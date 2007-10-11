@@ -1,35 +1,35 @@
 #include "starruby.h"
 
-static int _fps = 30;
-static double _realFps = 0;
-static bool _running = false;
-static bool _terminated = false;
+static int fps = 30;
+static double realFps = 0;
+static bool running = false;
+static bool terminated = false;
 
 static VALUE game_fps(VALUE self)
 {
-  return INT2NUM(_fps);
+  return INT2NUM(fps);
 }
 
-static VALUE game_fps_eq(VALUE self, VALUE fps)
+static VALUE game_fps_eq(VALUE self, VALUE rbFps)
 {
-  _fps = NUM2INT(fps);
-  return fps;
+  fps = NUM2INT(rbFps);
+  return rbFps;
 }
 
 static VALUE game_real_fps(VALUE self)
 {
-  return rb_float_new(_realFps);
+  return rb_float_new(realFps);
 }
 
 static VALUE game_run(int argc, VALUE* argv, VALUE self)
 {
-  if (_running) {
+  if (running) {
     rb_raise(rb_eStarRubyError, "already run");
     return Qnil;
   }
   
-  _running = true;
-  _terminated = false;
+  running = true;
+  terminated = false;
   
   VALUE block;
   rb_scan_args(argc, argv, "0&", &block);
@@ -63,7 +63,7 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
     
     while (true) {
       now = SDL_GetTicks();
-      nowX = (now - before) * (_fps / 10) + errorX;
+      nowX = (now - before) * (fps / 10) + errorX;
       if (100 <= nowX)
         break;
       SDL_Delay(1);
@@ -72,14 +72,14 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
     errorX = nowX % 100;
 
     if ((now - before2) >= 1000) {
-      _realFps = (double)perSecondCounter / (now - before2) * 1000;
+      realFps = (double)perSecondCounter / (now - before2) * 1000;
       perSecondCounter = 0;
       before2 = now;
     }
     
     rb_yield(Qnil);
 
-    if (_terminated)
+    if (terminated)
       break;
   }
 
@@ -87,19 +87,19 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
   
   SDL_Quit();
   
-  _running = false;
+  running = false;
   
   return Qnil;
 }
 
 static VALUE game_running(VALUE self)
 {
-  return _running ? Qtrue : Qfalse;
+  return running ? Qtrue : Qfalse;
 }
 
 static VALUE game_terminate(VALUE self)
 {
-  _terminated = true;
+  terminated = true;
   return Qnil;
 }
 
@@ -108,9 +108,9 @@ static VALUE game_title(VALUE self)
   return rb_iv_get(self, "title");
 }
 
-static VALUE game_title_eq(VALUE self, VALUE title)
+static VALUE game_title_eq(VALUE self, VALUE rbTitle)
 {
-  return rb_iv_set(self, "title", title);
+  return rb_iv_set(self, "title", rbTitle);
 }
 
 void init_game(void)

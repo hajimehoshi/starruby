@@ -32,3 +32,32 @@ class GameTest < Test::Unit::TestCase
   end
   
 end
+
+class ScreenTest < Test::Unit::TestCase
+  
+  def test_size
+    assert_equal 320, Screen.width
+    assert_equal 240, Screen.height
+    assert_equal [320, 240], Screen.size
+    assert_equal true, Screen.size.frozen?
+  end
+  
+  #def test_offscreen
+    #assert_kind_of Texture, Screen.offscreen
+    #assert_equal Screen.width, Screen.offscreen.width
+    #assert_equal Screen.height, Screen.offscreen.height
+  #end
+  
+end
+
+class TextureTest < Test::Unit::TestCase
+  
+  def test_new
+    texture = Texture.new(123, 456)
+    assert_equal 123, texture.width
+    assert_equal 456, texture.height
+    assert_equal [123, 456], texture.size
+    assert_equal true, texture.size.frozen?
+  end
+  
+end

@@ -1,0 +1,2 @@
+require "starruby"
+require "test"

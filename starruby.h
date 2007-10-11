@@ -7,13 +7,14 @@
 #include <SDL_image.h>
 
 extern VALUE rb_mStarRuby;
+extern VALUE rb_eStarRubyError;
 
 void InitializeGame(void);
 void InitializeScreen(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
 
-inline void rb_raise_star_ruby_error(char*);
-inline void rb_raise_sdl_error(void);
+#define rb_raise_star_ruby_error(message) rb_raise(rb_eStarRubyError, message)
+#define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, SDL_GetError())
 
 #endif

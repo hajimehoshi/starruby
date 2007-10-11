@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <ruby.h>
 #include <SDL.h>
+#include <SDL_image.h>
 
 extern VALUE rb_mStarRuby;
 

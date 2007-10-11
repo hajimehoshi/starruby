@@ -24,7 +24,7 @@ static VALUE game_real_fps(VALUE self)
 static VALUE game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running) {
-    rb_raise_star_ruby_error("already run");
+    rb_raise(rb_eStarRubyError, "already run");
     return Qnil;
   }
   

@@ -14,7 +14,6 @@ void InitializeScreen(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
 
-#define rb_raise_star_ruby_error(message) rb_raise(rb_eStarRubyError, message)
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, SDL_GetError())
 
 #endif

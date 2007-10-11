@@ -11,3 +11,8 @@ void Init_starruby(void)
   
   init_game();
 }
+
+inline void rb_raise_sdl_error(void)
+{
+  rb_raise(rb_eStarRubyError, SDL_GetError());
+}

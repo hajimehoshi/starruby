@@ -24,7 +24,7 @@ static VALUE game_real_fps(VALUE self)
 static VALUE game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running) {
-    rb_raise(rb_eStarRubyError, "already run");
+    rb_raise_star_ruby_error("already run");
     return Qnil;
   }
   
@@ -53,13 +53,13 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
   Uint32 before = SDL_GetTicks();
   Uint32 before2 = before;
   int errorX = 0;
-  int perSecondCounter = 0;
+  int counter = 0;
   
   while (true) {
     if (SDL_PollEvent(&event) != 0 && event.type == SDL_QUIT)
       break;
 
-    perSecondCounter++;
+    counter++;
     
     while (true) {
       now = SDL_GetTicks();
@@ -72,8 +72,8 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
     errorX = nowX % 100;
 
     if ((now - before2) >= 1000) {
-      realFps = (double)perSecondCounter / (now - before2) * 1000;
-      perSecondCounter = 0;
+      realFps = (double)counter / (now - before2) * 1000;
+      counter = 0;
       before2 = now;
     }
     
@@ -113,7 +113,7 @@ static VALUE game_title_eq(VALUE self, VALUE rbTitle)
   return rb_iv_set(self, "title", rbTitle);
 }
 
-void init_game(void)
+void InitializeGame(void)
 {
   VALUE rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_singleton_method(rb_mGame, "fps",       game_fps,       0);

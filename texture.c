@@ -26,7 +26,7 @@ static VALUE texture_width(VALUE self)
   return rb_iv_get(self, "width");
 }
 
-void init_texture(void)
+void InitializeTexture(void)
 {
   VALUE rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_private_method(rb_cTexture, "initialize", texture_initialize, 2);

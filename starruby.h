@@ -6,12 +6,13 @@
 #include <SDL.h>
 
 extern VALUE rb_mStarRuby;
-extern VALUE rb_eStarRubyError;
 
-void init_game(void);
-void init_screen(void);
-void init_texture(void);
+void InitializeGame(void);
+void InitializeScreen(void);
+void InitializeStarRubyError(void);
+void InitializeTexture(void);
 
+inline void rb_raise_star_ruby_error(char*);
 inline void rb_raise_sdl_error(void);
 
 #endif

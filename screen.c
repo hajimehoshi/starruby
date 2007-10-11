@@ -28,7 +28,7 @@ static VALUE screen_width()
   return INT2NUM(SCREEN_WIDTH);
 }
 
-void init_screen(void)
+void InitializeScreen(void)
 {
   VALUE rb_mScreen = rb_define_module_under(rb_mStarRuby, "Screen");
   rb_define_singleton_method(rb_mScreen, "height",    screen_height,    0);

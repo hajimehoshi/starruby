@@ -64,6 +64,13 @@ static VALUE Color_green(VALUE self)
   return INT2NUM(color->green);
 }
 
+static VALUE Color_hash(VALUE self)
+{
+  struct Color* color;
+  Data_Get_Struct(self, struct Color, color);
+  return INT2NUM(color->red ^ color->green ^ color-> blue ^ color->alpha);
+}
+
 static VALUE Color_red(VALUE self)
 {
   struct Color* color;
@@ -81,5 +88,6 @@ void InitializeColor(void)
   rb_define_method(rb_cColor, "==",    Color_eq,    1);
   rb_define_method(rb_cColor, "eql?",  Color_eq,    1);
   rb_define_method(rb_cColor, "green", Color_green, 0);
+  rb_define_method(rb_cColor, "hash",  Color_hash,  0);
   rb_define_method(rb_cColor, "red",   Color_red,   0);
 }

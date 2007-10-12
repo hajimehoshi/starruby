@@ -15,8 +15,8 @@ class ColorTest < Test::Unit::TestCase
     assert_equal 4, c1.alpha
     assert_equal 255, c2.alpha
 
-    #assert c1 == Color.new(1, 2, 3, 4)
-    #assert c1.eql?(Color.new(1, 2, 3, 4))
+    assert c1 == Color.new(1, 2, 3, 4)
+    assert c1.eql?(Color.new(1, 2, 3, 4))
     #assert_equal c1.hash, Color.new(1, 2, 3, 4).hash
   end
   

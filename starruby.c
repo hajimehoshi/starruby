@@ -19,7 +19,7 @@ static void StartSdl(void)
     rb_raise_sdl_error();
 }
 
-static void TerminateSdl(VALUE dammy)
+static void TerminateSdl(VALUE dummy)
 {
   SDL_FreeSurface(screen);
   SDL_Quit();

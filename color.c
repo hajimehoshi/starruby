@@ -38,6 +38,11 @@ static VALUE Color_blue(VALUE self)
   return INT2NUM(color->blue);
 }
 
+static VALUE Color_eq(VALUE self, VALUE rbOther)
+{
+  return Qnil;
+}
+
 static VALUE Color_green(VALUE self)
 {
   struct Color* color;
@@ -60,6 +65,7 @@ void InitializeColor(void)
   rb_define_private_method(rb_cColor, "initialize", Color_initialize, -1);
   rb_define_method(rb_cColor, "alpha", Color_alpha, 0);
   rb_define_method(rb_cColor, "blue",  Color_blue,  0);
+  rb_define_method(rb_cColor, "==",    Color_eq,    0);
   rb_define_method(rb_cColor, "green", Color_green, 0);
   rb_define_method(rb_cColor, "red",   Color_red,   0);
 }

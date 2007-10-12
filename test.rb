@@ -3,6 +3,25 @@ require "test/unit"
 
 include StarRuby
 
+class ColorTest < Test::Unit::TestCase
+
+  def test_color
+    c1 = Color.new(1, 2, 3, 4)
+    c2 = Color.new(5, 6, 7)
+
+    assert_equal 1, c1.red
+    assert_equal 2, c1.green
+    assert_equal 3, c1.blue
+    assert_equal 4, c1.alpha
+    assert_equal 255, c2.alpha
+
+    #assert c1 == Color.new(1, 2, 3, 4)
+    #assert c1.eql?(Color.new(1, 2, 3, 4))
+    #assert_equal c1.hash, Color.new(1, 2, 3, 4).hash
+  end
+  
+end
+
 class GameTest < Test::Unit::TestCase
   
   def test_game

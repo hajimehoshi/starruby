@@ -5,48 +5,34 @@ static double realFps = 0;
 static bool running = false;
 static bool terminated = false;
 
-static VALUE game_fps(VALUE self)
+static VALUE Game_fps(VALUE self)
 {
   return INT2NUM(fps);
 }
 
-static VALUE game_fps_eq(VALUE self, VALUE rbFps)
+static VALUE Game_fps_eq(VALUE self, VALUE rbFps)
 {
   fps = NUM2INT(rbFps);
   return rbFps;
 }
 
-static VALUE game_real_fps(VALUE self)
+static VALUE Game_real_fps(VALUE self)
 {
   return rb_float_new(realFps);
 }
 
-static VALUE game_run(int argc, VALUE* argv, VALUE self)
+static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running) {
     rb_raise(rb_eStarRubyError, "already run");
     return Qnil;
   }
-  
   running = true;
   terminated = false;
   
   VALUE block;
   rb_scan_args(argc, argv, "0&", &block);
-
-  Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-    SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (SDL_Init(flags) < 0)
-    rb_raise_sdl_error();
   
-  SDL_ShowCursor(SDL_DISABLE);
-
-  Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
-
-  SDL_Surface* screen = SDL_SetVideoMode(320, 240, 32, options);
-  if (screen == NULL)
-    rb_raise_sdl_error();
-
   SDL_Event event;
   Uint32 now;
   int nowX;
@@ -58,7 +44,7 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
   while (true) {
     if (SDL_PollEvent(&event) != 0 && event.type == SDL_QUIT)
       break;
-
+    
     counter++;
     
     while (true) {
@@ -70,7 +56,7 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
     }
     before = now;
     errorX = nowX % 100;
-
+    
     if ((now - before2) >= 1000) {
       realFps = (double)counter / (now - before2) * 1000;
       counter = 0;
@@ -78,37 +64,31 @@ static VALUE game_run(int argc, VALUE* argv, VALUE self)
     }
     
     rb_yield(Qnil);
-
+    
     if (terminated)
       break;
   }
-
-  SDL_FreeSurface(screen);
-  
-  SDL_Quit();
-  
   running = false;
-  
   return Qnil;
 }
 
-static VALUE game_running(VALUE self)
+static VALUE Game_running(VALUE self)
 {
   return running ? Qtrue : Qfalse;
 }
 
-static VALUE game_terminate(VALUE self)
+static VALUE Game_terminate(VALUE self)
 {
   terminated = true;
   return Qnil;
 }
 
-static VALUE game_title(VALUE self)
+static VALUE Game_title(VALUE self)
 {
   return rb_iv_get(self, "title");
 }
 
-static VALUE game_title_eq(VALUE self, VALUE rbTitle)
+static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
 {
   return rb_iv_set(self, "title", rbTitle);
 }
@@ -116,12 +96,12 @@ static VALUE game_title_eq(VALUE self, VALUE rbTitle)
 void InitializeGame(void)
 {
   VALUE rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
-  rb_define_singleton_method(rb_mGame, "fps",       game_fps,       0);
-  rb_define_singleton_method(rb_mGame, "fps=",      game_fps_eq,    1);
-  rb_define_singleton_method(rb_mGame, "real_fps",  game_real_fps,  0);
-  rb_define_singleton_method(rb_mGame, "run",       game_run,       -1);
-  rb_define_singleton_method(rb_mGame, "running?",  game_running,   0);
-  rb_define_singleton_method(rb_mGame, "terminate", game_terminate, 0);
-  rb_define_singleton_method(rb_mGame, "title",     game_title,     0);
-  rb_define_singleton_method(rb_mGame, "title=",    game_title_eq,  1);
+  rb_define_singleton_method(rb_mGame, "fps",       Game_fps,       0);
+  rb_define_singleton_method(rb_mGame, "fps=",      Game_fps_eq,    1);
+  rb_define_singleton_method(rb_mGame, "real_fps",  Game_real_fps,  0);
+  rb_define_singleton_method(rb_mGame, "run",       Game_run,       -1);
+  rb_define_singleton_method(rb_mGame, "running?",  Game_running,   0);
+  rb_define_singleton_method(rb_mGame, "terminate", Game_terminate, 0);
+  rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
+  rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
 }

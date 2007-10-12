@@ -19,16 +19,10 @@ static void StartSdl(void)
     rb_raise_sdl_error();
 }
 
-static void TerminateSdl(void)
+static void TerminateSdl(VALUE dammy)
 {
   SDL_FreeSurface(screen);
   SDL_Quit();
-}
-
-static VALUE __terminate_sdl__(VALUE rbKernel)
-{
-  TerminateSdl();
-  return Qnil;
 }
 
 void Init_starruby(void)
@@ -42,6 +36,5 @@ void Init_starruby(void)
   InitializeTexture();
 
   StartSdl();
-  rb_define_global_function("__terminate_sdl__", __terminate_sdl__, 0);
-  rb_eval_string("at_exit { __terminate_sdl__ }");
+  rb_set_end_proc(TerminateSdl, Qnil);
 }

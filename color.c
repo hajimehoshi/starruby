@@ -78,7 +78,6 @@ static VALUE Color_to_s(VALUE self)
 {
   struct Color* color;
   Data_Get_Struct(self, struct Color, color);
-  char tmp[4] = "000";
   
   char str[256];
   snprintf(str, sizeof(str), "#<Color alpha=%d, red=%d, green=%d, blue=%d>",

@@ -39,6 +39,13 @@ class ColorTest < Test::Unit::TestCase
     assert_equal 0,   c.alpha
   end
   
+  def test_to_s
+    c = Color.new(1, 2, 3, 4)
+    assert_equal "#<Color alpha=4, red=1, green=2, blue=3>", c.to_s
+    c = Color.new(255, 255, 255, 255)
+    assert_equal "#<Color alpha=255, red=255, green=255, blue=255>", c.to_s
+  end
+  
 end
 
 class ToneTest < Test::Unit::TestCase
@@ -174,7 +181,7 @@ class TextureTest < Test::Unit::TestCase
     assert_raise StarRubyError do
       texture.dispose
     end
-    # change_hue
+    # TODO: change_hue
   end
   
   def test_get_and_set_pixel
@@ -184,22 +191,69 @@ class TextureTest < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
       end
     end
-=begin
-    assert_raise IndexError do
-      texture.get_pixel 3, 2
+    
+    begin
+      texture.get_pixel(-1, 2)
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (-1, 2)", e.message
     end
     
-    texture.set_pixel 0, 1, Color.new(31, 41, 59, 26)
-    texture.set_pixel 1, 2, Color.new(53, 58, 97, 92)
-    texture.set_pixel 2, 0, Color.new(65, 35, 89, 79)
+    begin
+      texture.get_pixel(2, -1)
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (2, -1)", e.message
+    end
+    
+    begin
+      texture.get_pixel(3, 2)
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (3, 2)", e.message
+    end
+    
+    begin
+      texture.get_pixel(2, 3)
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (2, 3)", e.message
+    end
+    
+    assert_equal Color.new(31, 41, 59, 26), texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
+    assert_equal Color.new(53, 58, 97, 92), texture.set_pixel(1, 2, Color.new(53, 58, 97, 92))
+    assert_equal Color.new(65, 35, 89, 79), texture.set_pixel(2, 0, Color.new(65, 35, 89, 79))
     assert_equal Color.new(31, 41, 59, 26), texture.get_pixel(0, 1);
     assert_equal Color.new(53, 58, 97, 92), texture.get_pixel(1, 2);
     assert_equal Color.new(65, 35, 89, 79), texture.get_pixel(2, 0);
     
-    assert_raise IndexError do
-      texture.get_pixel 2, 3
+    begin
+      texture.set_pixel(-1, 2, Color.new(0, 0, 0))
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (-1, 2)", e.message
     end
-=end
+    
+    begin
+      texture.set_pixel(2, -1, Color.new(0, 0, 0))
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (2, -1)", e.message
+    end
+    
+    begin
+      texture.set_pixel(3, 2, Color.new(0, 0, 0))
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (3, 2)", e.message
+    end
+    
+    begin
+      texture.set_pixel(2, 3, Color.new(0, 0, 0))
+      flunk
+    rescue IndexError => e
+      assert_equal "index out of range: (2, 3)", e.message
+    end
   end
   
 end

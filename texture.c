@@ -98,11 +98,19 @@ static VALUE Texture_disposed(VALUE self)
 
 static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 {
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  
   struct Texture* texture;
   Data_Get_Struct(self, struct Texture, texture);
   
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
+    char errorMessage[256];
+    snprintf(errorMessage, 256, "index out of range: (%d, %d)", x, y);
+    rb_raise(rb_eIndexError, errorMessage);
+    return Qnil;
+  }
+  
   struct Color color = texture->pixels[x + y * texture->width];
   return rb_funcall(rb_cColor, rb_intern("new"), 4,
                     INT2NUM(color.red),
@@ -116,6 +124,28 @@ static VALUE Texture_height(VALUE self)
   struct Texture* texture;
   Data_Get_Struct(self, struct Texture, texture);
   return INT2NUM(texture->height);
+}
+
+static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
+{
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
+    char errorMessage[256];
+    snprintf(errorMessage, 256, "index out of range: (%d, %d)", x, y);
+    rb_raise(rb_eIndexError, errorMessage);
+    return rbColor;;
+  }
+
+  struct Color* color;
+  Data_Get_Struct(rbColor, struct Color, color);
+  
+  texture->pixels[x + y * texture->width] = *color;
+  return rbColor;
 }
 
 static VALUE Texture_size(VALUE self)
@@ -148,6 +178,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "disposed?", Texture_disposed,  0);
   rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel, 2);
   rb_define_method(rb_cTexture, "height",    Texture_height,    0);
+  rb_define_method(rb_cTexture, "set_pixel", Texture_set_pixel, 3);
   rb_define_method(rb_cTexture, "size",      Texture_size,      0);
   rb_define_method(rb_cTexture, "width",     Texture_width,     0);
 }

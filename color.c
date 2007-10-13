@@ -80,29 +80,10 @@ static VALUE Color_to_s(VALUE self)
   Data_Get_Struct(self, struct Color, color);
   char tmp[4] = "000";
   
-  VALUE rbStr = rb_str_new2("Color(");
-  
-  rb_str_cat2(rbStr, "alpha:");
-  snprintf(tmp, sizeof(tmp), "%d", color->alpha);
-  rb_str_cat2(rbStr, tmp);
-  rb_str_cat2(rbStr, ",");
-
-  rb_str_cat2(rbStr, "red:");
-  snprintf(tmp, sizeof(tmp), "%d", color->red);
-  rb_str_cat2(rbStr, tmp);
-  rb_str_cat2(rbStr, ",");
-
-  rb_str_cat2(rbStr, "green:");
-  snprintf(tmp, sizeof(tmp), "%d", color->green);
-  rb_str_cat2(rbStr, tmp);
-  rb_str_cat2(rbStr, ",");
-
-  rb_str_cat2(rbStr, "blue:");
-  snprintf(tmp, sizeof(tmp), "%d", color->blue);
-  rb_str_cat2(rbStr, tmp);
-  
-  rb_str_cat2(rbStr, ")");
-  return rbStr;
+  char str[256];
+  snprintf(str, 256, "#<Color alpha=%d, red=%d, green=%d, blue=%d>",
+           color->alpha, color->red, color->green, color->blue);
+  return rb_str_new2(str);
 }
 
 void InitializeColor(void)

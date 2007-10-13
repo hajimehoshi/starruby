@@ -81,7 +81,7 @@ static VALUE Color_to_s(VALUE self)
   char tmp[4] = "000";
   
   char str[256];
-  snprintf(str, 256, "#<Color alpha=%d, red=%d, green=%d, blue=%d>",
+  snprintf(str, sizeof(str), "#<Color alpha=%d, red=%d, green=%d, blue=%d>",
            color->alpha, color->red, color->green, color->blue);
   return rb_str_new2(str);
 }

@@ -106,7 +106,8 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     char errorMessage[256];
-    snprintf(errorMessage, 256, "index out of range: (%d, %d)", x, y);
+    snprintf(errorMessage, sizeof(errorMessage),
+             "index out of range: (%d, %d)", x, y);
     rb_raise(rb_eIndexError, errorMessage);
     return Qnil;
   }
@@ -136,7 +137,8 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     char errorMessage[256];
-    snprintf(errorMessage, 256, "index out of range: (%d, %d)", x, y);
+    snprintf(errorMessage, sizeof(errorMessage),
+             "index out of range: (%d, %d)", x, y);
     rb_raise(rb_eIndexError, errorMessage);
     return rbColor;;
   }

@@ -1,4 +1,4 @@
-require "starruby"
+require "../starruby"
 require "test/unit"
 
 include StarRuby
@@ -120,6 +120,24 @@ class TextureTest < Test::Unit::TestCase
     assert_equal 456, texture.height
     assert_equal [123, 456], texture.size
     assert_equal true, texture.size.frozen?
+  end
+  
+  def test_load
+    texture = Texture.load("images/ruby.png")
+    assert_equal 50, texture.width
+    assert_equal 35, texture.height
+    assert_equal [50, 35], texture.size
+    
+    assert_raise Errno::ENOENT do
+      Texture.load("invalid_path/foo.png")
+    end
+    
+    assert_raise Errno::ENOENT do
+      Texture.load("images/not_existed.png")
+    end
+    
+    assert_not_nil Texture.load("images/ruby");
+    assert_not_nil Texture.load("images/rubypng");
   end
   
 end

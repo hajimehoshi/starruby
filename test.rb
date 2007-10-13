@@ -19,6 +19,20 @@ class ColorTest < Test::Unit::TestCase
     assert c1.eql?(Color.new(1, 2, 3, 4))
     assert_equal c1.hash, Color.new(1, 2, 3, 4).hash
   end
+
+  def test_color_overflow
+    c = Color.new(-100, 256, -1, 999)
+    assert_equal 0,   c.red
+    assert_equal 255, c.green
+    assert_equal 0,   c.blue
+    assert_equal 255, c.alpha
+    
+    c = Color.new(999, -1, 256, -100)
+    assert_equal 255, c.red
+    assert_equal 0,   c.green
+    assert_equal 255, c.blue
+    assert_equal 0,   c.alpha
+  end
   
 end
 

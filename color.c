@@ -19,10 +19,11 @@ static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
 
   struct Color* color;
   Data_Get_Struct(self, struct Color, color);
-  color->red   = NUM2INT(rbRed);
-  color->green = NUM2INT(rbGreen);
-  color->blue  = NUM2INT(rbBlue);
-  color->alpha = (rbAlpha != Qnil) ? NUM2INT(rbAlpha) : 255;
+  color->red   = NORMALIZE(NUM2INT(rbRed), 0, 255);
+  color->green = NORMALIZE(NUM2INT(rbGreen), 0, 255);
+  color->blue  = NORMALIZE(NUM2INT(rbBlue), 0, 255);
+  color->alpha = (rbAlpha != Qnil) ?
+    NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   return Qnil;
 }
 

@@ -26,11 +26,13 @@ void InitializeTexture(void);
 
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, SDL_GetError())
 
-struct Color{
+#define NORMALIZE(x, min, max) ((x < min) ? min : ((max < x) ? max : x))
+
+struct Color {
+  unsigned char alpha;
   unsigned char red;
   unsigned char green;
   unsigned char blue;
-  unsigned char alpha;
 };
 
 #endif

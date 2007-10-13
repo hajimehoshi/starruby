@@ -1,7 +1,5 @@
 #include "starruby.h"
 
-static VALUE rb_cColor;
-
 static VALUE Color_alloc(VALUE klass)
 {
   struct Color* color = ALLOC(struct Color);
@@ -76,6 +74,37 @@ static VALUE Color_red(VALUE self)
   return INT2NUM(color->red);
 }
 
+static VALUE Color_to_s(VALUE self)
+{
+  struct Color* color;
+  Data_Get_Struct(self, struct Color, color);
+  char tmp[4] = "000";
+  
+  VALUE rbStr = rb_str_new2("Color(");
+  
+  rb_str_cat2(rbStr, "alpha:");
+  snprintf(tmp, sizeof(tmp), "%d", color->alpha);
+  rb_str_cat2(rbStr, tmp);
+  rb_str_cat2(rbStr, ",");
+
+  rb_str_cat2(rbStr, "red:");
+  snprintf(tmp, sizeof(tmp), "%d", color->red);
+  rb_str_cat2(rbStr, tmp);
+  rb_str_cat2(rbStr, ",");
+
+  rb_str_cat2(rbStr, "green:");
+  snprintf(tmp, sizeof(tmp), "%d", color->green);
+  rb_str_cat2(rbStr, tmp);
+  rb_str_cat2(rbStr, ",");
+
+  rb_str_cat2(rbStr, "blue:");
+  snprintf(tmp, sizeof(tmp), "%d", color->blue);
+  rb_str_cat2(rbStr, tmp);
+  
+  rb_str_cat2(rbStr, ")");
+  return rbStr;
+}
+
 void InitializeColor(void)
 {
   rb_cColor = rb_define_class_under(rb_mStarRuby, "Color", rb_cObject);
@@ -88,4 +117,5 @@ void InitializeColor(void)
   rb_define_method(rb_cColor, "green", Color_green, 0);
   rb_define_method(rb_cColor, "hash",  Color_hash,  0);
   rb_define_method(rb_cColor, "red",   Color_red,   0);
+  rb_define_method(rb_cColor, "to_s",  Color_to_s,  0);
 }

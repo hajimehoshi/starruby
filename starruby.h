@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <ruby.h>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -13,6 +14,7 @@
 #define GLOBAL extern
 #endif
 
+GLOBAL VALUE rb_cColor;
 GLOBAL VALUE rb_mStarRuby;
 GLOBAL VALUE rb_eStarRubyError;
 
@@ -49,7 +51,7 @@ struct Tone {
 struct Texture {
   uint16_t width;
   uint16_t height;
-  uint64_t* pixels;
+  struct Color* pixels;
 };
 
 #endif

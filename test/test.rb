@@ -166,4 +166,40 @@ class TextureTest < Test::Unit::TestCase
     assert !texture.dup.frozen?
   end
   
+  def test_dispose
+    texture = Texture.load("images/ruby")
+    assert_equal false, texture.disposed?
+    texture.dispose
+    assert_equal true, texture.disposed?
+    assert_raise StarRubyError do
+      texture.dispose
+    end
+    # change_hue
+  end
+  
+  def test_get_and_set_pixel
+    texture = Texture.new(3, 3)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+      end
+    end
+=begin
+    assert_raise IndexError do
+      texture.get_pixel 3, 2
+    end
+    
+    texture.set_pixel 0, 1, Color.new(31, 41, 59, 26)
+    texture.set_pixel 1, 2, Color.new(53, 58, 97, 92)
+    texture.set_pixel 2, 0, Color.new(65, 35, 89, 79)
+    assert_equal Color.new(31, 41, 59, 26), texture.get_pixel(0, 1);
+    assert_equal Color.new(53, 58, 97, 92), texture.get_pixel(1, 2);
+    assert_equal Color.new(65, 35, 89, 79), texture.get_pixel(2, 0);
+    
+    assert_raise IndexError do
+      texture.get_pixel 2, 3
+    end
+=end
+  end
+  
 end

@@ -21,8 +21,8 @@ static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   
   texture->width  = NUM2INT(rbWidth);
   texture->height = NUM2INT(rbHeight);
-  texture->pixels = ALLOC_N(uint64_t, texture->width * texture->height);
-  MEMZERO(texture->pixels, uint64_t, texture->width * texture->height);
+  texture->pixels = ALLOC_N(struct Color, texture->width * texture->height);
+  MEMZERO(texture->pixels, struct Color, texture->width * texture->height);
   return Qnil;
 }
 
@@ -36,6 +36,7 @@ static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
 
   texture->width  = origTexture->width;
   texture->height = origTexture->height;
+  texture->pixels = NULL; // TODO
   
   return Qnil;
 }
@@ -75,6 +76,41 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   return rbTexture;
 }
 
+static VALUE Texture_dispose(VALUE self)
+{
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eStarRubyError, "already disposed");
+    return Qnil;
+  }
+  free(texture->pixels);
+  texture->pixels = NULL;
+  return Qnil;
+}
+
+static VALUE Texture_disposed(VALUE self)
+{
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+  return !texture->pixels ? Qtrue : Qfalse;
+}
+
+static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
+{
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+  
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  struct Color color = texture->pixels[x + y * texture->width];
+  return rb_funcall(rb_cColor, rb_intern("new"), 4,
+                    INT2NUM(color.red),
+                    INT2NUM(color.green),
+                    INT2NUM(color.blue),
+                    INT2NUM(color.alpha));
+}
+
 static VALUE Texture_height(VALUE self)
 {
   struct Texture* texture;
@@ -105,9 +141,13 @@ void InitializeTexture(void)
     rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
-  rb_define_private_method(rb_cTexture, "initialize_copy", Texture_initialize_copy, 1);
+  rb_define_private_method(rb_cTexture, "initialize_copy",
+                           Texture_initialize_copy, 1);
   rb_define_singleton_method(rb_cTexture, "load", Texture_load, 1);
-  rb_define_method(rb_cTexture, "height", Texture_height, 0);
-  rb_define_method(rb_cTexture, "size",   Texture_size,   0);
-  rb_define_method(rb_cTexture, "width",  Texture_width,  0);
+  rb_define_method(rb_cTexture, "dispose",   Texture_dispose,   0);
+  rb_define_method(rb_cTexture, "disposed?", Texture_disposed,  0);
+  rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel, 2);
+  rb_define_method(rb_cTexture, "height",    Texture_height,    0);
+  rb_define_method(rb_cTexture, "size",      Texture_size,      0);
+  rb_define_method(rb_cTexture, "width",     Texture_width,     0);
 }

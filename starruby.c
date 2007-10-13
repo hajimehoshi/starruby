@@ -34,6 +34,7 @@ void Init_starruby(void)
   InitializeScreen();
   InitializeStarRubyError();
   InitializeTexture();
+  InitializeTone();
 
   StartSdl();
   rb_set_end_proc(TerminateSdl, Qnil);

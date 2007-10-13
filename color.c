@@ -10,18 +10,15 @@ static VALUE Color_alloc(VALUE klass)
 
 static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbRed;
-  VALUE rbGreen;
-  VALUE rbBlue;
-  VALUE rbAlpha;
+  VALUE rbRed, rbGreen, rbBlue, rbAlpha;
   rb_scan_args(argc, argv, "31",
                &rbRed, &rbGreen, &rbBlue, &rbAlpha);
 
   struct Color* color;
   Data_Get_Struct(self, struct Color, color);
-  color->red   = NORMALIZE(NUM2INT(rbRed), 0, 255);
+  color->red   = NORMALIZE(NUM2INT(rbRed),   0, 255);
   color->green = NORMALIZE(NUM2INT(rbGreen), 0, 255);
-  color->blue  = NORMALIZE(NUM2INT(rbBlue), 0, 255);
+  color->blue  = NORMALIZE(NUM2INT(rbBlue),  0, 255);
   color->alpha = (rbAlpha != Qnil) ?
     NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   return Qnil;
@@ -69,7 +66,7 @@ static VALUE Color_hash(VALUE self)
 {
   struct Color* color;
   Data_Get_Struct(self, struct Color, color);
-  return INT2NUM(color->red ^ color->green ^ color-> blue ^ color->alpha);
+  return INT2NUM(color->red ^ color->green ^ color->blue ^ color->alpha);
 }
 
 static VALUE Color_red(VALUE self)

@@ -16,8 +16,13 @@ class ColorTest < Test::Unit::TestCase
     assert_equal 255, c2.alpha
 
     assert c1 == Color.new(1, 2, 3, 4)
+    assert c2 == Color.new(5, 6, 7)
+    assert c2 == Color.new(5, 6, 7, 255)
+    assert c1 != Color.new(1, 2, 3, 5)
+    assert c1 != Object.new
     assert c1.eql?(Color.new(1, 2, 3, 4))
     assert_equal c1.hash, Color.new(1, 2, 3, 4).hash
+    assert_equal c2.hash, Color.new(5, 6, 7).hash
   end
 
   def test_color_overflow
@@ -32,6 +37,30 @@ class ColorTest < Test::Unit::TestCase
     assert_equal 0,   c.green
     assert_equal 255, c.blue
     assert_equal 0,   c.alpha
+  end
+  
+end
+
+class ToneTest < Test::Unit::TestCase
+  
+  def test_tone
+    t1 = Tone.new(1, 2, 3, 4)
+    t2 = Tone.new(5, 6, 7)
+
+    assert_equal 1, t1.red
+    assert_equal 2, t1.green
+    assert_equal 3, t1.blue
+    assert_equal 4, t1.saturation
+    assert_equal 255, t2.saturation
+
+    assert t1 == Tone.new(1, 2, 3, 4)
+    assert t2 == Tone.new(5, 6, 7)
+    assert t2 == Tone.new(5, 6, 7, 255)
+    assert t1 != Tone.new(1, 2, 3, 5)
+    assert t1 != Object.new
+    assert t1.eql?(Tone.new(1, 2, 3, 4))
+    assert_equal t1.hash, Tone.new(1, 2, 3, 4).hash
+    assert_equal t2.hash, Tone.new(5, 6, 7).hash
   end
   
 end

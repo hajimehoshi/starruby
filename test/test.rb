@@ -138,6 +138,8 @@ class TextureTest < Test::Unit::TestCase
     
     assert_not_nil Texture.load("images/ruby");
     assert_not_nil Texture.load("images/rubypng");
+    assert_not_nil Texture.load("images/ruby.foo");
+    assert_not_nil Texture.load("images/ruby.foo.png");
   end
   
 end

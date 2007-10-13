@@ -49,11 +49,9 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
     rb_raise_sdl_image_error();
     return Qnil;
   }
-  int width = surface->w;
-  int height = surface->h;
 
   VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
-                               INT2NUM(width), INT2NUM(height));
+                               INT2NUM(surface->w), INT2NUM(surface->h));
 
   struct Texture* texture;
   Data_Get_Struct(rbTexture, struct Texture, texture);

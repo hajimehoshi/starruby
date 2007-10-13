@@ -140,6 +140,30 @@ class TextureTest < Test::Unit::TestCase
     assert_not_nil Texture.load("images/rubypng");
     assert_not_nil Texture.load("images/ruby.foo");
     assert_not_nil Texture.load("images/ruby.foo.png");
+    
+    assert_raise StarRubyError do
+      Texture.load("images/not_image");
+    end
+    
+    assert_raise StarRubyError do
+      Texture.load("images/not_image.txt");
+    end
+  end
+  
+  def test_clone
+    texture = Texture.load("images/ruby")
+    texture2 = texture.clone
+    assert_equal texture.size, texture2.size
+    texture.freeze
+    assert texture.clone.frozen?
+  end
+  
+  def test_dup
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    assert_equal texture.size, texture2.size
+    texture.freeze
+    assert !texture.dup.frozen?
   end
   
 end

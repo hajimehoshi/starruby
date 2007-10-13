@@ -26,6 +26,20 @@ static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   return Qnil;
 }
 
+static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
+{
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+
+  struct Texture* origTexture;
+  Data_Get_Struct(rbTexture, struct Texture, origTexture);
+
+  texture->width  = origTexture->width;
+  texture->height = origTexture->height;
+  
+  return Qnil;
+}
+
 static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
   char* path = StringValuePtr(rbPath);
@@ -91,6 +105,7 @@ void InitializeTexture(void)
     rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
+  rb_define_private_method(rb_cTexture, "initialize_copy", Texture_initialize_copy, 1);
   rb_define_singleton_method(rb_cTexture, "load", Texture_load, 1);
   rb_define_method(rb_cTexture, "height", Texture_height, 0);
   rb_define_method(rb_cTexture, "size",   Texture_size,   0);

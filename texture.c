@@ -81,8 +81,8 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
 
   int width  = texture->width;
   int height = texture->height;
-  int sdlWidth  = width  / 4 * 4;
-  int sdlHeight = height / 4 * 4;
+  int sdlWidth  = (width + 3) & -4;
+  int sdlHeight = (height + 3) & -4;
 
   SDL_LockSurface(surface);
   if (width == sdlWidth && height == sdlHeight) {

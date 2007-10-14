@@ -75,6 +75,18 @@ static VALUE Tone_red(VALUE self)
   return INT2NUM(tone->red);
 }
 
+static VALUE Tone_to_s(VALUE self)
+{
+  struct Tone* tone;
+  Data_Get_Struct(self, struct Tone, tone);
+
+  char str[256];
+  snprintf(str, sizeof(str),
+           "#<StarRuby::Tone red=%d, green=%d, blue=%d, saturation=%d>",
+           tone->red, tone->green, tone->blue, tone->saturation);
+  return rb_str_new2(str);
+}
+
 void InitializeTone(void)
 {
   rb_cTone = rb_define_class_under(rb_mStarRuby, "Tone", rb_cObject);
@@ -87,4 +99,5 @@ void InitializeTone(void)
   rb_define_method(rb_cTone, "hash",       Tone_hash,       0);
   rb_define_method(rb_cTone, "saturation", Tone_saturation, 0);
   rb_define_method(rb_cTone, "red",        Tone_red,        0);
+  rb_define_method(rb_cTone, "to_s",       Tone_to_s,       0);
 }

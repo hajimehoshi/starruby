@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 require "../starruby"
 require "test/unit"
 
@@ -41,9 +43,9 @@ class ColorTest < Test::Unit::TestCase
   
   def test_to_s
     c = Color.new(1, 2, 3, 4)
-    assert_equal "#<Color alpha=4, red=1, green=2, blue=3>", c.to_s
+    assert_equal "#<StarRuby::Color alpha=4, red=1, green=2, blue=3>", c.to_s
     c = Color.new(255, 255, 255, 255)
-    assert_equal "#<Color alpha=255, red=255, green=255, blue=255>", c.to_s
+    assert_equal "#<StarRuby::Color alpha=255, red=255, green=255, blue=255>", c.to_s
   end
   
 end
@@ -68,6 +70,27 @@ class ToneTest < Test::Unit::TestCase
     assert t1.eql?(Tone.new(1, 2, 3, 4))
     assert_equal t1.hash, Tone.new(1, 2, 3, 4).hash
     assert_equal t2.hash, Tone.new(5, 6, 7).hash
+  end
+  
+  def test_tone_overflow
+    t = Tone.new(-256, 256, -999, 999)
+    assert_equal -255, t.red
+    assert_equal 255,  t.green
+    assert_equal -255, t.blue
+    assert_equal 255,  t.saturation
+    
+    t = Tone.new(256, -256, 999, -999)
+    assert_equal 255,  t.red
+    assert_equal -255, t.green
+    assert_equal 255,  t.blue
+    assert_equal 0,    t.saturation
+  end
+  
+  def test_to_s
+    t = Tone.new(1, 2, 3, 4)
+    assert_equal "#<StarRuby::Tone red=1, green=2, blue=3, saturation=4>", t.to_s
+    t = Tone.new(-255, -255, -255, 255)
+    assert_equal "#<StarRuby::Tone red=-255, green=-255, blue=-255, saturation=255>", t.to_s
   end
   
 end

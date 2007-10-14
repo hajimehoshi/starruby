@@ -80,7 +80,8 @@ static VALUE Color_to_s(VALUE self)
   Data_Get_Struct(self, struct Color, color);
   
   char str[256];
-  snprintf(str, sizeof(str), "#<Color alpha=%d, red=%d, green=%d, blue=%d>",
+  snprintf(str, sizeof(str),
+           "#<StarRuby::Color alpha=%d, red=%d, green=%d, blue=%d>",
            color->alpha, color->red, color->green, color->blue);
   return rb_str_new2(str);
 }

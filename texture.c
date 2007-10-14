@@ -171,7 +171,19 @@ static VALUE Texture_fill_rect(VALUE self,
     return Qnil;
   }
 
+  int rectX = NUM2INT(rbX);
+  int rectY = NUM2INT(rbY);
+  int rectWidth = NUM2INT(rbWidth);
+  int rectHeight= NUM2INT(rbHeight);
+  struct Color* color;
+  Data_Get_Struct(rbColor, struct Color, color);
+
+  int width = texture->width;
+  union Pixel* pixels = texture->pixels;
   
+  for (int j = rectY; j < rectY + rectHeight; j++)
+    for (int i = rectX; i < rectX + rectWidth; i++)
+      pixels[i + j * width].color = *color;
   
   return Qnil;
 }

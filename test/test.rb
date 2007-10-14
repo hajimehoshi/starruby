@@ -368,7 +368,7 @@ class TextureTest < Test::Unit::TestCase
       texture.fill(Color.new(31, 41, 59, 26))
     end
   end
-=begin
+
   def test_fill_rect
     texture = Texture.load("images/ruby")
     orig_texture = texture.clone
@@ -383,5 +383,21 @@ class TextureTest < Test::Unit::TestCase
       end
     end
   end
-=end
+  
+  def test_fill_rect_frozen
+    texture = Texture.load("images/ruby")
+    texture.freeze
+    assert_raise TypeError do
+      texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
+    end
+  end
+  
+  def test_fill_rect_disposed
+    texture = Texture.load("images/ruby")
+    texture.dispose
+    assert_raise TypeError do
+      texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
+    end
+  end
+
 end

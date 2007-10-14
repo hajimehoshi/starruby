@@ -21,8 +21,8 @@ static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   
   texture->width  = NUM2INT(rbWidth);
   texture->height = NUM2INT(rbHeight);
-  texture->pixels = ALLOC_N(struct Color, texture->width * texture->height);
-  MEMZERO(texture->pixels, struct Color, texture->width * texture->height);
+  texture->pixels = ALLOC_N(union Pixel, texture->width * texture->height);
+  MEMZERO(texture->pixels, union Pixel, texture->width * texture->height);
   return Qnil;
 }
 
@@ -36,7 +36,9 @@ static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
 
   texture->width  = origTexture->width;
   texture->height = origTexture->height;
-  texture->pixels = NULL; // TODO
+  int length = texture->width * texture->height;
+  texture->pixels = ALLOC_N(union Pixel, length);
+  MEMCPY(texture->pixels, origTexture->pixels, union Pixel, length);
   
   return Qnil;
 }
@@ -134,6 +136,46 @@ static VALUE Texture_disposed(VALUE self)
   return !texture->pixels ? Qtrue : Qfalse;
 }
 
+static VALUE Texture_fill(VALUE self, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+  
+  struct Color* color;
+  Data_Get_Struct(rbColor, struct Color, color);
+
+  int length = texture->width * texture->height;
+  union Pixel* pixels = texture->pixels;
+  for (int i = 0; i < length; i++, pixels++)
+    pixels->color = *color;
+  
+  return Qnil;
+}
+
+static VALUE Texture_fill_rect(VALUE self,
+                               VALUE rbX, VALUE rbY,
+                               VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+
+  
+  
+  return Qnil;
+}
+
 static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 {
   int x = NUM2INT(rbX);
@@ -141,7 +183,6 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   
   struct Texture* texture;
   Data_Get_Struct(self, struct Texture, texture);
-
   if (!texture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
@@ -155,7 +196,7 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
     return Qnil;
   }
   
-  struct Color color = texture->pixels[x + y * texture->width];
+  struct Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(rb_cColor, rb_intern("new"), 4,
                     INT2NUM(color.red),
                     INT2NUM(color.green),
@@ -196,7 +237,7 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   struct Color* color;
   Data_Get_Struct(rbColor, struct Color, color);
   
-  texture->pixels[x + y * texture->width] = *color;
+  texture->pixels[x + y * texture->width].color = *color;
   return rbColor;
 }
 
@@ -229,6 +270,8 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "clear",     Texture_clear,     0);
   rb_define_method(rb_cTexture, "dispose",   Texture_dispose,   0);
   rb_define_method(rb_cTexture, "disposed?", Texture_disposed,  0);
+  rb_define_method(rb_cTexture, "fill",      Texture_fill,      1);
+  rb_define_method(rb_cTexture, "fill_rect", Texture_fill_rect, 5);
   rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel, 2);
   rb_define_method(rb_cTexture, "height",    Texture_height,    0);
   rb_define_method(rb_cTexture, "set_pixel", Texture_set_pixel, 3);

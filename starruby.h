@@ -48,10 +48,15 @@ struct Tone {
   uint8_t saturation;
 };
 
+union Pixel {
+  struct Color color;
+  uint32_t value;
+};
+
 struct Texture {
   uint16_t width;
   uint16_t height;
-  struct Color* pixels;
+  union Pixel* pixels;
 };
 
 #endif

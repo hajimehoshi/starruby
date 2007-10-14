@@ -186,6 +186,11 @@ class TextureTest < Test::Unit::TestCase
     assert_equal texture.size, texture2.size
     texture.freeze
     assert texture.clone.frozen?
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
+    end
   end
   
   def test_dup
@@ -194,6 +199,11 @@ class TextureTest < Test::Unit::TestCase
     assert_equal texture.size, texture2.size
     texture.freeze
     assert !texture.dup.frozen?
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
+    end
   end
   
   def test_dispose
@@ -333,4 +343,45 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_fill
+    texture = Texture.load("images/ruby")
+    texture.fill(Color.new(31, 41, 59, 26))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(31, 41, 59, 26), texture.get_pixel(x, y)
+      end
+    end
+  end
+  
+  def test_fill_frozen
+    texture = Texture.load("images/ruby")
+    texture.freeze
+    assert_raise TypeError do
+      texture.fill(Color.new(31, 41, 59, 26))
+    end
+  end
+  
+  def test_fill_disposed
+    texture = Texture.load("images/ruby")
+    texture.dispose
+    assert_raise TypeError do
+      texture.fill(Color.new(31, 41, 59, 26))
+    end
+  end
+=begin
+  def test_fill_rect
+    texture = Texture.load("images/ruby")
+    orig_texture = texture.clone
+    texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if 10 <= x and 11 <= y and x < 22 and y < 24
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
+    end
+  end
+=end
 end

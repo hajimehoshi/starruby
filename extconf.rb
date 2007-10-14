@@ -10,6 +10,6 @@ $LOCAL_LIBS += " " + `env #{sdl_config} --libs`.chomp
 
 $CFLAGS += " -finline-functions -Wall -std=c99"
 
-have_library("SDL_image");
+$libs += " -lSDL_image"
 
 create_makefile("starruby")

@@ -1,7 +1,6 @@
 #include "starruby.h"
 
 static VALUE rb_mScreen;
-static VALUE rbOffscreenTexture = Qnil;
 static VALUE rbScreenSize = Qnil;
 
 static VALUE Screen_height(VALUE self)
@@ -11,12 +10,12 @@ static VALUE Screen_height(VALUE self)
 
 static VALUE Screen_offscreen(VALUE self)
 {
-  VALUE rbTexture = rb_iv_get(rb_mScreen, "offscreen_texture");;
+  VALUE rbTexture = rb_iv_get(rb_mScreen, "offscreen");
   if (rbTexture == Qnil) {
-    VALUE rbOffscreenTexture = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                                          INT2NUM(SCREEN_WIDTH),
-                                          INT2NUM(SCREEN_HEIGHT));
-    return rb_iv_set(rb_mScreen, "offscreen_texture", rbOffscreenTexture);
+    VALUE rbOffscreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
+                                   INT2NUM(SCREEN_WIDTH),
+                                   INT2NUM(SCREEN_HEIGHT));
+    return rb_iv_set(rb_mScreen, "offscreen", rbOffscreen);
   } else {
     return rbTexture;
   }

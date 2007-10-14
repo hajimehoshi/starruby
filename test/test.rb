@@ -134,11 +134,11 @@ class ScreenTest < Test::Unit::TestCase
     assert_equal true, Screen.size.frozen?
   end
   
-  #def test_offscreen
-    #assert_kind_of Texture, Screen.offscreen
-    #assert_equal Screen.width, Screen.offscreen.width
-    #assert_equal Screen.height, Screen.offscreen.height
-  #end
+  def test_offscreen
+    assert_kind_of Texture, Screen.offscreen
+    assert_equal Screen.width, Screen.offscreen.width
+    assert_equal Screen.height, Screen.offscreen.height
+  end
   
 end
 

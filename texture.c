@@ -272,8 +272,7 @@ static VALUE Texture_width(VALUE self)
 
 void InitializeTexture(void)
 {
-  VALUE rb_cTexture =
-    rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
+  rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",

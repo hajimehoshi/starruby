@@ -17,6 +17,7 @@
 GLOBAL VALUE rb_cColor;
 GLOBAL VALUE rb_mStarRuby;
 GLOBAL VALUE rb_eStarRubyError;
+GLOBAL VALUE rb_cTexture;
 
 #define SCREEN_WIDTH (320)
 #define SCREEN_HEIGHT (240)

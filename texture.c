@@ -59,21 +59,59 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
     }
   }
   
-  SDL_Surface* surface = IMG_Load(path);
-  if (!surface) {
+  SDL_Surface* imageSurface = IMG_Load(path);
+  if (!imageSurface) {
     rb_raise_sdl_image_error();
     return Qnil;
   }
 
+  SDL_Surface* surface = SDL_DisplayFormatAlpha(imageSurface);
+  if (!surface) {
+    rb_raise_sdl_error();
+    return Qnil;
+  }
+  
   VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
                                INT2NUM(surface->w), INT2NUM(surface->h));
 
   struct Texture* texture;
   Data_Get_Struct(rbTexture, struct Texture, texture);
+
+  int width  = texture->width;
+  int height = texture->height;
+  int sdlWidth  = width  / 4 * 4;
+  int sdlHeight = height / 4 * 4;
+
+  SDL_LockSurface(surface);
+  if (width == sdlWidth && height == sdlHeight) {
+    MEMCPY(texture->pixels, surface->pixels, uint32_t, width * height);
+  } else {
+    for (int i = 0; i < height; i++)
+      MEMCPY(texture->pixels + i * width,
+             surface->pixels + i * sdlWidth,
+             uint32_t, width);
+  }
+  SDL_UnlockSurface(surface);
   
   SDL_FreeSurface(surface);
+  SDL_FreeSurface(imageSurface);
   
   return rbTexture;
+}
+
+static VALUE Texture_clear(VALUE self)
+{
+  rb_check_frozen(self);
+  
+  struct Texture* texture;
+  Data_Get_Struct(self, struct Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+  
+  MEMZERO(texture->pixels, struct Color, texture->width * texture->height);
+  return Qnil;
 }
 
 static VALUE Texture_dispose(VALUE self)
@@ -103,6 +141,11 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   
   struct Texture* texture;
   Data_Get_Struct(self, struct Texture, texture);
+
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
   
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     char errorMessage[256];
@@ -129,18 +172,25 @@ static VALUE Texture_height(VALUE self)
 
 static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
+  rb_check_frozen(self);
   
   struct Texture* texture;
   Data_Get_Struct(self, struct Texture, texture);
 
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     char errorMessage[256];
     snprintf(errorMessage, sizeof(errorMessage),
              "index out of range: (%d, %d)", x, y);
     rb_raise(rb_eIndexError, errorMessage);
-    return rbColor;;
+    return Qnil;
   }
 
   struct Color* color;
@@ -176,6 +226,7 @@ void InitializeTexture(void)
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
   rb_define_singleton_method(rb_cTexture, "load", Texture_load, 1);
+  rb_define_method(rb_cTexture, "clear",     Texture_clear,     0);
   rb_define_method(rb_cTexture, "dispose",   Texture_dispose,   0);
   rb_define_method(rb_cTexture, "disposed?", Texture_disposed,  0);
   rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel, 2);

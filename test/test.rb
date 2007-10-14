@@ -279,4 +279,58 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_get_pixel_disposed
+    texture = Texture.new(3, 3)
+    texture.dispose
+    assert_raise TypeError do
+      texture.get_pixel(0, 1)
+    end
+  end
+  
+  def test_set_pixel_frozen
+    texture = Texture.new(3, 3)
+    texture.freeze
+    assert_raise TypeError do
+      texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
+    end
+  end
+  
+  def test_set_pixel_disposed
+    texture = Texture.new(3, 3)
+    texture.dispose
+    assert_raise TypeError do
+      texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
+    end
+  end
+  
+  def test_change_hue
+    # TODO
+  end
+  
+  def test_clear
+    texture = Texture.load("images/ruby")
+    texture.clear
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x, y)
+      end
+    end
+  end
+  
+  def test_clear_frozen
+    texture = Texture.load("images/ruby")
+    texture.freeze
+    assert_raise TypeError do
+      texture.clear
+    end
+  end
+  
+  def test_clear_disposed
+    texture = Texture.load("images/ruby")
+    texture.dispose
+    assert_raise TypeError do
+      texture.clear
+    end
+  end
+  
 end

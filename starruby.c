@@ -37,5 +37,4 @@ void Init_starruby(void)
   InitializeScreen();
   InitializeStarRubyError();
   InitializeTexture();
-  InitializeTone();
 }

@@ -50,51 +50,6 @@ class ColorTest < Test::Unit::TestCase
   
 end
 
-class ToneTest < Test::Unit::TestCase
-  
-  def test_tone
-    t1 = Tone.new(1, 2, 3, 4)
-    t2 = Tone.new(5, 6, 7)
-
-    assert_equal 1, t1.red
-    assert_equal 2, t1.green
-    assert_equal 3, t1.blue
-    assert_equal 4, t1.saturation
-    assert_equal 255, t2.saturation
-
-    assert t1 == Tone.new(1, 2, 3, 4)
-    assert t2 == Tone.new(5, 6, 7)
-    assert t2 == Tone.new(5, 6, 7, 255)
-    assert t1 != Tone.new(1, 2, 3, 5)
-    assert t1 != Object.new
-    assert t1.eql?(Tone.new(1, 2, 3, 4))
-    assert_equal t1.hash, Tone.new(1, 2, 3, 4).hash
-    assert_equal t2.hash, Tone.new(5, 6, 7).hash
-  end
-  
-  def test_tone_overflow
-    t = Tone.new(-256, 256, -999, 999)
-    assert_equal -255, t.red
-    assert_equal 255,  t.green
-    assert_equal -255, t.blue
-    assert_equal 255,  t.saturation
-    
-    t = Tone.new(256, -256, 999, -999)
-    assert_equal 255,  t.red
-    assert_equal -255, t.green
-    assert_equal 255,  t.blue
-    assert_equal 0,    t.saturation
-  end
-  
-  def test_to_s
-    t = Tone.new(1, 2, 3, 4)
-    assert_equal "#<StarRuby::Tone red=1, green=2, blue=3, saturation=4>", t.to_s
-    t = Tone.new(-255, -255, -255, 255)
-    assert_equal "#<StarRuby::Tone red=-255, green=-255, blue=-255, saturation=255>", t.to_s
-  end
-  
-end
-
 class GameTest < Test::Unit::TestCase
   
   def test_game

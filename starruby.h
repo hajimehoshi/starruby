@@ -36,7 +36,6 @@ void InitializeGame(SDL_Surface*);
 void InitializeScreen(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
-void InitializeTone(void);
 
 void UpdateScreen(SDL_Surface*);
 
@@ -57,13 +56,6 @@ typedef struct {
 #define RMASK (0x00ff0000)
 #define GMASK (0x0000ff00)
 #define BMASK (0x000000ff)
-
-typedef struct {
-  int16_t red;
-  int16_t green;
-  int16_t blue;
-  uint8_t saturation;
-} Tone;
 
 typedef union {
   Color color;

@@ -1,13 +1,24 @@
 #include "starruby.h"
 
 #define rb_raise_sdl_image_error() rb_raise(rb_eStarRubyError, IMG_GetError())
-#define ALPHA(src, dst, a) (((dst << 8) - dst + (src + dst) * a + 255) >> 8)
+#define DIV255(x) ((x + 255) >> 8)
+#define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
 static VALUE symbol_src_x;
 static VALUE symbol_src_y;
 static VALUE symbol_src_width;
 static VALUE symbol_src_height;
 static VALUE symbol_alpha;
+static VALUE symbol_blend_type;
+
+static VALUE symbol_add;
+static VALUE symbol_sub;
+
+typedef enum {
+  ALPHA,
+  ADD,
+  SUB,
+} BlendType;
 
 static void Texture_free(Texture* texture)
 {
@@ -252,6 +263,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   VALUE rbSrcWidth  = rb_hash_aref(rbOptions, symbol_src_width);
   VALUE rbSrcHeight = rb_hash_aref(rbOptions, symbol_src_height);
   VALUE rbAlpha     = rb_hash_aref(rbOptions, symbol_alpha);
+  VALUE rbBlendType = rb_hash_aref(rbOptions, symbol_blend_type);
   
   int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
   int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
@@ -260,6 +272,14 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int srcHeight =
     (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
   int alpha = (rbAlpha != Qnil) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
+  BlendType blendType = ALPHA;
+  if (rbBlendType == Qnil || rbBlendType == symbol_alpha) {
+    blendType = ALPHA;
+  } else if (rbBlendType == symbol_add) {
+    blendType = ADD;
+  } else if (rbBlendType == symbol_sub) {
+    blendType = SUB;
+  }
 
   int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
@@ -285,12 +305,34 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
   Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
+  uint8_t srcAlpha;
   for (int j = 0; j < srcHeight; j++) {
     for (int i = 0; i < srcWidth; i++) {
-      dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
-      dst->color.red   = ALPHA(src->color.red,   dst->color.red,  alpha);
-      dst->color.green = ALPHA(src->color.green, dst->color.blue, alpha);
-      dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue, alpha);
+      srcAlpha = DIV255(src->color.alpha * alpha);
+      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);
+      switch (blendType) {
+      case ALPHA:
+        dst->color.red   = ALPHA(src->color.red,   dst->color.red,   srcAlpha);
+        dst->color.green = ALPHA(src->color.green, dst->color.green, srcAlpha);
+        dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  srcAlpha);
+        break;
+      case ADD:
+        dst->color.red =
+          MIN(255, dst->color.red + DIV255(src->color.red * srcAlpha));
+        dst->color.green =
+          MIN(255, dst->color.green + DIV255(src->color.green * srcAlpha));
+        dst->color.blue =
+          MIN(255,dst->color.blue + DIV255(src->color.blue * srcAlpha));
+        break;
+      case SUB:
+        dst->color.red =
+          MAX(0, dst->color.red + DIV255(src->color.red * srcAlpha));
+        dst->color.green =
+          MAX(0, dst->color.green + DIV255(src->color.green * srcAlpha));
+        dst->color.blue =
+          MAX(0, dst->color.blue + DIV255(src->color.blue * srcAlpha));
+        break;
+      }
       dst++;
       src++;
     }
@@ -373,4 +415,7 @@ void InitializeTexture(void)
   symbol_src_width  = ID2SYM(rb_intern("src_width"));
   symbol_src_height = ID2SYM(rb_intern("src_height"));
   symbol_alpha      = ID2SYM(rb_intern("alpha"));
+  symbol_blend_type = ID2SYM(rb_intern("blend_type"));
+  symbol_add        = ID2SYM(rb_intern("add"));
+  symbol_sub        = ID2SYM(rb_intern("sub"));
 }

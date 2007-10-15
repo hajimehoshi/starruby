@@ -411,6 +411,32 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_render_texture2
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.fill(Color.new(128, 128, 128, 128))
+    texture2.render_texture(texture, 0, 0)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        case p1.alpha
+        when 255
+          assert_equal p1.red,   p2.red
+          assert_equal p1.green, p2.green
+          assert_equal p1.blue,  p2.blue
+        when 0
+          assert_equal 128, p2.red
+          assert_equal 128, p2.green
+          assert_equal 128, p2.blue
+        else
+          flunk
+        end
+        assert_equal [128, p1.alpha].max, p2.alpha
+      end
+    end
+  end
+  
   def test_render_texture_frozen
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
@@ -478,7 +504,7 @@ class TextureTest < Test::Unit::TestCase
         assert_equal p1.red,   p2.red
         assert_equal p1.green, p2.green
         assert_equal p1.blue,  p2.blue
-        assert_equal [128, p2.alpha].max, p2.alpha
+        assert_equal [128, p1.alpha].max, p2.alpha
       end
     end
   end
@@ -511,7 +537,7 @@ class TextureTest < Test::Unit::TestCase
         assert_in_delta p1.red / 2,   p2.red,   1
         assert_in_delta p1.green / 2, p2.green, 1
         assert_in_delta p1.blue / 2,  p2.blue,  1
-        assert_equal p1.alpha, p2.alpha
+        assert_in_delta p1.alpha / 2, p2.alpha, 1
       end
     end
     texture2.clear
@@ -523,7 +549,7 @@ class TextureTest < Test::Unit::TestCase
         assert_in_delta p1.red / 4,   p2.red,   1
         assert_in_delta p1.green / 4, p2.green, 1
         assert_in_delta p1.blue / 4,  p2.blue,  1
-        assert_equal p1.alpha, p2.alpha
+        assert_in_delta p1.alpha / 4, p2.alpha, 1
       end
     end
     texture2.clear
@@ -535,13 +561,40 @@ class TextureTest < Test::Unit::TestCase
         assert_in_delta p1.red * 3 / 4,   p2.red,   1
         assert_in_delta p1.green * 3 / 4, p2.green, 1
         assert_in_delta p1.blue * 3 / 4,  p2.blue,  1
-        assert_equal p1.alpha, p2.alpha
+        assert_in_delta p1.alpha * 3 / 4, p2.alpha, 1
       end
     end
   end
   
+=begin
   def test_render_texture_blend_type
+    # alpha
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :blend_type => :alpha)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1, p2
+      end
+    end
+    # add
+    texture.fill Color.new(128, 128, 128, 128)
+    texture2.render_texture(texture, 0, 0, :blend_type => :add, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_in_delta 128 + p2.red / 2,   p2.red, 1
+        assert_in_delta 128 + p2.green / 2, p2.green, 1
+        assert_in_delta 128 + p2.blue / 2,  p2.blue, 1
+        assert_equal [128, p1.alpha].max, p2.alpha
+      end
+    end
+    # sub
   end
+=end
   
   def test_render_texture_self
     # TODO

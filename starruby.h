@@ -43,11 +43,16 @@ void UpdateScreen(SDL_Surface*);
 #define NORMALIZE(x, min, max) ((x < min) ? min : ((max < x) ? max : x))
 
 struct Color {
-  uint8_t alpha;
   uint8_t blue;
   uint8_t green;
   uint8_t red;
+  uint8_t alpha;
 };
+
+#define AMASK (0xff000000)
+#define RMASK (0x00ff0000)
+#define GMASK (0x0000ff00)
+#define BMASK (0x000000ff)
 
 struct Tone {
   int16_t red;

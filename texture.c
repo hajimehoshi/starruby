@@ -240,17 +240,17 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  VALUE rbSrcX = rb_hash_aref(rbOptions, rb_intern("src_x"));
-  VALUE rbSrcY = rb_hash_aref(rbOptions, rb_intern("src_y"));
-  VALUE rbSrcWidth = rb_hash_aref(rbOptions, rb_intern("src_width"));
-  VALUE rbSrcHeight = rb_hash_aref(rbOptions, rb_intern("src_height"));
+  VALUE rbSrcX = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_x")));
+  VALUE rbSrcY = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_y")));
+  VALUE rbSrcWidth = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_width")));
+  VALUE rbSrcHeight = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_height")));
   
   int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
   int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
   int srcWidth =
-    (rbSrcWidth != Qnil) ? NUM2INT(rbSrcWidth) : srcTextureWidth;
+    (rbSrcWidth != Qnil) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
   int srcHeight =
-    (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : srcTextureHeight;
+    (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
 
   int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
@@ -274,10 +274,17 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   srcWidth = MIN(srcWidth, dstTextureWidth - dstX);
   srcHeight = MIN(srcHeight, dstTextureHeight - dstY);
 
+  union Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
+  union Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
   for (int j = 0; j < srcHeight; j++) {
-    MEMCPY(dstTexture->pixels + dstX + (j + dstY) * dstTextureWidth,
-           srcTexture->pixels + srcX + (j + srcY) * srcTextureWidth,
-           union Pixel, srcWidth);
+    for (int i = 0; i < srcWidth; i++) {
+      dst->value = (src->value & ~AMASK) | (dst->value & AMASK);
+      dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
+      dst++;
+      src++;
+    }
+    dst += -srcWidth + dstTextureWidth;
+    src += -srcWidth + srcTextureWidth;
   }
 
   return Qnil;

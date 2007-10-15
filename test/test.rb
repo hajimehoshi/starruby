@@ -433,5 +433,75 @@ class TextureTest < Test::Unit::TestCase
       texture3.render_texture(texture, 0, 0)
     end
   end
+  
+  def test_render_texture_xy
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 10, 11)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        if x < 10 or y < 11
+          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+        else
+          assert_equal texture.get_pixel(x-10, y-11), texture2.get_pixel(x, y)
+        end
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, -12, -13)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        if x < texture2.width - 12 and y < texture2.height - 13
+          assert_equal texture.get_pixel(x+12, y+13), texture2.get_pixel(x, y)
+        else
+          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+        end
+      end
+    end
+  end
+  
+  def test_render_texture_pixel_alpha
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        a = texture.get_pixel(x, y).alpha
+        assert(a == 0 || a == 255)
+        texture2.set_pixel(x, y, Color.new(0, 0, 0, 128))
+      end
+    end
+    texture2.render_texture(texture, 0, 0)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_equal [128, p2.alpha].max, p2.alpha
+      end
+    end
+  end
+  
+  def test_render_texture_src_rect
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 10, 11, {
+      :src_x => 12, :src_y => 13, :src_width => 14, :src_height => 15
+    })
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        if 10 <= x and 11 <= y and x < 24 and y < 26
+          assert_equal texture.get_pixel(x - 10 + 12, y - 11 + 13), texture2.get_pixel(x, y)
+        else
+          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+        end
+      end
+    end
+  end
+  
+  def test_render_texture_self
+    # TODO
+  end
 
 end

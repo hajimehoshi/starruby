@@ -4,5 +4,6 @@ VALUE rb_eStarRubyError;
 
 void InitializeStarRubyError(void)
 {
-  rb_eStarRubyError = rb_define_class("StarRubyError", rb_eStandardError);
+  rb_eStarRubyError = rb_define_class_under(rb_mStarRuby, "StarRubyError",
+                                            rb_eStandardError);
 }

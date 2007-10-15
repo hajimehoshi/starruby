@@ -399,5 +399,22 @@ class TextureTest < Test::Unit::TestCase
       texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
     end
   end
+  
+  def test_render_texture
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal texture.get_pixel(x, y), texture2.get_pixel(x, y)
+      end
+    end
+  end
+  
+  def test_render_texture_frozen
+  end
+  
+  def test_render_texture_disposed
+  end
 
 end

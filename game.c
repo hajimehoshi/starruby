@@ -1,5 +1,7 @@
 #include "starruby.h"
 
+static SDL_Surface* screen;
+
 static int fps = 30;
 static double realFps = 0;
 static bool running = false;
@@ -62,9 +64,8 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
       counter = 0;
       before2 = now;
     }
-    
     rb_yield(Qnil);
-    
+    UpdateScreen(screen);
     if (terminated)
       break;
   }
@@ -93,9 +94,11 @@ static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
   return rb_iv_set(self, "title", rbTitle);
 }
 
-void InitializeGame(void)
+void InitializeGame(SDL_Surface* _screen)
 {
-  VALUE rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
+  screen = _screen;
+  
+  rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_singleton_method(rb_mGame, "fps",       Game_fps,       0);
   rb_define_singleton_method(rb_mGame, "fps=",      Game_fps_eq,    1);
   rb_define_singleton_method(rb_mGame, "real_fps",  Game_real_fps,  0);

@@ -1,4 +1,4 @@
-#define DEF_GLOBAL
+#define DEFINE_STARRUBY_EXTERN
 #include "starruby.h"
 
 static SDL_Surface* screen;
@@ -27,15 +27,15 @@ static void TerminateSdl(VALUE dummy)
 
 void Init_starruby(void)
 {
+  StartSdl();
+  rb_set_end_proc(TerminateSdl, Qnil);
+  
   rb_mStarRuby = rb_define_module("StarRuby");
 
   InitializeColor();
-  InitializeGame();
+  InitializeGame(screen);
   InitializeScreen();
   InitializeStarRubyError();
   InitializeTexture();
   InitializeTone();
-
-  StartSdl();
-  rb_set_end_proc(TerminateSdl, Qnil);
 }

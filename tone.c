@@ -1,7 +1,5 @@
 #include "starruby.h"
 
-static VALUE rb_cTone;
-
 static VALUE Tone_alloc(VALUE klass)
 {
   struct Tone* tone = ALLOC(struct Tone);

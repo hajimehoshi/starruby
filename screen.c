@@ -1,6 +1,5 @@
 #include "starruby.h"
 
-static VALUE rb_mScreen;
 static VALUE rbScreenSize = Qnil;
 
 static VALUE Screen_height(VALUE self)
@@ -33,6 +32,24 @@ static VALUE Screen_size(VALUE self)
 static VALUE Screen_width(VALUE self)
 {
   return INT2NUM(SCREEN_WIDTH);
+}
+
+void UpdateScreen(SDL_Surface* screen)
+{
+  VALUE rbOffscreen = rb_iv_get(rb_mScreen, "offscreen");
+  if (rbOffscreen == Qnil)
+    return;
+
+  struct Texture* texture;
+  Data_Get_Struct(rbOffscreen, struct Texture, texture);
+
+  SDL_LockSurface(screen);
+  MEMCPY(screen->pixels, texture->pixels, uint32_t,
+         SCREEN_WIDTH * SCREEN_HEIGHT);
+  SDL_UnlockSurface(screen);
+
+  if (SDL_Flip(screen))
+    rb_raise_sdl_error();
 }
 
 void InitializeScreen(void)

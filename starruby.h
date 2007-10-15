@@ -8,16 +8,19 @@
 #include <SDL.h>
 #include <SDL_image.h>
 
-#ifdef DEF_GLOBAL
-#define GLOBAL
+#ifdef DEFINE_STARRUBY_EXTERN
+#define STARRUBY_EXTERN
 #else
-#define GLOBAL extern
+#define STARRUBY_EXTERN extern
 #endif
 
-GLOBAL VALUE rb_cColor;
-GLOBAL VALUE rb_mStarRuby;
-GLOBAL VALUE rb_eStarRubyError;
-GLOBAL VALUE rb_cTexture;
+STARRUBY_EXTERN VALUE rb_cColor;
+STARRUBY_EXTERN VALUE rb_mGame;
+STARRUBY_EXTERN VALUE rb_mScreen;
+STARRUBY_EXTERN VALUE rb_mStarRuby;
+STARRUBY_EXTERN VALUE rb_eStarRubyError;
+STARRUBY_EXTERN VALUE rb_cTexture;
+STARRUBY_EXTERN VALUE rb_cTone;
 
 #define SCREEN_WIDTH (320)
 #define SCREEN_HEIGHT (240)
@@ -25,14 +28,18 @@ GLOBAL VALUE rb_cTexture;
 void Init_starruby(void);
 
 void InitializeColor(void);
-void InitializeGame(void);
+void InitializeGame(SDL_Surface*);
 void InitializeScreen(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
 void InitializeTone(void);
 
+void UpdateScreen(SDL_Surface*);
+
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, SDL_GetError())
 
+#define MAX(x, y) ((x >= y) ? x : y)
+#define MIN(x, y) ((x <= y) ? x : y)
 #define NORMALIZE(x, min, max) ((x < min) ? min : ((max < x) ? max : x))
 
 struct Color {

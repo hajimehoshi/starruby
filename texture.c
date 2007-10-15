@@ -79,20 +79,9 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   struct Texture* texture;
   Data_Get_Struct(rbTexture, struct Texture, texture);
 
-  int width  = texture->width;
-  int height = texture->height;
-  int sdlWidth  = (width + 3) & -4;
-  int sdlHeight = (height + 3) & -4;
-
   SDL_LockSurface(surface);
-  if (width == sdlWidth && height == sdlHeight) {
-    MEMCPY(texture->pixels, surface->pixels, uint32_t, width * height);
-  } else {
-    for (int i = 0; i < height; i++)
-      MEMCPY(texture->pixels + i * width,
-             surface->pixels + i * sdlWidth,
-             uint32_t, width);
-  }
+  MEMCPY(texture->pixels, surface->pixels, uint32_t,
+         texture->width * texture->height);
   SDL_UnlockSurface(surface);
   
   SDL_FreeSurface(surface);
@@ -223,6 +212,67 @@ static VALUE Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
+static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
+{
+  struct Texture* dstTexture;
+  Data_Get_Struct(self, struct Texture, dstTexture);
+
+  VALUE rbTexture, rbX, rbY, rbOptions;
+  rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
+  if (rbOptions == Qnil)
+    rbOptions = rb_hash_new();
+
+  struct Texture* srcTexture;
+  Data_Get_Struct(rbTexture, struct Texture, srcTexture);
+
+  int srcTextureWidth = srcTexture->width;
+  int srcTextureHeight = srcTexture->height;
+  int dstTextureWidth = dstTexture->width;
+  int dstTextureHeight = dstTexture->height;
+
+  VALUE rbSrcX = rb_hash_aref(rbOptions, rb_intern("src_x"));
+  VALUE rbSrcY = rb_hash_aref(rbOptions, rb_intern("src_y"));
+  VALUE rbSrcWidth = rb_hash_aref(rbOptions, rb_intern("src_width"));
+  VALUE rbSrcHeight = rb_hash_aref(rbOptions, rb_intern("src_height"));
+  
+  int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
+  int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
+  int srcWidth =
+    (rbSrcWidth != Qnil) ? NUM2INT(rbSrcWidth) : srcTextureWidth;
+  int srcHeight =
+    (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : srcTextureHeight;
+
+  int dstX = NUM2INT(rbX);
+  int dstY = NUM2INT(rbY);
+  if (dstX < 0) {
+    srcX += -dstX;
+    srcWidth -= -dstX;
+    dstX = 0;
+  }
+  if (dstY < 0) {
+    srcY += -dstY;
+    srcHeight -= -dstY;
+    dstY = 0;
+  }
+
+  if (srcX < 0 || srcY < 0 || srcWidth < 0 || srcHeight < 0 ||
+      srcTextureWidth < srcX + srcWidth || srcTextureHeight < srcY + srcHeight)
+    return Qnil; // RangeError?
+  if (dstTextureWidth <= dstX || dstTextureHeight <= dstY)
+    return Qnil;
+
+  srcWidth = MIN(srcWidth, dstTextureWidth - dstX);
+  srcHeight = MIN(srcHeight, dstTextureHeight - dstY);
+
+  for (int j = 0; j < srcHeight; j++) {
+    MEMCPY(dstTexture->pixels + dstX + (j + dstY) * dstTextureWidth,
+           srcTexture->pixels + srcX + (j + srcY) * srcTextureWidth,
+           uint32_t, srcWidth);
+  }
+
+  return Qnil;
+}
+
 static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
@@ -278,14 +328,15 @@ void InitializeTexture(void)
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
   rb_define_singleton_method(rb_cTexture, "load", Texture_load, 1);
-  rb_define_method(rb_cTexture, "clear",     Texture_clear,     0);
-  rb_define_method(rb_cTexture, "dispose",   Texture_dispose,   0);
-  rb_define_method(rb_cTexture, "disposed?", Texture_disposed,  0);
-  rb_define_method(rb_cTexture, "fill",      Texture_fill,      1);
-  rb_define_method(rb_cTexture, "fill_rect", Texture_fill_rect, 5);
-  rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel, 2);
-  rb_define_method(rb_cTexture, "height",    Texture_height,    0);
-  rb_define_method(rb_cTexture, "set_pixel", Texture_set_pixel, 3);
-  rb_define_method(rb_cTexture, "size",      Texture_size,      0);
-  rb_define_method(rb_cTexture, "width",     Texture_width,     0);
+  rb_define_method(rb_cTexture, "clear",          Texture_clear,          0);
+  rb_define_method(rb_cTexture, "dispose",        Texture_dispose,        0);
+  rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,       0);
+  rb_define_method(rb_cTexture, "fill",           Texture_fill,           1);
+  rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,      5);
+  rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,      2);
+  rb_define_method(rb_cTexture, "height",         Texture_height,         0);
+  rb_define_method(rb_cTexture, "render_texture", Texture_render_texture, -1);
+  rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);
+  rb_define_method(rb_cTexture, "size",           Texture_size,           0);
+  rb_define_method(rb_cTexture, "width",          Texture_width,          0);
 }

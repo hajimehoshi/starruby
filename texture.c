@@ -1,6 +1,13 @@
 #include "starruby.h"
 
 #define rb_raise_sdl_image_error() rb_raise(rb_eStarRubyError, IMG_GetError())
+#define ALPHA(src, dst, a) (((dst << 8) - dst + (src + dst) * a + 255) >> 8)
+
+static VALUE symbol_src_x;
+static VALUE symbol_src_y;
+static VALUE symbol_src_width;
+static VALUE symbol_src_height;
+static VALUE symbol_alpha;
 
 static void Texture_free(struct Texture* texture)
 {
@@ -240,10 +247,11 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  VALUE rbSrcX = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_x")));
-  VALUE rbSrcY = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_y")));
-  VALUE rbSrcWidth = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_width")));
-  VALUE rbSrcHeight = rb_hash_aref(rbOptions, ID2SYM(rb_intern("src_height")));
+  VALUE rbSrcX      = rb_hash_aref(rbOptions, symbol_src_x);
+  VALUE rbSrcY      = rb_hash_aref(rbOptions, symbol_src_y);
+  VALUE rbSrcWidth  = rb_hash_aref(rbOptions, symbol_src_width);
+  VALUE rbSrcHeight = rb_hash_aref(rbOptions, symbol_src_height);
+  VALUE rbAlpha     = rb_hash_aref(rbOptions, symbol_alpha);
   
   int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
   int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
@@ -251,6 +259,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     (rbSrcWidth != Qnil) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
   int srcHeight =
     (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
+  int alpha = (rbAlpha != Qnil) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
 
   int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
@@ -278,8 +287,10 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   union Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
   for (int j = 0; j < srcHeight; j++) {
     for (int i = 0; i < srcWidth; i++) {
-      dst->value = (src->value & ~AMASK) | (dst->value & AMASK);
       dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
+      dst->color.red   = ALPHA(src->color.red,   dst->color.red,  alpha);
+      dst->color.green = ALPHA(src->color.green, dst->color.blue, alpha);
+      dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue, alpha);
       dst++;
       src++;
     }
@@ -356,4 +367,10 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);
   rb_define_method(rb_cTexture, "size",           Texture_size,           0);
   rb_define_method(rb_cTexture, "width",          Texture_width,          0);
+
+  symbol_src_x      = ID2SYM(rb_intern("src_x"));
+  symbol_src_y      = ID2SYM(rb_intern("src_y"));
+  symbol_src_width  = ID2SYM(rb_intern("src_width"));
+  symbol_src_height = ID2SYM(rb_intern("src_height"));
+  symbol_alpha      = ID2SYM(rb_intern("alpha"));
 }

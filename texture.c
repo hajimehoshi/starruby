@@ -322,15 +322,15 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
         dst->color.green =
           MIN(255, dst->color.green + DIV255(src->color.green * srcAlpha));
         dst->color.blue =
-          MIN(255,dst->color.blue + DIV255(src->color.blue * srcAlpha));
+          MIN(255, dst->color.blue + DIV255(src->color.blue * srcAlpha));
         break;
       case SUB:
         dst->color.red =
-          MAX(0, dst->color.red + DIV255(src->color.red * srcAlpha));
+          MAX(0, (int)dst->color.red - DIV255(src->color.red * srcAlpha));
         dst->color.green =
-          MAX(0, dst->color.green + DIV255(src->color.green * srcAlpha));
+          MAX(0, (int)dst->color.green - DIV255(src->color.green * srcAlpha));
         dst->color.blue =
-          MAX(0, dst->color.blue + DIV255(src->color.blue * srcAlpha));
+          MAX(0, (int)dst->color.blue - DIV255(src->color.blue * srcAlpha));
         break;
       }
       dst++;

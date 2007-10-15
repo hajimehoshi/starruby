@@ -566,7 +566,6 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-=begin
   def test_render_texture_blend_type
     # alpha
     texture = Texture.load("images/ruby")
@@ -580,21 +579,50 @@ class TextureTest < Test::Unit::TestCase
       end
     end
     # add
-    texture.fill Color.new(128, 128, 128, 128)
+    texture2.fill Color.new(100, 110, 120, 130)
     texture2.render_texture(texture, 0, 0, :blend_type => :add, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_in_delta 128 + p2.red / 2,   p2.red, 1
-        assert_in_delta 128 + p2.green / 2, p2.green, 1
-        assert_in_delta 128 + p2.blue / 2,  p2.blue, 1
-        assert_equal [128, p1.alpha].max, p2.alpha
+        case p1.alpha
+        when 255
+          assert_in_delta 100 + p1.red / 2,   p2.red,   1
+          assert_in_delta 110 + p1.green / 2, p2.green, 1
+          assert_in_delta 120 + p1.blue / 2,  p2.blue,  1
+        when 0
+          assert_equal 100, p2.red
+          assert_equal 110, p2.green
+          assert_equal 120, p2.blue
+        else
+          flunk
+        end
+        assert_in_delta [130, p1.alpha / 2].max, p2.alpha, 1
       end
     end
     # sub
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :sub, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        case p1.alpha
+        when 255
+          assert_in_delta [100 - p1.red / 2, 0].max,   p2.red,   1
+          assert_in_delta [110 - p1.green / 2, 0].max, p2.green, 1
+          assert_in_delta [120 - p1.blue / 2, 0].max,  p2.blue,  1
+        when 0
+          assert_equal 100, p2.red
+          assert_equal 110, p2.green
+          assert_equal 120, p2.blue
+        else
+          flunk
+        end
+        assert_in_delta [130, p1.alpha / 2].max, p2.alpha, 1
+      end
+    end
   end
-=end
   
   def test_render_texture_self
     # TODO

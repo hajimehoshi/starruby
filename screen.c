@@ -40,12 +40,11 @@ void UpdateScreen(SDL_Surface* screen)
   if (rbOffscreen == Qnil)
     return;
 
-  struct Texture* texture;
-  Data_Get_Struct(rbOffscreen, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(rbOffscreen, Texture, texture);
 
   SDL_LockSurface(screen);
-  MEMCPY(screen->pixels, texture->pixels, union Pixel,
-         SCREEN_WIDTH * SCREEN_HEIGHT);
+  MEMCPY(screen->pixels, texture->pixels, Pixel, SCREEN_WIDTH * SCREEN_HEIGHT);
   SDL_UnlockSurface(screen);
 
   if (SDL_Flip(screen))

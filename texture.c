@@ -9,7 +9,7 @@ static VALUE symbol_src_width;
 static VALUE symbol_src_height;
 static VALUE symbol_alpha;
 
-static void Texture_free(struct Texture* texture)
+static void Texture_free(Texture* texture)
 {
   free(texture->pixels);
   free(texture);
@@ -17,35 +17,35 @@ static void Texture_free(struct Texture* texture)
 
 static VALUE Texture_alloc(VALUE klass)
 {
-  struct Texture* texture = ALLOC(struct Texture);
+  Texture* texture = ALLOC(Texture);
   return Data_Wrap_Struct(klass, 0, Texture_free, texture);
 }
 
 static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   
   texture->width  = NUM2INT(rbWidth);
   texture->height = NUM2INT(rbHeight);
-  texture->pixels = ALLOC_N(union Pixel, texture->width * texture->height);
-  MEMZERO(texture->pixels, union Pixel, texture->width * texture->height);
+  texture->pixels = ALLOC_N(Pixel, texture->width * texture->height);
+  MEMZERO(texture->pixels, Pixel, texture->width * texture->height);
   return Qnil;
 }
 
 static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
 
-  struct Texture* origTexture;
-  Data_Get_Struct(rbTexture, struct Texture, origTexture);
+  Texture* origTexture;
+  Data_Get_Struct(rbTexture, Texture, origTexture);
 
   texture->width  = origTexture->width;
   texture->height = origTexture->height;
   int length = texture->width * texture->height;
-  texture->pixels = ALLOC_N(union Pixel, length);
-  MEMCPY(texture->pixels, origTexture->pixels, union Pixel, length);
+  texture->pixels = ALLOC_N(Pixel, length);
+  MEMCPY(texture->pixels, origTexture->pixels, Pixel, length);
   
   return Qnil;
 }
@@ -83,11 +83,11 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
                                INT2NUM(surface->w), INT2NUM(surface->h));
 
-  struct Texture* texture;
-  Data_Get_Struct(rbTexture, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(rbTexture, Texture, texture);
 
   SDL_LockSurface(surface);
-  MEMCPY(texture->pixels, surface->pixels, union Pixel,
+  MEMCPY(texture->pixels, surface->pixels, Pixel,
          texture->width * texture->height);
   SDL_UnlockSurface(surface);
   
@@ -101,21 +101,21 @@ static VALUE Texture_clear(VALUE self)
 {
   rb_check_frozen(self);
   
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
   }
   
-  MEMZERO(texture->pixels, struct Color, texture->width * texture->height);
+  MEMZERO(texture->pixels, Color, texture->width * texture->height);
   return Qnil;
 }
 
 static VALUE Texture_dispose(VALUE self)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eStarRubyError, "already disposed");
     return Qnil;
@@ -127,8 +127,8 @@ static VALUE Texture_dispose(VALUE self)
 
 static VALUE Texture_disposed(VALUE self)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   return !texture->pixels ? Qtrue : Qfalse;
 }
 
@@ -136,18 +136,18 @@ static VALUE Texture_fill(VALUE self, VALUE rbColor)
 {
   rb_check_frozen(self);
   
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
   }
   
-  struct Color* color;
-  Data_Get_Struct(rbColor, struct Color, color);
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
 
   int length = texture->width * texture->height;
-  union Pixel* pixels = texture->pixels;
+  Pixel* pixels = texture->pixels;
   for (int i = 0; i < length; i++, pixels++)
     pixels->color = *color;
   
@@ -160,8 +160,8 @@ static VALUE Texture_fill_rect(VALUE self,
 {
   rb_check_frozen(self);
   
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
@@ -171,11 +171,11 @@ static VALUE Texture_fill_rect(VALUE self,
   int rectY = NUM2INT(rbY);
   int rectWidth = NUM2INT(rbWidth);
   int rectHeight= NUM2INT(rbHeight);
-  struct Color* color;
-  Data_Get_Struct(rbColor, struct Color, color);
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
 
   int width = texture->width;
-  union Pixel* pixels = texture->pixels;
+  Pixel* pixels = texture->pixels;
   
   for (int j = rectY; j < rectY + rectHeight; j++)
     for (int i = rectX; i < rectX + rectWidth; i++)
@@ -189,8 +189,8 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
   
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
@@ -204,7 +204,7 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
     return Qnil;
   }
   
-  struct Color color = texture->pixels[x + y * texture->width].color;
+  Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(rb_cColor, rb_intern("new"), 4,
                     INT2NUM(color.red),
                     INT2NUM(color.green),
@@ -214,8 +214,8 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 
 static VALUE Texture_height(VALUE self)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   return INT2NUM(texture->height);
 }
 
@@ -223,8 +223,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
   
-  struct Texture* dstTexture;
-  Data_Get_Struct(self, struct Texture, dstTexture);
+  Texture* dstTexture;
+  Data_Get_Struct(self, Texture, dstTexture);
   if (!dstTexture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
@@ -235,8 +235,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (rbOptions == Qnil)
     rbOptions = rb_hash_new();
 
-  struct Texture* srcTexture;
-  Data_Get_Struct(rbTexture, struct Texture, srcTexture);
+  Texture* srcTexture;
+  Data_Get_Struct(rbTexture, Texture, srcTexture);
   if (!srcTexture->pixels) {
     rb_raise(rb_eTypeError, "can't use disposed texture");
     return Qnil;
@@ -283,8 +283,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   srcWidth = MIN(srcWidth, dstTextureWidth - dstX);
   srcHeight = MIN(srcHeight, dstTextureHeight - dstY);
 
-  union Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
-  union Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
+  Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
+  Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
   for (int j = 0; j < srcHeight; j++) {
     for (int i = 0; i < srcWidth; i++) {
       dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
@@ -305,8 +305,8 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
   
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
 
   if (!texture->pixels) {
     rb_raise(rb_eTypeError, "can't modify disposed texture");
@@ -324,8 +324,8 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
     return Qnil;
   }
 
-  struct Color* color;
-  Data_Get_Struct(rbColor, struct Color, color);
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
   
   texture->pixels[x + y * texture->width].color = *color;
   return rbColor;
@@ -333,8 +333,8 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 
 static VALUE Texture_size(VALUE self)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
                               INT2NUM(texture->height));
   rb_obj_freeze(rbSize);
@@ -343,8 +343,8 @@ static VALUE Texture_size(VALUE self)
 
 static VALUE Texture_width(VALUE self)
 {
-  struct Texture* texture;
-  Data_Get_Struct(self, struct Texture, texture);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
   return INT2NUM(texture->width);
 }
 

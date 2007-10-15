@@ -42,34 +42,34 @@ void UpdateScreen(SDL_Surface*);
 #define MIN(x, y) ((x <= y) ? x : y)
 #define NORMALIZE(x, min, max) ((x < min) ? min : ((max < x) ? max : x))
 
-struct Color {
+typedef struct {
   uint8_t blue;
   uint8_t green;
   uint8_t red;
   uint8_t alpha;
-};
+} Color;
 
 #define AMASK (0xff000000)
 #define RMASK (0x00ff0000)
 #define GMASK (0x0000ff00)
 #define BMASK (0x000000ff)
 
-struct Tone {
+typedef struct {
   int16_t red;
   int16_t green;
   int16_t blue;
   uint8_t saturation;
-};
+} Tone;
 
-union Pixel {
-  struct Color color;
+typedef union {
+  Color color;
   uint32_t value;
-};
+} Pixel;
 
-struct Texture {
+typedef struct {
   uint16_t width;
   uint16_t height;
-  union Pixel* pixels;
-};
+  Pixel* pixels;
+} Texture;
 
 #endif

@@ -532,12 +532,15 @@ class TextureTest < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_in_delta p1.red / 4.0 * 3,   p2.red,   1
-        assert_in_delta p1.green / 4.0 * 3, p2.green, 1
-        assert_in_delta p1.blue / 4.0 * 3,  p2.blue,  1
+        assert_in_delta p1.red * 3 / 4,   p2.red,   1
+        assert_in_delta p1.green * 3 / 4, p2.green, 1
+        assert_in_delta p1.blue * 3 / 4,  p2.blue,  1
         assert_equal p1.alpha, p2.alpha
       end
     end
+  end
+  
+  def test_render_texture_blend_type
   end
   
   def test_render_texture_self

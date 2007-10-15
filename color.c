@@ -2,7 +2,7 @@
 
 static VALUE Color_alloc(VALUE klass)
 {
-  struct Color* color = ALLOC(struct Color);
+  Color* color = ALLOC(Color);
   return Data_Wrap_Struct(klass, 0, -1, color);
 }
 
@@ -12,8 +12,8 @@ static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "31",
                &rbRed, &rbGreen, &rbBlue, &rbAlpha);
 
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   color->red   = NORMALIZE(NUM2INT(rbRed),   0, 255);
   color->green = NORMALIZE(NUM2INT(rbGreen), 0, 255);
   color->blue  = NORMALIZE(NUM2INT(rbBlue),  0, 255);
@@ -24,15 +24,15 @@ static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
 
 static VALUE Color_alpha(VALUE self)
 {
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   return INT2NUM(color->alpha);
 }
 
 static VALUE Color_blue(VALUE self)
 {
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   return INT2NUM(color->blue);
 }
 
@@ -41,11 +41,11 @@ static VALUE Color_eq(VALUE self, VALUE rbOther)
   if (!rb_obj_is_kind_of(rbOther, rb_cColor))
     return Qfalse;
 
-  struct Color* color1;
-  Data_Get_Struct(self, struct Color, color1);
+  Color* color1;
+  Data_Get_Struct(self, Color, color1);
 
-  struct Color* color2;
-  Data_Get_Struct(rbOther, struct Color, color2);
+  Color* color2;
+  Data_Get_Struct(rbOther, Color, color2);
 
   return (color1->red   == color2->red &&
           color1->green == color2->green &&
@@ -55,29 +55,29 @@ static VALUE Color_eq(VALUE self, VALUE rbOther)
 
 static VALUE Color_green(VALUE self)
 {
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   return INT2NUM(color->green);
 }
 
 static VALUE Color_hash(VALUE self)
 {
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   return INT2NUM(color->red ^ color->green ^ color->blue ^ color->alpha);
 }
 
 static VALUE Color_red(VALUE self)
 {
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   return INT2NUM(color->red);
 }
 
 static VALUE Color_to_s(VALUE self)
 {
-  struct Color* color;
-  Data_Get_Struct(self, struct Color, color);
+  Color* color;
+  Data_Get_Struct(self, Color, color);
   
   char str[256];
   snprintf(str, sizeof(str),

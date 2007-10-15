@@ -80,7 +80,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   Data_Get_Struct(rbTexture, struct Texture, texture);
 
   SDL_LockSurface(surface);
-  MEMCPY(texture->pixels, surface->pixels, uint32_t,
+  MEMCPY(texture->pixels, surface->pixels, union Pixel,
          texture->width * texture->height);
   SDL_UnlockSurface(surface);
   
@@ -214,8 +214,14 @@ static VALUE Texture_height(VALUE self)
 
 static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
+  rb_check_frozen(self);
+  
   struct Texture* dstTexture;
   Data_Get_Struct(self, struct Texture, dstTexture);
+  if (!dstTexture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
 
   VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
@@ -224,6 +230,10 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   struct Texture* srcTexture;
   Data_Get_Struct(rbTexture, struct Texture, srcTexture);
+  if (!srcTexture->pixels) {
+    rb_raise(rb_eTypeError, "can't use disposed texture");
+    return Qnil;
+  }
 
   int srcTextureWidth = srcTexture->width;
   int srcTextureHeight = srcTexture->height;
@@ -267,7 +277,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   for (int j = 0; j < srcHeight; j++) {
     MEMCPY(dstTexture->pixels + dstX + (j + dstY) * dstTextureWidth,
            srcTexture->pixels + srcX + (j + srcY) * srcTextureWidth,
-           uint32_t, srcWidth);
+           union Pixel, srcWidth);
   }
 
   return Qnil;

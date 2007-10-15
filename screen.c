@@ -44,7 +44,7 @@ void UpdateScreen(SDL_Surface* screen)
   Data_Get_Struct(rbOffscreen, struct Texture, texture);
 
   SDL_LockSurface(screen);
-  MEMCPY(screen->pixels, texture->pixels, uint32_t,
+  MEMCPY(screen->pixels, texture->pixels, union Pixel,
          SCREEN_WIDTH * SCREEN_HEIGHT);
   SDL_UnlockSurface(screen);
 

@@ -412,9 +412,26 @@ class TextureTest < Test::Unit::TestCase
   end
   
   def test_render_texture_frozen
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.freeze
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, 0)
+    end
   end
   
   def test_render_texture_disposed
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.dispose
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, 0)
+    end
+    texture3 = Texture.new(texture.width, texture.height)
+    texture.dispose
+    assert_raise TypeError do
+      texture3.render_texture(texture, 0, 0)
+    end
   end
 
 end

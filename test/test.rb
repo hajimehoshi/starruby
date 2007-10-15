@@ -614,6 +614,9 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_render_texture_tone
+  end
+  
   def test_render_texture_self
     # TODO
   end

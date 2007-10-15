@@ -10,7 +10,10 @@ static VALUE symbol_src_width;
 static VALUE symbol_src_height;
 static VALUE symbol_alpha;
 static VALUE symbol_blend_type;
-
+static VALUE symbol_tone_red;
+static VALUE symbol_tone_green;
+static VALUE symbol_tone_blue;
+static VALUE symbol_tone_saturation;
 static VALUE symbol_add;
 static VALUE symbol_sub;
 
@@ -331,12 +334,16 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  VALUE rbSrcX      = rb_hash_aref(rbOptions, symbol_src_x);
-  VALUE rbSrcY      = rb_hash_aref(rbOptions, symbol_src_y);
-  VALUE rbSrcWidth  = rb_hash_aref(rbOptions, symbol_src_width);
-  VALUE rbSrcHeight = rb_hash_aref(rbOptions, symbol_src_height);
-  VALUE rbAlpha     = rb_hash_aref(rbOptions, symbol_alpha);
-  VALUE rbBlendType = rb_hash_aref(rbOptions, symbol_blend_type);
+  VALUE rbSrcX           = rb_hash_aref(rbOptions, symbol_src_x);
+  VALUE rbSrcY           = rb_hash_aref(rbOptions, symbol_src_y);
+  VALUE rbSrcWidth       = rb_hash_aref(rbOptions, symbol_src_width);
+  VALUE rbSrcHeight      = rb_hash_aref(rbOptions, symbol_src_height);
+  VALUE rbAlpha          = rb_hash_aref(rbOptions, symbol_alpha);
+  VALUE rbBlendType      = rb_hash_aref(rbOptions, symbol_blend_type);
+  VALUE rbToneRed        = rb_hash_aref(rbOptions, symbol_tone_red);
+  VALUE rbToneGreen      = rb_hash_aref(rbOptions, symbol_tone_green);
+  VALUE rbToneBlue       = rb_hash_aref(rbOptions, symbol_tone_blue);
+  VALUE rbToneSaturation = rb_hash_aref(rbOptions, symbol_tone_saturation);
   
   int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
   int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
@@ -490,6 +497,10 @@ void InitializeTexture(void)
   symbol_src_height = ID2SYM(rb_intern("src_height"));
   symbol_alpha      = ID2SYM(rb_intern("alpha"));
   symbol_blend_type = ID2SYM(rb_intern("blend_type"));
+  symbol_blend_type = ID2SYM(rb_intern("tone_red"));
+  symbol_blend_type = ID2SYM(rb_intern("tone_green"));
+  symbol_blend_type = ID2SYM(rb_intern("tone_blue"));
+  symbol_blend_type = ID2SYM(rb_intern("tone_saturation"));
   symbol_add        = ID2SYM(rb_intern("add"));
   symbol_sub        = ID2SYM(rb_intern("sub"));
 }

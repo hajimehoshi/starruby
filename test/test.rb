@@ -499,29 +499,6 @@ class TextureTest < Test::Unit::TestCase
   end
   private :test_render_texture_scale
   
-  def test_render_texture_pixel_alpha
-    texture = Texture.load("images/ruby")
-    texture2 = Texture.new(texture.width, texture.height)
-    texture2.height.times do |y|
-      texture2.width.times do |x|
-        a = texture.get_pixel(x, y).alpha
-        assert(a == 0 || a == 255)
-        texture2.set_pixel(x, y, Color.new(0, 0, 0, 128))
-      end
-    end
-    texture2.render_texture(texture, 0, 0)
-    texture2.height.times do |y|
-      texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
-        assert_equal [128, p1.alpha].max, p2.alpha
-      end
-    end
-  end
-  
   def test_render_texture_src_rect
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)

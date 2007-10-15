@@ -1,6 +1,7 @@
 #ifndef STARRUBY_H
 #define STARRUBY_H
 
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,6 +23,9 @@ STARRUBY_EXTERN VALUE rb_eStarRubyError;
 STARRUBY_EXTERN VALUE rb_cTexture;
 STARRUBY_EXTERN VALUE rb_cTone;
 
+#ifndef PI
+#define PI (3.1415926535897932384626433832795)
+#endif
 #define SCREEN_WIDTH (320)
 #define SCREEN_HEIGHT (240)
 

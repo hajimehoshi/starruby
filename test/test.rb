@@ -462,6 +462,7 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  private
   def test_render_texture_xy
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
@@ -488,16 +489,19 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  public
   def test_render_texture_scale
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
-    texture2.render_texture(texture, 10, 11)
+    texture2.render_texture(texture, 0, 0, :scale_x => 2, :scale_y => 2)
     texture2.height.times do |y|
       texture2.width.times do |x|
+        p1 = texture.get_pixel(x / 2, y / 2)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1, p2
       end
     end
   end
-  private :test_render_texture_scale
   
   def test_render_texture_src_rect
     texture = Texture.load("images/ruby")

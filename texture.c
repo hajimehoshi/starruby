@@ -311,6 +311,13 @@ static VALUE Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
+/*
+ * (srcPA)--(srcPB)
+ *    |        |
+ *    |        |
+ *    |        |
+ * (srcPC)--(srcPD)
+ */
 static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
@@ -416,8 +423,104 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     .a = 1, .b = 0, .tx = NUM2INT(rbX),
     .c = 0, .d = 1, .ty = NUM2INT(rbY),
   });
+  if (!AffineMatrix_IsRegular(&mat))
+    return Qnil;
+
+  double pAX = 0,        pAY = 0;
+  double pBX = srcWidth, pBY = 0;
+  double pCX = srcWidth, pCY = srcHeight;
+  double pDX = 0,        pDY = srcHeight;
+  AffineMatrix_Transform(&mat, &pAX, &pAY);
+  AffineMatrix_Transform(&mat, &pBX, &pBY);
+  AffineMatrix_Transform(&mat, &pCX, &pCY);
+  AffineMatrix_Transform(&mat, &pDX, &pDY);
+
+  double dstAX = MIN(MIN(MIN(pAX, pBX), pCX), pDX);
+  double dstAY = MIN(MIN(MIN(pAY, pBY), pCY), pDY);
+  double dstDX = MAX(MAX(MAX(pAX, pBX), pCX), pDX);
+  double dstDY = MAX(MAX(MAX(pAY, pBY), pCY), pDY);
+  if (dstTextureWidth <= dstAX || dstTextureHeight <= dstAY ||
+      dstDX < 0 || dstDY < 0)
+    return Qnil;
+
+  AffineMatrix matInv = mat;
+  AffineMatrix_Invert(&matInv);
+  double srcOX = dstAX + 0.5;
+  double srcOY = dstAY + 0.5;
+  AffineMatrix_Transform(&matInv, &srcOX, &srcOY);
+  srcOX += srcX;
+  srcOY += srcY;
+  double srcDXX = matInv.a;
+  double srcDXY = matInv.c;
+  double srcDYX = matInv.b;
+  double srcDYY = matInv.d;
+
+  int startI = MAX(0, (int)dstAX);
+  int startJ = MAX(0, (int)dstAY);
+  int endI = MIN(dstTextureWidth,  (int)dstDX);
+  int endJ = MIN(dstTextureHeight, (int)dstDY);
+
+  for (int j = startJ; j < endJ; j++) {
+    double srcI = srcOX + (j - dstAY) * srcDYX;
+    double srcJ = srcOY + (j - dstAY) * srcDYY;
+    for (int i = startI; i < endI; i++, srcI += srcDXX, srcJ += srcDXY) {
+      int srcIInt = (int)floor(srcI);
+      int srcJInt = (int)floor(srcJ);
+      if (srcIInt < srcX || srcX + srcWidth <= srcIInt ||
+          srcJInt < srcY || srcY + srcHeight <= srcJInt)
+        continue;
+      Pixel* src = &(srcTexture->pixels[srcIInt + srcJInt * srcTextureWidth]);
+      Pixel* dst = &(dstTexture->pixels[i + j * dstTextureWidth]);
+      uint8_t srcR = src->color.red;
+      uint8_t srcG = src->color.green;
+      uint8_t srcB = src->color.blue;
+      uint8_t dstR = dst->color.red;
+      uint8_t dstG = dst->color.green;
+      uint8_t dstB = dst->color.blue;
+      uint8_t srcAlpha = DIV255(src->color.alpha * alpha);
+      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);
+      if (saturation < 255) {
+        uint8_t y = 0.30 * srcR + 0.59 * srcG + 0.11 * srcB;
+        srcR = ALPHA(srcR, y, saturation);
+        srcG = ALPHA(srcG, y, saturation);
+        srcB = ALPHA(srcB, y, saturation);
+      }
+      if (0 < toneRed)
+        srcR = ALPHA(255, srcR, toneRed);
+      else if (toneRed < 0)
+        srcR = ALPHA(0,   srcR, -toneRed);
+      if (0 < toneGreen)
+        srcG = ALPHA(255, srcG, toneGreen);
+      else if (toneGreen < 0)
+        srcG = ALPHA(0,   srcG, -toneGreen);
+      if (0 < toneBlue)
+        srcB = ALPHA(255, srcB, toneBlue);
+      else if (toneBlue < 0)
+        srcB = ALPHA(0,   srcB, -toneBlue);
+      switch (blendType) {
+      case ALPHA:
+        dstR = ALPHA(srcR, dstR, srcAlpha);
+        dstG = ALPHA(srcG, dstG, srcAlpha);
+        dstB = ALPHA(srcB, dstB, srcAlpha);
+        break;
+      case ADD:
+        dstR = MIN(255, dstR + DIV255(srcR * srcAlpha));
+        dstG = MIN(255, dstG + DIV255(srcG * srcAlpha));
+        dstB = MIN(255, dstB + DIV255(srcB * srcAlpha));
+        break;
+      case SUB:
+        dstR = MAX(0, (int)dstR - DIV255(srcR * srcAlpha));
+        dstG = MAX(0, (int)dstG - DIV255(srcG * srcAlpha));
+        dstB = MAX(0, (int)dstB - DIV255(srcB * srcAlpha));
+        break;
+      }
+      dst->color.red   = dstR;
+      dst->color.green = dstG;
+      dst->color.blue  = dstB;
+    }
+  }
   
-  int dstX = NUM2INT(rbX);
+  /*int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
   if (dstX < 0) {
     srcX += -dstX;
@@ -440,8 +543,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   srcHeight = MIN(srcHeight, dstTextureHeight - dstY);
 
   Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
-  Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
-  for (int j = 0; j < srcHeight; j++) {
+  Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);*/
+  /*for (int j = 0; j < srcHeight; j++) {
     for (int i = 0; i < srcWidth; i++) {
       uint8_t srcR = src->color.red;
       uint8_t srcG = src->color.green;
@@ -494,7 +597,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     }
     dst += -srcWidth + dstTextureWidth;
     src += -srcWidth + srcTextureWidth;
-  }
+  }*/
 
   return Qnil;
 }

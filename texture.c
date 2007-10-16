@@ -340,9 +340,9 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   VALUE rbSrcHeight  = rb_hash_aref(rbOptions, symbol_src_height);
   VALUE rbAlpha      = rb_hash_aref(rbOptions, symbol_alpha);
   VALUE rbBlendType  = rb_hash_aref(rbOptions, symbol_blend_type);
-  /*VALUE rbToneRed    = rb_hash_aref(rbOptions, symbol_tone_red);
+  VALUE rbToneRed    = rb_hash_aref(rbOptions, symbol_tone_red);
   VALUE rbToneGreen  = rb_hash_aref(rbOptions, symbol_tone_green);
-  VALUE rbToneBlue   = rb_hash_aref(rbOptions, symbol_tone_blue);*/
+  VALUE rbToneBlue   = rb_hash_aref(rbOptions, symbol_tone_blue);
   VALUE rbSaturation = rb_hash_aref(rbOptions, symbol_saturation);
   
   int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
@@ -360,8 +360,14 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   } else if (rbBlendType == symbol_sub) {
     blendType = SUB;
   }
+  int toneRed =
+    (rbToneRed != Qnil)    ? NORMALIZE(NUM2INT(rbToneRed), -255, 255)   : 0;
+  int toneGreen =
+    (rbToneGreen != Qnil)  ? NORMALIZE(NUM2INT(rbToneGreen), -255, 255) : 0;
+  int toneBlue =
+    (rbToneBlue != Qnil)   ? NORMALIZE(NUM2INT(rbToneBlue), -255, 255)  : 0;
   uint8_t saturation =
-    (rbSaturation != Qnil) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255) : 255;
+    (rbSaturation != Qnil) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255)   : 255;
 
   int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
@@ -403,6 +409,18 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
         srcG = ALPHA(srcG, y, saturation);
         srcB = ALPHA(srcB, y, saturation);
       }
+      if (0 < toneRed)
+        srcR = ALPHA(255, srcR, toneRed);
+      else if (toneRed < 0)
+        srcR = ALPHA(0,   srcR, -toneRed);
+      if (0 < toneGreen)
+        srcG = ALPHA(255, srcG, toneGreen);
+      else if (toneGreen < 0)
+        srcG = ALPHA(0,   srcG, -toneGreen);
+      if (0 < toneBlue)
+        srcB = ALPHA(255, srcB, toneBlue);
+      else if (toneBlue < 0)
+        srcB = ALPHA(0,   srcB, -toneBlue);
       switch (blendType) {
       case ALPHA:
         dstR = ALPHA(srcR, dstR, srcAlpha);

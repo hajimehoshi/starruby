@@ -636,15 +636,21 @@ class TextureTest < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
-        assert_in_delta (gray + p1.red) / 2,   p2.red,   1
-        assert_in_delta (gray + p1.green) / 2, p2.green, 1
-        assert_in_delta (gray + p1.blue) / 2,  p2.blue,  1
+        case p1.alpha
+        when 255
+          gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
+          assert_in_delta (gray + p1.red) / 2,   p2.red,   1
+          assert_in_delta (gray + p1.green) / 2, p2.green, 1
+          assert_in_delta (gray + p1.blue) / 2,  p2.blue,  1
+        when 0
+          assert_equal 0, p2.red
+          assert_equal 0, p2.green
+          assert_equal 0, p2.blue
+        end
         assert_equal p1.alpha, p2.alpha
       end
     end
     texture2.clear
-    texture2 = Texture.new(texture.width, texture.height)
     texture2.render_texture(texture, 0, 0, {
       :tone_red => 0, :tone_green => 0, :tone_blue => 0, :saturation => 0,
     })
@@ -652,9 +658,58 @@ class TextureTest < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert(p2.red == p2.green && p2.green == p2.blue)
-        gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
-        assert_in_delta gray, p2.red, 1
+        case p1.alpha
+        when 255
+          assert(p2.red == p2.green && p2.green == p2.blue)
+          gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
+          assert_in_delta gray, p2.red, 1
+        when 0
+          assert_equal 0, p2.red
+          assert_equal 0, p2.green
+          assert_equal 0, p2.blue
+        end
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, {
+      :tone_red => 64, :tone_green => 128, :tone_blue => 192,
+    })
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        case p1.alpha
+        when 255
+          assert_in_delta (255 + p1.red * 3) / 4,  p2.red,   1
+          assert_in_delta (255 + p1.green) / 2,    p2.green, 1
+          assert_in_delta (255 * 3 + p1.blue) / 4, p2.blue,  1
+        when 0
+          assert_equal 0, p2.red
+          assert_equal 0, p2.green
+          assert_equal 0, p2.blue
+        end
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, {
+      :tone_red => -192, :tone_green => -128, :tone_blue => -64,
+    })
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        case p1.alpha
+        when 255
+          assert_in_delta p1.red / 4,      p2.red,   1
+          assert_in_delta p1.green / 2,    p2.green, 1
+          assert_in_delta p1.blue * 3 / 4, p2.blue,  1
+        when 0
+          assert_equal 0, p2.red
+          assert_equal 0, p2.green
+          assert_equal 0, p2.blue
+        end
         assert_equal p1.alpha, p2.alpha
       end
     end

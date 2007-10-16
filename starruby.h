@@ -52,11 +52,6 @@ typedef struct {
   uint8_t alpha;
 } Color;
 
-#define AMASK (0xff000000)
-#define RMASK (0x00ff0000)
-#define GMASK (0x0000ff00)
-#define BMASK (0x000000ff)
-
 typedef union {
   Color color;
   uint32_t value;

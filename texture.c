@@ -491,16 +491,16 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "size",           Texture_size,           0);
   rb_define_method(rb_cTexture, "width",          Texture_width,          0);
 
-  symbol_src_x      = ID2SYM(rb_intern("src_x"));
-  symbol_src_y      = ID2SYM(rb_intern("src_y"));
-  symbol_src_width  = ID2SYM(rb_intern("src_width"));
-  symbol_src_height = ID2SYM(rb_intern("src_height"));
-  symbol_alpha      = ID2SYM(rb_intern("alpha"));
-  symbol_blend_type = ID2SYM(rb_intern("blend_type"));
-  symbol_blend_type = ID2SYM(rb_intern("tone_red"));
-  symbol_blend_type = ID2SYM(rb_intern("tone_green"));
-  symbol_blend_type = ID2SYM(rb_intern("tone_blue"));
-  symbol_blend_type = ID2SYM(rb_intern("tone_saturation"));
-  symbol_add        = ID2SYM(rb_intern("add"));
-  symbol_sub        = ID2SYM(rb_intern("sub"));
+  symbol_src_x           = ID2SYM(rb_intern("src_x"));
+  symbol_src_y           = ID2SYM(rb_intern("src_y"));
+  symbol_src_width       = ID2SYM(rb_intern("src_width"));
+  symbol_src_height      = ID2SYM(rb_intern("src_height"));
+  symbol_alpha           = ID2SYM(rb_intern("alpha"));
+  symbol_blend_type      = ID2SYM(rb_intern("blend_type"));
+  symbol_tone_red        = ID2SYM(rb_intern("tone_red"));
+  symbol_tone_green      = ID2SYM(rb_intern("tone_green"));
+  symbol_tone_blue       = ID2SYM(rb_intern("tone_blue"));
+  symbol_tone_saturation = ID2SYM(rb_intern("tone_saturation"));
+  symbol_add             = ID2SYM(rb_intern("add"));
+  symbol_sub             = ID2SYM(rb_intern("sub"));
 }

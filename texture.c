@@ -388,12 +388,12 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     .a = 1, .c = 0, .tx = 0,
     .b = 0, .d = 1, .ty = 0,
   };
-  if (scaleX != 0 || scaleY != 0 || angle != 0) {
+  if (scaleX != 1 || scaleY != 1 || angle != 0) {
     AffineMatrix_Concat(&mat, &(AffineMatrix) {
       .a = 1, .b = 0, .tx = -centerX,
       .c = 0, .d = 1, .ty = -centerY,
     });
-    if (scaleX != 0 || scaleY != 0) {
+    if (scaleX != 1 || scaleY != 1) {
       AffineMatrix_Concat(&mat, &(AffineMatrix) {
         .a = scaleX, .b = 0,      .tx = 0,
         .c = 0,      .d = scaleY, .ty = 0,
@@ -438,9 +438,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   AffineMatrix matInv = mat;
   AffineMatrix_Invert(&matInv);
   double srcOX = dstX0 + 0.5;
-  //double srcOX = dstX0;
   double srcOY = dstY0 + 0.5;
-  //double srcOY = dstY0;
   AffineMatrix_Transform(&matInv, &srcOX, &srcOY);
   srcOX += srcX;
   srcOY += srcY;
@@ -461,10 +459,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   }
   int dstX0Int = (int)dstX0;
   int dstY0Int = (int)dstY0;
-  int dstX1Int = MIN(dstTextureWidth,  (int)dstX1);
-  int dstY1Int = MIN(dstTextureHeight, (int)dstY1);
-  int dstWidth  = dstX1Int - dstX0Int;
-  int dstHeight = dstY1Int - dstY0Int;
+  int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
+  int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
   
   double srcI;
   double srcJ;

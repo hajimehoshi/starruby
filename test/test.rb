@@ -462,7 +462,6 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-  private
   def test_render_texture_xy
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
@@ -489,7 +488,6 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-  public
   def test_render_texture_scale
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)

@@ -4,18 +4,18 @@
 #define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
-static VALUE symbol_src_x;
-static VALUE symbol_src_y;
-static VALUE symbol_src_width;
-static VALUE symbol_src_height;
+static VALUE symbol_add;
 static VALUE symbol_alpha;
 static VALUE symbol_blend_type;
-static VALUE symbol_tone_red;
-static VALUE symbol_tone_green;
-static VALUE symbol_tone_blue;
-static VALUE symbol_tone_saturation;
-static VALUE symbol_add;
+static VALUE symbol_saturation;
+static VALUE symbol_src_height;
+static VALUE symbol_src_width;
+static VALUE symbol_src_x;
+static VALUE symbol_src_y;
 static VALUE symbol_sub;
+static VALUE symbol_tone_blue;
+static VALUE symbol_tone_green;
+static VALUE symbol_tone_red;
 
 typedef enum {
   ALPHA,
@@ -287,7 +287,7 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
     char errorMessage[256];
     snprintf(errorMessage, sizeof(errorMessage),
              "index out of range: (%d, %d)", x, y);
-    rb_raise(rb_eIndexError, errorMessage);
+    rb_raise(rb_eArgError, errorMessage);
     return Qnil;
   }
   
@@ -334,16 +334,16 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  VALUE rbSrcX           = rb_hash_aref(rbOptions, symbol_src_x);
-  VALUE rbSrcY           = rb_hash_aref(rbOptions, symbol_src_y);
-  VALUE rbSrcWidth       = rb_hash_aref(rbOptions, symbol_src_width);
-  VALUE rbSrcHeight      = rb_hash_aref(rbOptions, symbol_src_height);
-  VALUE rbAlpha          = rb_hash_aref(rbOptions, symbol_alpha);
-  VALUE rbBlendType      = rb_hash_aref(rbOptions, symbol_blend_type);
-  VALUE rbToneRed        = rb_hash_aref(rbOptions, symbol_tone_red);
-  VALUE rbToneGreen      = rb_hash_aref(rbOptions, symbol_tone_green);
-  VALUE rbToneBlue       = rb_hash_aref(rbOptions, symbol_tone_blue);
-  VALUE rbToneSaturation = rb_hash_aref(rbOptions, symbol_tone_saturation);
+  VALUE rbSrcX       = rb_hash_aref(rbOptions, symbol_src_x);
+  VALUE rbSrcY       = rb_hash_aref(rbOptions, symbol_src_y);
+  VALUE rbSrcWidth   = rb_hash_aref(rbOptions, symbol_src_width);
+  VALUE rbSrcHeight  = rb_hash_aref(rbOptions, symbol_src_height);
+  VALUE rbAlpha      = rb_hash_aref(rbOptions, symbol_alpha);
+  VALUE rbBlendType  = rb_hash_aref(rbOptions, symbol_blend_type);
+  /*VALUE rbToneRed    = rb_hash_aref(rbOptions, symbol_tone_red);
+  VALUE rbToneGreen  = rb_hash_aref(rbOptions, symbol_tone_green);
+  VALUE rbToneBlue   = rb_hash_aref(rbOptions, symbol_tone_blue);*/
+  VALUE rbSaturation = rb_hash_aref(rbOptions, symbol_saturation);
   
   int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
   int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
@@ -360,6 +360,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   } else if (rbBlendType == symbol_sub) {
     blendType = SUB;
   }
+  uint8_t saturation =
+    (rbSaturation != Qnil) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255) : 255;
 
   int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
@@ -385,34 +387,42 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
   Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
-  uint8_t srcAlpha;
   for (int j = 0; j < srcHeight; j++) {
     for (int i = 0; i < srcWidth; i++) {
-      srcAlpha = DIV255(src->color.alpha * alpha);
+      uint8_t srcR = src->color.red;
+      uint8_t srcG = src->color.green;
+      uint8_t srcB = src->color.blue;
+      uint8_t dstR = dst->color.red;
+      uint8_t dstG = dst->color.green;
+      uint8_t dstB = dst->color.blue;
+      uint8_t srcAlpha = DIV255(src->color.alpha * alpha);
       dst->color.alpha = MAX(dst->color.alpha, srcAlpha);
+      if (saturation < 255) {
+        uint8_t y = 0.30 * srcR + 0.59 * srcG + 0.11 * srcB;
+        srcR = ALPHA(srcR, y, saturation);
+        srcG = ALPHA(srcG, y, saturation);
+        srcB = ALPHA(srcB, y, saturation);
+      }
       switch (blendType) {
       case ALPHA:
-        dst->color.red   = ALPHA(src->color.red,   dst->color.red,   srcAlpha);
-        dst->color.green = ALPHA(src->color.green, dst->color.green, srcAlpha);
-        dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  srcAlpha);
+        dstR = ALPHA(srcR, dstR, srcAlpha);
+        dstG = ALPHA(srcG, dstG, srcAlpha);
+        dstB = ALPHA(srcB, dstB, srcAlpha);
         break;
       case ADD:
-        dst->color.red =
-          MIN(255, dst->color.red + DIV255(src->color.red * srcAlpha));
-        dst->color.green =
-          MIN(255, dst->color.green + DIV255(src->color.green * srcAlpha));
-        dst->color.blue =
-          MIN(255, dst->color.blue + DIV255(src->color.blue * srcAlpha));
+        dstR = MIN(255, dstR + DIV255(srcR * srcAlpha));
+        dstG = MIN(255, dstG + DIV255(srcG * srcAlpha));
+        dstB = MIN(255, dstB + DIV255(srcB * srcAlpha));
         break;
       case SUB:
-        dst->color.red =
-          MAX(0, (int)dst->color.red - DIV255(src->color.red * srcAlpha));
-        dst->color.green =
-          MAX(0, (int)dst->color.green - DIV255(src->color.green * srcAlpha));
-        dst->color.blue =
-          MAX(0, (int)dst->color.blue - DIV255(src->color.blue * srcAlpha));
+        dstR = MAX(0, (int)dstR - DIV255(srcR * srcAlpha));
+        dstG = MAX(0, (int)dstG - DIV255(srcG * srcAlpha));
+        dstB = MAX(0, (int)dstB - DIV255(srcB * srcAlpha));
         break;
       }
+      dst->color.red   = dstR;
+      dst->color.green = dstG;
+      dst->color.blue  = dstB;
       dst++;
       src++;
     }
@@ -442,7 +452,7 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
     char errorMessage[256];
     snprintf(errorMessage, sizeof(errorMessage),
              "index out of range: (%d, %d)", x, y);
-    rb_raise(rb_eIndexError, errorMessage);
+    rb_raise(rb_eArgError, errorMessage);
     return Qnil;
   }
 
@@ -491,16 +501,16 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "size",           Texture_size,           0);
   rb_define_method(rb_cTexture, "width",          Texture_width,          0);
 
-  symbol_src_x           = ID2SYM(rb_intern("src_x"));
-  symbol_src_y           = ID2SYM(rb_intern("src_y"));
-  symbol_src_width       = ID2SYM(rb_intern("src_width"));
-  symbol_src_height      = ID2SYM(rb_intern("src_height"));
-  symbol_alpha           = ID2SYM(rb_intern("alpha"));
-  symbol_blend_type      = ID2SYM(rb_intern("blend_type"));
-  symbol_tone_red        = ID2SYM(rb_intern("tone_red"));
-  symbol_tone_green      = ID2SYM(rb_intern("tone_green"));
-  symbol_tone_blue       = ID2SYM(rb_intern("tone_blue"));
-  symbol_tone_saturation = ID2SYM(rb_intern("tone_saturation"));
-  symbol_add             = ID2SYM(rb_intern("add"));
-  symbol_sub             = ID2SYM(rb_intern("sub"));
+  symbol_add        = ID2SYM(rb_intern("add"));
+  symbol_alpha      = ID2SYM(rb_intern("alpha"));
+  symbol_blend_type = ID2SYM(rb_intern("blend_type"));
+  symbol_src_height = ID2SYM(rb_intern("src_height"));
+  symbol_src_width  = ID2SYM(rb_intern("src_width"));
+  symbol_src_x      = ID2SYM(rb_intern("src_x"));
+  symbol_src_y      = ID2SYM(rb_intern("src_y"));
+  symbol_saturation = ID2SYM(rb_intern("saturation"));
+  symbol_sub        = ID2SYM(rb_intern("sub"));
+  symbol_tone_blue  = ID2SYM(rb_intern("tone_blue"));
+  symbol_tone_green = ID2SYM(rb_intern("tone_green"));
+  symbol_tone_red   = ID2SYM(rb_intern("tone_red"));
 }

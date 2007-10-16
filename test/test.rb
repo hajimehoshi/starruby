@@ -183,28 +183,28 @@ class TextureTest < Test::Unit::TestCase
     begin
       texture.get_pixel(-1, 2)
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (-1, 2)", e.message
     end
     
     begin
       texture.get_pixel(2, -1)
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (2, -1)", e.message
     end
     
     begin
       texture.get_pixel(3, 2)
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (3, 2)", e.message
     end
     
     begin
       texture.get_pixel(2, 3)
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (2, 3)", e.message
     end
     
@@ -218,28 +218,28 @@ class TextureTest < Test::Unit::TestCase
     begin
       texture.set_pixel(-1, 2, Color.new(0, 0, 0))
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (-1, 2)", e.message
     end
     
     begin
       texture.set_pixel(2, -1, Color.new(0, 0, 0))
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (2, -1)", e.message
     end
     
     begin
       texture.set_pixel(3, 2, Color.new(0, 0, 0))
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (3, 2)", e.message
     end
     
     begin
       texture.set_pixel(2, 3, Color.new(0, 0, 0))
       flunk
-    rescue IndexError => e
+    rescue ArgumentError => e
       assert_equal "index out of range: (2, 3)", e.message
     end
   end
@@ -615,6 +615,49 @@ class TextureTest < Test::Unit::TestCase
   end
   
   def test_render_texture_tone
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, {
+      :tone_red => 0, :tone_green => 0, :tone_blue => 0, :saturation => 255,
+    })
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1, p2
+      end
+    end
+    texture2.clear
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, {
+      :tone_red => 0, :tone_green => 0, :tone_blue => 0, :saturation => 128,
+    })
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
+        assert_in_delta (gray + p1.red) / 2,   p2.red,   1
+        assert_in_delta (gray + p1.green) / 2, p2.green, 1
+        assert_in_delta (gray + p1.blue) / 2,  p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    texture2.clear
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, {
+      :tone_red => 0, :tone_green => 0, :tone_blue => 0, :saturation => 0,
+    })
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert(p2.red == p2.green && p2.green == p2.blue)
+        gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
+        assert_in_delta gray, p2.red, 1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
   end
   
   def test_render_texture_self

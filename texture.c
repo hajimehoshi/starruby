@@ -437,10 +437,10 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   AffineMatrix matInv = mat;
   AffineMatrix_Invert(&matInv);
-  //double srcOX = dstX0 + 0.5;
-  double srcOX = dstX0;
-  //double srcOY = dstY0 + 0.5;
-  double srcOY = dstY0;
+  double srcOX = dstX0 + 0.5;
+  //double srcOX = dstX0;
+  double srcOY = dstY0 + 0.5;
+  //double srcOY = dstY0;
   AffineMatrix_Transform(&matInv, &srcOX, &srcOY);
   srcOX += srcX;
   srcOY += srcY;

@@ -499,6 +499,17 @@ class TextureTest < Test::Unit::TestCase
         assert_equal p1, p2
       end
     end
+    w = texture.width
+    h = texture.height
+    texture2.clear
+    texture2.render_texture(texture, w, h, :scale_x => -1, :scale_y => -1)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(w - x - 1, h - y - 1)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1, p2
+      end
+    end
   end
   
   def test_render_texture_src_rect

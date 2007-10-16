@@ -11,4 +11,8 @@ $CFLAGS += " -finline-functions -Wall -std=c99"
 
 $LDFLAGS += " -lSDL_image" # have_library?
 
+if arg_config("--debug", false)
+  $CFLAGS += " -DDEBUG -O0"
+end
+
 create_makefile("starruby")

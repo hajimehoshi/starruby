@@ -37,4 +37,8 @@ void Init_starruby(void)
   InitializeScreen();
   InitializeStarRubyError();
   InitializeTexture();
+  
+#ifdef DEBUG
+  AffineMatrix_Test();
+#endif
 }

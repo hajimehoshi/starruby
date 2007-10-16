@@ -16,10 +16,7 @@
 #endif
 
 typedef struct {
-  uint8_t blue;
-  uint8_t green;
-  uint8_t red;
-  uint8_t alpha;
+  uint8_t blue, green, red, alpha;
 } Color;
 
 typedef union {
@@ -28,18 +25,12 @@ typedef union {
 } Pixel;
 
 typedef struct {
-  uint16_t width;
-  uint16_t height;
+  uint16_t width, height;
   Pixel* pixels;
 } Texture;
 
 typedef struct {
-  double a;
-  double b;
-  double c;
-  double d;
-  double tx;
-  double ty;
+  double a, b, c, d, tx, ty;
 } AffineMatrix;
 
 #ifndef PI

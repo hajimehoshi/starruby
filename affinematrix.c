@@ -22,12 +22,8 @@ void AffineMatrix_Invert(AffineMatrix* m)
   double newC = -m->c / det;
   double newD = m->a / det;
   *m = (AffineMatrix) {
-    .a  = newA,
-    .b  = newB,
-    .c  = newC,
-    .d  = newD,
-    .tx = newA * -m->tx + newB * -m->ty,
-    .ty = newC * -m->tx + newD * -m->ty,
+    .a  = newA, .b  = newB, .tx = newA * -m->tx + newB * -m->ty,
+    .c  = newC, .d  = newD, .ty = newC * -m->tx + newD * -m->ty,
   };
 }
 
@@ -49,23 +45,29 @@ void AffineMatrix_Transform(AffineMatrix* m,
 void AffineMatrix_Test(void)
 {
   assert(AffineMatrix_IsRegular(&(AffineMatrix) {
-    .a = 1, .b = 2, .c = 3, .d = 4, .tx = 5, .ty = 6,
+    .a = 1, .b = 2, .tx = 5,
+    .c = 3, .d = 4, .ty = 6,
   }));
   assert(AffineMatrix_IsRegular(&(AffineMatrix) {
-    .a = 7, .b = 8, .c = 9, .d = 10, .tx = 11, .ty = 12,
+    .a = 7, .b = 8,  .tx = 11,
+    .c = 9, .d = 10, .ty = 12,
   }));
   assert(!AffineMatrix_IsRegular(&(AffineMatrix) {
-    .a = 0, .b = 0, .c = 0, .d = 0, .tx = 13, .ty = 14,
+    .a = 0, .b = 0, .tx = 13,
+    .c = 0, .d = 0, .ty = 14,
   }));
   assert(!AffineMatrix_IsRegular(&(AffineMatrix) {
-    .a = 1, .b = 0, .c = 1, .d = 0, .tx = 15, .ty = 16,
+    .a = 1, .b = 0, .tx = 15,
+    .c = 1, .d = 0, .ty = 16,
   }));
   
   AffineMatrix m1 = {
-    .a = 7, .b = 8, .c = 9, .d = 10, .tx = 11, .ty = 12,
+    .a = 7, .b = 8,  .tx = 11,
+    .c = 9, .d = 10, .ty = 12,
   };
   AffineMatrix m2 = {
-    .a = 1, .b = 2, .c = 3, .d = 4, .tx = 5, .ty = 6,
+    .a = 1, .b = 2, .tx = 5,
+    .c = 3, .d = 4, .ty = 6,
   };
   AffineMatrix_Concat(&m1, &m2);
   assert(m1.a  == 25);
@@ -82,7 +84,8 @@ void AffineMatrix_Test(void)
   assert(m2.ty == 6);
 
   AffineMatrix m3 = {
-    .a = 1, .b = 2, .c = 3, .d = 4, .tx = 5, .ty = 6,
+    .a = 1, .b = 2, .tx = 5,
+    .c = 3, .d = 4, .ty = 6,
   };
   AffineMatrix_Invert(&m3);
   assert(m3.a  == -2);
@@ -92,7 +95,8 @@ void AffineMatrix_Test(void)
   assert(m3.tx == 4);
   assert(m3.ty == -4.5);
   AffineMatrix m4 = {
-    .a = 7, .b = 8, .c = 9, .d = 10, .tx = 11, .ty = 12,
+    .a = 7, .b = 8,  .tx = 11,
+    .c = 9, .d = 10, .ty = 12,
   };
   AffineMatrix_Invert(&m4);
   double delta = 0.00001;
@@ -104,7 +108,8 @@ void AffineMatrix_Test(void)
   assert(fabs(m4.ty - (-7.5)) < delta);
 
   AffineMatrix m5 = {
-    .a = 1, .b = 2, .c = 3, .d = 4, .tx = 5, .ty = 6,
+    .a = 1, .b = 2, .tx = 5,
+    .c = 3, .d = 4, .ty = 6,
   };
   double x1 = 7;
   double y1 = 8;

@@ -6,8 +6,13 @@
 
 static VALUE symbol_add;
 static VALUE symbol_alpha;
+static VALUE symbol_angle;
 static VALUE symbol_blend_type;
+static VALUE symbol_center_x;
+static VALUE symbol_center_y;
 static VALUE symbol_saturation;
+static VALUE symbol_scale_x;
+static VALUE symbol_scale_y;
 static VALUE symbol_src_height;
 static VALUE symbol_src_width;
 static VALUE symbol_src_x;
@@ -338,6 +343,11 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   VALUE rbSrcY       = rb_hash_aref(rbOptions, symbol_src_y);
   VALUE rbSrcWidth   = rb_hash_aref(rbOptions, symbol_src_width);
   VALUE rbSrcHeight  = rb_hash_aref(rbOptions, symbol_src_height);
+  VALUE rbScaleX     = rb_hash_aref(rbOptions, symbol_scale_x);
+  VALUE rbScaleY     = rb_hash_aref(rbOptions, symbol_scale_y);
+  VALUE rbAngle      = rb_hash_aref(rbOptions, symbol_angle);
+  VALUE rbCenterX    = rb_hash_aref(rbOptions, symbol_center_x);
+  VALUE rbCenterY    = rb_hash_aref(rbOptions, symbol_center_y);
   VALUE rbAlpha      = rb_hash_aref(rbOptions, symbol_alpha);
   VALUE rbBlendType  = rb_hash_aref(rbOptions, symbol_blend_type);
   VALUE rbToneRed    = rb_hash_aref(rbOptions, symbol_tone_red);
@@ -351,6 +361,11 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     (rbSrcWidth != Qnil) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
   int srcHeight =
     (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
+  double scaleX = (rbScaleX != Qnil) ? NUM2DBL(rbScaleX) : 1;
+  double scaleY = (rbScaleY != Qnil) ? NUM2DBL(rbScaleY) : 1;
+  double angle = (rbAngle != Qnil) ? NUM2DBL(rbAngle) : 0;
+  int centerX = (rbCenterX != Qnil) ? NUM2INT(rbCenterX) : 0;
+  int centerY = (rbCenterY != Qnil) ? NUM2INT(rbCenterY) : 0;
   int alpha = (rbAlpha != Qnil) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   BlendType blendType = ALPHA;
   if (rbBlendType == Qnil || rbBlendType == symbol_alpha) {
@@ -368,7 +383,40 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     (rbToneBlue != Qnil)   ? NORMALIZE(NUM2INT(rbToneBlue), -255, 255)  : 0;
   uint8_t saturation =
     (rbSaturation != Qnil) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255)   : 255;
-
+  
+  AffineMatrix mat = {
+    .a = 1, .c = 0, .tx = 0,
+    .b = 0, .d = 1, .ty = 0,
+  };
+  if (scaleX != 0 || scaleY != 0 || angle != 0) {
+    AffineMatrix_Concat(&mat, &(AffineMatrix) {
+      .a = 1, .b = 0, .tx = -centerX,
+      .c = 0, .d = 1, .ty = -centerY,
+    });
+    if (scaleX != 0 || scaleY != 0) {
+      AffineMatrix_Concat(&mat, &(AffineMatrix) {
+        .a = scaleX, .b = 0,      .tx = 0,
+        .c = 0,      .d = scaleY, .ty = 0,
+      });
+    }
+    if (angle != 0) {
+      double c = cos(angle);
+      double s = sin(angle);
+      AffineMatrix_Concat(&mat, &(AffineMatrix) {
+        .a = c, .b = -s, .tx = 0,
+        .c = s, .d = c,  .ty = 0,
+      });
+    }
+    AffineMatrix_Concat(&mat, &(AffineMatrix) {
+      .a = 1, .b = 0, .tx = centerX,
+      .c = 0, .d = 1, .ty = centerY,
+    });
+  }
+  AffineMatrix_Concat(&mat, &(AffineMatrix) {
+    .a = 1, .b = 0, .tx = NUM2INT(rbX),
+    .c = 0, .d = 1, .ty = NUM2INT(rbY),
+  });
+  
   int dstX = NUM2INT(rbX);
   int dstY = NUM2INT(rbY);
   if (dstX < 0) {
@@ -521,12 +569,17 @@ void InitializeTexture(void)
 
   symbol_add        = ID2SYM(rb_intern("add"));
   symbol_alpha      = ID2SYM(rb_intern("alpha"));
+  symbol_angle      = ID2SYM(rb_intern("angle"));
   symbol_blend_type = ID2SYM(rb_intern("blend_type"));
+  symbol_center_x   = ID2SYM(rb_intern("center_x"));
+  symbol_center_y   = ID2SYM(rb_intern("center_y"));
+  symbol_saturation = ID2SYM(rb_intern("saturation"));
+  symbol_scale_x    = ID2SYM(rb_intern("scale_x"));
+  symbol_scale_y    = ID2SYM(rb_intern("scale_y"));
   symbol_src_height = ID2SYM(rb_intern("src_height"));
   symbol_src_width  = ID2SYM(rb_intern("src_width"));
   symbol_src_x      = ID2SYM(rb_intern("src_x"));
   symbol_src_y      = ID2SYM(rb_intern("src_y"));
-  symbol_saturation = ID2SYM(rb_intern("saturation"));
   symbol_sub        = ID2SYM(rb_intern("sub"));
   symbol_tone_blue  = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green = ID2SYM(rb_intern("tone_green"));

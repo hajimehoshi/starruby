@@ -2,10 +2,11 @@ require "../starruby"
 
 include StarRuby
 
-texture = Texture.load("images/ruby")
-texture.render_texture(texture, 10, 10)
+font = Font.new("arial", 12)
+color = Color.new(255, 255, 255, 255)
 
 Game.run do
-  Screen.offscreen.fill Color.new(100, 110, 120, 130)
-  Screen.offscreen.render_texture(texture, 0, 0)
+  # Screen.offscreen.fill Color.new(100, 110, 120, 130)
+  Screen.offscreen.fill(Color.new(0, 0, 0, 0))
+  Screen.offscreen.render_text("hoge", 0, 0, font, color)
 end

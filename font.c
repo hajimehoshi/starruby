@@ -59,7 +59,7 @@ static VALUE Font_load_path(VALUE self)
 
 static void Font_free(Font* font)
 {
-  if (!SdlIsQuitted()) {
+  if (!SdlIsQuitted() && font->sdlFont) {
     TTF_CloseFont(font->sdlFont);
     font->sdlFont = NULL;
   }
@@ -155,6 +155,22 @@ static VALUE Font_italic(VALUE self)
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_ITALIC) ? Qtrue : Qfalse;
 }
 
+static VALUE Font_get_size(VALUE self, VALUE rbText)
+{
+  Font* font;
+  Data_Get_Struct(self, Font, font);
+  if (!font->sdlFont) {
+    rb_raise(rb_eTypeError, "can't use disposed font");
+    return Qnil;
+  }
+  char* text = StringValuePtr(rbText);
+  int width, height;
+  TTF_SizeUTF8(font->sdlFont, text, &width, &height);
+  VALUE rbSize = rb_assoc_new(INT2NUM(width), INT2NUM(height));
+  OBJ_FREEZE(rbSize);
+  return rbSize;
+}
+
 static VALUE Font_name(VALUE self)
 {
   Font* font;
@@ -187,6 +203,7 @@ void InitializeFont(void)
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);
   rb_define_method(rb_cFont, "dispose",   Font_dispose,  0);
   rb_define_method(rb_cFont, "disposed?", Font_disposed, 0);
+  rb_define_method(rb_cFont, "get_size",  Font_get_size, 1);
   rb_define_method(rb_cFont, "italic?",   Font_italic,   0);
   rb_define_method(rb_cFont, "name",      Font_name,     0);
   rb_define_method(rb_cFont, "size",      Font_size,     0);

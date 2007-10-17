@@ -52,6 +52,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
 
   SDL_Surface* surface = SDL_DisplayFormatAlpha(imageSurface);
   if (!surface) {
+    SDL_FreeSurface(imageSurface);
     rb_raise_sdl_error();
     return Qnil;
   }
@@ -66,7 +67,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   MEMCPY(texture->pixels, surface->pixels, Pixel,
          texture->width * texture->height);
   SDL_UnlockSurface(surface);
-  
+
   SDL_FreeSurface(surface);
   SDL_FreeSurface(imageSurface);
   
@@ -306,6 +307,86 @@ static VALUE Texture_height(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   return INT2NUM(texture->height);
+}
+
+static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
+                                 VALUE rbFont, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+
+  Font* font;
+  Data_Get_Struct(rbFont, Font, font);
+  if (!font->sdlFont) {
+    rb_raise(rb_eTypeError, "can't use disposed font");
+    return Qnil;
+  }
+  
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
+
+  char* text = StringValuePtr(rbText);
+  
+  int dstX = NUM2INT(rbX);
+  int dstY = NUM2INT(rbY);
+  if (texture->width <= dstX || texture->height <= dstY)
+    return Qnil;
+  
+  SDL_Surface* textSurfaceRaw =
+    TTF_RenderUTF8_Solid(font->sdlFont, text, (SDL_Color) {255, 255, 255, 255});
+  if (!textSurfaceRaw) {
+    rb_raise_sdl_ttf_error();
+    return Qnil;
+  }
+  SDL_Surface* textSurface = SDL_DisplayFormat(textSurfaceRaw);
+  if (!textSurface) {
+    SDL_FreeSurface(textSurfaceRaw);
+    rb_raise_sdl_error();
+    return Qnil;
+  }
+
+  int srcX = 0;
+  int srcY = 0;
+  int width = textSurface->w;
+  int height = textSurface->h;
+  if (dstX < 0) {
+    srcX += -dstX;
+    width -= -dstX;
+    dstX = 0;
+  }
+  if (dstY < 0) {
+    srcY += -dstY;
+    height -= -dstY;
+    dstY = 0;
+  }
+  if (width < 0 || height < 0 ||
+      textSurface->w < srcX + width || textSurface->h < srcY + height)
+    goto EXIT;
+
+  width  = MIN(width,  texture->width  - dstX);
+  height = MIN(height, texture->height - dstY);
+
+  Pixel* src = &(((Pixel*)textSurface->pixels)[srcX + srcY * textSurface->w]);
+  Pixel* dst = &(texture->pixels[dstX + dstY * texture->width]);
+
+  for (int j = 0; j < height;
+       j++, src += -width + textSurface->w, dst += -width + texture->width) {
+    for (int i = 0; i < width; i++, src++, dst++) {
+      if (src->value)
+        *dst = *src;
+    }
+  }
+
+EXIT:
+  SDL_FreeSurface(textSurface);
+  SDL_FreeSurface(textSurfaceRaw);
+  return Qnil;
 }
 
 static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
@@ -591,6 +672,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,      5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,      2);
   rb_define_method(rb_cTexture, "height",         Texture_height,         0);
+  rb_define_method(rb_cTexture, "render_text",    Texture_render_text,    5);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture, -1);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);
   rb_define_method(rb_cTexture, "size",           Texture_size,           0);

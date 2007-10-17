@@ -129,7 +129,20 @@ class FontTest < Test::Unit::TestCase
     assert_raise TypeError do
       font.size
     end
+    assert_raise TypeError do
+      font.get_size("A")
+    end
     font.dispose
+  end
+  
+  def test_get_size
+    case RUBY_PLATFORM
+    when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
+      font = Font.new("msgothic", 12, :ttc_index => 0)
+      assert_equal "MS Gothic", font.name
+      #assert_equal [6, 12], font.get_size("A")
+      assert font.get_size("A").frozen?
+    end
   end
   
 end
@@ -484,6 +497,21 @@ class TextureTest < Test::Unit::TestCase
     assert_raise TypeError do
       texture.change_hue(Math::PI)
     end
+  end
+  
+  def test_render_text
+    texture = Texture.load("images/ruby")
+    font = Font.new("arial", 12)
+    color = Color.new(255, 255, 255)
+    texture.render_text("A", 0, 0, font, color)
+  end
+  
+  def test_render_text_disposed
+    # TODO
+  end
+  
+  def test_render_text_frozen
+    # TODO
   end
   
   def test_render_texture

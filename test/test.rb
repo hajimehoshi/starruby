@@ -100,19 +100,36 @@ class FontTest < Test::Unit::TestCase
     assert_equal "Arial", font.name
     assert_equal false, font.bold?
     assert_equal false, font.italic?
-    #font = Font.new("msgothic", 12, :ttc_index => 1)
-    font = Font.new("msgothic", 12)
+    font = Font.new("msgothic", 12, {
+      :ttc_index => 1, :bold => true, :italic => true
+    })
     assert_equal 12, font.size
-    assert_equal "MS Gothic", font.name
-    assert_equal false, font.bold?
-    assert_equal false, font.italic?
+    assert_equal "MS PGothic", font.name
+    assert_equal true, font.bold?
+    assert_equal true, font.italic?
     assert_raise Errno::ENOENT do
       Font.new("notfont", 12)
     end
   end
   
   def test_dispose
-    # TODO
+    font = Font.new("arial", 16)
+    assert_equal false, font.disposed?
+    font.dispose
+    assert_equal true, font.disposed?
+    assert_raise TypeError do
+      font.bold?
+    end
+    assert_raise TypeError do
+      font.italic?
+    end
+    assert_raise TypeError do
+      font.name
+    end
+    assert_raise TypeError do
+      font.size
+    end
+    font.dispose
   end
   
 end

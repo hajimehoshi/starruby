@@ -737,7 +737,19 @@ class TextureTest < Test::Unit::TestCase
   end
   
   def test_render_texture_self
-    # TODO
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0)
+    texture2.render_texture(texture2, 10, 10)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        if (x < 10 or y < 10) or texture.get_pixel(x - 10, y - 10).alpha == 0
+          assert_equal texture.get_pixel(x, y), texture2.get_pixel(x, y)
+        else
+          assert_equal texture.get_pixel(x - 10, y - 10), texture2.get_pixel(x, y)
+        end
+      end
+    end
   end
 
 end

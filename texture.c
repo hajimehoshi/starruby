@@ -333,6 +333,11 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eTypeError, "can't use disposed texture");
     return Qnil;
   }
+  VALUE rbClonedTexture = Qnil;
+  if (self == rbTexture) {
+    rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
+    Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
+  }
 
   int srcTextureWidth = srcTexture->width;
   int srcTextureHeight = srcTexture->height;
@@ -416,7 +421,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     .c = 0, .d = 1, .ty = NUM2INT(rbY),
   });
   if (!AffineMatrix_IsRegular(&mat))
-    return Qnil;
+    goto EXIT;
 
   double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
   AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
@@ -429,7 +434,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
   if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
       dstX1 < 0 || dstY1 < 0)
-    return Qnil;
+    goto EXIT;
 
   AffineMatrix matInv = mat;
   AffineMatrix_Invert(&matInv);
@@ -521,6 +526,10 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
       dst->color.blue  = dstB;
     }
   }
+
+EXIT:
+  if (rbClonedTexture != Qnil)
+    Texture_dispose(rbClonedTexture);
   
   return Qnil;
 }

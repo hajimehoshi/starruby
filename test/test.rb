@@ -57,7 +57,7 @@ class FontTest < Test::Unit::TestCase
   def test_load_path
     assert_equal ".", Font.load_path[0]
     case RUBY_PLATFORM
-    when /cygwin|mingw32/
+    when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
       require "Win32API"
       path = " " * 256
       p = Win32API.new("SHFOLDER", "SHGetFolderPath", %w(p i p i p), "i")
@@ -67,6 +67,24 @@ class FontTest < Test::Unit::TestCase
   end
   
   def test_exist
+    case RUBY_PLATFORM
+    when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
+      assert_equal true,  Font.exist?("arial")
+      assert_equal true,  Font.exist?("arial.ttf")
+      assert_equal false, Font.exist?("arial.ttc")
+      assert_equal true,  Font.exist?("msgothic")
+      assert_equal false, Font.exist?("msgothic.ttf")
+      assert_equal true,  Font.exist?("msgothic.ttc")
+      assert_equal false, Font.exist?("NotFont")
+      assert_equal false, Font.exist?("NotFont.ttf")
+      assert_equal false, Font.exist?("NotFont.ttc")
+    end
+    #assert_equal true,  Font.exist?("Resources/Fonts/04B_11__")
+    #assert_equal true,  Font.exist?("Resources/Fonts/04B_11__.TTF")
+    #assert_equal false, Font.exist?("Resources/Fonts/04B_12__")
+    #assert_equal false, Font.exist?("Hoge/Resources/Fonts/04B_11__")
+    # ファイルの中身は精査しない
+    #assert_equal true,  Font.exist?("Resources/Images/Ruby.png")
   end
   
 end

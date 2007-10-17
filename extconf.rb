@@ -3,7 +3,7 @@ require "mkmf"
 case CONFIG["arch"]
 when /mingw32/
   $CFLAGS += " -DWIN32"
-when /cygwin|mswin32|bccwin32|interix|djgpp/
+when /mswin32|cygwin|bccwin32|interix|djgpp/
   raise "not supported arch: #{CONFIG["arch"]}"
 end
 

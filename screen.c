@@ -24,7 +24,7 @@ static VALUE Screen_size(VALUE self)
 {
   if (NIL_P(rbScreenSize)) {
     rbScreenSize = rb_assoc_new(INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
-    rb_obj_freeze(rbScreenSize);
+    OBJ_FREEZE(rbScreenSize);
   }
   return rbScreenSize;
 }

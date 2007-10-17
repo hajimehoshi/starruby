@@ -570,7 +570,7 @@ static VALUE Texture_size(VALUE self)
   Data_Get_Struct(self, Texture, texture);
   VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
                               INT2NUM(texture->height));
-  rb_obj_freeze(rbSize);
+  OBJ_FREEZE(rbSize);
   return rbSize;
 }
 

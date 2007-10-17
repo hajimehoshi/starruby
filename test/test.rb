@@ -59,10 +59,10 @@ class FontTest < Test::Unit::TestCase
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
       require "Win32API"
-      path = " " * 256
+      path = "\0" * 256
       p = Win32API.new("SHFOLDER", "SHGetFolderPath", %w(p i p i p), "i")
       p.call(0, CSIDL_FONTS, 0, 0, path)
-      assert_equal path.strip.delete("\0"), Font.load_path[1]
+      assert_equal path.delete("\0"), Font.load_path[1]
     end
   end
   

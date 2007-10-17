@@ -31,7 +31,7 @@ static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 static VALUE Font_load_path(VALUE self)
 {
   VALUE rbLoadPath = rb_iv_get(rb_cFont, "load_path");
-  if (rbLoadPath == Qnil) {
+  if (NIL_P(rbLoadPath)) {
     VALUE rbLoadPath = rb_ary_new3(1, rb_str_new2("."));
 #ifdef WIN32
     char path[256];

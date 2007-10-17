@@ -324,7 +324,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
-  if (rbOptions == Qnil)
+  if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
   Texture* srcTexture;
@@ -360,33 +360,33 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   VALUE rbToneBlue   = rb_hash_aref(rbOptions, symbol_tone_blue);
   VALUE rbSaturation = rb_hash_aref(rbOptions, symbol_saturation);
   
-  int srcX = (rbSrcX != Qnil) ? NUM2INT(rbSrcX) : 0;
-  int srcY = (rbSrcY != Qnil) ? NUM2INT(rbSrcY) : 0;
+  int srcX = (!NIL_P(rbSrcX)) ? NUM2INT(rbSrcX) : 0;
+  int srcY = (!NIL_P(rbSrcY)) ? NUM2INT(rbSrcY) : 0;
   int srcWidth =
-    (rbSrcWidth != Qnil) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
+    (!NIL_P(rbSrcWidth)) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
   int srcHeight =
-    (rbSrcHeight != Qnil) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
-  double scaleX = (rbScaleX != Qnil) ? NUM2DBL(rbScaleX) : 1;
-  double scaleY = (rbScaleY != Qnil) ? NUM2DBL(rbScaleY) : 1;
-  double angle = (rbAngle != Qnil) ? NUM2DBL(rbAngle) : 0;
-  int centerX = (rbCenterX != Qnil) ? NUM2INT(rbCenterX) : 0;
-  int centerY = (rbCenterY != Qnil) ? NUM2INT(rbCenterY) : 0;
-  int alpha = (rbAlpha != Qnil) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
+    (!NIL_P(rbSrcHeight)) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
+  double scaleX = !NIL_P(rbScaleX) ? NUM2DBL(rbScaleX) : 1;
+  double scaleY = !NIL_P(rbScaleY) ? NUM2DBL(rbScaleY) : 1;
+  double angle = !NIL_P(rbAngle) ? NUM2DBL(rbAngle) : 0;
+  int centerX = !NIL_P(rbCenterX) ? NUM2INT(rbCenterX) : 0;
+  int centerY = !NIL_P(rbCenterY) ? NUM2INT(rbCenterY) : 0;
+  int alpha = !NIL_P(rbAlpha) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   BlendType blendType = ALPHA;
-  if (rbBlendType == Qnil || rbBlendType == symbol_alpha)
+  if (NIL_P(rbBlendType) || rbBlendType == symbol_alpha)
     blendType = ALPHA;
   else if (rbBlendType == symbol_add)
     blendType = ADD;
   else if (rbBlendType == symbol_sub)
     blendType = SUB;
   int toneRed =
-    (rbToneRed != Qnil)    ? NORMALIZE(NUM2INT(rbToneRed), -255, 255)   : 0;
+    !NIL_P(rbToneRed)    ? NORMALIZE(NUM2INT(rbToneRed), -255, 255)   : 0;
   int toneGreen =
-    (rbToneGreen != Qnil)  ? NORMALIZE(NUM2INT(rbToneGreen), -255, 255) : 0;
+    !NIL_P(rbToneGreen)  ? NORMALIZE(NUM2INT(rbToneGreen), -255, 255) : 0;
   int toneBlue =
-    (rbToneBlue != Qnil)   ? NORMALIZE(NUM2INT(rbToneBlue), -255, 255)  : 0;
+    !NIL_P(rbToneBlue)   ? NORMALIZE(NUM2INT(rbToneBlue), -255, 255)  : 0;
   uint8_t saturation =
-    (rbSaturation != Qnil) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255)   : 255;
+    !NIL_P(rbSaturation) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255)   : 255;
   
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,
@@ -528,7 +528,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   }
 
 EXIT:
-  if (rbClonedTexture != Qnil)
+  if (!NIL_P(rbClonedTexture))
     Texture_dispose(rbClonedTexture);
   
   return Qnil;

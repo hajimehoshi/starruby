@@ -17,7 +17,7 @@ static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
   color->red   = NORMALIZE(NUM2INT(rbRed),   0, 255);
   color->green = NORMALIZE(NUM2INT(rbGreen), 0, 255);
   color->blue  = NORMALIZE(NUM2INT(rbBlue),  0, 255);
-  color->alpha = (rbAlpha != Qnil) ?
+  color->alpha = !NIL_P(rbAlpha) ?
     NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   return Qnil;
 }

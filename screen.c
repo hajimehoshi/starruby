@@ -10,7 +10,7 @@ static VALUE Screen_height(VALUE self)
 static VALUE Screen_offscreen(VALUE self)
 {
   VALUE rbTexture = rb_iv_get(rb_mScreen, "offscreen");
-  if (rbTexture == Qnil) {
+  if (NIL_P(rbTexture)) {
     VALUE rbOffscreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                                    INT2NUM(SCREEN_WIDTH),
                                    INT2NUM(SCREEN_HEIGHT));
@@ -22,7 +22,7 @@ static VALUE Screen_offscreen(VALUE self)
 
 static VALUE Screen_size(VALUE self)
 {
-  if (rbScreenSize == Qnil) {
+  if (NIL_P(rbScreenSize)) {
     rbScreenSize = rb_assoc_new(INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
     rb_obj_freeze(rbScreenSize);
   }
@@ -37,7 +37,7 @@ static VALUE Screen_width(VALUE self)
 void UpdateScreen(SDL_Surface* screen)
 {
   VALUE rbOffscreen = rb_iv_get(rb_mScreen, "offscreen");
-  if (rbOffscreen == Qnil)
+  if (NIL_P(rbOffscreen))
     return;
 
   Texture* texture;

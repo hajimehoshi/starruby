@@ -375,11 +375,11 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
   Pixel* src = &(((Pixel*)textSurface->pixels)[srcX + srcY * textSurface->w]);
   Pixel* dst = &(texture->pixels[dstX + dstY * texture->width]);
 
-  for (int j = 0; j < height;
-       j++, src += -width + textSurface->w, dst += -width + texture->width) {
+  for (int j = 0; j < height; j++,
+       src += -width + textSurface->w, dst += -width + texture->width) {
     for (int i = 0; i < width; i++, src++, dst++) {
       if (src->value)
-        *dst = *src;
+        dst->color = *color;
     }
   }
 

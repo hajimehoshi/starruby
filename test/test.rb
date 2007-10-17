@@ -136,11 +136,10 @@ class FontTest < Test::Unit::TestCase
   end
   
   def test_get_size
-    case RUBY_PLATFORM
-    when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
+    if Font.exist? "msgothic"
       font = Font.new("msgothic", 12, :ttc_index => 0)
       assert_equal "MS Gothic", font.name
-      #assert_equal [6, 12], font.get_size("A")
+      assert_equal [6, 13], font.get_size("A")
       assert font.get_size("A").frozen?
     end
   end

@@ -165,7 +165,10 @@ static VALUE Font_get_size(VALUE self, VALUE rbText)
   }
   char* text = StringValuePtr(rbText);
   int width, height;
-  TTF_SizeUTF8(font->sdlFont, text, &width, &height);
+  if (TTF_SizeUTF8(font->sdlFont, text, &width, &height)) {
+    rb_raise_sdl_ttf_error();
+    return Qnil;
+  }
   VALUE rbSize = rb_assoc_new(INT2NUM(width), INT2NUM(height));
   OBJ_FREEZE(rbSize);
   return rbSize;

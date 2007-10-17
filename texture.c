@@ -363,11 +363,11 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     (!NIL_P(rbSrcWidth)) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
   int srcHeight =
     (!NIL_P(rbSrcHeight)) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
-  double scaleX = !NIL_P(rbScaleX) ? NUM2DBL(rbScaleX) : 1;
-  double scaleY = !NIL_P(rbScaleY) ? NUM2DBL(rbScaleY) : 1;
-  double angle = !NIL_P(rbAngle) ? NUM2DBL(rbAngle) : 0;
-  int centerX = !NIL_P(rbCenterX) ? NUM2INT(rbCenterX) : 0;
-  int centerY = !NIL_P(rbCenterY) ? NUM2INT(rbCenterY) : 0;
+  double scaleX = !NIL_P(rbScaleX)  ? NUM2DBL(rbScaleX)  : 1;
+  double scaleY = !NIL_P(rbScaleY)  ? NUM2DBL(rbScaleY)  : 1;
+  double angle  = !NIL_P(rbAngle)   ? NUM2DBL(rbAngle)   : 0;
+  int centerX   = !NIL_P(rbCenterX) ? NUM2INT(rbCenterX) : 0;
+  int centerY   = !NIL_P(rbCenterY) ? NUM2INT(rbCenterY) : 0;
   int alpha = !NIL_P(rbAlpha) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   BlendType blendType = ALPHA;
   if (NIL_P(rbBlendType) || rbBlendType == symbol_alpha)

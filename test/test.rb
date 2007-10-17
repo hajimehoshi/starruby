@@ -79,12 +79,19 @@ class FontTest < Test::Unit::TestCase
       assert_equal false, Font.exist?("NotFont.ttf")
       assert_equal false, Font.exist?("NotFont.ttc")
     end
-    #assert_equal true,  Font.exist?("Resources/Fonts/04B_11__")
-    #assert_equal true,  Font.exist?("Resources/Fonts/04B_11__.TTF")
-    #assert_equal false, Font.exist?("Resources/Fonts/04B_12__")
-    #assert_equal false, Font.exist?("Hoge/Resources/Fonts/04B_11__")
-    # ファイルの中身は精査しない
-    #assert_equal true,  Font.exist?("Resources/Images/Ruby.png")
+    assert_equal true,  Font.exist?("fonts/test")
+    assert_equal true,  Font.exist?("fonts/test.ttf")
+    assert_equal false, Font.exist?("test")
+    assert_equal false, Font.exist?("test.ttf")
+    begin
+      Font.load_path.push("./fonts")
+      assert_equal true, Font.exist?("fonts/test")
+      assert_equal true, Font.exist?("fonts/test.ttf")
+      assert_equal true, Font.exist?("test")
+      assert_equal true, Font.exist?("test.ttf")
+    ensure
+      Font.load_path.pop
+    end
   end
   
 end

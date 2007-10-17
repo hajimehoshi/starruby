@@ -1,6 +1,6 @@
 #include "starruby.h"
 
-#define rb_raise_sdl_image_error() rb_raise(rb_eStarRubyError, IMG_GetError())
+#define rb_raise_sdl_image_error() rb_raise(rb_eStarRubyError, "%s", IMG_GetError())
 #define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
@@ -289,10 +289,7 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   }
   
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
-    char errorMessage[256];
-    snprintf(errorMessage, sizeof(errorMessage),
-             "index out of range: (%d, %d)", x, y);
-    rb_raise(rb_eArgError, errorMessage);
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
     return Qnil;
   }
   
@@ -550,10 +547,7 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   int y = NUM2INT(rbY);
   
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
-    char errorMessage[256];
-    snprintf(errorMessage, sizeof(errorMessage),
-             "index out of range: (%d, %d)", x, y);
-    rb_raise(rb_eArgError, errorMessage);
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
     return Qnil;
   }
 

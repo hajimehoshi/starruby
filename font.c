@@ -39,10 +39,7 @@ static VALUE Font_load_path(VALUE self)
                                   SHGFP_TYPE_CURRENT, path))) {
       rb_ary_push(rbLoadPath, rb_str_new2(path));
     } else {
-      DWORD errorNo = GetLastError();
-      char errorMessage[256];
-      snprintf(errorMessage, sizeof(errorMessage), "Win32API error: %d", errorNo);
-      rb_raise(rb_eStarRubyError, errorMessage);
+      rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
     }
 #endif
     return rb_iv_set(rb_cFont, "load_path", rbLoadPath);

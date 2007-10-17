@@ -1,6 +1,5 @@
 #include "starruby.h"
 
-#define rb_raise_sdl_image_error() rb_raise(rb_eStarRubyError, "%s", IMG_GetError())
 #define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
@@ -40,8 +39,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
       VALUE rbNewPath = rb_ary_shift(rbPathes);
       path = StringValuePtr(rbNewPath);
     } else {
-      VALUE rbENOENT = rb_const_get(rb_mErrno, rb_intern("ENOENT"));
-      rb_raise(rbENOENT, path);
+      rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
       return Qnil;
     }
   }
@@ -78,12 +76,14 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
 static void Texture_free(Texture* texture)
 {
   free(texture->pixels);
+  texture->pixels = NULL;
   free(texture);
 }
 
 static VALUE Texture_alloc(VALUE klass)
 {
   Texture* texture = ALLOC(Texture);
+  texture->pixels = NULL;
   return Data_Wrap_Struct(klass, 0, Texture_free, texture);
 }
 

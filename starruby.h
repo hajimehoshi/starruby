@@ -8,6 +8,7 @@
 #include <ruby.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 #ifdef WIN32
 #include <windows.h>
 #include <shlobj.h>
@@ -40,6 +41,10 @@ typedef struct {
   double a, b, c, d, tx, ty;
 } AffineMatrix;
 
+typedef struct {
+  TTF_Font* sdlFont;
+} Font;
+
 #ifndef PI
 #define PI (3.1415926535897932384626433832795)
 #endif
@@ -55,6 +60,10 @@ STARRUBY_EXTERN VALUE rb_cTexture;
 STARRUBY_EXTERN VALUE rb_cTone;
 
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
+#define rb_raise_sdl_image_error()\
+  rb_raise(rb_eStarRubyError, "%s", IMG_GetError())
+#define rb_raise_sdl_ttf_error()\
+  rb_raise(rb_eStarRubyError, "%s", TTF_GetError());
 
 #define MAX(x, y) ((x >= y) ? x : y)
 #define MIN(x, y) ((x <= y) ? x : y)
@@ -75,6 +84,8 @@ void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);
 void AffineMatrix_Invert(AffineMatrix*);
 bool AffineMatrix_IsRegular(AffineMatrix*);
 void AffineMatrix_Transform(AffineMatrix*, double, double, double*, double*);
+
+bool SdlIsQuitted();
 
 #ifdef DEBUG
 #include <assert.h>

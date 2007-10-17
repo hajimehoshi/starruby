@@ -13,6 +13,7 @@ $LDFLAGS += " " + `env sdl-config --libs`.chomp
 $CFLAGS += " -finline-functions -Wall -std=c99"
 
 $LDFLAGS += " -lSDL_image" # have_library?
+$LDFLAGS += " -lSDL_ttf" # have_library?
 
 if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0"

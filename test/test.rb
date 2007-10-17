@@ -75,9 +75,9 @@ class FontTest < Test::Unit::TestCase
       assert_equal true,  Font.exist?("msgothic")
       assert_equal false, Font.exist?("msgothic.ttf")
       assert_equal true,  Font.exist?("msgothic.ttc")
-      assert_equal false, Font.exist?("NotFont")
-      assert_equal false, Font.exist?("NotFont.ttf")
-      assert_equal false, Font.exist?("NotFont.ttc")
+      assert_equal false, Font.exist?("notfont")
+      assert_equal false, Font.exist?("notfont.ttf")
+      assert_equal false, Font.exist?("notfont.ttc")
     end
     assert_equal true,  Font.exist?("fonts/test")
     assert_equal true,  Font.exist?("fonts/test.ttf")
@@ -92,6 +92,20 @@ class FontTest < Test::Unit::TestCase
     ensure
       Font.load_path.pop
     end
+  end
+  
+  def test_new
+    font = Font.new("msgothic", 12)
+    assert_equal 12, font.size
+    assert_equal false, font.bold?
+    assert_equal false, font.italic?
+    assert_raise Errno::ENOENT do
+      Font.new("notfont", 12)
+    end
+  end
+  
+  def test_dispose
+    # TODO
   end
   
 end

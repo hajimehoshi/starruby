@@ -3,6 +3,12 @@
 
 static SDL_Surface* screen;
 
+static bool sdlIsQuitted = false;
+bool SdlIsQuitted()
+{
+  return sdlIsQuitted;
+}
+
 static void StartSdl(void)
 {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
@@ -17,12 +23,17 @@ static void StartSdl(void)
   screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, options);
   if (screen == NULL)
     rb_raise_sdl_error();
+
+  if (TTF_Init())
+    rb_raise_sdl_ttf_error()
 }
 
-static void TerminateSdl(VALUE dummy)
+static void TerminateSdl(VALUE unused)
 {
+  TTF_Quit();
   SDL_FreeSurface(screen);
   SDL_Quit();
+  sdlIsQuitted = true;
 }
 
 void Init_starruby(void)

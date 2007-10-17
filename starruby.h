@@ -42,6 +42,7 @@ typedef struct {
 } AffineMatrix;
 
 typedef struct {
+  int size;
   TTF_Font* sdlFont;
 } Font;
 

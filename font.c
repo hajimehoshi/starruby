@@ -83,6 +83,7 @@ static VALUE Font_initialize(VALUE self, VALUE rbPath, VALUE rbSize)
   
   Font* font;
   Data_Get_Struct(self, Font, font);
+  font->size = size;
   font->sdlFont = TTF_OpenFont(path, size);
   if (!font->sdlFont) {
     rb_raise_sdl_ttf_error();
@@ -93,29 +94,30 @@ static VALUE Font_initialize(VALUE self, VALUE rbPath, VALUE rbSize)
 
 static VALUE Font_bold(VALUE self)
 {
-  return Qfalse;
+  Font* font;
+  Data_Get_Struct(self, Font, font);
+  return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_BOLD) ? Qtrue : Qfalse;
 }
 
 static VALUE Font_italic(VALUE self)
 {
-  return Qfalse;
+  Font* font;
+  Data_Get_Struct(self, Font, font);
+  return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_ITALIC) ? Qtrue : Qfalse;
 }
 
 static VALUE Font_name(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (!font) {
-    rb_raise(rb_eTypeError, "can't use disposed font");
-    return Qnil;
-  }
   return rb_str_new2(TTF_FontFaceFamilyName(font->sdlFont));
-  return Qnil;
 }
 
 static VALUE Font_size(VALUE self)
 {
-  return INT2NUM(12);
+  Font* font;
+  Data_Get_Struct(self, Font, font);
+  return INT2NUM(font->size);
 }
 
 void InitializeFont(void)

@@ -97,6 +97,7 @@ class FontTest < Test::Unit::TestCase
   def test_new
     font = Font.new("msgothic", 12)
     assert_equal 12, font.size
+    assert_equal "MS Gothic", font.name
     assert_equal false, font.bold?
     assert_equal false, font.italic?
     assert_raise Errno::ENOENT do

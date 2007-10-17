@@ -66,7 +66,7 @@ void UpdateScreen(SDL_Surface*);
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);
 void AffineMatrix_Invert(AffineMatrix*);
 bool AffineMatrix_IsRegular(AffineMatrix*);
-void AffineMatrix_Transform(AffineMatrix*, double*, double*);
+void AffineMatrix_Transform(AffineMatrix*, double, double, double*, double*);
 
 #ifdef DEBUG
 #include <assert.h>

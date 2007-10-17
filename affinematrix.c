@@ -33,12 +33,11 @@ bool AffineMatrix_IsRegular(AffineMatrix* m)
 }
 
 void AffineMatrix_Transform(AffineMatrix* m,
-                            double* restrict x, double* restrict y)
+                            double x, double y,
+                            double* restrict xOut, double* restrict yOut)
 {
-  double newX = m->a * (*x) + m->b * (*y) + m->tx;
-  double newY = m->c * (*x) + m->d * (*y) + m->ty;
-  *x = newX;
-  *y = newY;
+  *xOut = m->a * x + m->b * y + m->tx;
+  *yOut = m->c * x + m->d * y + m->ty;
 }
 
 #ifdef DEBUG
@@ -111,14 +110,14 @@ void AffineMatrix_Test(void)
     .a = 1, .b = 2, .tx = 5,
     .c = 3, .d = 4, .ty = 6,
   };
-  double x1 = 7;
-  double y1 = 8;
-  AffineMatrix_Transform(&m5, &x1, &y1);
+  double x1;
+  double y1;
+  AffineMatrix_Transform(&m5, 7, 8, &x1, &y1);
   assert(fabs(x1 - 28) < delta);
   assert(fabs(y1 - 59) < delta);
-  double x2 = -9;
-  double y2 = 10;
-  AffineMatrix_Transform(&m5, &x2, &y2);
+  double x2;
+  double y2;
+  AffineMatrix_Transform(&m5, -9, 10, &x2, &y2);
   assert(fabs(x2 - 16) < delta);
   assert(fabs(y2 - 19) < delta);
 }

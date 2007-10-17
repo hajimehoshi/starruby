@@ -368,13 +368,12 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int centerY = (rbCenterY != Qnil) ? NUM2INT(rbCenterY) : 0;
   int alpha = (rbAlpha != Qnil) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
   BlendType blendType = ALPHA;
-  if (rbBlendType == Qnil || rbBlendType == symbol_alpha) {
+  if (rbBlendType == Qnil || rbBlendType == symbol_alpha)
     blendType = ALPHA;
-  } else if (rbBlendType == symbol_add) {
+  else if (rbBlendType == symbol_add)
     blendType = ADD;
-  } else if (rbBlendType == symbol_sub) {
+  else if (rbBlendType == symbol_sub)
     blendType = SUB;
-  }
   int toneRed =
     (rbToneRed != Qnil)    ? NORMALIZE(NUM2INT(rbToneRed), -255, 255)   : 0;
   int toneGreen =
@@ -419,27 +418,23 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!AffineMatrix_IsRegular(&mat))
     return Qnil;
 
-  double srcX00 = 0,        srcY00 = 0;
-  double srcX01 = 0,        srcY01 = srcHeight;
-  double srcX10 = srcWidth, srcY10 = 0;
-  double srcX11 = srcWidth, srcY11 = srcHeight;
-  AffineMatrix_Transform(&mat, &srcX00, &srcY00);
-  AffineMatrix_Transform(&mat, &srcX01, &srcY01);
-  AffineMatrix_Transform(&mat, &srcX10, &srcY10);
-  AffineMatrix_Transform(&mat, &srcX11, &srcY11);
-  double dstX0 = MIN(MIN(MIN(srcX00, srcX01), srcX10), srcX11);
-  double dstY0 = MIN(MIN(MIN(srcY00, srcY01), srcY10), srcY11);
-  double dstX1 = MAX(MAX(MAX(srcX00, srcX01), srcX10), srcX11);
-  double dstY1 = MAX(MAX(MAX(srcY00, srcY01), srcY10), srcY11);
+  double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
+  AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
+  AffineMatrix_Transform(&mat, 0,        srcHeight, &dstX01, &dstY01);
+  AffineMatrix_Transform(&mat, srcWidth, 0,         &dstX10, &dstY10);
+  AffineMatrix_Transform(&mat, srcWidth, srcHeight, &dstX11, &dstY11);
+  double dstX0 = MIN(MIN(MIN(dstX00, dstX01), dstX10), dstX11);
+  double dstY0 = MIN(MIN(MIN(dstY00, dstY01), dstY10), dstY11);
+  double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
+  double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
   if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
       dstX1 < 0 || dstY1 < 0)
     return Qnil;
 
   AffineMatrix matInv = mat;
   AffineMatrix_Invert(&matInv);
-  double srcOX = dstX0 + 0.5;
-  double srcOY = dstY0 + 0.5;
-  AffineMatrix_Transform(&matInv, &srcOX, &srcOY);
+  double srcOX, srcOY;
+  AffineMatrix_Transform(&matInv, dstX0 + .5, dstY0 + .5, &srcOX, &srcOY);
   srcOX += srcX;
   srcOY += srcY;
   double srcDXX = matInv.a;

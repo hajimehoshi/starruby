@@ -50,6 +50,27 @@ class ColorTest < Test::Unit::TestCase
   
 end
 
+class FontTest < Test::Unit::TestCase
+  
+  CSIDL_FONTS = 0x0014
+  
+  def test_load_path
+    assert_equal ".", Font.load_path[0]
+    case RUBY_PLATFORM
+    when /cygwin|mingw32/
+      require "Win32API"
+      path = " " * 256
+      p = Win32API.new("SHFOLDER", "SHGetFolderPath", %w(p i p i p), "i")
+      p.call(0, CSIDL_FONTS, 0, 0, path)
+      assert_equal path.strip.delete("\0"), Font.load_path[1]
+    end
+  end
+  
+  def test_exist
+  end
+  
+end
+
 class GameTest < Test::Unit::TestCase
   
   def test_game

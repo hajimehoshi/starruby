@@ -8,6 +8,13 @@
 #include <ruby.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#ifdef WIN32
+#include <windows.h>
+#include <shlobj.h>
+#ifndef SHGFP_TYPE_CURRENT
+#define SHGFP_TYPE_CURRENT (0)
+#endif
+#endif
 
 #ifdef DEFINE_STARRUBY_EXTERN
 #define STARRUBY_EXTERN
@@ -56,6 +63,7 @@ STARRUBY_EXTERN VALUE rb_cTone;
 void Init_starruby(void);
 
 void InitializeColor(void);
+void InitializeFont(void);
 void InitializeGame(SDL_Surface*);
 void InitializeScreen(void);
 void InitializeStarRubyError(void);

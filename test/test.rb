@@ -411,11 +411,6 @@ class TextureTest < Test::Unit::TestCase
         assert_equal texture.get_pixel(x, y), texture2.get_pixel(x, y)
       end
     end
-  end
-  
-  def test_render_texture2
-    texture = Texture.load("images/ruby")
-    texture2 = Texture.new(texture.width, texture.height)
     texture2.fill(Color.new(128, 128, 128, 128))
     texture2.render_texture(texture, 0, 0)
     texture.height.times do |y|
@@ -508,6 +503,19 @@ class TextureTest < Test::Unit::TestCase
         p1 = texture.get_pixel(w - x - 1, h - y - 1)
         p2 = texture2.get_pixel(x, y)
         assert_equal p1, p2
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, w / 2, 0, :scale_x => -1)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        if x < w / 2
+          p1 = texture.get_pixel(w / 2 - x - 1, y)
+          p2 = texture2.get_pixel(x, y)
+          assert_equal p1, p2
+        else
+          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+        end
       end
     end
   end

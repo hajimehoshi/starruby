@@ -95,6 +95,12 @@ class FontTest < Test::Unit::TestCase
   end
   
   def test_new
+    font = Font.new("arial", 16)
+    assert_equal 16, font.size
+    assert_equal "Arial", font.name
+    assert_equal false, font.bold?
+    assert_equal false, font.italic?
+    #font = Font.new("msgothic", 12, :ttc_index => 1)
     font = Font.new("msgothic", 12)
     assert_equal 12, font.size
     assert_equal "MS Gothic", font.name

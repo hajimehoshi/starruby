@@ -92,9 +92,20 @@ static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
+
+  int width  = NUM2INT(rbWidth);
+  int height = NUM2INT(rbHeight);
+  if (width <= 0) {
+    rb_raise(rb_eArgError, "negative width");
+    return Qnil;
+  }
+  if (height <= 0) {
+    rb_raise(rb_eArgError, "negative height");
+    return Qnil;
+  }
+  texture->width  = width;
+  texture->height = height;
   
-  texture->width  = NUM2INT(rbWidth);
-  texture->height = NUM2INT(rbHeight);
   texture->pixels = ALLOC_N(Pixel, texture->width * texture->height);
   MEMZERO(texture->pixels, Pixel, texture->width * texture->height);
   return Qnil;
@@ -351,6 +362,8 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
     return Qnil;
   }
 
+  SDL_LockSurface(textSurface);
+  
   int srcX = 0;
   int srcY = 0;
   int width = textSurface->w;
@@ -384,6 +397,7 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
   }
 
 EXIT:
+  SDL_UnlockSurface(textSurface);
   SDL_FreeSurface(textSurface);
   SDL_FreeSurface(textSurfaceRaw);
   return Qnil;

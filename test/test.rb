@@ -201,6 +201,16 @@ class TextureTest < Test::Unit::TestCase
     assert_equal 456, texture.height
     assert_equal [123, 456], texture.size
     assert_equal true, texture.size.frozen?
+    
+    assert_raise ArgumentError do
+      Texture.new(123, -456)
+    end
+    assert_raise ArgumentError do
+      Texture.new(-123, 456)
+    end
+    assert_raise ArgumentError do
+      Texture.new(-123, -456)
+    end
   end
   
   def test_load

@@ -112,6 +112,12 @@ class FontTest < Test::Unit::TestCase
     end
   end
   
+  def test_new2
+    assert_raise Errno::ENOENT do
+      Font.new("notfont.ttf", 16)
+    end
+  end
+  
   def test_dispose
     font = Font.new("arial", 16)
     assert_equal false, font.disposed?
@@ -136,11 +142,21 @@ class FontTest < Test::Unit::TestCase
   end
   
   def test_get_size
-    if Font.exist? "msgothic"
+    if Font.exist?("msgothic")
       font = Font.new("msgothic", 12, :ttc_index => 0)
       assert_equal "MS Gothic", font.name
       assert_equal [6, 13], font.get_size("A")
       assert font.get_size("A").frozen?
+      h = font.get_size("A")[1]
+      assert_equal [78, h], font.get_size("Hello, World!")
+      assert_equal [60, h], font.get_size("こんにちは")
+      assert_equal [30, h], font.get_size("aaa&a")
+    end
+    if Font.exist?("arial")
+      font = Font.new("arial", 12);
+      size = font.get_size("AAAAAAAAAAAAAA");
+      size[0] # No Exception
+      size[1] # No Exception
     end
   end
   

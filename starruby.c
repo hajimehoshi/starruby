@@ -46,6 +46,7 @@ void Init_starruby(void)
   InitializeColor();
   InitializeFont();
   InitializeGame(screen);
+  InitializeInput();
   InitializeScreen();
   InitializeStarRubyError();
   InitializeTexture();

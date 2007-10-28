@@ -75,6 +75,7 @@ void Init_starruby(void);
 void InitializeColor(void);
 void InitializeFont(void);
 void InitializeGame(SDL_Surface*);
+void InitializeInput(void);
 void InitializeScreen(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);

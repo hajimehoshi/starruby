@@ -16,9 +16,8 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 
 void InitializeInput(void)
 {
-  VALUE rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
-  rb_define_singleton_method(rb_mInput, "mouse_location",
-                             Input_mouse_location, 0);
-  rb_define_singleton_method(rb_mInput, "pressed_keys",
-                             Input_pressed_keys, -1);
+  rb_cInput = rb_define_class_under(rb_mStarRuby, "Input", rb_cObject);
+  rb_define_method(rb_cInput, "mouse_location", Input_mouse_location, 0);
+  rb_funcall(rb_singleton_class(rb_cInput), rb_intern("private"), 1,
+             ID2SYM(rb_intern("new")));
 }

@@ -890,3 +890,17 @@ class TextureTest < Test::Unit::TestCase
   end
 
 end
+
+class InputTest < Test::Unit::TestCase
+  
+  def test_input
+    assert_kind_of Input, Game.input
+  end
+  
+  def test_input
+    assert_raise NoMethodError do
+      Input.new
+    end
+  end
+  
+end

@@ -73,18 +73,25 @@ STARRUBY_EXTERN VALUE rb_cTone;
 void Init_starruby(void);
 
 void InitializeColor(void);
-void InitializeGame(SDL_Surface*);
+void InitializeGame(void);
 void InitializeFont(void);
 void InitializeInput(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
+
+void UpdateInput(void);
+
+void InitializeSdlGame(void);
+void InitializeSdlInput(void);
+void FinalizeSdlGame(void);
+void FinalizeSdlInput(void);
 
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);
 void AffineMatrix_Invert(AffineMatrix*);
 bool AffineMatrix_IsRegular(AffineMatrix*);
 void AffineMatrix_Transform(AffineMatrix*, double, double, double*, double*);
 
-bool SdlIsQuitted();
+bool IsSdlQuitted();
 
 #ifdef DEBUG
 #include <assert.h>

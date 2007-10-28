@@ -7,6 +7,6 @@ color = Color.new(255, 155, 200, 255)
 
 Game.run do
   Game.screen.fill(Color.new(0, 0, 0, 0))
-  x, y = Input.mouse_location
+  x, y = Game.input.mouse_location
   Game.screen.render_text([x, y].inspect, x, y, font, color)
 end

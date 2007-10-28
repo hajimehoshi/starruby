@@ -23,7 +23,7 @@ static VALUE Game_fps_eq(VALUE self, VALUE rbFps)
 
 static VALUE Game_input(VALUE self)
 {
-  if (rbInput == Qnil) {
+  if (NIL_P(rbInput)) {
     rbInput = rb_funcall(rb_cInput, rb_intern("new"), 0);
     rb_define_readonly_variable("input", &rbInput); // for GC
   }
@@ -81,11 +81,15 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
       counter = 0;
       before2 = now;
     }
+
+    UpdateInput();
+    
     rb_yield(Qnil);
     
     SDL_LockSurface(screen);
     MEMCPY(screen->pixels, texture->pixels, Pixel, SCREEN_WIDTH * SCREEN_HEIGHT);
     SDL_UnlockSurface(screen);
+    
     if (SDL_Flip(screen))
       rb_raise_sdl_error();
     
@@ -103,7 +107,7 @@ static VALUE Game_running(VALUE self)
 
 static VALUE Game_screen(VALUE self)
 {
-  if (rbScreen == Qnil) {
+  if (NIL_P(rbScreen)) {
     rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                           INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
     rb_define_readonly_variable("screen", &rbScreen); // for GC
@@ -127,10 +131,21 @@ static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
   return rb_iv_set(self, "title", rbTitle);
 }
 
-void InitializeGame(SDL_Surface* _screen)
+void InitializeSdlGame(void)
 {
-  screen = _screen;
-  
+  Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
+  screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, options);
+  if (screen == NULL)
+    rb_raise_sdl_error();
+}
+
+void FinalizeSdlGame(void)
+{
+  SDL_FreeSurface(screen);
+}
+
+void InitializeGame(void)
+{
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_singleton_method(rb_mGame, "fps",       Game_fps,       0);
   rb_define_singleton_method(rb_mGame, "fps=",      Game_fps_eq,    1);

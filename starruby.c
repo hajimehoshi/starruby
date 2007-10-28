@@ -25,7 +25,7 @@ static void StartSdl(void)
     rb_raise_sdl_error();
 
   if (TTF_Init())
-    rb_raise_sdl_ttf_error()
+    rb_raise_sdl_ttf_error();
 }
 
 static void TerminateSdl(VALUE unused)
@@ -49,10 +49,6 @@ void Init_starruby(void)
   InitializeInput();
   InitializeStarRubyError();
   InitializeTexture();
-
-  Global_screen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                             INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
-  rb_define_readonly_variable("$screen", &Global_screen);
   
 #ifdef DEBUG
   AffineMatrix_Test();

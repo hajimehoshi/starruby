@@ -59,13 +59,11 @@ STARRUBY_EXTERN VALUE rb_eStarRubyError;
 STARRUBY_EXTERN VALUE rb_cTexture;
 STARRUBY_EXTERN VALUE rb_cTone;
 
-STARRUBY_EXTERN VALUE Global_screen;
-
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
 #define rb_raise_sdl_image_error()\
   rb_raise(rb_eStarRubyError, "%s", IMG_GetError())
 #define rb_raise_sdl_ttf_error()\
-  rb_raise(rb_eStarRubyError, "%s", TTF_GetError());
+  rb_raise(rb_eStarRubyError, "%s", TTF_GetError())
 
 #define MAX(x, y) ((x >= y) ? x : y)
 #define MIN(x, y) ((x <= y) ? x : y)

@@ -7,6 +7,8 @@ static double realFps = 0;
 static bool running = false;
 static bool terminated = false;
 
+static VALUE rbScreen;
+
 static VALUE Game_fps(VALUE self)
 {
   return INT2NUM(fps);
@@ -23,18 +25,7 @@ static VALUE Game_real_fps(VALUE self)
   return rb_float_new(realFps);
 }
 
-static void UpdateScreen(SDL_Surface* screen)
-{
-  Texture* texture;
-  Data_Get_Struct(Global_screen, Texture, texture);
-
-  SDL_LockSurface(screen);
-  MEMCPY(screen->pixels, texture->pixels, Pixel, SCREEN_WIDTH * SCREEN_HEIGHT);
-  SDL_UnlockSurface(screen);
-
-  if (SDL_Flip(screen))
-    rb_raise_sdl_error();
-}
+static VALUE Game_screen(VALUE);
 
 static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 {
@@ -55,6 +46,9 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   Uint32 before2 = before;
   int errorX = 0;
   int counter = 0;
+
+  Texture* texture;
+  Data_Get_Struct(Game_screen(self), Texture, texture);
   
   while (true) {
     if (SDL_PollEvent(&event) != 0 && event.type == SDL_QUIT)
@@ -78,7 +72,13 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
       before2 = now;
     }
     rb_yield(Qnil);
-    UpdateScreen(screen);
+    
+    SDL_LockSurface(screen);
+    MEMCPY(screen->pixels, texture->pixels, Pixel, SCREEN_WIDTH * SCREEN_HEIGHT);
+    SDL_UnlockSurface(screen);
+    if (SDL_Flip(screen))
+      rb_raise_sdl_error();
+    
     if (terminated)
       break;
   }
@@ -89,6 +89,16 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 static VALUE Game_running(VALUE self)
 {
   return running ? Qtrue : Qfalse;
+}
+
+static VALUE Game_screen(VALUE self)
+{
+  if (rbScreen == Qnil) {
+    rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
+                          INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
+    rb_define_readonly_variable("screen", &rbScreen); // for GC
+  }
+  return rbScreen;
 }
 
 static VALUE Game_terminate(VALUE self)
@@ -117,7 +127,10 @@ void InitializeGame(SDL_Surface* _screen)
   rb_define_singleton_method(rb_mGame, "real_fps",  Game_real_fps,  0);
   rb_define_singleton_method(rb_mGame, "run",       Game_run,       -1);
   rb_define_singleton_method(rb_mGame, "running?",  Game_running,   0);
+  rb_define_singleton_method(rb_mGame, "screen",    Game_screen,    0);
   rb_define_singleton_method(rb_mGame, "terminate", Game_terminate, 0);
   rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
   rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
+
+  rbScreen = Qnil;
 }

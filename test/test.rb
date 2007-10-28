@@ -520,11 +520,23 @@ class TextureTest < Test::Unit::TestCase
   end
   
   def test_render_text_disposed
-    # TODO
+    texture = Texture.load("images/ruby")
+    font = Font.new("arial", 12)
+    color = Color.new(255, 255, 255)
+    texture.dispose
+    assert_raise TypeError do
+      texture.render_text("A", 0, 0, font, color)
+    end
   end
   
   def test_render_text_frozen
-    # TODO
+    texture = Texture.load("images/ruby")
+    font = Font.new("arial", 12)
+    color = Color.new(255, 255, 255)
+    texture.freeze
+    assert_raise TypeError do
+      texture.render_text("A", 0, 0, font, color)
+    end
   end
   
   def test_render_texture

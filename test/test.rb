@@ -201,6 +201,30 @@ class ScreenTest < Test::Unit::TestCase
     assert_equal true, Screen.size.frozen?
   end
   
+end
+
+class ScreenTest < Test::Unit::TestCase
+  
+  def test_size
+    assert_kind_of Texture, $screen
+    assert_equal 320, $screen.width
+    assert_equal 240, $screen.height
+    assert_raise NameError do
+      $screen = nil
+    end
+  end
+  
+end
+=begin
+class ScreenTest < Test::Unit::TestCase
+  
+  def test_size
+    assert_equal 320, Screen.width
+    assert_equal 240, Screen.height
+    assert_equal [320, 240], Screen.size
+    assert_equal true, Screen.size.frozen?
+  end
+  
   def test_offscreen
     assert_kind_of Texture, Screen.offscreen
     assert_equal Screen.width, Screen.offscreen.width
@@ -208,6 +232,7 @@ class ScreenTest < Test::Unit::TestCase
   end
   
 end
+=end
 
 class TextureTest < Test::Unit::TestCase
   

@@ -47,9 +47,12 @@ void Init_starruby(void)
   InitializeFont();
   InitializeGame(screen);
   InitializeInput();
-  InitializeScreen();
   InitializeStarRubyError();
   InitializeTexture();
+
+  Global_screen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
+                             INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
+  rb_define_readonly_variable("$screen", &Global_screen);
   
 #ifdef DEBUG
   AffineMatrix_Test();

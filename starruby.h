@@ -54,11 +54,12 @@ typedef struct {
 
 STARRUBY_EXTERN VALUE rb_cColor;
 STARRUBY_EXTERN VALUE rb_mGame;
-STARRUBY_EXTERN VALUE rb_mScreen;
 STARRUBY_EXTERN VALUE rb_mStarRuby;
 STARRUBY_EXTERN VALUE rb_eStarRubyError;
 STARRUBY_EXTERN VALUE rb_cTexture;
 STARRUBY_EXTERN VALUE rb_cTone;
+
+STARRUBY_EXTERN VALUE Global_screen;
 
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
 #define rb_raise_sdl_image_error()\
@@ -73,14 +74,11 @@ STARRUBY_EXTERN VALUE rb_cTone;
 void Init_starruby(void);
 
 void InitializeColor(void);
-void InitializeFont(void);
 void InitializeGame(SDL_Surface*);
+void InitializeFont(void);
 void InitializeInput(void);
-void InitializeScreen(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
-
-void UpdateScreen(SDL_Surface*);
 
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);
 void AffineMatrix_Invert(AffineMatrix*);

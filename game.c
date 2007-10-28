@@ -23,6 +23,19 @@ static VALUE Game_real_fps(VALUE self)
   return rb_float_new(realFps);
 }
 
+static void UpdateScreen(SDL_Surface* screen)
+{
+  Texture* texture;
+  Data_Get_Struct(Global_screen, Texture, texture);
+
+  SDL_LockSurface(screen);
+  MEMCPY(screen->pixels, texture->pixels, Pixel, SCREEN_WIDTH * SCREEN_HEIGHT);
+  SDL_UnlockSurface(screen);
+
+  if (SDL_Flip(screen))
+    rb_raise_sdl_error();
+}
+
 static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running) {

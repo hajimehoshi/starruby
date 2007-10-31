@@ -182,7 +182,6 @@ static KeyboardKey* searchKey(const char* name)
   return NULL;
 }
 
-
 void TestInput(void)
 {
   printf("Begin Test: Input\n");

@@ -46,6 +46,7 @@ void Init_starruby(void)
   InitializeTexture();
   
 #ifdef DEBUG
-  AffineMatrix_Test();
+  TestAffineMatrix();
+  TestInput();
 #endif
 }

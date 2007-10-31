@@ -41,8 +41,10 @@ void AffineMatrix_Transform(AffineMatrix* m,
 }
 
 #ifdef DEBUG
-void AffineMatrix_Test(void)
+void TestAffineMatrix(void)
 {
+  printf("Begin Test: AffineMatrix\n");
+  
   assert(AffineMatrix_IsRegular(&(AffineMatrix) {
     .a = 1, .b = 2, .tx = 5,
     .c = 3, .d = 4, .ty = 6,
@@ -120,5 +122,7 @@ void AffineMatrix_Test(void)
   AffineMatrix_Transform(&m5, -9, 10, &x2, &y2);
   assert(fabs(x2 - 16) < delta);
   assert(fabs(y2 - 19) < delta);
+
+  printf("End Test: AffineMatrix\n");
 }
 #endif

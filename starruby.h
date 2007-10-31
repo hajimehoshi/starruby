@@ -96,7 +96,8 @@ bool IsSdlQuitted();
 
 #ifdef DEBUG
 #include <assert.h>
-void AffineMatrix_Test(void);
+void TestAffineMatrix(void);
+void TestInput(void);
 #endif
 
 #endif

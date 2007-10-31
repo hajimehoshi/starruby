@@ -82,15 +82,13 @@ void InitializeInput(void)
   VALUE rbKeyboardKeyMap = rb_hash_new();
   rb_iv_set(rb_mInput, "keyboard_key_map", rbKeyboardKeyMap);
   
-  char alphabets[2] = {'\0', '\0'};
   for (int i = 0; i < SDLK_z - SDLK_a + 1; i++) {
-    alphabets[0] = 'a' + i;
+    char keyName[] = {'a' + i, '\0'};
     rb_hash_aset(rbKeyboardKeyMap,
-                 ID2SYM(rb_intern(&(alphabets[0]))), INT2NUM(SDLK_a + i));
+                 ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_a + i));
   }
   for (int i = 0; i <= 9; i++) {
-    char keyName[3];
-    snprintf(keyName, sizeof(keyName), "d%d", i);
+    char keyName[] = {'d', '0' + i, '\0'};
     rb_hash_aset(rbKeyboardKeyMap,
                  ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_0 + i));
   }
@@ -101,8 +99,7 @@ void InitializeInput(void)
                  ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_F1 + i));
   }
   for (int i = 0; i <= 9; i++) {
-    char keyName[8];
-    snprintf(keyName, sizeof(keyName), "numpad%d", i);
+    char keyName[] = {'n', 'u', 'm', 'p', 'a', 'd', '0' + i, '\0'};
     rb_hash_aset(rbKeyboardKeyMap,
                  ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_KP0 + i));
   }

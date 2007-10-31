@@ -1,5 +1,14 @@
 #include "starruby.h"
 
+#define ADD_KEY(currentKey, _name, _sdlKey) do {\
+  KeyboardKey* key = ALLOC(KeyboardKey);\
+  key->rbSymbol = ID2SYM(rb_intern(_name));\
+  key->sdlKey   = _sdlKey;\
+  key->state    = 0;\
+  key->next     = NULL;\
+  currentKey->next = key;\
+  currentKey = key;\
+} while (false)
 #define STR2SYM(x) ID2SYM(rb_intern(x))
 
 static int sdlJoystickCount;
@@ -99,51 +108,24 @@ void InitializeInput(void)
   symbol_mouse    = ID2SYM(rb_intern("mouse"));
 
   keyboardKeys = ALLOC(KeyboardKey);
-  keyboardKeys->rbSymbol = Qundef;
+  keyboardKeys->rbSymbol = Qundef; // dummy
   keyboardKeys->sdlKey   = 0;
   keyboardKeys->state    = 0;
   keyboardKeys->next     = NULL;
   
   KeyboardKey* currentKey = keyboardKeys;
-  for (int i = 0; i < SDLK_z - SDLK_a + 1; i++) {
-    KeyboardKey* key = ALLOC(KeyboardKey);
-    key->rbSymbol = ID2SYM(rb_intern((char[]){'a' + i, '\0'}));
-    key->sdlKey   = SDLK_a + i;
-    key->state    = 0;
-    key->next     = NULL;
-    currentKey->next = key;
-    currentKey = key;
-  }
-  for (int i = 0; i <= 9; i++) {
-    KeyboardKey* key = ALLOC(KeyboardKey);
-    key->rbSymbol = ID2SYM(rb_intern((char[]){'d', '0' + i, '\0'}));
-    key->sdlKey   = SDLK_0 + i;
-    key->state    = 0;
-    key->next     = NULL;
-    currentKey->next = key;
-    currentKey = key;
-  }
+  for (int i = 0; i < SDLK_z - SDLK_a + 1; i++)
+    ADD_KEY(currentKey, ((char[]){'a' + i, '\0'}), SDLK_a + i);
+  for (int i = 0; i <= 9; i++)
+    ADD_KEY(currentKey, ((char[]){'d', '0' + i, '\0'}), SDLK_0 + i);
   for (int i = 0; i < 15; i++) {
-    char keyName[4];
-    snprintf(keyName, sizeof(keyName), "f%d", i + 1);
-    KeyboardKey* key = ALLOC(KeyboardKey);
-    key->rbSymbol = ID2SYM(rb_intern(keyName));
-    key->sdlKey   = SDLK_F1 + i;
-    key->state    = 0;
-    key->next     = NULL;
-    currentKey->next = key;
-    currentKey = key;
+    char name[4];
+    snprintf(name, sizeof(name), "f%d", i + 1);
+    ADD_KEY(currentKey, name, SDLK_F1 + i);
   }
   for (int i = 0; i <= 9; i++) {
-    char keyName[] = "numpad\0";
-    keyName[6] = '0' + i;
-    KeyboardKey* key = ALLOC(KeyboardKey);
-    key->rbSymbol = ID2SYM(rb_intern(keyName));
-    key->sdlKey   = SDLK_KP0 + i;
-    key->state    = 0;
-    key->next     = NULL;
-    currentKey->next = key;
-    currentKey = key;
+    ADD_KEY(currentKey, ((char[]){'n','u','m','p','a','d', '0' + i, '\0'}),
+            SDLK_KP0 + i);
   }
   char* names[] = {
     "add",
@@ -183,15 +165,8 @@ void InitializeInput(void)
   char** name = names;
   for (SDLKey* sdlKey = sdlKeys;
        *name;
-       name++, sdlKey++) {
-    KeyboardKey* key = ALLOC(KeyboardKey);
-    key->rbSymbol = ID2SYM(rb_intern(*name));
-    key->sdlKey   = *sdlKey;
-    key->state    = 0;
-    key->next     = NULL;
-    currentKey->next = key;
-    currentKey = key;
-  }
+       name++, sdlKey++)
+    ADD_KEY(currentKey, *name, *sdlKey);
 }
 
 #ifdef DEBUG
@@ -244,6 +219,9 @@ void TestInput(void)
   assert(SDLK_LEFT  == searchKey("left")->sdlKey);
   assert(SDLK_RIGHT == searchKey("right")->sdlKey);
   assert(SDLK_UP    == searchKey("up")->sdlKey);
+
+  for (KeyboardKey* key = keyboardKeys; key; key = key->next)
+    assert(0 == key->state);
 
   printf("End Test: Input\n");
 }

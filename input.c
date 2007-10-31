@@ -1,5 +1,7 @@
 #include "starruby.h"
 
+#define STR2SYM(x) ID2SYM(rb_intern(x))
+
 static int sdlJoystickCount;
 static SDL_Joystick** sdlJoysticks;
 
@@ -79,30 +81,59 @@ void InitializeInput(void)
   symbol_keyboard = ID2SYM(rb_intern("keyboard"));
   symbol_mouse    = ID2SYM(rb_intern("mouse"));
 
-  VALUE rbKeyboardKeyMap = rb_hash_new();
-  rb_iv_set(rb_mInput, "keyboard_key_map", rbKeyboardKeyMap);
+  VALUE rbMap = rb_hash_new();
+  rb_iv_set(rb_mInput, "keyboard_key_map", rbMap);
   
   for (int i = 0; i < SDLK_z - SDLK_a + 1; i++) {
     char keyName[] = {'a' + i, '\0'};
-    rb_hash_aset(rbKeyboardKeyMap,
-                 ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_a + i));
+    rb_hash_aset(rbMap, ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_a + i));
   }
   for (int i = 0; i <= 9; i++) {
     char keyName[] = {'d', '0' + i, '\0'};
-    rb_hash_aset(rbKeyboardKeyMap,
-                 ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_0 + i));
+    rb_hash_aset(rbMap, ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_0 + i));
   }
   for (int i = 0; i < 15; i++) {
     char keyName[4];
     snprintf(keyName, sizeof(keyName), "f%d", i + 1);
-    rb_hash_aset(rbKeyboardKeyMap,
-                 ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_F1 + i));
+    rb_hash_aset(rbMap, ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_F1 + i));
   }
   for (int i = 0; i <= 9; i++) {
     char keyName[] = {'n', 'u', 'm', 'p', 'a', 'd', '0' + i, '\0'};
-    rb_hash_aset(rbKeyboardKeyMap,
-                 ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_KP0 + i));
+    rb_hash_aset(rbMap,ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_KP0 + i));
   }
+  rb_hash_aset(rbMap, STR2SYM("add"),         INT2NUM(SDLK_KP_PLUS));
+  rb_hash_aset(rbMap, STR2SYM("back"),        INT2NUM(SDLK_BACKSPACE));
+  rb_hash_aset(rbMap, STR2SYM("capslock"),    INT2NUM(SDLK_CAPSLOCK));
+  rb_hash_aset(rbMap, STR2SYM("clear"),       INT2NUM(SDLK_CLEAR));
+  rb_hash_aset(rbMap, STR2SYM("decimal"),     INT2NUM(SDLK_PERIOD));
+  rb_hash_aset(rbMap, STR2SYM("delete"),      INT2NUM(SDLK_DELETE));
+  rb_hash_aset(rbMap, STR2SYM("divide"),      INT2NUM(SDLK_KP_DIVIDE));
+  rb_hash_aset(rbMap, STR2SYM("down"),        INT2NUM(SDLK_DOWN));
+  rb_hash_aset(rbMap, STR2SYM("end"),         INT2NUM(SDLK_END));
+  rb_hash_aset(rbMap, STR2SYM("enter"),       INT2NUM(SDLK_RETURN));
+  rb_hash_aset(rbMap, STR2SYM("escape"),      INT2NUM(SDLK_ESCAPE));
+  rb_hash_aset(rbMap, STR2SYM("help"),        INT2NUM(SDLK_HELP));
+  rb_hash_aset(rbMap, STR2SYM("home"),        INT2NUM(SDLK_HOME));
+  rb_hash_aset(rbMap, STR2SYM("insert"),      INT2NUM(SDLK_INSERT));
+  rb_hash_aset(rbMap, STR2SYM("lcontrolkey"), INT2NUM(SDLK_LCTRL));
+  rb_hash_aset(rbMap, STR2SYM("left"),        INT2NUM(SDLK_LEFT));
+  rb_hash_aset(rbMap, STR2SYM("lmenu"),       INT2NUM(SDLK_LALT));
+  rb_hash_aset(rbMap, STR2SYM("lshiftkey"),   INT2NUM(SDLK_LSHIFT));
+  rb_hash_aset(rbMap, STR2SYM("lwin"),        INT2NUM(SDLK_LSUPER));
+  rb_hash_aset(rbMap, STR2SYM("multiply"),    INT2NUM(SDLK_KP_MULTIPLY));
+  rb_hash_aset(rbMap, STR2SYM("numlock"),     INT2NUM(SDLK_NUMLOCK));
+  rb_hash_aset(rbMap, STR2SYM("pagedown"),    INT2NUM(SDLK_PAGEDOWN));
+  rb_hash_aset(rbMap, STR2SYM("pageup"),      INT2NUM(SDLK_PAGEUP));
+  rb_hash_aset(rbMap, STR2SYM("rcontrolkey"), INT2NUM(SDLK_RCTRL));
+  rb_hash_aset(rbMap, STR2SYM("right"),       INT2NUM(SDLK_RIGHT));
+  rb_hash_aset(rbMap, STR2SYM("rmenu"),       INT2NUM(SDLK_RALT));
+  rb_hash_aset(rbMap, STR2SYM("rshiftkey"),   INT2NUM(SDLK_RSHIFT));
+  rb_hash_aset(rbMap, STR2SYM("rwin"),        INT2NUM(SDLK_RSUPER));
+  rb_hash_aset(rbMap, STR2SYM("scroll"),      INT2NUM(SDLK_SCROLLOCK));
+  rb_hash_aset(rbMap, STR2SYM("space"),       INT2NUM(SDLK_SPACE));
+  rb_hash_aset(rbMap, STR2SYM("subtract"),    INT2NUM(SDLK_KP_MINUS));
+  rb_hash_aset(rbMap, STR2SYM("tab"),         INT2NUM(SDLK_TAB));
+  rb_hash_aset(rbMap, STR2SYM("up"),          INT2NUM(SDLK_UP));
 }
 
 #ifdef DEBUG
@@ -111,30 +142,30 @@ void TestInput(void)
   printf("Begin Test: Input\n");
   
   VALUE rbMap = rb_iv_get(rb_mInput, "keyboard_key_map");
-  assert(SDLK_a   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("a")))));
-  assert(SDLK_b   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("b")))));
-  assert(SDLK_c   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("c")))));
-  assert(SDLK_e   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("e")))));
-  assert(SDLK_i   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("i")))));
-  assert(SDLK_q   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("q")))));
-  assert(SDLK_z   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("z")))));
-  assert(SDLK_0   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("d0")))));
-  assert(SDLK_1   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("d1")))));
-  assert(SDLK_2   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("d2")))));
-  assert(SDLK_4   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("d4")))));
-  assert(SDLK_8   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("d8")))));
-  assert(SDLK_9   == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("d9")))));
-  assert(SDLK_F1  == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("f1")))));
-  assert(SDLK_F2  == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("f2")))));
-  assert(SDLK_F4  == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("f4")))));
-  assert(SDLK_F8  == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("f8")))));
-  assert(SDLK_F15 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("f15")))));
-  assert(SDLK_KP0 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("numpad0")))));
-  assert(SDLK_KP1 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("numpad1")))));
-  assert(SDLK_KP2 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("numpad2")))));
-  assert(SDLK_KP4 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("numpad4")))));
-  assert(SDLK_KP8 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("numpad8")))));
-  assert(SDLK_KP9 == NUM2INT(rb_hash_aref(rbMap, ID2SYM(rb_intern("numpad9")))));
+  assert(SDLK_a   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("a"))));
+  assert(SDLK_b   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("b"))));
+  assert(SDLK_c   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("c"))));
+  assert(SDLK_e   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("e"))));
+  assert(SDLK_i   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("i"))));
+  assert(SDLK_q   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("q"))));
+  assert(SDLK_z   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("z"))));
+  assert(SDLK_0   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d0"))));
+  assert(SDLK_1   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d1"))));
+  assert(SDLK_2   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d2"))));
+  assert(SDLK_4   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d4"))));
+  assert(SDLK_8   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d8"))));
+  assert(SDLK_9   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d9"))));
+  assert(SDLK_F1  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f1"))));
+  assert(SDLK_F2  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f2"))));
+  assert(SDLK_F4  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f4"))));
+  assert(SDLK_F8  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f8"))));
+  assert(SDLK_F15 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f15"))));
+  assert(SDLK_KP0 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad0"))));
+  assert(SDLK_KP1 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad1"))));
+  assert(SDLK_KP2 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad2"))));
+  assert(SDLK_KP4 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad4"))));
+  assert(SDLK_KP8 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad8"))));
+  assert(SDLK_KP9 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad9"))));
 
   printf("End Test: Input\n");
 }

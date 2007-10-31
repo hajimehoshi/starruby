@@ -1,7 +1,5 @@
 #include "starruby.h"
 
-static VALUE rb_cFont;
-
 static VALUE symbol_bold;
 static VALUE symbol_italic;
 static VALUE symbol_ttc_index;

@@ -7,8 +7,6 @@ static double realFps = 0;
 static bool running = false;
 static bool terminated = false;
 
-static VALUE rbScreen;
-
 static VALUE Game_fps(VALUE self)
 {
   return INT2NUM(fps);
@@ -97,10 +95,11 @@ static VALUE Game_running(VALUE self)
 
 static VALUE Game_screen(VALUE self)
 {
+  VALUE rbScreen = rb_iv_get(self, "screen");
   if (NIL_P(rbScreen)) {
     rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                           INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
-    rb_define_readonly_variable("screen", &rbScreen); // for GC
+    rb_iv_set(self, "screen", rbScreen);
   }
   return rbScreen;
 }
@@ -146,6 +145,4 @@ void InitializeGame(void)
   rb_define_singleton_method(rb_mGame, "terminate", Game_terminate, 0);
   rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
   rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
-
-  rbScreen = Qnil;
 }

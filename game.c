@@ -7,7 +7,6 @@ static double realFps = 0;
 static bool running = false;
 static bool terminated = false;
 
-static VALUE rbInput;
 static VALUE rbScreen;
 
 static VALUE Game_fps(VALUE self)
@@ -19,15 +18,6 @@ static VALUE Game_fps_eq(VALUE self, VALUE rbFps)
 {
   fps = NUM2INT(rbFps);
   return rbFps;
-}
-
-static VALUE Game_input(VALUE self)
-{
-  if (NIL_P(rbInput)) {
-    rbInput = rb_funcall(rb_cInput, rb_intern("new"), 0);
-    rb_define_readonly_variable("input", &rbInput); // for GC
-  }
-  return rbInput;
 }
 
 static VALUE Game_real_fps(VALUE self)
@@ -149,7 +139,6 @@ void InitializeGame(void)
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_singleton_method(rb_mGame, "fps",       Game_fps,       0);
   rb_define_singleton_method(rb_mGame, "fps=",      Game_fps_eq,    1);
-  rb_define_singleton_method(rb_mGame, "input",     Game_input,     0);
   rb_define_singleton_method(rb_mGame, "real_fps",  Game_real_fps,  0);
   rb_define_singleton_method(rb_mGame, "run",       Game_run,       -1);
   rb_define_singleton_method(rb_mGame, "running?",  Game_running,   0);
@@ -158,6 +147,5 @@ void InitializeGame(void)
   rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
   rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
 
-  rbInput = Qnil;
   rbScreen = Qnil;
 }

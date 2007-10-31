@@ -1,5 +1,8 @@
 #include "starruby.h"
 
+static int sdlJoystickCount;
+static SDL_Joystick** sdlJoysticks;
+
 static VALUE symbol_game_pad;
 static VALUE symbol_keyboard;
 static VALUE symbol_mouse;
@@ -21,29 +24,49 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 
 void UpdateInput()
 {
-  int x, y;
-  SDL_GetMouseState(&x, &y);
-  rbMouseLocation = rb_assoc_new(INT2NUM(x), INT2NUM(y));
+  SDL_JoystickUpdate();
+
+  // Keyboard
+
+  // Game Pad
+
+  // Mouse
+  int mouseLocationX, mouseLocationY;
+  SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
+  rbMouseLocation = rb_assoc_new(INT2NUM(mouseLocationX),
+                                 INT2NUM(mouseLocationY));
   OBJ_FREEZE(rbMouseLocation);
 }
 
 void InitializeSdlInput()
 {
   SDL_JoystickEventState(SDL_ENABLE);
+  sdlJoystickCount = SDL_NumJoysticks();
+  sdlJoysticks = ALLOC_N(SDL_Joystick*, sdlJoystickCount);
+  for (int i = 0; i < sdlJoystickCount; i++) {
+    sdlJoysticks[i] = SDL_JoystickOpen(i);
+  }
 }
 
 void FinalizeSdlInput()
 {
+  for (int i = 0; i < sdlJoystickCount; i++) {
+    if (SDL_JoystickOpened(i))
+      SDL_JoystickClose(sdlJoysticks[i]);
+    sdlJoysticks[i] = NULL;
+  }
+  free(sdlJoysticks);
+  sdlJoysticks = NULL;
 }
 
 void InitializeInput(void)
 {
-  rb_cInput = rb_define_class_under(rb_mStarRuby, "Input", rb_cObject);
-  rb_define_method(rb_cInput, "mouse_location", Input_mouse_location, 0);
-  rb_define_method(rb_cInput, "pressed_keys",   Input_pressed_keys,   0);
-  rb_funcall(rb_singleton_class(rb_cInput), rb_intern("private"), 1,
-             ID2SYM(rb_intern("new")));
-
+  rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
+  rb_define_singleton_method(rb_mInput, "mouse_location",
+                             Input_mouse_location, 0);
+  rb_define_singleton_method(rb_mInput, "pressed_keys",
+                             Input_pressed_keys,   0);
+  
   symbol_game_pad = ID2SYM(rb_intern("game_pad"));
   symbol_keyboard = ID2SYM(rb_intern("keyboard"));
   symbol_mouse    = ID2SYM(rb_intern("mouse"));

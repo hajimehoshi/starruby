@@ -893,20 +893,10 @@ end
 
 class InputTest < Test::Unit::TestCase
   
-  def test_input
-    assert_kind_of Input, Game.input
-  end
-  
-  def test_new
-    assert_raise NoMethodError do
-      Input.new
-    end
-  end
-  
   def test_mouse_location
-    assert_kind_of Array, Game.input.mouse_location
-    assert_equal 2, Game.input.mouse_location.size
-    assert Game.input.mouse_location.frozen?
+    assert_kind_of Array, Input.mouse_location
+    assert_equal 2, Input.mouse_location.size
+    assert Input.mouse_location.frozen?
   end
   
 end

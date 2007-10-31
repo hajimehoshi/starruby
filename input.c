@@ -5,6 +5,15 @@
 static int sdlJoystickCount;
 static SDL_Joystick** sdlJoysticks;
 
+typedef struct KeyboardKey {
+  VALUE rbSymbol;
+  SDLKey sdlKey;
+  int state;
+  struct KeyboardKey* next;
+} KeyboardKey;
+
+KeyboardKey* keyboardKeys;
+
 static VALUE symbol_game_pad;
 static VALUE symbol_keyboard;
 static VALUE symbol_mouse;
@@ -60,6 +69,14 @@ void InitializeSdlInput()
 
 void FinalizeSdlInput()
 {
+  KeyboardKey* key = keyboardKeys;
+  while (key) {
+    KeyboardKey* nextKey = key->next;
+    free(key);
+    key = nextKey;
+  }
+  keyboardKeys = NULL;
+  
   for (int i = 0; i < sdlJoystickCount; i++) {
     if (SDL_JoystickOpened(i))
       SDL_JoystickClose(sdlJoysticks[i]);
@@ -81,91 +98,152 @@ void InitializeInput(void)
   symbol_keyboard = ID2SYM(rb_intern("keyboard"));
   symbol_mouse    = ID2SYM(rb_intern("mouse"));
 
-  VALUE rbMap = rb_hash_new();
-  rb_iv_set(rb_mInput, "keyboard_key_map", rbMap);
+  keyboardKeys = ALLOC(KeyboardKey);
+  keyboardKeys->rbSymbol = Qundef;
+  keyboardKeys->sdlKey   = 0;
+  keyboardKeys->state    = 0;
+  keyboardKeys->next     = NULL;
   
+  KeyboardKey* currentKey = keyboardKeys;
   for (int i = 0; i < SDLK_z - SDLK_a + 1; i++) {
-    char keyName[] = {'a' + i, '\0'};
-    rb_hash_aset(rbMap, ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_a + i));
+    KeyboardKey* key = ALLOC(KeyboardKey);
+    key->rbSymbol = ID2SYM(rb_intern((char[]){'a' + i, '\0'}));
+    key->sdlKey   = SDLK_a + i;
+    key->state    = 0;
+    key->next     = NULL;
+    currentKey->next = key;
+    currentKey = key;
   }
   for (int i = 0; i <= 9; i++) {
-    char keyName[] = {'d', '0' + i, '\0'};
-    rb_hash_aset(rbMap, ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_0 + i));
+    KeyboardKey* key = ALLOC(KeyboardKey);
+    key->rbSymbol = ID2SYM(rb_intern((char[]){'d', '0' + i, '\0'}));
+    key->sdlKey   = SDLK_0 + i;
+    key->state    = 0;
+    key->next     = NULL;
+    currentKey->next = key;
+    currentKey = key;
   }
   for (int i = 0; i < 15; i++) {
     char keyName[4];
     snprintf(keyName, sizeof(keyName), "f%d", i + 1);
-    rb_hash_aset(rbMap, ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_F1 + i));
+    KeyboardKey* key = ALLOC(KeyboardKey);
+    key->rbSymbol = ID2SYM(rb_intern(keyName));
+    key->sdlKey   = SDLK_F1 + i;
+    key->state    = 0;
+    key->next     = NULL;
+    currentKey->next = key;
+    currentKey = key;
   }
   for (int i = 0; i <= 9; i++) {
-    char keyName[] = {'n', 'u', 'm', 'p', 'a', 'd', '0' + i, '\0'};
-    rb_hash_aset(rbMap,ID2SYM(rb_intern(keyName)), INT2NUM(SDLK_KP0 + i));
+    char keyName[] = "numpad\0";
+    keyName[6] = '0' + i;
+    KeyboardKey* key = ALLOC(KeyboardKey);
+    key->rbSymbol = ID2SYM(rb_intern(keyName));
+    key->sdlKey   = SDLK_KP0 + i;
+    key->state    = 0;
+    key->next     = NULL;
+    currentKey->next = key;
+    currentKey = key;
   }
-  rb_hash_aset(rbMap, STR2SYM("add"),         INT2NUM(SDLK_KP_PLUS));
-  rb_hash_aset(rbMap, STR2SYM("back"),        INT2NUM(SDLK_BACKSPACE));
-  rb_hash_aset(rbMap, STR2SYM("capslock"),    INT2NUM(SDLK_CAPSLOCK));
-  rb_hash_aset(rbMap, STR2SYM("clear"),       INT2NUM(SDLK_CLEAR));
-  rb_hash_aset(rbMap, STR2SYM("decimal"),     INT2NUM(SDLK_PERIOD));
-  rb_hash_aset(rbMap, STR2SYM("delete"),      INT2NUM(SDLK_DELETE));
-  rb_hash_aset(rbMap, STR2SYM("divide"),      INT2NUM(SDLK_KP_DIVIDE));
-  rb_hash_aset(rbMap, STR2SYM("down"),        INT2NUM(SDLK_DOWN));
-  rb_hash_aset(rbMap, STR2SYM("end"),         INT2NUM(SDLK_END));
-  rb_hash_aset(rbMap, STR2SYM("enter"),       INT2NUM(SDLK_RETURN));
-  rb_hash_aset(rbMap, STR2SYM("escape"),      INT2NUM(SDLK_ESCAPE));
-  rb_hash_aset(rbMap, STR2SYM("help"),        INT2NUM(SDLK_HELP));
-  rb_hash_aset(rbMap, STR2SYM("home"),        INT2NUM(SDLK_HOME));
-  rb_hash_aset(rbMap, STR2SYM("insert"),      INT2NUM(SDLK_INSERT));
-  rb_hash_aset(rbMap, STR2SYM("lcontrolkey"), INT2NUM(SDLK_LCTRL));
-  rb_hash_aset(rbMap, STR2SYM("left"),        INT2NUM(SDLK_LEFT));
-  rb_hash_aset(rbMap, STR2SYM("lmenu"),       INT2NUM(SDLK_LALT));
-  rb_hash_aset(rbMap, STR2SYM("lshiftkey"),   INT2NUM(SDLK_LSHIFT));
-  rb_hash_aset(rbMap, STR2SYM("lwin"),        INT2NUM(SDLK_LSUPER));
-  rb_hash_aset(rbMap, STR2SYM("multiply"),    INT2NUM(SDLK_KP_MULTIPLY));
-  rb_hash_aset(rbMap, STR2SYM("numlock"),     INT2NUM(SDLK_NUMLOCK));
-  rb_hash_aset(rbMap, STR2SYM("pagedown"),    INT2NUM(SDLK_PAGEDOWN));
-  rb_hash_aset(rbMap, STR2SYM("pageup"),      INT2NUM(SDLK_PAGEUP));
-  rb_hash_aset(rbMap, STR2SYM("rcontrolkey"), INT2NUM(SDLK_RCTRL));
-  rb_hash_aset(rbMap, STR2SYM("right"),       INT2NUM(SDLK_RIGHT));
-  rb_hash_aset(rbMap, STR2SYM("rmenu"),       INT2NUM(SDLK_RALT));
-  rb_hash_aset(rbMap, STR2SYM("rshiftkey"),   INT2NUM(SDLK_RSHIFT));
-  rb_hash_aset(rbMap, STR2SYM("rwin"),        INT2NUM(SDLK_RSUPER));
-  rb_hash_aset(rbMap, STR2SYM("scroll"),      INT2NUM(SDLK_SCROLLOCK));
-  rb_hash_aset(rbMap, STR2SYM("space"),       INT2NUM(SDLK_SPACE));
-  rb_hash_aset(rbMap, STR2SYM("subtract"),    INT2NUM(SDLK_KP_MINUS));
-  rb_hash_aset(rbMap, STR2SYM("tab"),         INT2NUM(SDLK_TAB));
-  rb_hash_aset(rbMap, STR2SYM("up"),          INT2NUM(SDLK_UP));
+  char* names[] = {
+    "add",
+    "back",
+    "capslock", "clear",
+    "decimal", "delete", "divide", "down",
+    "end", "enter", "escape",
+    "help", "home",
+    "insert",
+    "lcontrolkey", "left", "lmenu", "lshiftkey", "lwin",
+    "multiply",
+    "numlock",
+    "pagedown", "pageup",
+    "rcontrolkey", "right", "rmenu", "rshiftkey", "rwin",
+    "scroll", "space", "subtract",
+    "tab",
+    "up",
+    NULL,
+  };
+  SDLKey sdlKeys[] = {
+    SDLK_KP_PLUS,
+    SDLK_BACKSPACE,
+    SDLK_CAPSLOCK, SDLK_CLEAR,
+    SDLK_PERIOD, SDLK_DELETE, SDLK_KP_DIVIDE, SDLK_DOWN,
+    SDLK_END, SDLK_RETURN, SDLK_ESCAPE,
+    SDLK_HELP, SDLK_HOME,
+    SDLK_INSERT,
+    SDLK_LCTRL, SDLK_LEFT, SDLK_LALT, SDLK_LSHIFT, SDLK_LSUPER,
+    SDLK_KP_MULTIPLY, SDLK_NUMLOCK,
+    SDLK_PAGEDOWN, SDLK_PAGEUP,
+    SDLK_RCTRL, SDLK_RIGHT, SDLK_RALT, SDLK_RSHIFT, SDLK_RSUPER,
+    SDLK_SCROLLOCK, SDLK_SPACE, SDLK_KP_MINUS,
+    SDLK_TAB,
+    SDLK_UP,
+    -1,
+  };
+  char** name = names;
+  for (SDLKey* sdlKey = sdlKeys;
+       *name;
+       name++, sdlKey++) {
+    KeyboardKey* key = ALLOC(KeyboardKey);
+    key->rbSymbol = ID2SYM(rb_intern(*name));
+    key->sdlKey   = *sdlKey;
+    key->state    = 0;
+    key->next     = NULL;
+    currentKey->next = key;
+    currentKey = key;
+  }
 }
 
 #ifdef DEBUG
+static KeyboardKey* searchKey(const char* name)
+{
+  VALUE rbNameSymbol = STR2SYM(name);
+  KeyboardKey* key = keyboardKeys;
+  while (key) {
+    if (key->rbSymbol == rbNameSymbol)
+      return key;
+    key = key->next;
+  }
+  return NULL;
+}
+
+
 void TestInput(void)
 {
   printf("Begin Test: Input\n");
-  
-  VALUE rbMap = rb_iv_get(rb_mInput, "keyboard_key_map");
-  assert(SDLK_a   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("a"))));
-  assert(SDLK_b   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("b"))));
-  assert(SDLK_c   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("c"))));
-  assert(SDLK_e   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("e"))));
-  assert(SDLK_i   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("i"))));
-  assert(SDLK_q   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("q"))));
-  assert(SDLK_z   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("z"))));
-  assert(SDLK_0   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d0"))));
-  assert(SDLK_1   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d1"))));
-  assert(SDLK_2   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d2"))));
-  assert(SDLK_4   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d4"))));
-  assert(SDLK_8   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d8"))));
-  assert(SDLK_9   == NUM2INT(rb_hash_aref(rbMap, STR2SYM("d9"))));
-  assert(SDLK_F1  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f1"))));
-  assert(SDLK_F2  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f2"))));
-  assert(SDLK_F4  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f4"))));
-  assert(SDLK_F8  == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f8"))));
-  assert(SDLK_F15 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("f15"))));
-  assert(SDLK_KP0 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad0"))));
-  assert(SDLK_KP1 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad1"))));
-  assert(SDLK_KP2 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad2"))));
-  assert(SDLK_KP4 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad4"))));
-  assert(SDLK_KP8 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad8"))));
-  assert(SDLK_KP9 == NUM2INT(rb_hash_aref(rbMap, STR2SYM("numpad9"))));
+
+  assert(SDLK_a == searchKey("a")->sdlKey);
+  assert(SDLK_b == searchKey("b")->sdlKey);
+  assert(SDLK_c == searchKey("c")->sdlKey);
+  assert(SDLK_e == searchKey("e")->sdlKey);
+  assert(SDLK_i == searchKey("i")->sdlKey);
+  assert(SDLK_q == searchKey("q")->sdlKey);
+  assert(SDLK_z == searchKey("z")->sdlKey);
+
+  assert(SDLK_0 == searchKey("d0")->sdlKey);
+  assert(SDLK_1 == searchKey("d1")->sdlKey);
+  assert(SDLK_2 == searchKey("d2")->sdlKey);
+  assert(SDLK_4 == searchKey("d4")->sdlKey);
+  assert(SDLK_8 == searchKey("d8")->sdlKey);
+  assert(SDLK_9 == searchKey("d9")->sdlKey);
+
+  assert(SDLK_F1  == searchKey("f1")->sdlKey);
+  assert(SDLK_F2  == searchKey("f2")->sdlKey);
+  assert(SDLK_F4  == searchKey("f4")->sdlKey);
+  assert(SDLK_F8  == searchKey("f8")->sdlKey);
+  assert(SDLK_F15 == searchKey("f15")->sdlKey);
+
+  assert(SDLK_KP0 == searchKey("numpad0")->sdlKey);
+  assert(SDLK_KP1 == searchKey("numpad1")->sdlKey);
+  assert(SDLK_KP2 == searchKey("numpad2")->sdlKey);
+  assert(SDLK_KP4 == searchKey("numpad4")->sdlKey);
+  assert(SDLK_KP8 == searchKey("numpad8")->sdlKey);
+  assert(SDLK_KP9 == searchKey("numpad9")->sdlKey);
+
+  assert(SDLK_DOWN  == searchKey("down")->sdlKey);
+  assert(SDLK_LEFT  == searchKey("left")->sdlKey);
+  assert(SDLK_RIGHT == searchKey("right")->sdlKey);
+  assert(SDLK_UP    == searchKey("up")->sdlKey);
 
   printf("End Test: Input\n");
 }

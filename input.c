@@ -21,6 +21,9 @@ typedef struct KeyboardKey {
 } KeyboardKey;
 
 static KeyboardKey* keyboardKeys;
+static int mouseButtonLeftState;
+static int mouseButtonMiddleState;
+static int mouseButtonRightState;
 
 static VALUE symbol_delay;
 static VALUE symbol_device_number;
@@ -28,7 +31,10 @@ static VALUE symbol_duration;
 static VALUE symbol_game_pad;
 static VALUE symbol_interval;
 static VALUE symbol_keyboard;
+static VALUE symbol_left;
+static VALUE symbol_middle;
 static VALUE symbol_mouse;
+static VALUE symbol_right;
 
 static VALUE Input_mouse_location(VALUE self)
 {
@@ -80,6 +86,12 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
   }
   } else if (rbDevice == symbol_game_pad) {
   } else if (rbDevice == symbol_mouse) {
+    if (isPressed(mouseButtonLeftState, duration, delay, interval))
+      rb_ary_push(rbResult, symbol_left);
+    if (isPressed(mouseButtonMiddleState, duration, delay, interval))
+      rb_ary_push(rbResult, symbol_middle);
+    if (isPressed(mouseButtonRightState, duration, delay, interval))
+      rb_ary_push(rbResult, symbol_right);
   }
 
   OBJ_FREEZE(rbResult);
@@ -90,7 +102,6 @@ void UpdateInput()
 {
   SDL_JoystickUpdate();
 
-  // Keyboard
   Uint8* sdlKeyState = SDL_GetKeyState(NULL);
   KeyboardKey* key = keyboardKeys;
   while (key) {
@@ -103,7 +114,6 @@ void UpdateInput()
 
   // Game Pad
 
-  // Mouse
   int mouseLocationX, mouseLocationY;
   Uint8 sdlMouseButtons = SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
   VALUE rbMouseLocation = rb_assoc_new(INT2NUM(mouseLocationX),
@@ -111,11 +121,17 @@ void UpdateInput()
   OBJ_FREEZE(rbMouseLocation);
 
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT))
-    ;
+    mouseButtonLeftState++;
+  else
+    mouseButtonLeftState = 0;
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
-    ;
+    mouseButtonMiddleState++;
+  else
+    mouseButtonMiddleState = 0;
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_RIGHT))
-    ;
+    mouseButtonRightState++;
+  else
+    mouseButtonRightState = 0;
   
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 }
@@ -163,7 +179,10 @@ void InitializeInput(void)
   symbol_game_pad      = ID2SYM(rb_intern("game_pad"));
   symbol_interval      = ID2SYM(rb_intern("interval"));
   symbol_keyboard      = ID2SYM(rb_intern("keyboard"));
+  symbol_left          = ID2SYM(rb_intern("left"));
+  symbol_middle        = ID2SYM(rb_intern("middle"));
   symbol_mouse         = ID2SYM(rb_intern("mouse"));
+  symbol_right         = ID2SYM(rb_intern("right"));
 
   keyboardKeys = ALLOC(KeyboardKey);
   keyboardKeys->rbSymbol = Qundef; // dummy
@@ -225,6 +244,10 @@ void InitializeInput(void)
        *name;
        name++, sdlKey++)
     ADD_KEY(currentKey, *name, *sdlKey);
+
+  mouseButtonLeftState   = 0;
+  mouseButtonMiddleState = 0;
+  mouseButtonRightState  = 0;
 }
 
 #ifdef DEBUG

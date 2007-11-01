@@ -12,6 +12,8 @@ Game.run do
   
   keys = Input.pressed_keys(:keyboard, :duration => 3, :delay => 3, :interval => 1)
   Game.screen.render_text(keys.inspect, 0, 0, font, color);
-  keys = Input.pressed_keys(:mouse)
+  keys = Input.pressed_keys(:game_pad)
   Game.screen.render_text(keys.inspect, 0, 16, font, color);
+  keys = Input.pressed_keys(:mouse)
+  Game.screen.render_text(keys.inspect, 0, 32, font, color);
 end

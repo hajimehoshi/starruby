@@ -899,4 +899,13 @@ class InputTest < Test::Unit::TestCase
     assert Input.mouse_location.frozen?
   end
   
+  def test_game_pad_device_number
+    assert_raise RangeError do
+      Input.pressed_keys(:game_pad, :device_number => -1)
+    end
+    assert_raise RangeError do
+      Input.pressed_keys(:game_pad, :device_number => 100)
+    end
+  end
+  
 end

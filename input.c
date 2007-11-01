@@ -100,7 +100,7 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
       key = key->next;
     }
   } else if (rbDevice == symbol_game_pad) {
-    if (0 < deviceNumber < 0 && deviceNumber < gamePadCount) {
+    if (0 <= deviceNumber && deviceNumber < gamePadCount) {
       GamePad* gamePad = &(gamePads[deviceNumber]);
       if (isPressed(gamePad->downState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_down);
@@ -206,10 +206,9 @@ void InitializeSdlInput()
     snprintf(name, sizeof(name), "f%d", i + 1);
     ADD_KEY(currentKey, name, SDLK_F1 + i);
   }
-  for (int i = 0; i <= 9; i++) {
+  for (int i = 0; i <= 9; i++)
     ADD_KEY(currentKey, ((char[]){'n','u','m','p','a','d', '0' + i, '\0'}),
             SDLK_KP0 + i);
-  }
   char* names[] = {
     "add",
     "back",
@@ -257,6 +256,8 @@ void InitializeSdlInput()
   MEMZERO(gamePads, GamePad, gamePadCount);
   for (int i = 0; i < gamePadCount; i++) {
     SDL_Joystick* ptr = gamePads[i].sdlJoystick = SDL_JoystickOpen(i);
+    if (ptr == NULL)
+      rb_raise_sdl_error();
     int buttonCount = gamePads[i].buttonCount = SDL_JoystickNumButtons(ptr);
     gamePads[i].buttonStates = ALLOC_N(int, buttonCount);
     MEMZERO(gamePads[i].buttonStates, int, buttonCount);
@@ -272,11 +273,12 @@ void FinalizeSdlInput()
   mouse = NULL;
   
   for (int i = 0; i < gamePadCount; i++) {
+    GamePad* gamePad = &(gamePads[i]);
     if (SDL_JoystickOpened(i))
-      SDL_JoystickClose(gamePads[i].sdlJoystick);
-    gamePads[i].sdlJoystick = NULL;
-    free(gamePads[i].buttonStates);
-    gamePads[i].buttonStates = NULL;
+      SDL_JoystickClose(gamePad->sdlJoystick);
+    gamePad->sdlJoystick = NULL;
+    free(gamePad->buttonStates);
+    gamePad->buttonStates = NULL;
   }
   free(gamePads);
   gamePads = NULL;

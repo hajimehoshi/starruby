@@ -31,9 +31,12 @@ typedef struct {
 } GamePad;
 static GamePad* gamePads;
 
-static int mouseButtonLeftState;
-static int mouseButtonMiddleState;
-static int mouseButtonRightState;
+typedef struct {
+  int leftState;
+  int middleState;
+  int rightState;
+} Mouse;
+static Mouse* mouse;
 
 static VALUE symbol_delay;
 static VALUE symbol_device_number;
@@ -114,11 +117,11 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
       if (isPressed(gamePad->buttonStates[i], duration, delay, interval))
         rb_ary_push(rbResult, INT2NUM(i + 1));
   } else if (rbDevice == symbol_mouse) {
-    if (isPressed(mouseButtonLeftState, duration, delay, interval))
+    if (isPressed(mouse->leftState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_left);
-    if (isPressed(mouseButtonMiddleState, duration, delay, interval))
+    if (isPressed(mouse->middleState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_middle);
-    if (isPressed(mouseButtonRightState, duration, delay, interval))
+    if (isPressed(mouse->rightState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_right);
   }
 
@@ -172,17 +175,17 @@ void UpdateInput()
   OBJ_FREEZE(rbMouseLocation);
 
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT))
-    mouseButtonLeftState++;
+    mouse->leftState++;
   else
-    mouseButtonLeftState = 0;
+    mouse->leftState = 0;
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
-    mouseButtonMiddleState++;
+    mouse->middleState++;
   else
-    mouseButtonMiddleState = 0;
+    mouse->middleState = 0;
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_RIGHT))
-    mouseButtonRightState++;
+    mouse->rightState++;
   else
-    mouseButtonRightState = 0;
+    mouse->rightState = 0;
   
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 }
@@ -261,13 +264,15 @@ void InitializeSdlInput()
     MEMZERO(gamePads[i].buttonStates, int, buttonCount);
   }
 
-  mouseButtonLeftState   = 0;
-  mouseButtonMiddleState = 0;
-  mouseButtonRightState  = 0;
+  mouse = ALLOC(Mouse);
+  MEMZERO(mouse, Mouse, 1);
 }
 
 void FinalizeSdlInput()
 {
+  free(mouse);
+  mouse = NULL;
+  
   for (int i = 0; i < gamePadCount; i++) {
     if (SDL_JoystickOpened(i))
       SDL_JoystickClose(gamePads[i].sdlJoystick);

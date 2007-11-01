@@ -298,7 +298,7 @@ void InitializeInput(void)
   rb_define_singleton_method(rb_mInput, "mouse_location",
                              Input_mouse_location, 0);
   rb_define_singleton_method(rb_mInput, "pressed_keys",
-                             Input_pressed_keys,   -1);
+                             Input_pressed_keys, -1);
 
   symbol_delay         = ID2SYM(rb_intern("delay"));
   symbol_device_number = ID2SYM(rb_intern("device_number"));

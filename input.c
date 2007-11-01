@@ -100,22 +100,20 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
       key = key->next;
     }
   } else if (rbDevice == symbol_game_pad) {
-    if (deviceNumber < 0 || gamePadCount <= deviceNumber) {
-      rb_raise(rb_eRangeError, "device number out of range");
-      return Qnil;
+    if (0 < deviceNumber < 0 && deviceNumber < gamePadCount) {
+      GamePad* gamePad = &(gamePads[deviceNumber]);
+      if (isPressed(gamePad->downState, duration, delay, interval))
+        rb_ary_push(rbResult, symbol_down);
+      if (isPressed(gamePad->leftState, duration, delay, interval))
+        rb_ary_push(rbResult, symbol_left);
+      if (isPressed(gamePad->rightState, duration, delay, interval))
+        rb_ary_push(rbResult, symbol_right);
+      if (isPressed(gamePad->upState, duration, delay, interval))
+        rb_ary_push(rbResult, symbol_up);
+      for (int i = 0; i < gamePad->buttonCount; i++)
+        if (isPressed(gamePad->buttonStates[i], duration, delay, interval))
+          rb_ary_push(rbResult, INT2NUM(i + 1));
     }
-    GamePad* gamePad = &(gamePads[deviceNumber]);
-    if (isPressed(gamePad->downState, duration, delay, interval))
-      rb_ary_push(rbResult, symbol_down);
-    if (isPressed(gamePad->leftState, duration, delay, interval))
-      rb_ary_push(rbResult, symbol_left);
-    if (isPressed(gamePad->rightState, duration, delay, interval))
-      rb_ary_push(rbResult, symbol_right);
-    if (isPressed(gamePad->upState, duration, delay, interval))
-      rb_ary_push(rbResult, symbol_up);
-    for (int i = 0; i < gamePad->buttonCount; i++)
-      if (isPressed(gamePad->buttonStates[i], duration, delay, interval))
-        rb_ary_push(rbResult, INT2NUM(i + 1));
   } else if (rbDevice == symbol_mouse) {
     if (isPressed(mouse->leftState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_left);

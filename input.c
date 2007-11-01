@@ -35,27 +35,6 @@ static VALUE Input_mouse_location(VALUE self)
   return rb_iv_get(rb_mInput, "mouse_location");
 }
 
-static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
-{
-  VALUE rbDevice, rbOptions;
-  rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
-
-  
-
-  if (rbDevice == symbol_keyboard) {
-    KeyboardKey* key = keyboardKeys;
-  while (key) {
-    key = key->next;
-  }
-  } else if (rbDevice == symbol_game_pad) {
-  } else if (rbDevice == symbol_mouse) {
-  }
-  
-  return Qnil;
-}
-
 static bool isPressed(int status, int duration, int delay, int interval)
 {
   if (status <= 0 || duration == 0)
@@ -71,6 +50,40 @@ static bool isPressed(int status, int duration, int delay, int interval)
   if (0 <= interval)
     return (status - (duration + delay + 1)) % (interval + 1) == 0;
   return false;
+}
+
+static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
+{
+  VALUE rbDevice, rbOptions;
+  rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+
+  VALUE rbResult = rb_ary_new();
+
+  VALUE rbDeviceNumber = rb_hash_aref(rbOptions, symbol_device_number);
+  VALUE rbDuration     = rb_hash_aref(rbOptions, symbol_duration);
+  VALUE rbDelay        = rb_hash_aref(rbOptions, symbol_delay);
+  VALUE rbInterval     = rb_hash_aref(rbOptions, symbol_interval);
+
+  int deviceNumber = !NIL_P(rbDeviceNumber) ? NUM2INT(rbDeviceNumber) : 0;
+  int duration     = !NIL_P(rbDuration)     ? NUM2INT(rbDuration)     : -1;
+  int delay        = !NIL_P(rbDelay)        ? NUM2INT(rbDelay)        : -1;
+  int interval     = !NIL_P(rbInterval)     ? NUM2INT(rbInterval)     : 0;
+
+  if (rbDevice == symbol_keyboard) {
+    KeyboardKey* key = keyboardKeys;
+  while (key) {
+    if (isPressed(key->state, duration, delay, interval))
+      rb_ary_push(rbResult, key->rbSymbol);
+    key = key->next;
+  }
+  } else if (rbDevice == symbol_game_pad) {
+  } else if (rbDevice == symbol_mouse) {
+  }
+
+  OBJ_FREEZE(rbResult);
+  return rbResult;
 }
 
 void UpdateInput()
@@ -142,7 +155,7 @@ void InitializeInput(void)
   rb_define_singleton_method(rb_mInput, "mouse_location",
                              Input_mouse_location, 0);
   rb_define_singleton_method(rb_mInput, "pressed_keys",
-                             Input_pressed_keys,   0);
+                             Input_pressed_keys,   -1);
 
   symbol_delay         = ID2SYM(rb_intern("delay"));
   symbol_device_number = ID2SYM(rb_intern("device_number"));

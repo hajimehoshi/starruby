@@ -9,7 +9,6 @@
   currentKey->next = key;\
   currentKey = key;\
 } while (false)
-#define STR2SYM(x) ID2SYM(rb_intern(x))
 
 static int sdlJoystickCount;
 static SDL_Joystick** sdlJoysticks;
@@ -21,10 +20,13 @@ typedef struct KeyboardKey {
   struct KeyboardKey* next;
 } KeyboardKey;
 
-KeyboardKey* keyboardKeys;
+static KeyboardKey* keyboardKeys;
 
-static VALUE symbol_device;
+static VALUE symbol_delay;
+static VALUE symbol_device_number;
+static VALUE symbol_duration;
 static VALUE symbol_game_pad;
+static VALUE symbol_interval;
 static VALUE symbol_keyboard;
 static VALUE symbol_mouse;
 
@@ -39,6 +41,8 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+
+  
 
   if (rbDevice == symbol_keyboard) {
     KeyboardKey* key = keyboardKeys;
@@ -140,10 +144,13 @@ void InitializeInput(void)
   rb_define_singleton_method(rb_mInput, "pressed_keys",
                              Input_pressed_keys,   0);
 
-  symbol_device   = ID2SYM(rb_intern("device"));
-  symbol_game_pad = ID2SYM(rb_intern("game_pad"));
-  symbol_keyboard = ID2SYM(rb_intern("keyboard"));
-  symbol_mouse    = ID2SYM(rb_intern("mouse"));
+  symbol_delay         = ID2SYM(rb_intern("delay"));
+  symbol_device_number = ID2SYM(rb_intern("device_number"));
+  symbol_duration      = ID2SYM(rb_intern("duration"));
+  symbol_game_pad      = ID2SYM(rb_intern("game_pad"));
+  symbol_interval      = ID2SYM(rb_intern("interval"));
+  symbol_keyboard      = ID2SYM(rb_intern("keyboard"));
+  symbol_mouse         = ID2SYM(rb_intern("mouse"));
 
   keyboardKeys = ALLOC(KeyboardKey);
   keyboardKeys->rbSymbol = Qundef; // dummy
@@ -210,7 +217,7 @@ void InitializeInput(void)
 #ifdef DEBUG
 static KeyboardKey* searchKey(const char* name)
 {
-  VALUE rbNameSymbol = STR2SYM(name);
+  VALUE rbNameSymbol = ID2SYM(rb_intern(name));
   KeyboardKey* key = keyboardKeys;
   while (key) {
     if (key->rbSymbol == rbNameSymbol)

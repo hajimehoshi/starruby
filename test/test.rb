@@ -190,6 +190,20 @@ class GameTest < Test::Unit::TestCase
     assert_equal 33, Game.fps
   end
   
+  def test_running
+    assert_equal false, Game.running?
+    Game.run do
+      assert_equal true, Game.running?
+      Game.terminate
+    end
+    assert_equal false, Game.running?
+    Game.run do
+      assert_equal true, Game.running?
+      Game.terminate
+    end
+    assert_equal false, Game.running?
+  end
+  
   def test_screen
     assert_nil Game.screen
     Game.run do

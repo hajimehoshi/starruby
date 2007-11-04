@@ -21,8 +21,11 @@ static VALUE Game_real_fps(VALUE self)
   return rb_float_new(realFps);
 }
 
-static VALUE doFrame(SDL_Surface* screen)
+static VALUE DoLoop(SDL_Surface* screen)
 {
+  running = true;
+  terminated = false;
+  
   VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
@@ -72,12 +75,10 @@ static VALUE doFrame(SDL_Surface* screen)
     if (terminated)
       break;
   }
-  running = false;
-
   return Qnil;
 }
 
-static VALUE disposeScreen(SDL_Surface* screen)
+static VALUE DisposeScreen(SDL_Surface* screen)
 {
   SDL_FreeSurface(screen);
   screen = NULL;
@@ -85,7 +86,14 @@ static VALUE disposeScreen(SDL_Surface* screen)
   if (!NIL_P(rbScreen))
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
   rb_iv_set(rb_mGame, "screen", Qnil);
-  
+  return Qnil;
+}
+
+static VALUE DoLoopEnsure(SDL_Surface* screen)
+{
+  DisposeScreen(screen);
+  running = false;
+  terminated = false;
   return Qnil;
 }
 
@@ -97,8 +105,6 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eStarRubyError, "already run");
     return Qnil;
   }
-  running = true;
-  terminated = false;
 
   VALUE rbBlock, rbWidth, rbHeight;
   rb_scan_args(argc, argv, "02&", &rbWidth, &rbHeight, &rbBlock);
@@ -114,12 +120,11 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
   SDL_Surface* screen = SDL_SetVideoMode(texture->width, texture->height,
                                          32, options);
-  if (screen == NULL) {
-    disposeScreen(screen);
+  if (!screen) {
+    DisposeScreen(screen);
     rb_raise_sdl_error();
   }
-  
-  rb_ensure(doFrame, (VALUE)screen, disposeScreen, (VALUE)screen);
+  rb_ensure(DoLoop, (VALUE)screen, DoLoopEnsure, (VALUE)screen);
   return Qnil;
 }
 

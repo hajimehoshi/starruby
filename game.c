@@ -3,7 +3,6 @@
 static int fps = 30;
 static double realFps = 0;
 static bool running = false;
-static SDL_Surface* screen = NULL;
 static bool terminated = false;
 
 static VALUE Game_fps(VALUE self)
@@ -22,7 +21,7 @@ static VALUE Game_real_fps(VALUE self)
   return rb_float_new(realFps);
 }
 
-static VALUE doFrame()
+static VALUE doFrame(SDL_Surface* screen)
 {
   VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   Texture* texture;
@@ -78,7 +77,7 @@ static VALUE doFrame()
   return Qnil;
 }
 
-static VALUE disposeScreen()
+static VALUE disposeScreen(SDL_Surface* screen)
 {
   SDL_FreeSurface(screen);
   screen = NULL;
@@ -113,13 +112,14 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   Data_Get_Struct(rbScreen, Texture, texture);
   
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
-  screen = SDL_SetVideoMode(texture->width, texture->height, 32, options);
+  SDL_Surface* screen = SDL_SetVideoMode(texture->width, texture->height,
+                                         32, options);
   if (screen == NULL) {
-    disposeScreen();
+    disposeScreen(screen);
     rb_raise_sdl_error();
   }
   
-  rb_ensure(doFrame, Qnil, disposeScreen, Qnil);
+  rb_ensure(doFrame, (VALUE)screen, disposeScreen, (VALUE)screen);
   return Qnil;
 }
 

@@ -80,10 +80,9 @@ static VALUE doFrame()
 
 static VALUE disposeScreen()
 {
-  VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
-  
   SDL_FreeSurface(screen);
   screen = NULL;
+  VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   if (!NIL_P(rbScreen))
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
   rb_iv_set(rb_mGame, "screen", Qnil);
@@ -116,10 +115,7 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
   screen = SDL_SetVideoMode(texture->width, texture->height, 32, options);
   if (screen == NULL) {
-    SDL_FreeSurface(screen);
-    if (!NIL_P(rbScreen))
-      rb_funcall(rbScreen, rb_intern("dispose"), 0);
-    rb_iv_set(self, "screen", Qnil);
+    disposeScreen();
     rb_raise_sdl_error();
   }
   

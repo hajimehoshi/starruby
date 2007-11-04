@@ -8,6 +8,7 @@
 #include <ruby.h>
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 #include <SDL_ttf.h>
 #ifdef WIN32
 #include <windows.h>
@@ -63,6 +64,8 @@ STARRUBY_EXTERN VALUE rb_cTone;
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
 #define rb_raise_sdl_image_error()\
   rb_raise(rb_eStarRubyError, "%s", IMG_GetError())
+#define rb_raise_sdl_mix_error()\
+  rb_raise(rb_eStarRubyError, "%s", Mix_GetError())
 #define rb_raise_sdl_ttf_error()\
   rb_raise(rb_eStarRubyError, "%s", TTF_GetError())
 
@@ -82,7 +85,9 @@ void InitializeTexture(void);
 
 void UpdateInput(void);
 
+void InitializeSdlAudio(void);
 void InitializeSdlInput(void);
+void FinalizeSdlAudio(void);
 void FinalizeSdlInput(void);
 
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);

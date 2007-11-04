@@ -53,6 +53,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   SDL_Surface* surface = SDL_DisplayFormatAlpha(imageSurface);
   if (!surface) {
     SDL_FreeSurface(imageSurface);
+    imageSurface = NULL;
     rb_raise_sdl_error();
     return Qnil;
   }
@@ -69,7 +70,9 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   SDL_UnlockSurface(surface);
 
   SDL_FreeSurface(surface);
+  surface = NULL;
   SDL_FreeSurface(imageSurface);
+  imageSurface = NULL;
   
   return rbTexture;
 }
@@ -358,6 +361,7 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
   SDL_Surface* textSurface = SDL_DisplayFormat(textSurfaceRaw);
   if (!textSurface) {
     SDL_FreeSurface(textSurfaceRaw);
+    textSurfaceRaw = NULL;
     rb_raise_sdl_error();
     return Qnil;
   }
@@ -399,7 +403,9 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
 EXIT:
   SDL_UnlockSurface(textSurface);
   SDL_FreeSurface(textSurface);
+  textSurface = NULL;
   SDL_FreeSurface(textSurfaceRaw);
+  textSurfaceRaw = NULL;
   return Qnil;
 }
 

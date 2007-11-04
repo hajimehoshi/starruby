@@ -191,9 +191,32 @@ class GameTest < Test::Unit::TestCase
   end
   
   def test_screen
-    assert_kind_of Texture, Game.screen
-    assert_equal 320, Game.screen.width
-    assert_equal 240, Game.screen.height
+    assert_nil Game.screen
+    Game.run do
+      begin
+        assert_kind_of Texture, Game.screen
+        assert_equal [320, 240], Game.screen.size
+      ensure
+        Game.terminate
+      end
+    end
+    Game.run(123, 456) do
+      begin
+        assert_kind_of Texture, Game.screen
+        assert_equal [123, 456], Game.screen.size
+      ensure
+        Game.terminate
+      end
+    end
+    assert_nil Game.screen
+    begin
+      Game.run do
+        assert_not_nil Game.screen
+        raise RuntimeError, "runtime error"
+      end
+    rescue RuntimeError
+    end
+    assert_nil Game.screen
   end
   
 end

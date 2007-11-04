@@ -128,10 +128,8 @@ static VALUE Font_dispose(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (font->sdlFont) {
-    TTF_CloseFont(font->sdlFont);
-    font->sdlFont = NULL;
-  }
+  TTF_CloseFont(font->sdlFont);
+  font->sdlFont = NULL;
   return Qnil;
 }
 

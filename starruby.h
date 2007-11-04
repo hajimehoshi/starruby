@@ -50,6 +50,7 @@ typedef struct {
 #define PI (3.1415926535897932384626433832795)
 #endif
 
+STARRUBY_EXTERN VALUE rb_mAudio;
 STARRUBY_EXTERN VALUE rb_cColor;
 STARRUBY_EXTERN VALUE rb_cFont;
 STARRUBY_EXTERN VALUE rb_mGame;
@@ -71,6 +72,7 @@ STARRUBY_EXTERN VALUE rb_cTone;
 
 void Init_starruby(void);
 
+void InitializeAudio(void);
 void InitializeColor(void);
 void InitializeGame(void);
 void InitializeFont(void);

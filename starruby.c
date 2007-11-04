@@ -36,6 +36,7 @@ void Init_starruby(void)
   
   rb_mStarRuby = rb_define_module("StarRuby");
 
+  InitializeAudio();
   InitializeColor();
   InitializeFont();
   InitializeGame();

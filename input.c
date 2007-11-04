@@ -244,8 +244,9 @@ void InitializeSdlInput()
     SDLK_UP,
     -1,
   };
-  char** name = names;
-  for (SDLKey* sdlKey = sdlKeys;
+  SDLKey* sdlKey;
+  char** name;
+  for (sdlKey = sdlKeys, name = names;
        *name;
        name++, sdlKey++)
     ADD_KEY(currentKey, *name, *sdlKey);

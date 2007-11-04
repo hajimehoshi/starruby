@@ -1,11 +1,11 @@
 #include "starruby.h"
 
-static SDL_Surface* screen;
-
 static int fps = 30;
 static double realFps = 0;
 static bool running = false;
 static bool terminated = false;
+static int screenWidth = 320;
+static int screenHeight = 240;
 
 static VALUE Game_fps(VALUE self)
 {
@@ -33,6 +33,11 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   }
   running = true;
   terminated = false;
+
+  Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
+  SDL_Surface* screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, options);
+  if (screen == NULL)
+    rb_raise_sdl_error();
   
   VALUE block;
   rb_scan_args(argc, argv, "0&", &block);
@@ -75,7 +80,7 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
     rb_yield(Qnil);
     
     SDL_LockSurface(screen);
-    MEMCPY(screen->pixels, texture->pixels, Pixel, SCREEN_WIDTH * SCREEN_HEIGHT);
+    MEMCPY(screen->pixels, texture->pixels, Pixel, screenWidth * screenHeight);
     SDL_UnlockSurface(screen);
     
     if (SDL_Flip(screen))
@@ -85,6 +90,10 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
       break;
   }
   running = false;
+
+  SDL_FreeSurface(screen);
+  screen = NULL;
+  
   return Qnil;
 }
 
@@ -98,7 +107,7 @@ static VALUE Game_screen(VALUE self)
   VALUE rbScreen = rb_iv_get(self, "screen");
   if (NIL_P(rbScreen)) {
     rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                          INT2NUM(SCREEN_WIDTH), INT2NUM(SCREEN_HEIGHT));
+                          INT2NUM(screenWidth), INT2NUM(screenHeight));
     rb_iv_set(self, "screen", rbScreen);
   }
   return rbScreen;
@@ -118,19 +127,6 @@ static VALUE Game_title(VALUE self)
 static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
 {
   return rb_iv_set(self, "title", rbTitle);
-}
-
-void InitializeSdlGame(void)
-{
-  Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
-  screen = SDL_SetVideoMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32, options);
-  if (screen == NULL)
-    rb_raise_sdl_error();
-}
-
-void FinalizeSdlGame(void)
-{
-  SDL_FreeSurface(screen);
 }
 
 void InitializeGame(void)

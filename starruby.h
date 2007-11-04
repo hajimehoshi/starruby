@@ -49,8 +49,6 @@ typedef struct {
 #ifndef PI
 #define PI (3.1415926535897932384626433832795)
 #endif
-#define SCREEN_WIDTH (320)
-#define SCREEN_HEIGHT (240)
 
 STARRUBY_EXTERN VALUE rb_cColor;
 STARRUBY_EXTERN VALUE rb_cFont;
@@ -82,9 +80,7 @@ void InitializeTexture(void);
 
 void UpdateInput(void);
 
-void InitializeSdlGame(void);
 void InitializeSdlInput(void);
-void FinalizeSdlGame(void);
 void FinalizeSdlInput(void);
 
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);

@@ -27,6 +27,19 @@ typedef enum {
   SUB,
 } BlendType;
 
+static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
+{
+  return SDL_ConvertSurface(surface, &(SDL_PixelFormat) {
+    .palette = NULL,
+    .BitsPerPixel = 32, .BytesPerPixel = 4,
+    .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
+    .Bmask = 0x000000ff, .Amask = 0xff000000,
+    .Rloss = 0x10, .Gloss = 0x08, .Bloss = 0x00, .Aloss = 0x00,
+    .Rshift = 0x00, .Gshift = 0x00, .Bshift = 0x00, .Ashift = 0x08,
+    .colorkey = 0, .alpha = 255,
+  }, SDL_HWACCEL | SDL_DOUBLEBUF);
+}
+
 static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
   char* path = StringValuePtr(rbPath);
@@ -49,17 +62,8 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
     rb_raise_sdl_image_error();
     return Qnil;
   }
-
-  SDL_Surface* surface =
-    SDL_ConvertSurface(imageSurface, &(SDL_PixelFormat) {
-      .palette = NULL,
-      .BitsPerPixel = 32, .BytesPerPixel = 4,
-      .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
-      .Bmask = 0x000000ff, .Amask = 0xff000000,
-      .Rloss = 0x10, .Gloss = 0x08, .Bloss = 0x00, .Aloss = 0x00,
-      .Rshift = 0x00, .Gshift = 0x00, .Bshift = 0x00, .Ashift = 0x08,
-      .colorkey = 0, .alpha = 255,
-    }, SDL_HWACCEL | SDL_DOUBLEBUF);
+  
+  SDL_Surface* surface = ConvertSurfaceForScreen(imageSurface);
   if (!surface) {
     SDL_FreeSurface(imageSurface);
     imageSurface = NULL;
@@ -367,7 +371,8 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
     rb_raise_sdl_ttf_error();
     return Qnil;
   }
-  SDL_Surface* textSurface = SDL_DisplayFormat(textSurfaceRaw);
+  //SDL_Surface* textSurface = SDL_DisplayFormat(textSurfaceRaw);
+  SDL_Surface* textSurface = ConvertSurfaceForScreen(textSurfaceRaw);
   if (!textSurface) {
     SDL_FreeSurface(textSurfaceRaw);
     textSurfaceRaw = NULL;

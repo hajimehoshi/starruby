@@ -371,7 +371,6 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
     rb_raise_sdl_ttf_error();
     return Qnil;
   }
-  //SDL_Surface* textSurface = SDL_DisplayFormat(textSurfaceRaw);
   SDL_Surface* textSurface = ConvertSurfaceForScreen(textSurfaceRaw);
   if (!textSurface) {
     SDL_FreeSurface(textSurfaceRaw);
@@ -456,50 +455,61 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  VALUE rbSrcX       = rb_hash_aref(rbOptions, symbol_src_x);
-  VALUE rbSrcY       = rb_hash_aref(rbOptions, symbol_src_y);
-  VALUE rbSrcWidth   = rb_hash_aref(rbOptions, symbol_src_width);
-  VALUE rbSrcHeight  = rb_hash_aref(rbOptions, symbol_src_height);
-  VALUE rbScaleX     = rb_hash_aref(rbOptions, symbol_scale_x);
-  VALUE rbScaleY     = rb_hash_aref(rbOptions, symbol_scale_y);
-  VALUE rbAngle      = rb_hash_aref(rbOptions, symbol_angle);
-  VALUE rbCenterX    = rb_hash_aref(rbOptions, symbol_center_x);
-  VALUE rbCenterY    = rb_hash_aref(rbOptions, symbol_center_y);
-  VALUE rbAlpha      = rb_hash_aref(rbOptions, symbol_alpha);
-  VALUE rbBlendType  = rb_hash_aref(rbOptions, symbol_blend_type);
-  VALUE rbToneRed    = rb_hash_aref(rbOptions, symbol_tone_red);
-  VALUE rbToneGreen  = rb_hash_aref(rbOptions, symbol_tone_green);
-  VALUE rbToneBlue   = rb_hash_aref(rbOptions, symbol_tone_blue);
-  VALUE rbSaturation = rb_hash_aref(rbOptions, symbol_saturation);
-  
-  int srcX = (!NIL_P(rbSrcX)) ? NUM2INT(rbSrcX) : 0;
-  int srcY = (!NIL_P(rbSrcY)) ? NUM2INT(rbSrcY) : 0;
-  int srcWidth =
-    (!NIL_P(rbSrcWidth)) ? NUM2INT(rbSrcWidth) : (srcTextureWidth - srcX);
-  int srcHeight =
-    (!NIL_P(rbSrcHeight)) ? NUM2INT(rbSrcHeight) : (srcTextureHeight - srcY);
-  double scaleX = !NIL_P(rbScaleX)  ? NUM2DBL(rbScaleX)  : 1;
-  double scaleY = !NIL_P(rbScaleY)  ? NUM2DBL(rbScaleY)  : 1;
-  double angle  = !NIL_P(rbAngle)   ? NUM2DBL(rbAngle)   : 0;
-  int centerX   = !NIL_P(rbCenterX) ? NUM2INT(rbCenterX) : 0;
-  int centerY   = !NIL_P(rbCenterY) ? NUM2INT(rbCenterY) : 0;
-  int alpha = !NIL_P(rbAlpha) ? NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
+  VALUE val;
+  st_table* table = RHASH(rbOptions)->tbl;
+  int srcX = 0;
+  int srcY = 0;
+  int srcWidth  = srcTextureWidth  - srcX;
+  int srcHeight = srcTextureHeight - srcY;
+  double scaleX = 1;
+  double scaleY = 1;
+  double angle = 0;
+  int centerX = 0;
+  int centerY = 0;
+  int alpha = 255;
   BlendType blendType = ALPHA;
-  if (NIL_P(rbBlendType) || rbBlendType == symbol_alpha)
-    blendType = ALPHA;
-  else if (rbBlendType == symbol_add)
-    blendType = ADD;
-  else if (rbBlendType == symbol_sub)
-    blendType = SUB;
-  int toneRed =
-    !NIL_P(rbToneRed)    ? NORMALIZE(NUM2INT(rbToneRed), -255, 255)   : 0;
-  int toneGreen =
-    !NIL_P(rbToneGreen)  ? NORMALIZE(NUM2INT(rbToneGreen), -255, 255) : 0;
-  int toneBlue =
-    !NIL_P(rbToneBlue)   ? NORMALIZE(NUM2INT(rbToneBlue), -255, 255)  : 0;
-  uint8_t saturation =
-    !NIL_P(rbSaturation) ? NORMALIZE(NUM2INT(rbSaturation), 0, 255)   : 255;
+  int toneRed   = 0;
+  int toneGreen = 0;
+  int toneBlue  = 0;
+  uint8_t saturation = 255;
   
+  if (st_lookup(table, symbol_src_x, &val))
+    srcX = NUM2INT(val);
+  if (st_lookup(table, symbol_src_y, &val))
+    srcY = NUM2INT(val);
+  if (st_lookup(table, symbol_src_width, &val))
+    srcWidth = NUM2INT(val);
+  if (st_lookup(table, symbol_src_height, &val))
+    srcHeight = NUM2INT(val);
+  if (st_lookup(table, symbol_scale_x, &val))
+    scaleX = NUM2DBL(val);
+  if (st_lookup(table, symbol_scale_y, &val))
+    scaleY = NUM2DBL(val);
+  if (st_lookup(table, symbol_angle, &val))
+    angle = NUM2DBL(val);
+  if (st_lookup(table, symbol_center_x, &val))
+    centerX = NUM2INT(val);
+  if (st_lookup(table, symbol_center_y, &val))
+    centerY = NUM2INT(val);
+  if (st_lookup(table, symbol_alpha, &val))
+    alpha = NUM2DBL(val);
+  if (st_lookup(table, symbol_blend_type, &val)) {
+    if (NIL_P(val) || val == symbol_alpha)
+      blendType = ALPHA;
+    else if (val == symbol_add)
+      blendType = ADD;
+    else if (val == symbol_sub)
+      blendType = SUB;
+  }
+  if (st_lookup(table, symbol_tone_red, &val))
+    toneRed = NUM2INT(val);
+  if (st_lookup(table, symbol_tone_green, &val))
+    toneGreen = NUM2INT(val);
+  if (st_lookup(table, symbol_tone_blue, &val))
+    toneBlue = NUM2INT(val);
+  if (st_lookup(table, symbol_saturation, &val))
+    saturation = NUM2INT(val);
+
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,
     .b = 0, .d = 1, .ty = 0,

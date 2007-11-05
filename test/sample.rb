@@ -2,23 +2,77 @@ require "../starruby"
 
 include StarRuby
 
-font = Font.new("msgothic", 12, :ttc_index => 0)
-color = Color.new(255, 155, 200, 255)
-texture = Texture.load("images/sample.png")
+font = Font.new("Arial", 12)
+color = Color.new(255, 255, 255)
 
-Game.run(300, 300) do
+class Sprite
+  
+  TEXTURE = Texture.load "Images/Sprite.png"
+  MAX_X = 320 - TEXTURE.width
+  MAX_Y = 240 - TEXTURE.height
+  
+  attr_reader :x
+  attr_reader :y
+  
+  def initialize
+    @x = rand(MAX_X)
+    @y = rand(MAX_Y)
+    @vx = rand(2) * 2 - 1
+    @vy = rand(2) * 2 - 1
+  end
+  
+  def update
+    @x += @vx
+    @y += @vy
+    if @x < 0
+      @x = -@x
+      @vx = 1
+    end
+    if @y < 0
+      @y = -@y
+      @vy = 1
+    end
+    if MAX_X <= @x
+      @x = -(@x - MAX_X) + MAX_X
+      @vx = -1
+    end
+    if MAX_Y <= @y
+      @y = -(@y - MAX_Y) + MAX_Y
+      @vy = -1
+    end
+  end
+  
+end
 
+sprites = Array.new(1000) { Sprite.new }
+
+i = 0
+
+Game.fps = 10000
+Game.run do
   
-  Game.screen.fill(Color.new(0, 0, 0, 0))
-  Game.screen.render_texture(texture, 100, 100)
+  screen = Game.screen
   
+  screen.clear
+  
+  sprites.each do |s|
+    s.update
+    screen.render_texture Sprite::TEXTURE, s.x, s.y
+  end
+  
+  screen.render_text("Keyboard:", 8, 8, font, color)
+  screen.render_text(Input.pressed_keys(:keyboard).inspect, 8 + 16, 8 + 16, font, color)
+  
+  screen.render_text("Game Pad:", 8, 8 + 32, font, color)
+  screen.render_text(Input.pressed_keys(:game_pad).inspect, 8 + 16, 8 + 48, font, color)
+  
+  screen.render_text("Mouse:", 8, 8 + 64, font, color)
+  screen.render_text(Input.pressed_keys(:mouse).inspect, 8 + 16, 8 + 80, font, color)
   x, y = Input.mouse_location
-  Game.screen.render_text([x, y].inspect, x, y, font, color)
+  screen.render_text("(#{x}, #{y})", x, y, font, color)
   
-  keys = Input.pressed_keys(:keyboard)
-  Game.screen.render_text(keys.inspect, 0, 0, font, color);
-  keys = Input.pressed_keys(:game_pad)
-  Game.screen.render_text(keys.inspect, 0, 16, font, color);
-  keys = Input.pressed_keys(:mouse)
-  Game.screen.render_text(keys.inspect, 0, 32, font, color);
+  i += 1
+  i %= 10
+  Game.title = "%0.2f" % Game.real_fps if i == 0
+
 end

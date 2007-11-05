@@ -57,7 +57,7 @@ static VALUE Font_load_path(VALUE self)
 
 static void Font_free(Font* font)
 {
-  if (!IsSdlQuitted() && font->sdlFont) {
+  if (!IsSdlQuitted()) {
     TTF_CloseFont(font->sdlFont);
     font->sdlFont = NULL;
   }

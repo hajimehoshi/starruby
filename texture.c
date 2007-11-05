@@ -459,8 +459,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   st_table* table = RHASH(rbOptions)->tbl;
   int srcX = 0;
   int srcY = 0;
-  int srcWidth  = srcTextureWidth  - srcX;
-  int srcHeight = srcTextureHeight - srcY;
+  int srcWidth;
+  int srcHeight;
   double scaleX = 1;
   double scaleY = 1;
   double angle = 0;
@@ -479,8 +479,12 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     srcY = NUM2INT(val);
   if (st_lookup(table, symbol_src_width, &val))
     srcWidth = NUM2INT(val);
+  else
+    srcWidth = srcTextureWidth - srcX;
   if (st_lookup(table, symbol_src_height, &val))
     srcHeight = NUM2INT(val);
+  else
+    srcHeight = srcTextureHeight - srcY;
   if (st_lookup(table, symbol_scale_x, &val))
     scaleX = NUM2DBL(val);
   if (st_lookup(table, symbol_scale_y, &val))

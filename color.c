@@ -64,7 +64,8 @@ static VALUE Color_hash(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
-  return INT2NUM(color->red ^ color->green ^ color->blue ^ color->alpha);
+  return INT2NUM((color->red << 2) ^ color->green ^
+                 (color->blue << 2 ) ^ color->alpha);
 }
 
 static VALUE Color_red(VALUE self)

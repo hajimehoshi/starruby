@@ -50,7 +50,16 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
     return Qnil;
   }
 
-  SDL_Surface* surface = SDL_DisplayFormatAlpha(imageSurface);
+  SDL_Surface* surface =
+    SDL_ConvertSurface(imageSurface, &(SDL_PixelFormat) {
+      .palette = NULL,
+      .BitsPerPixel = 32, .BytesPerPixel = 4,
+      .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
+      .Bmask = 0x000000ff, .Amask = 0xff000000,
+      .Rloss = 0x10, .Gloss = 0x08, .Bloss = 0x00, .Aloss = 0x00,
+      .Rshift = 0x00, .Gshift = 0x00, .Bshift = 0x00, .Ashift = 0x08,
+      .colorkey = 0, .alpha = 255,
+    }, SDL_HWACCEL | SDL_DOUBLEBUF);
   if (!surface) {
     SDL_FreeSurface(imageSurface);
     imageSurface = NULL;

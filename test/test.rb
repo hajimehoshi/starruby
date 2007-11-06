@@ -925,6 +925,18 @@ class TextureTest < Test::Unit::TestCase
       end
     end
   end
+  
+  def test_render_texture_nil_option
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    [:src_x, :src_y, :src_width, :src_height,
+    :scale_x, :scale_y, :angle, :center_x, :center_y, :alpha, :blend_type,
+    :tone_red, :tone_blue, :tone_green, :saturation].each do |key|
+      assert_raise(TypeError, "key: #{key}") do
+        texture2.render_texture(texture, 0, 0, key => nil)
+      end
+    end
+  end
 
 end
 

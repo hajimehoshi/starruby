@@ -444,15 +444,10 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eTypeError, "can't use disposed texture");
     return Qnil;
   }
-  VALUE rbClonedTexture = Qnil;
-  if (self == rbTexture) {
-    rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
-    Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
-  }
-
-  int srcTextureWidth = srcTexture->width;
+  
+  int srcTextureWidth  = srcTexture->width;
   int srcTextureHeight = srcTexture->height;
-  int dstTextureWidth = dstTexture->width;
+  int dstTextureWidth  = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
   VALUE val;
@@ -498,7 +493,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (st_lookup(table, symbol_alpha, &val))
     alpha = NUM2DBL(val);
   if (st_lookup(table, symbol_blend_type, &val)) {
-    if (NIL_P(val) || val == symbol_alpha)
+    Check_Type(val, T_SYMBOL);
+    if (val == symbol_alpha)
       blendType = ALPHA;
     else if (val == symbol_add)
       blendType = ADD;
@@ -547,7 +543,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     .c = 0, .d = 1, .ty = NUM2INT(rbY),
   });
   if (!AffineMatrix_IsRegular(&mat))
-    goto EXIT;
+    return Qnil;
   
   double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
   AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
@@ -560,7 +556,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
   if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
       dstX1 < 0 || dstY1 < 0)
-    goto EXIT;
+    return Qnil;
 
   AffineMatrix matInv = mat;
   AffineMatrix_Invert(&matInv);
@@ -587,7 +583,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstY0Int = (int)dstY0;
   int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
   int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
-
+  
   int32_t srcOX16  = (int)floor(srcOX  * (1 << 16));
   int32_t srcOY16  = (int)floor(srcOY  * (1 << 16));
   int32_t srcDXX16 = (int)floor(srcDXX * (1 << 16));
@@ -596,6 +592,13 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int32_t srcDYY16 = (int)floor(srcDYY * (1 << 16));
   Pixel* src;
   Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
+  
+  VALUE rbClonedTexture = Qnil;
+  if (self == rbTexture) {
+    rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
+    Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
+  }
+  
   for (int j = 0; j < dstHeight;
        j++, dst += -dstWidth + dstTextureWidth) {
     int32_t srcI16 = srcOX16 + j * srcDYX16;
@@ -658,7 +661,6 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   }
 
-EXIT:
   if (!NIL_P(rbClonedTexture))
     Texture_dispose(rbClonedTexture);
   

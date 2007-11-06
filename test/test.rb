@@ -965,4 +965,12 @@ class InputTest < Test::Unit::TestCase
     assert_equal [], Input.pressed_keys(:game_pad, :device_number => 100)
   end
   
+  def test_pressed_keys_nil_option
+    [:device_number, :duration, :delay, :interval].each do |key|
+      assert_raise(TypeError, "key: #{key}") do
+        Input.pressed_keys(:keyboard, key => nil)
+      end
+    end
+  end
+  
 end

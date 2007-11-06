@@ -82,15 +82,21 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 
   VALUE rbResult = rb_ary_new();
 
-  VALUE rbDeviceNumber = rb_hash_aref(rbOptions, symbol_device_number);
-  VALUE rbDuration     = rb_hash_aref(rbOptions, symbol_duration);
-  VALUE rbDelay        = rb_hash_aref(rbOptions, symbol_delay);
-  VALUE rbInterval     = rb_hash_aref(rbOptions, symbol_interval);
+  int deviceNumber = 0;
+  int duration     = -1;
+  int delay        = -1;
+  int interval     = 0;
 
-  int deviceNumber = !NIL_P(rbDeviceNumber) ? NUM2INT(rbDeviceNumber) : 0;
-  int duration     = !NIL_P(rbDuration)     ? NUM2INT(rbDuration)     : -1;
-  int delay        = !NIL_P(rbDelay)        ? NUM2INT(rbDelay)        : -1;
-  int interval     = !NIL_P(rbInterval)     ? NUM2INT(rbInterval)     : 0;
+  VALUE val;
+  st_table* table = RHASH(rbOptions)->tbl;
+  if (st_lookup(table, symbol_device_number, &val))
+    deviceNumber = NUM2INT(val);
+  if (st_lookup(table, symbol_duration, &val))
+    duration = NUM2INT(val);
+  if (st_lookup(table, symbol_delay, &val))
+    delay = NUM2INT(val);
+  if (st_lookup(table, symbol_interval, &val))
+    interval = NUM2INT(val);
 
   if (rbDevice == symbol_keyboard) {
     KeyboardKey* key = keyboardKeys;

@@ -427,7 +427,7 @@ EXIT:
     int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;\
    for (int i = 0; i < dstWidth;\
        i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {\
-    int_fast32_t srcI = srcI16 >> 16;\
+     int_fast32_t srcI = srcI16 >> 16;\
      int_fast32_t srcJ = srcJ16 >> 16;\
      if (srcI < srcX || srcX + srcWidth <= srcI ||\
          srcJ < srcY || srcY + srcHeight <= srcJ)\

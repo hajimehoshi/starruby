@@ -7,7 +7,7 @@ color = Color.new(255, 255, 255)
 
 class Sprite
   
-  TEXTURE = Texture.load "Images/Sprite.png"
+  TEXTURE = Texture.load "images/Sprite"
   MAX_X = 320 - TEXTURE.width
   MAX_Y = 240 - TEXTURE.height
   

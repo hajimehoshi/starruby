@@ -87,13 +87,18 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
 
-  VALUE rbBold     = rb_hash_aref(rbOptions, symbol_bold);
-  VALUE rbItalic   = rb_hash_aref(rbOptions, symbol_italic);
-  VALUE rbTtcIndex = rb_hash_aref(rbOptions, symbol_ttc_index);
-  
-  bool bold    = !NIL_P(rbBold)     ? RTEST(rbBold)       : false;
-  bool italic  = !NIL_P(rbItalic)   ? RTEST(rbItalic)     : false;
-  int ttcIndex = !NIL_P(rbTtcIndex) ? NUM2INT(rbTtcIndex) : 0;
+  bool bold = false;
+  bool italic = false;
+  int ttcIndex = 0;
+
+  VALUE val;
+  st_table* table = RHASH(rbOptions)->tbl;
+  if (st_lookup(table, symbol_bold, &val))
+    bold = RTEST(val);
+  if (st_lookup(table, symbol_italic, &val))
+    italic = RTEST(val);
+  if (st_lookup(table, symbol_ttc_index, &val))
+    ttcIndex = NUM2INT(val);
   
   char* path = StringValuePtr(rbFullPath);
   int size = NUM2INT(rbSize);

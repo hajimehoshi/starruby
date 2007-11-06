@@ -450,8 +450,6 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth  = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  VALUE val;
-  st_table* table = RHASH(rbOptions)->tbl;
   int srcX = 0;
   int srcY = 0;
   int srcWidth;
@@ -467,7 +465,9 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int toneGreen = 0;
   int toneBlue  = 0;
   uint8_t saturation = 255;
-  
+
+  VALUE val;
+  st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_src_x, &val))
     srcX = NUM2INT(val);
   if (st_lookup(table, symbol_src_y, &val))

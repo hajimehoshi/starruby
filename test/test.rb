@@ -118,6 +118,18 @@ class FontTest < Test::Unit::TestCase
     end
   end
   
+  def test_new_nil_option
+    [:bold, :italic].each do |key|
+      Font.new("arial", 12, key => nil)
+    end
+    [:ttc_index].each do |key|
+      assert_raise(TypeError, "key: #{key}") do
+        Font.new("arial", 12, key => nil)
+      end
+    end
+    
+  end
+  
   def test_dispose
     font = Font.new("arial", 16)
     assert_equal false, font.disposed?

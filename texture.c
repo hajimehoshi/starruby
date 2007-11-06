@@ -433,13 +433,16 @@ EXIT:
          srcJ < srcY || srcY + srcHeight <= srcJ)\
        continue;\
      src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
+     if (src->color.alpha == 0)\
+       continue;\
      uint8_t srcR = src->color.red;\
      uint8_t srcG = src->color.green;\
      uint8_t srcB = src->color.blue;\
      uint8_t dstR = dst->color.red;\
      uint8_t dstG = dst->color.green;\
      uint8_t dstB = dst->color.blue;\
-     uint8_t srcAlpha = DIV255(src->color.alpha * alpha);\
+     uint8_t srcAlpha = (alpha == 255) ?\
+       src->color.alpha : DIV255(src->color.alpha * alpha);\
      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
      convertingPixel\
      dst->color.red   = dstR;\

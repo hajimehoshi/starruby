@@ -236,10 +236,6 @@ static VALUE Texture_dispose(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eStarRubyError, "already disposed");
-    return Qnil;
-  }
   free(texture->pixels);
   texture->pixels = NULL;
   return Qnil;

@@ -326,9 +326,7 @@ class TextureTest < Test::Unit::TestCase
     assert_equal false, texture.disposed?
     texture.dispose
     assert_equal true, texture.disposed?
-    assert_raise StarRubyError do
-      texture.dispose
-    end
+    texture.dispose
   end
   
   def test_get_and_set_pixel

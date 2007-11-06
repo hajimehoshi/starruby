@@ -1,5 +1,8 @@
 #include "starruby.h"
 
+/*#define DIV255(x) do {\
+  __asm__();
+} while (true); //((x + 255) >> 8)*/
 #define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
@@ -549,107 +552,113 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!AffineMatrix_IsRegular(&mat))
     goto EXIT;
 
-  double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
-  AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
-  AffineMatrix_Transform(&mat, 0,        srcHeight, &dstX01, &dstY01);
-  AffineMatrix_Transform(&mat, srcWidth, 0,         &dstX10, &dstY10);
-  AffineMatrix_Transform(&mat, srcWidth, srcHeight, &dstX11, &dstY11);
-  double dstX0 = MIN(MIN(MIN(dstX00, dstX01), dstX10), dstX11);
-  double dstY0 = MIN(MIN(MIN(dstY00, dstY01), dstY10), dstY11);
-  double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
-  double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
-  if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
-      dstX1 < 0 || dstY1 < 0)
-    goto EXIT;
+  /*if (mat.a == 1 && mat.b == 0 && mat.c == 0 && mat.d == 1 &&
+      blendType == ALPHA &&
+      toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255) {
+  } else*/
+  {
+    double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
+    AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
+    AffineMatrix_Transform(&mat, 0,        srcHeight, &dstX01, &dstY01);
+    AffineMatrix_Transform(&mat, srcWidth, 0,         &dstX10, &dstY10);
+    AffineMatrix_Transform(&mat, srcWidth, srcHeight, &dstX11, &dstY11);
+    double dstX0 = MIN(MIN(MIN(dstX00, dstX01), dstX10), dstX11);
+    double dstY0 = MIN(MIN(MIN(dstY00, dstY01), dstY10), dstY11);
+    double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
+    double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
+    if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
+        dstX1 < 0 || dstY1 < 0)
+      goto EXIT;
 
-  AffineMatrix matInv = mat;
-  AffineMatrix_Invert(&matInv);
-  double srcOX, srcOY;
-  AffineMatrix_Transform(&matInv, dstX0 + .5, dstY0 + .5, &srcOX, &srcOY);
-  srcOX += srcX;
-  srcOY += srcY;
-  double srcDXX = matInv.a;
-  double srcDXY = matInv.c;
-  double srcDYX = matInv.b;
-  double srcDYY = matInv.d;
+    AffineMatrix matInv = mat;
+    AffineMatrix_Invert(&matInv);
+    double srcOX, srcOY;
+    AffineMatrix_Transform(&matInv, dstX0 + .5, dstY0 + .5, &srcOX, &srcOY);
+    srcOX += srcX;
+    srcOY += srcY;
+    double srcDXX = matInv.a;
+    double srcDXY = matInv.c;
+    double srcDYX = matInv.b;
+    double srcDYY = matInv.d;
 
-  if (dstX0 < 0) {
-    srcOX += -dstX0 * srcDXX;
-    srcOY += -dstX0 * srcDXY;
-    dstX0 = 0;
-  }
-  if (dstY0 < 0) {
-    srcOX += -dstY0 * srcDYX;
-    srcOY += -dstY0 * srcDYY;
-    dstY0 = 0;
-  }
-  int dstX0Int = (int)dstX0;
-  int dstY0Int = (int)dstY0;
-  int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
-  int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
-  
-  double srcI;
-  double srcJ;
-  Pixel* src;
-  Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
-  for (int j = 0; j < dstHeight;
-       j++, dst += -dstWidth + dstTextureWidth) {
-    srcI = srcOX + j * srcDYX;
-    srcJ = srcOY + j * srcDYY;
-    for (int i = 0; i < dstWidth;
-         i++, dst++, srcI += srcDXX, srcJ += srcDXY) {
-      int srcIInt = (int)floor(srcI);
-      int srcJInt = (int)floor(srcJ);
-      if (srcIInt < srcX || srcX + srcWidth <= srcIInt ||
-          srcJInt < srcY || srcY + srcHeight <= srcJInt)
-        continue;
-      src = &(srcTexture->pixels[srcIInt + srcJInt * srcTextureWidth]);
-      uint8_t srcR = src->color.red;
-      uint8_t srcG = src->color.green;
-      uint8_t srcB = src->color.blue;
-      uint8_t dstR = dst->color.red;
-      uint8_t dstG = dst->color.green;
-      uint8_t dstB = dst->color.blue;
-      uint8_t srcAlpha = DIV255(src->color.alpha * alpha);
-      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);
-      if (saturation < 255) {
-        uint8_t y = 0.30 * srcR + 0.59 * srcG + 0.11 * srcB;
-        srcR = ALPHA(srcR, y, saturation);
-        srcG = ALPHA(srcG, y, saturation);
-        srcB = ALPHA(srcB, y, saturation);
+    if (dstX0 < 0) {
+      srcOX += -dstX0 * srcDXX;
+      srcOY += -dstX0 * srcDXY;
+      dstX0 = 0;
+    }
+    if (dstY0 < 0) {
+      srcOX += -dstY0 * srcDYX;
+      srcOY += -dstY0 * srcDYY;
+      dstY0 = 0;
+    }
+    int dstX0Int = (int)dstX0;
+    int dstY0Int = (int)dstY0;
+    int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
+    int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
+
+    double srcI;
+    double srcJ;
+    Pixel* src;
+    Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
+    for (int j = 0; j < dstHeight;
+         j++, dst += -dstWidth + dstTextureWidth) {
+      srcI = srcOX + j * srcDYX;
+      srcJ = srcOY + j * srcDYY;
+      for (int i = 0; i < dstWidth;
+           i++, dst++, srcI += srcDXX, srcJ += srcDXY) {
+        int srcIInt = (int)floor(srcI);
+        int srcJInt = (int)floor(srcJ);
+        if (srcIInt < srcX || srcX + srcWidth <= srcIInt ||
+            srcJInt < srcY || srcY + srcHeight <= srcJInt)
+          continue;
+        src = &(srcTexture->pixels[srcIInt + srcJInt * srcTextureWidth]);
+        uint8_t srcR = src->color.red;
+        uint8_t srcG = src->color.green;
+        uint8_t srcB = src->color.blue;
+        uint8_t dstR = dst->color.red;
+        uint8_t dstG = dst->color.green;
+        uint8_t dstB = dst->color.blue;
+        uint8_t srcAlpha = DIV255(src->color.alpha * alpha);
+        dst->color.alpha = MAX(dst->color.alpha, srcAlpha);
+        if (saturation < 255) {
+          uint8_t y = 0.30 * srcR + 0.59 * srcG + 0.11 * srcB;
+          srcR = ALPHA(srcR, y, saturation);
+          srcG = ALPHA(srcG, y, saturation);
+          srcB = ALPHA(srcB, y, saturation);
+        }
+        if (0 < toneRed)
+          srcR = ALPHA(255, srcR, toneRed);
+        else if (toneRed < 0)
+          srcR = ALPHA(0,   srcR, -toneRed);
+        if (0 < toneGreen)
+          srcG = ALPHA(255, srcG, toneGreen);
+        else if (toneGreen < 0)
+          srcG = ALPHA(0,   srcG, -toneGreen);
+        if (0 < toneBlue)
+          srcB = ALPHA(255, srcB, toneBlue);
+        else if (toneBlue < 0)
+          srcB = ALPHA(0,   srcB, -toneBlue);
+        switch (blendType) {
+        case ALPHA:
+          dstR = ALPHA(srcR, dstR, srcAlpha);
+          dstG = ALPHA(srcG, dstG, srcAlpha);
+          dstB = ALPHA(srcB, dstB, srcAlpha);
+          break;
+        case ADD:
+          dstR = MIN(255, dstR + DIV255(srcR * srcAlpha));
+          dstG = MIN(255, dstG + DIV255(srcG * srcAlpha));
+          dstB = MIN(255, dstB + DIV255(srcB * srcAlpha));
+          break;
+        case SUB:
+          dstR = MAX(0, (int)dstR - DIV255(srcR * srcAlpha));
+          dstG = MAX(0, (int)dstG - DIV255(srcG * srcAlpha));
+          dstB = MAX(0, (int)dstB - DIV255(srcB * srcAlpha));
+          break;
+        }
+        dst->color.red   = dstR;
+        dst->color.green = dstG;
+        dst->color.blue  = dstB;
       }
-      if (0 < toneRed)
-        srcR = ALPHA(255, srcR, toneRed);
-      else if (toneRed < 0)
-        srcR = ALPHA(0,   srcR, -toneRed);
-      if (0 < toneGreen)
-        srcG = ALPHA(255, srcG, toneGreen);
-      else if (toneGreen < 0)
-        srcG = ALPHA(0,   srcG, -toneGreen);
-      if (0 < toneBlue)
-        srcB = ALPHA(255, srcB, toneBlue);
-      else if (toneBlue < 0)
-        srcB = ALPHA(0,   srcB, -toneBlue);
-      switch (blendType) {
-      case ALPHA:
-        dstR = ALPHA(srcR, dstR, srcAlpha);
-        dstG = ALPHA(srcG, dstG, srcAlpha);
-        dstB = ALPHA(srcB, dstB, srcAlpha);
-        break;
-      case ADD:
-        dstR = MIN(255, dstR + DIV255(srcR * srcAlpha));
-        dstG = MIN(255, dstG + DIV255(srcG * srcAlpha));
-        dstB = MIN(255, dstB + DIV255(srcB * srcAlpha));
-        break;
-      case SUB:
-        dstR = MAX(0, (int)dstR - DIV255(srcR * srcAlpha));
-        dstG = MAX(0, (int)dstG - DIV255(srcG * srcAlpha));
-        dstB = MAX(0, (int)dstB - DIV255(srcB * srcAlpha));
-        break;
-      }
-      dst->color.red   = dstR;
-      dst->color.green = dstG;
-      dst->color.blue  = dstB;
     }
   }
 

@@ -3,6 +3,8 @@
 #define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
+#define macro(x) (x)
+
 static VALUE symbol_add;
 static VALUE symbol_alpha;
 static VALUE symbol_angle;
@@ -86,7 +88,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   surface = NULL;
   SDL_FreeSurface(imageSurface);
   imageSurface = NULL;
-  
+
   return rbTexture;
 }
 
@@ -418,6 +420,34 @@ EXIT:
   return Qnil;
 }
 
+#define RENDER_TEXTURE_LOOP(convertingPixel) \
+  for (int j = 0; j < dstHeight;\
+       j++, dst += -dstWidth + dstTextureWidth) {\
+    int_fast32_t srcI16 = srcOX16 + j * srcDYX16;\
+    int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;\
+   for (int i = 0; i < dstWidth;\
+       i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {\
+    int_fast32_t srcI = srcI16 >> 16;\
+     int_fast32_t srcJ = srcJ16 >> 16;\
+     if (srcI < srcX || srcX + srcWidth <= srcI ||\
+         srcJ < srcY || srcY + srcHeight <= srcJ)\
+       continue;\
+     src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
+     uint8_t srcR = src->color.red;\
+     uint8_t srcG = src->color.green;\
+     uint8_t srcB = src->color.blue;\
+     uint8_t dstR = dst->color.red;\
+     uint8_t dstG = dst->color.green;\
+     uint8_t dstB = dst->color.blue;\
+     uint8_t srcAlpha = DIV255(src->color.alpha * alpha);\
+     dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
+     convertingPixel\
+     dst->color.red   = dstR;\
+     dst->color.green = dstG;\
+     dst->color.blue  = dstB;\
+   }\
+  }\
+
 static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
@@ -580,12 +610,12 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
   int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
   
-  int32_t srcOX16  = (int)floor(srcOX  * (1 << 16));
-  int32_t srcOY16  = (int)floor(srcOY  * (1 << 16));
-  int32_t srcDXX16 = (int)floor(srcDXX * (1 << 16));
-  int32_t srcDXY16 = (int)floor(srcDXY * (1 << 16));
-  int32_t srcDYX16 = (int)floor(srcDYX * (1 << 16));
-  int32_t srcDYY16 = (int)floor(srcDYY * (1 << 16));
+  int_fast32_t srcOX16  = (int)floor(srcOX  * (1 << 16));
+  int_fast32_t srcOY16  = (int)floor(srcOY  * (1 << 16));
+  int_fast32_t srcDXX16 = (int)floor(srcDXX * (1 << 16));
+  int_fast32_t srcDXY16 = (int)floor(srcDXY * (1 << 16));
+  int_fast32_t srcDYX16 = (int)floor(srcDYX * (1 << 16));
+  int_fast32_t srcDYY16 = (int)floor(srcDYY * (1 << 16));
   Pixel* src;
   Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
   
@@ -594,27 +624,17 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
     Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
   }
-  
-  for (int j = 0; j < dstHeight;
-       j++, dst += -dstWidth + dstTextureWidth) {
-    int32_t srcI16 = srcOX16 + j * srcDYX16;
-    int32_t srcJ16 = srcOY16 + j * srcDYY16;
-    for (int i = 0; i < dstWidth;
-         i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {
-      int32_t srcI = srcI16 >> 16;
-      int32_t srcJ = srcJ16 >> 16;
-      if (srcI < srcX || srcX + srcWidth <= srcI ||
-          srcJ < srcY || srcY + srcHeight <= srcJ)
-        continue;
-      src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);
-      uint8_t srcR = src->color.red;
-      uint8_t srcG = src->color.green;
-      uint8_t srcB = src->color.blue;
-      uint8_t dstR = dst->color.red;
-      uint8_t dstG = dst->color.green;
-      uint8_t dstB = dst->color.blue;
-      uint8_t srcAlpha = DIV255(src->color.alpha * alpha);
-      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);
+
+  if (saturation == 255 &&
+      toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
+      blendType == ALPHA) {
+    RENDER_TEXTURE_LOOP({
+      dstR = ALPHA(srcR, dstR, srcAlpha);
+      dstG = ALPHA(srcG, dstG, srcAlpha);
+      dstB = ALPHA(srcB, dstB, srcAlpha);
+    });
+  } else {
+    RENDER_TEXTURE_LOOP({
       if (saturation < 255) {
         uint8_t y = 0.30 * srcR + 0.59 * srcG + 0.11 * srcB;
         srcR = ALPHA(srcR, y, saturation);
@@ -650,11 +670,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
         dstB = MAX(0, (int)dstB - DIV255(srcB * srcAlpha));
         break;
       }
-      dst->color.red   = dstR;
-      dst->color.green = dstG;
-      dst->color.blue  = dstB;
-    }
-
+    });
   }
 
   if (!NIL_P(rbClonedTexture))

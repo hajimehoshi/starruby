@@ -425,30 +425,30 @@ EXIT:
        j++, dst += -dstWidth + dstTextureWidth) {\
     int_fast32_t srcI16 = srcOX16 + j * srcDYX16;\
     int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;\
-   for (int i = 0; i < dstWidth;\
-       i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {\
-     int_fast32_t srcI = srcI16 >> 16;\
-     int_fast32_t srcJ = srcJ16 >> 16;\
-     if (srcI < srcX || srcX + srcWidth <= srcI ||\
-         srcJ < srcY || srcY + srcHeight <= srcJ)\
-       continue;\
-     src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
-     if (src->color.alpha == 0)\
-       continue;\
-     uint8_t srcR = src->color.red;\
-     uint8_t srcG = src->color.green;\
-     uint8_t srcB = src->color.blue;\
-     uint8_t dstR = dst->color.red;\
-     uint8_t dstG = dst->color.green;\
-     uint8_t dstB = dst->color.blue;\
-     uint8_t srcAlpha = (alpha == 255) ?\
-       src->color.alpha : DIV255(src->color.alpha * alpha);\
-     dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
-     convertingPixel\
-     dst->color.red   = dstR;\
-     dst->color.green = dstG;\
-     dst->color.blue  = dstB;\
-   }\
+    for (int i = 0; i < dstWidth;\
+         i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {\
+      int_fast32_t srcI = srcI16 >> 16;\
+      int_fast32_t srcJ = srcJ16 >> 16;\
+      if (srcI < srcX || srcX + srcWidth <= srcI ||\
+          srcJ < srcY || srcY + srcHeight <= srcJ)\
+        continue;\
+      src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
+      if (src->color.alpha == 0)\
+        continue;\
+      uint8_t srcR = src->color.red;\
+      uint8_t srcG = src->color.green;\
+      uint8_t srcB = src->color.blue;\
+      uint8_t dstR = dst->color.red;\
+      uint8_t dstG = dst->color.green;\
+      uint8_t dstB = dst->color.blue;\
+      uint8_t srcAlpha = (alpha == 255) ?\
+        src->color.alpha : DIV255(src->color.alpha * alpha);\
+      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
+      convertingPixel;\
+      dst->color.red   = dstR;\
+      dst->color.green = dstG;\
+      dst->color.blue  = dstB;\
+    }\
   }\
 
 static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)

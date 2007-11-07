@@ -3,8 +3,6 @@
 #define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (DIV255((dst << 8) - dst + (src - dst) * a))
 
-#define macro(x) (x)
-
 static VALUE symbol_add;
 static VALUE symbol_alpha;
 static VALUE symbol_angle;

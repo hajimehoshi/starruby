@@ -77,7 +77,7 @@ static VALUE DoLoop(SDL_Surface* screen)
       break;
     case 2:
       {
-        Uint8* dst = screen->pixels;
+        Uint32* dst = screen->pixels;
         Pixel* src = texture->pixels;
         int width  = texture->width;
         int width2 = width * 2;

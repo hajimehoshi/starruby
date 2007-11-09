@@ -203,7 +203,8 @@ class GameTest < Test::Unit::TestCase
   end
   
   def test_run
-    Game.run(320, 240) do
+    Game.run(320, 240, :window_scale => 2) do
+      assert_equal [320, 240], Game.screen.size
       Game.terminate
     end
   end

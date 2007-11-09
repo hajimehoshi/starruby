@@ -1,12 +1,14 @@
 #include "starruby.h"
 
-static VALUE symbol_full_screen;
+static VALUE symbol_fullscreen;
 static VALUE symbol_window_scale;
 
 static int fps = 30;
+static bool fullscreen = false;
 static double realFps = 0;
 static bool running = false;
 static bool terminated = false;
+static int windowScale = 1;
 
 static VALUE Game_fps(VALUE self)
 {
@@ -68,8 +70,31 @@ static VALUE DoLoop(SDL_Surface* screen)
     rb_yield(Qnil);
     
     SDL_LockSurface(screen);
-    MEMCPY(screen->pixels, texture->pixels, Pixel,
-           texture->width * texture->height);
+    switch (windowScale) {
+    case 1:
+      MEMCPY(screen->pixels, texture->pixels, Pixel,
+             texture->width * texture->height);
+      break;
+    case 2:
+      {
+        Uint8* dst = screen->pixels;
+        Pixel* src = texture->pixels;
+        int width  = texture->width;
+        int width2 = width * 2;
+        int height = texture->height;
+        for (int j = 0; j < height; j++) {
+          for (int i = 0; i < width; i++) {
+            *dst = *(dst + width2) = src->value;
+            dst++;
+            *dst = *(dst + width2) = src->value;
+            dst++;
+            src++;
+          }
+          dst += width2;
+        }
+      }
+      break;
+    }
     SDL_UnlockSurface(screen);
     
     if (SDL_Flip(screen))
@@ -116,6 +141,13 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
+  VALUE val;
+  st_table* table = RHASH(rbOptions)->tbl;
+  if (st_lookup(table, symbol_fullscreen, &val))
+    fullscreen = RTEST(val);
+  if (st_lookup(table, symbol_window_scale, &val) && !fullscreen)
+    windowScale = NORMALIZE(NUM2INT(val), 1, 2);
+
   VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                               INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen", rbScreen);
@@ -123,8 +155,9 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   Data_Get_Struct(rbScreen, Texture, texture);
   
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
-  SDL_Surface* screen = SDL_SetVideoMode(texture->width, texture->height,
-                                         32, options);
+  SDL_Surface* screen =
+    SDL_SetVideoMode(texture->width * windowScale, texture->height * windowScale,
+                     32, options);
   if (!screen) {
     DisposeScreen(screen);
     rb_raise_sdl_error();
@@ -173,6 +206,6 @@ void InitializeGame(void)
   rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
   rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
 
-  symbol_full_screen  = ID2SYM(rb_intern("fullscreen"));
+  symbol_fullscreen  = ID2SYM(rb_intern("fullscreen"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 }

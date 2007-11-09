@@ -1,5 +1,8 @@
 #include "starruby.h"
 
+static VALUE symbol_full_screen;
+static VALUE symbol_window_scale;
+
 static int fps = 30;
 static double realFps = 0;
 static bool running = false;
@@ -106,10 +109,12 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
 
-  VALUE rbBlock, rbWidth, rbHeight;
-  rb_scan_args(argc, argv, "02&", &rbWidth, &rbHeight, &rbBlock);
+  VALUE rbBlock, rbWidth, rbHeight, rbOptions;
+  rb_scan_args(argc, argv, "03&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
   int width  = !NIL_P(rbWidth)  ? NUM2INT(rbWidth)  : 320;
   int height = !NIL_P(rbHeight) ? NUM2INT(rbHeight) : 240;
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
 
   VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                               INT2NUM(width), INT2NUM(height));
@@ -167,4 +172,7 @@ void InitializeGame(void)
   rb_define_singleton_method(rb_mGame, "terminate", Game_terminate, 0);
   rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
   rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
+
+  symbol_full_screen  = ID2SYM(rb_intern("fullscreen"));
+  symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 }

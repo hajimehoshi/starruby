@@ -63,8 +63,8 @@ Game.run do
   screen.render_text("Keyboard:", 8, 8, font, color)
   screen.render_text(Input.pressed_keys(:keyboard).inspect, 8 + 16, 8 + 16, font, color)
   
-  screen.render_text("Game Pad:", 8, 8 + 32, font, color)
-  screen.render_text(Input.pressed_keys(:game_pad).inspect, 8 + 16, 8 + 48, font, color)
+  screen.render_text("Gamepad:", 8, 8 + 32, font, color)
+  screen.render_text(Input.pressed_keys(:gamepad).inspect, 8 + 16, 8 + 48, font, color)
   
   screen.render_text("Mouse:", 8, 8 + 64, font, color)
   screen.render_text(Input.pressed_keys(:mouse).inspect, 8 + 16, 8 + 80, font, color)

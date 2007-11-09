@@ -202,6 +202,12 @@ class GameTest < Test::Unit::TestCase
     assert_equal 33, Game.fps
   end
   
+  def test_run
+    Game.run(320, 240) do
+      Game.terminate
+    end
+  end
+  
   def test_running
     assert_equal false, Game.running?
     Game.run do
@@ -958,9 +964,9 @@ class InputTest < Test::Unit::TestCase
     assert Input.mouse_location.frozen?
   end
   
-  def test_game_pad_device_number
-    assert_equal [], Input.pressed_keys(:game_pad, :device_number => -1)
-    assert_equal [], Input.pressed_keys(:game_pad, :device_number => 100)
+  def test_gamepad_device_number
+    assert_equal [], Input.pressed_keys(:gamepad, :device_number => -1)
+    assert_equal [], Input.pressed_keys(:gamepad, :device_number => 100)
   end
   
   def test_pressed_keys_nil_option

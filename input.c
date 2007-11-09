@@ -42,7 +42,7 @@ static VALUE symbol_delay;
 static VALUE symbol_device_number;
 static VALUE symbol_down;
 static VALUE symbol_duration;
-static VALUE symbol_game_pad;
+static VALUE symbol_gamepad;
 static VALUE symbol_interval;
 static VALUE symbol_keyboard;
 static VALUE symbol_left;
@@ -105,7 +105,7 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
         rb_ary_push(rbResult, key->rbSymbol);
       key = key->next;
     }
-  } else if (rbDevice == symbol_game_pad) {
+  } else if (rbDevice == symbol_gamepad) {
     if (0 <= deviceNumber && deviceNumber < gamePadCount) {
       GamePad* gamePad = &(gamePads[deviceNumber]);
       if (isPressed(gamePad->downState, duration, delay, interval))
@@ -311,7 +311,7 @@ void InitializeInput(void)
   symbol_device_number = ID2SYM(rb_intern("device_number"));
   symbol_down          = ID2SYM(rb_intern("down"));
   symbol_duration      = ID2SYM(rb_intern("duration"));
-  symbol_game_pad      = ID2SYM(rb_intern("game_pad"));
+  symbol_gamepad       = ID2SYM(rb_intern("gamepad"));
   symbol_interval      = ID2SYM(rb_intern("interval"));
   symbol_keyboard      = ID2SYM(rb_intern("keyboard"));
   symbol_left          = ID2SYM(rb_intern("left"));

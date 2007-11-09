@@ -18,7 +18,7 @@ typedef struct KeyboardKey {
 } KeyboardKey;
 static KeyboardKey* keyboardKeys;
 
-static int gamePadCount;
+static int gamepadCount;
 
 typedef struct {
   SDL_Joystick* sdlJoystick;
@@ -29,7 +29,7 @@ typedef struct {
   int buttonCount;
   int* buttonStates;
 } GamePad;
-static GamePad* gamePads;
+static GamePad* gamepads;
 
 typedef struct {
   int leftState;
@@ -106,18 +106,18 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
       key = key->next;
     }
   } else if (rbDevice == symbol_gamepad) {
-    if (0 <= deviceNumber && deviceNumber < gamePadCount) {
-      GamePad* gamePad = &(gamePads[deviceNumber]);
-      if (isPressed(gamePad->downState, duration, delay, interval))
+    if (0 <= deviceNumber && deviceNumber < gamepadCount) {
+      GamePad* gamepad = &(gamepads[deviceNumber]);
+      if (isPressed(gamepad->downState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_down);
-      if (isPressed(gamePad->leftState, duration, delay, interval))
+      if (isPressed(gamepad->leftState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_left);
-      if (isPressed(gamePad->rightState, duration, delay, interval))
+      if (isPressed(gamepad->rightState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_right);
-      if (isPressed(gamePad->upState, duration, delay, interval))
+      if (isPressed(gamepad->upState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_up);
-      for (int i = 0; i < gamePad->buttonCount; i++)
-        if (isPressed(gamePad->buttonStates[i], duration, delay, interval))
+      for (int i = 0; i < gamepad->buttonCount; i++)
+        if (isPressed(gamepad->buttonStates[i], duration, delay, interval))
           rb_ary_push(rbResult, INT2NUM(i + 1));
     }
   } else if (rbDevice == symbol_mouse) {
@@ -147,29 +147,29 @@ void UpdateInput()
     key = key->next;
   }
 
-  for (int i = 0; i < gamePadCount; i++) {
-    GamePad* gamePad = &(gamePads[i]);
-    if (SDL_JoystickGetAxis(gamePad->sdlJoystick, 1) > 3200)
-      gamePad->downState++;
+  for (int i = 0; i < gamepadCount; i++) {
+    GamePad* gamepad = &(gamepads[i]);
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) > 3200)
+      gamepad->downState++;
     else
-      gamePad->downState = 0;
-    if (SDL_JoystickGetAxis(gamePad->sdlJoystick, 0) < -3200)
-      gamePad->leftState++;
+      gamepad->downState = 0;
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 0) < -3200)
+      gamepad->leftState++;
     else
-      gamePad->leftState = 0;
-    if (SDL_JoystickGetAxis(gamePad->sdlJoystick, 0) > 3200)
-      gamePad->rightState++;
+      gamepad->leftState = 0;
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 0) > 3200)
+      gamepad->rightState++;
     else
-      gamePad->rightState = 0;
-    if (SDL_JoystickGetAxis(gamePad->sdlJoystick, 1) < -3200)
-      gamePad->upState++;
+      gamepad->rightState = 0;
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) < -3200)
+      gamepad->upState++;
     else
-      gamePad->upState = 0;
-    for (int j = 0; j < gamePad->buttonCount; j++)
-      if (SDL_JoystickGetButton(gamePad->sdlJoystick, j))
-        gamePad->buttonStates[j]++;
+      gamepad->upState = 0;
+    for (int j = 0; j < gamepad->buttonCount; j++)
+      if (SDL_JoystickGetButton(gamepad->sdlJoystick, j))
+        gamepad->buttonStates[j]++;
       else
-        gamePad->buttonStates[j] = 0;
+        gamepad->buttonStates[j] = 0;
   }
 
   int mouseLocationX, mouseLocationY;
@@ -258,16 +258,16 @@ void InitializeSdlInput()
     ADD_KEY(currentKey, *name, *sdlKey);
 
   SDL_JoystickEventState(SDL_ENABLE);
-  gamePadCount = SDL_NumJoysticks();
-  gamePads = ALLOC_N(GamePad, gamePadCount);
-  MEMZERO(gamePads, GamePad, gamePadCount);
-  for (int i = 0; i < gamePadCount; i++) {
-    SDL_Joystick* ptr = gamePads[i].sdlJoystick = SDL_JoystickOpen(i);
+  gamepadCount = SDL_NumJoysticks();
+  gamepads = ALLOC_N(GamePad, gamepadCount);
+  MEMZERO(gamepads, GamePad, gamepadCount);
+  for (int i = 0; i < gamepadCount; i++) {
+    SDL_Joystick* ptr = gamepads[i].sdlJoystick = SDL_JoystickOpen(i);
     if (ptr == NULL)
       rb_raise_sdl_error();
-    int buttonCount = gamePads[i].buttonCount = SDL_JoystickNumButtons(ptr);
-    gamePads[i].buttonStates = ALLOC_N(int, buttonCount);
-    MEMZERO(gamePads[i].buttonStates, int, buttonCount);
+    int buttonCount = gamepads[i].buttonCount = SDL_JoystickNumButtons(ptr);
+    gamepads[i].buttonStates = ALLOC_N(int, buttonCount);
+    MEMZERO(gamepads[i].buttonStates, int, buttonCount);
   }
 
   mouse = ALLOC(Mouse);
@@ -279,16 +279,16 @@ void FinalizeSdlInput()
   free(mouse);
   mouse = NULL;
   
-  for (int i = 0; i < gamePadCount; i++) {
-    GamePad* gamePad = &(gamePads[i]);
+  for (int i = 0; i < gamepadCount; i++) {
+    GamePad* gamepad = &(gamepads[i]);
     if (SDL_JoystickOpened(i))
-      SDL_JoystickClose(gamePad->sdlJoystick);
-    gamePad->sdlJoystick = NULL;
-    free(gamePad->buttonStates);
-    gamePad->buttonStates = NULL;
+      SDL_JoystickClose(gamepad->sdlJoystick);
+    gamepad->sdlJoystick = NULL;
+    free(gamepad->buttonStates);
+    gamepad->buttonStates = NULL;
   }
-  free(gamePads);
-  gamePads = NULL;
+  free(gamepads);
+  gamepads = NULL;
   
   KeyboardKey* key = keyboardKeys;
   while (key) {

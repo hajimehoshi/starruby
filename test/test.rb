@@ -972,3 +972,19 @@ class InputTest < Test::Unit::TestCase
   end
   
 end
+
+class AudioTest < Test::Unit::TestCase
+  
+  def test_bgm_volume
+    assert_equal 255, Audio.bgm_volume
+    (0..255).each do |volume|
+      Audio.bgm_volume = volume
+      assert_equal volume, Audio.bgm_volume
+    end
+    Audio.bgm_volume = -100
+    assert_equal 0, Audio.bgm_volume
+    Audio.bgm_volume = 10000
+    assert_equal 255, Audio.bgm_volume
+  end
+  
+end

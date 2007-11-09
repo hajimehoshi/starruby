@@ -73,6 +73,7 @@ STARRUBY_EXTERN VALUE rb_cTone;
 #define MAX(x, y) ((x >= y) ? x : y)
 #define MIN(x, y) ((x <= y) ? x : y)
 #define NORMALIZE(x, min, max) ((x < min) ? min : ((max < x) ? max : x))
+#define DIV255(x) ((x + 255) >> 8)
 
 void Init_starruby(void);
 

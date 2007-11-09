@@ -22,8 +22,8 @@ void AffineMatrix_Invert(AffineMatrix* m)
   double newC = -m->c / det;
   double newD = m->a / det;
   *m = (AffineMatrix) {
-    .a  = newA, .b  = newB, .tx = newA * -m->tx + newB * -m->ty,
-    .c  = newC, .d  = newD, .ty = newC * -m->tx + newD * -m->ty,
+    .a  = newA, .b  = newB, .tx = newA * -(m->tx) + newB * -(m->ty),
+    .c  = newC, .d  = newD, .ty = newC * -(m->tx) + newD * -(m->ty),
   };
 }
 

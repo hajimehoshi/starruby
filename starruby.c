@@ -33,9 +33,6 @@ static void FinalizeSdl(VALUE unused)
 
 void Init_starruby(void)
 {
-  InitializeSdl();
-  rb_set_end_proc(FinalizeSdl, Qnil);
-  
   rb_mStarRuby = rb_define_module("StarRuby");
 
   InitializeAudio();
@@ -45,6 +42,9 @@ void Init_starruby(void)
   InitializeInput();
   InitializeStarRubyError();
   InitializeTexture();
+
+  InitializeSdl();
+  rb_set_end_proc(FinalizeSdl, Qnil);
   
 #ifdef DEBUG
   TestAffineMatrix();

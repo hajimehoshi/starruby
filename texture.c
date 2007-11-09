@@ -1,6 +1,5 @@
 #include "starruby.h"
 
-#define DIV255(x) ((x + 255) >> 8)
 #define ALPHA(src, dst, a) (a == 255 ? src :\
                             (a == 0 ? dst :\
                              DIV255((dst << 8) - dst + (src - dst) * a)))

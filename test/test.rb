@@ -88,18 +88,18 @@ class FontTest < Test::Unit::TestCase
     assert_equal false, Font.exist?("test")
     assert_equal false, Font.exist?("test.ttf")
   end
-=begin
+
   def test_new
-    font = Font.new("arial", 16)
+    font = Font.new("Arial", 16)
     assert_equal 16, font.size
     assert_equal "Arial", font.name
     assert_equal false, font.bold?
     assert_equal false, font.italic?
-    font = Font.new("msgothic", 12, {
+    font = Font.new("MS UI Gothic", 12, {
       :ttc_index => 1, :bold => true, :italic => true
-    })
+    }) # :ttc_index is ignored
     assert_equal 12, font.size
-    assert_equal "MS PGothic", font.name
+    assert_equal "MS UI Gothic", font.name
     assert_equal true, font.bold?
     assert_equal true, font.italic?
     assert_raise Errno::ENOENT do
@@ -107,28 +107,20 @@ class FontTest < Test::Unit::TestCase
     end
   end
   
-  def test_new2
-    assert_raise Errno::ENOENT do
-      Font.new("notfont.ttf", 16)
-    end
-  end
-  
   def test_new_nil_option
     [:bold, :italic].each do |key|
-      Font.new("arial", 12, key => nil)
+      Font.new("Arial", 12, key => nil)
     end
     [:ttc_index].each do |key|
       assert_raise(TypeError, "key: #{key}") do
-        Font.new("arial", 12, key => nil)
+        Font.new("Arial", 12, key => nil)
       end
     end
     
   end
-=end
   
-=begin
   def test_dispose
-    font = Font.new("arial", 16)
+    font = Font.new("Arial", 16)
     assert_equal false, font.disposed?
     font.dispose
     assert_equal true, font.disposed?
@@ -149,12 +141,10 @@ class FontTest < Test::Unit::TestCase
     end
     font.dispose
   end
-=end
   
-=begin
   def test_get_size
-    if Font.exist?("msgothic")
-      font = Font.new("msgothic", 12, :ttc_index => 0)
+    if Font.exist?("ＭＳ ゴシック")
+      font = Font.new("ＭＳ ゴシック", 12)
       assert_equal "MS Gothic", font.name
       assert_equal [6, 13], font.get_size("A")
       assert font.get_size("A").frozen?
@@ -163,14 +153,11 @@ class FontTest < Test::Unit::TestCase
       assert_equal [60, h], font.get_size("こんにちは")
       assert_equal [30, h], font.get_size("aaa&a")
     end
-    if Font.exist?("arial")
-      font = Font.new("arial", 12);
-      size = font.get_size("AAAAAAAAAAAAAA");
-      size[0] # No Exception
-      size[1] # No Exception
-    end
+    font = Font.new("Arial", 12);
+    size = font.get_size("AAAAAAAAAAAAAA");
+    size[0] # No Exception
+    size[1] # No Exception
   end
-=end
   
 end
 

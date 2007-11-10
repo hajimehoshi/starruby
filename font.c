@@ -16,35 +16,50 @@ typedef struct FontFileInfo {
 } FontFileInfo;
 static FontFileInfo* fontFileInfos;
 
-static VALUE SearchFontPath(VALUE rbFilePath)
+static void SearchFont(VALUE rbFilePath,
+                       VALUE* rbRealFilePath,
+                       int* ttcIndex)
 {
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePath))
-    return rbFilePath;
+  *rbRealFilePath = Qnil;
+  if (ttcIndex != NULL)
+    *ttcIndex = -1;
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePath)) {
+    *rbRealFilePath = rbFilePath;
+    return;
+  }
   VALUE rbFilePathTtf = rb_str_cat2(rb_str_dup(rbFilePath), ".ttf");
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtf))
-    return rbFilePathTtf;
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtf)) {
+    *rbRealFilePath = rbFilePathTtf;
+    return;
+  }
   VALUE rbFilePathTtc = rb_str_cat2(rb_str_dup(rbFilePath), ".ttc");
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtc))
-    return rbFilePathTtc;
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtc)) {
+    *rbRealFilePath = rbFilePathTtc;
+    return;
+  }
   VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePath)));
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
-      VALUE rbFileName = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
+      *rbRealFilePath = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
 #ifdef WIN32
       VALUE rbTemp = rb_str_new2(windowsFontDirPath);
-      rbFileName = rb_str_concat(rb_str_cat2(rbTemp, "\\"), rbFileName);
+      *rbRealFilePath = rb_str_concat(rb_str_cat2(rbTemp, "\\"), *rbRealFilePath);
 #endif
-      return rbFileName;
+      if (ttcIndex != NULL)
+        *ttcIndex = info->ttcIndex;
+      return;
     }
     info = info->next;
   }
-  return Qnil;
+  return;
 }
 
 static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 {
-  return !NIL_P(SearchFontPath(rbFilePath)) ? Qtrue : Qfalse;
+  VALUE rbRealFilePath;
+  SearchFont(rbFilePath, &rbRealFilePath, NULL);
+  return !NIL_P(rbRealFilePath) ? Qtrue : Qfalse;
 }
 
 static void Font_free(Font* font)
@@ -71,9 +86,11 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  
-  VALUE rbFullPath = SearchFontPath(rbPath);
-  if (NIL_P(rbFullPath)) {
+
+  VALUE rbRealFilePath;
+  int preTtcIndex;
+  SearchFont(rbPath, &rbRealFilePath, &preTtcIndex);
+  if (NIL_P(rbRealFilePath)) {
     char* path = StringValuePtr(rbPath);
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
     return Qnil;
@@ -89,10 +106,12 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
     bold = RTEST(val);
   if (st_lookup(table, symbol_italic, &val))
     italic = RTEST(val);
-  if (st_lookup(table, symbol_ttc_index, &val))
+  if (preTtcIndex != -1)
+    ttcIndex = preTtcIndex;
+  else if (st_lookup(table, symbol_ttc_index, &val))
     ttcIndex = NUM2INT(val);
   
-  char* path = StringValuePtr(rbFullPath);
+  char* path = StringValuePtr(rbRealFilePath);
   int size = NUM2INT(rbSize);
   
   Font* font;

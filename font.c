@@ -4,38 +4,56 @@ static VALUE symbol_bold;
 static VALUE symbol_italic;
 static VALUE symbol_ttc_index;
 
-static VALUE Font_load_path(VALUE);
-static VALUE SearchFont(VALUE rbFilePath)
+static VALUE SearchFontPath(VALUE rbFilePath)
 {
-  VALUE rbLoadPath = Font_load_path(rb_cFont);
-  int len = RARRAY(rbLoadPath)->len;
-  VALUE* ptr = RARRAY(rbLoadPath)->ptr;
-  for (int i = 0; i < len; i++, ptr++) {
-    VALUE rbFullPath = rb_funcall(rb_cFile, rb_intern("join"), 2,
-                                  *ptr, rbFilePath);
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePath))
+    return rbFilePath;
+  VALUE rbFilePathTtf = rb_str_cat2(rb_str_dup(rbFilePath), ".ttf");
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtf))
+    return rbFilePathTtf;
+  VALUE rbFilePathTtc = rb_str_cat2(rb_str_dup(rbFilePath), ".ttc");
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtc))
+    return rbFilePathTtc;
 #ifdef WIN32
-    // if a path began with 'C:', the path separator must be the backslash.
-    rb_funcall(rbFullPath, rb_intern("gsub!"), 2,
-               rb_str_new2("/"), rb_str_new2("\\"));
-#endif
-    if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFullPath))
-      return rbFullPath;
-    VALUE rbFullPathTtf = rb_str_cat2(rb_str_dup(rbFullPath), ".ttf");
-    if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFullPathTtf))
-      return rbFullPathTtf;
-    VALUE rbFullPathTtc = rb_str_cat2(rb_str_dup(rbFullPath), ".ttc");
-    if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFullPathTtc))
-      return rbFullPathTtc;
+  HKEY hKey;
+  char* regPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0, KEY_READ, &hKey)
+      == ERROR_SUCCESS) {
+    DWORD type;
+    char valueName[256];
+    char data[256];
+    for (DWORD dwIndex = 0; ;dwIndex++) {
+      DWORD valueNameLength = sizeof(valueName);
+      DWORD dataLength = sizeof(data);
+      LONG result = RegEnumValue(hKey, dwIndex, valueName, &valueNameLength,
+                                 NULL, &type, data, &dataLength);
+      if (result == ERROR_SUCCESS) {
+        printf("%s\n", valueName);
+      } else {
+        break;
+      }
+    }
+    /*if (SUCCEEDED(RegQueryValueEx(hKey, "Arial (TrueType)", NULL, &dataType,
+                                  fontFileName, &fontFileNameLength))) {
+      printf("%s\n", fontFileName);
+      printf("%d\n", (int)fontFileNameLength);
+      if (dataType != REG_SZ)
+        return Qnil;
+    }*/
+    RegCloseKey(hKey);
+  } else {
+    rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
   }
+#endif
   return Qnil;
 }
 
 static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 {
-  return !NIL_P(SearchFont(rbFilePath)) ? Qtrue : Qfalse;
+  return !NIL_P(SearchFontPath(rbFilePath)) ? Qtrue : Qfalse;
 }
 
-static VALUE Font_load_path(VALUE self)
+/*static VALUE Font_load_path(VALUE self)
 {
   VALUE rbLoadPath = rb_iv_get(self, "load_path");
   if (NIL_P(rbLoadPath)) {
@@ -53,7 +71,8 @@ static VALUE Font_load_path(VALUE self)
   } else {
     return rbLoadPath;
   }
-}
+  return rb_ary_new();
+}*/
 
 static void Font_free(Font* font)
 {
@@ -80,7 +99,7 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
   
-  VALUE rbFullPath = SearchFont(rbPath);
+  VALUE rbFullPath = SearchFontPath(rbPath);
   if (NIL_P(rbFullPath)) {
     char* path = StringValuePtr(rbPath);
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
@@ -201,7 +220,6 @@ void InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
   rb_define_singleton_method(rb_cFont, "exist?",    Font_exist,     1);
-  rb_define_singleton_method(rb_cFont, "load_path", Font_load_path, 0);
   rb_define_alloc_func(rb_cFont, Font_alloc);
   rb_define_private_method(rb_cFont, "initialize", Font_initialize, -1);
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);

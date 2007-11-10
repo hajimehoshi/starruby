@@ -13,6 +13,7 @@
 #include <SDL_ttf.h>
 #ifdef WIN32
 #include <windows.h>
+#include <winreg.h>
 #include <shlobj.h>
 #ifndef SHGFP_TYPE_CURRENT
 #define SHGFP_TYPE_CURRENT (0)

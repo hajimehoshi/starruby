@@ -53,7 +53,7 @@ end
 class FontTest < Test::Unit::TestCase
   
   CSIDL_FONTS = 0x0014
-  
+=begin
   def test_load_path
     assert_equal ".", Font.load_path[0]
     case RUBY_PLATFORM
@@ -65,16 +65,20 @@ class FontTest < Test::Unit::TestCase
       assert_equal path.delete("\0"), Font.load_path[1]
     end
   end
+=end
   
   def test_exist
+    #assert_equal true,  Font.exist?("arial")
+    #assert_equal true,  Font.exist?("arial.ttf")
+    #assert_equal false, Font.exist?("arial.ttc")
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
-      assert_equal true,  Font.exist?("arial")
-      assert_equal true,  Font.exist?("arial.ttf")
-      assert_equal false, Font.exist?("arial.ttc")
+      # Windows
       assert_equal true,  Font.exist?("msgothic")
       assert_equal false, Font.exist?("msgothic.ttf")
       assert_equal true,  Font.exist?("msgothic.ttc")
+      assert_equal true,  Font.exist?("Arial")
+      assert_equal true,  Font.exist?("ＭＳ ゴシック")
       assert_equal false, Font.exist?("notfont")
       assert_equal false, Font.exist?("notfont.ttf")
       assert_equal false, Font.exist?("notfont.ttc")
@@ -93,7 +97,7 @@ class FontTest < Test::Unit::TestCase
       Font.load_path.pop
     end
   end
-  
+=begin
   def test_new
     font = Font.new("arial", 16)
     assert_equal 16, font.size
@@ -129,7 +133,9 @@ class FontTest < Test::Unit::TestCase
     end
     
   end
+=end
   
+=begin
   def test_dispose
     font = Font.new("arial", 16)
     assert_equal false, font.disposed?
@@ -152,7 +158,9 @@ class FontTest < Test::Unit::TestCase
     end
     font.dispose
   end
+=end
   
+=begin
   def test_get_size
     if Font.exist?("msgothic")
       font = Font.new("msgothic", 12, :ttc_index => 0)
@@ -171,6 +179,7 @@ class FontTest < Test::Unit::TestCase
       size[1] # No Exception
     end
   end
+=end
   
 end
 

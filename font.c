@@ -1,8 +1,20 @@
 #include "starruby.h"
 
+#ifdef WIN32
+static char windowsFontDirPath[256];
+#endif
+
 static VALUE symbol_bold;
 static VALUE symbol_italic;
 static VALUE symbol_ttc_index;
+
+typedef struct FontFileInfo {
+  VALUE rbFontNameSymbol;
+  VALUE rbFileNameSymbol;
+  int ttcIndex;
+  struct FontFileInfo* next;
+} FontFileInfo;
+static FontFileInfo* fontFileInfos;
 
 static VALUE SearchFontPath(VALUE rbFilePath)
 {
@@ -14,37 +26,19 @@ static VALUE SearchFontPath(VALUE rbFilePath)
   VALUE rbFilePathTtc = rb_str_cat2(rb_str_dup(rbFilePath), ".ttc");
   if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtc))
     return rbFilePathTtc;
+  VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePath)));
+  FontFileInfo* info = fontFileInfos;
+  while (info) {
+    if (info->rbFontNameSymbol == rbFontNameSymbol) {
+      VALUE rbFileName = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
 #ifdef WIN32
-  HKEY hKey;
-  char* regPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
-  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0, KEY_READ, &hKey)
-      == ERROR_SUCCESS) {
-    DWORD type;
-    char valueName[256];
-    char data[256];
-    for (DWORD dwIndex = 0; ;dwIndex++) {
-      DWORD valueNameLength = sizeof(valueName);
-      DWORD dataLength = sizeof(data);
-      LONG result = RegEnumValue(hKey, dwIndex, valueName, &valueNameLength,
-                                 NULL, &type, data, &dataLength);
-      if (result == ERROR_SUCCESS) {
-        printf("%s\n", valueName);
-      } else {
-        break;
-      }
-    }
-    /*if (SUCCEEDED(RegQueryValueEx(hKey, "Arial (TrueType)", NULL, &dataType,
-                                  fontFileName, &fontFileNameLength))) {
-      printf("%s\n", fontFileName);
-      printf("%d\n", (int)fontFileNameLength);
-      if (dataType != REG_SZ)
-        return Qnil;
-    }*/
-    RegCloseKey(hKey);
-  } else {
-    rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
-  }
+      VALUE rbTemp = rb_str_new2(windowsFontDirPath);
+      rbFileName = rb_str_concat(rb_str_cat2(rbTemp, "\\"), rbFileName);
 #endif
+      return rbFileName;
+    }
+    info = info->next;
+  }
   return Qnil;
 }
 
@@ -52,27 +46,6 @@ static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 {
   return !NIL_P(SearchFontPath(rbFilePath)) ? Qtrue : Qfalse;
 }
-
-/*static VALUE Font_load_path(VALUE self)
-{
-  VALUE rbLoadPath = rb_iv_get(self, "load_path");
-  if (NIL_P(rbLoadPath)) {
-    VALUE rbLoadPath = rb_ary_new3(1, rb_str_new2("."));
-#ifdef WIN32
-    char path[256];
-    if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
-                                  SHGFP_TYPE_CURRENT, path))) {
-      rb_ary_push(rbLoadPath, rb_str_new2(path));
-    } else {
-      rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
-    }
-#endif
-    return rb_iv_set(self, "load_path", rbLoadPath);
-  } else {
-    return rbLoadPath;
-  }
-  return rb_ary_new();
-}*/
 
 static void Font_free(Font* font)
 {
@@ -214,6 +187,109 @@ static VALUE Font_size(VALUE self)
     return Qnil;
   }
   return INT2NUM(font->size);
+}
+
+#define ADD_INFO(currentInfo, _rbFontNameSymbol, _rbFileNameSymbol, _ttcIndex) do {\
+  FontFileInfo* info = ALLOC(FontFileInfo);\
+  info->rbFontNameSymbol = _rbFontNameSymbol;\
+  info->rbFileNameSymbol = _rbFileNameSymbol;\
+  info->ttcIndex         = _ttcIndex;\
+  info->next             = NULL;\
+  currentInfo->next = info;\
+  currentInfo = info;\
+} while (false)\
+                 
+void InitializeSdlFont(void)
+{
+  fontFileInfos = ALLOC(FontFileInfo);
+  fontFileInfos->rbFontNameSymbol = Qundef;
+  fontFileInfos->rbFileNameSymbol = Qundef;
+  fontFileInfos->ttcIndex         = -1;
+  fontFileInfos->next             = NULL;
+  FontFileInfo* currentInfo = fontFileInfos;
+  
+#ifdef WIN32
+  HKEY hKey;
+  char* regPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+  if (SUCCEEDED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0,
+                             KEY_READ, &hKey))) {
+    DWORD type;
+    char fontNameBuff[256];
+    char fileNameBuff[256];
+    DWORD fontNameBuffLength;
+    DWORD fileNameBuffLength;
+    rb_require("nkf");
+    VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
+    VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
+    for (DWORD dwIndex = 0; ;dwIndex++) {
+      fontNameBuffLength = sizeof(fontNameBuff);
+      fileNameBuffLength = sizeof(fileNameBuff);
+      LONG result = RegEnumValue(hKey, dwIndex,
+                                 fontNameBuff, &fontNameBuffLength,
+                                 NULL, &type,
+                                 fileNameBuff, &fileNameBuffLength);
+      if (result == ERROR_SUCCESS) {
+        char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
+        if (tolower(ext[0]) == 't' && tolower(ext[1]) == 't' &&
+            (tolower(ext[2]) == 'f' || tolower(ext[2]) == 'c')) {
+          char* fontName = fontNameBuff;
+          char* fileName = fileNameBuff;
+          // Font name must end with ' (TrueType)'.
+          fontName[fontNameBuffLength - 11] = '\0'; 
+          for (int i = fileNameBuffLength - 1; 0 <= i; i--) {
+            if (fileName[i] == '\\') {
+              fileName += i + 1;
+              break;
+            }
+          }
+          VALUE rbFontName = rb_str_new2(fontName);
+          rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
+                                  rbNkfOption, rbFontName);
+          if (strchr(StringValuePtr(rbFontName), '&')) {
+            VALUE rbArr = rb_str_split(rbFontName, "&");
+            VALUE* rbFontNames = RARRAY(rbArr)->ptr;
+            int arrLength = RARRAY(rbArr)->len;
+            int ttcIndex = 0;
+            for (int i = 0; i < arrLength; i++) {
+              rb_funcall(rbFontNames[i], rb_intern("strip!"), 0);
+              if (0 < RSTRING(rbFontNames[i])->len) {
+                VALUE rbFontNameSymbol = rb_str_intern(rbFontNames[i]);
+                VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+                ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
+                         ttcIndex);
+                ttcIndex++;
+              }
+            }
+          } else {
+            VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+            VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+            ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
+          }
+        }
+      } else {
+        break;
+      }
+    }
+    RegCloseKey(hKey);
+  } else {
+    rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
+  }
+  if (FAILED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
+                             SHGFP_TYPE_CURRENT, windowsFontDirPath))) {
+    rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
+  }
+#endif
+}
+
+void FinalizeSdlFont(void)
+{
+  FontFileInfo* fontFileInfo = fontFileInfos;
+  while (fontFileInfo) {
+    FontFileInfo* nextFontFileInfo = fontFileInfo->next;
+    free(nextFontFileInfo);
+    fontFileInfo = nextFontFileInfo;
+  }
+  fontFileInfo = NULL;
 }
 
 void InitializeFont(void)

@@ -1,15 +1,5 @@
 #include "starruby.h"
 
-#define ADD_KEY(currentKey, _name, _sdlKey) do {\
-  KeyboardKey* key = ALLOC(KeyboardKey);\
-  key->rbSymbol = ID2SYM(rb_intern(_name));\
-  key->sdlKey   = _sdlKey;\
-  key->state    = 0;\
-  key->next     = NULL;\
-  currentKey->next = key;\
-  currentKey = key;\
-} while (false)
-
 typedef struct KeyboardKey {
   VALUE rbSymbol;
   SDLKey sdlKey;
@@ -194,10 +184,20 @@ void UpdateInput()
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 }
 
+#define ADD_KEY(currentKey, _name, _sdlKey) do {\
+  KeyboardKey* key = ALLOC(KeyboardKey);\
+  key->rbSymbol = ID2SYM(rb_intern(_name));\
+  key->sdlKey   = _sdlKey;\
+  key->state    = 0;\
+  key->next     = NULL;\
+  currentKey->next = key;\
+  currentKey = key;\
+} while (false)
+
 void InitializeSdlInput()
 {
   keyboardKeys = ALLOC(KeyboardKey);
-  keyboardKeys->rbSymbol = Qundef; // dummy
+  keyboardKeys->rbSymbol = Qundef;
   keyboardKeys->sdlKey   = 0;
   keyboardKeys->state    = 0;
   keyboardKeys->next     = NULL;
@@ -274,7 +274,7 @@ void InitializeSdlInput()
   MEMZERO(mouse, Mouse, 1);
 }
 
-void FinalizeSdlInput()
+void FinalizeSdlInput(void)
 {
   free(mouse);
   mouse = NULL;

@@ -17,6 +17,7 @@ static void InitializeSdl(void)
   SDL_ShowCursor(SDL_DISABLE);
 
   InitializeSdlAudio();
+  InitializeSdlFont();
   InitializeSdlInput();
   if (TTF_Init())
     rb_raise_sdl_ttf_error();
@@ -26,6 +27,7 @@ static void FinalizeSdl(VALUE unused)
 {
   TTF_Quit();
   FinalizeSdlInput();
+  FinalizeSdlFont();
   FinalizeSdlAudio();
   SDL_Quit();
   isSdlQuitted = true;

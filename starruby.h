@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <ruby.h>
 #include <st.h>
 #include <SDL.h>
@@ -89,8 +90,10 @@ void InitializeTexture(void);
 void UpdateInput(void);
 
 void InitializeSdlAudio(void);
+void InitializeSdlFont(void);
 void InitializeSdlInput(void);
 void FinalizeSdlAudio(void);
+void FinalizeSdlFont(void);
 void FinalizeSdlInput(void);
 
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);

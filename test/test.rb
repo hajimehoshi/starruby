@@ -68,34 +68,25 @@ class FontTest < Test::Unit::TestCase
 =end
   
   def test_exist
-    #assert_equal true,  Font.exist?("arial")
-    #assert_equal true,  Font.exist?("arial.ttf")
-    #assert_equal false, Font.exist?("arial.ttc")
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
       # Windows
-      assert_equal true,  Font.exist?("msgothic")
+      assert_equal false, Font.exist?("msgothic")
       assert_equal false, Font.exist?("msgothic.ttf")
-      assert_equal true,  Font.exist?("msgothic.ttc")
+      assert_equal false, Font.exist?("msgothic.ttc")
       assert_equal true,  Font.exist?("Arial")
       assert_equal true,  Font.exist?("ＭＳ ゴシック")
       assert_equal false, Font.exist?("notfont")
       assert_equal false, Font.exist?("notfont.ttf")
       assert_equal false, Font.exist?("notfont.ttc")
+      assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("arial")
+      assert_equal (File.exist?("./Arial.ttf") or File.exist?("./Arial.ttc")), Font.exist?("./Arial")
+      assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("./arial")
     end
     assert_equal true,  Font.exist?("fonts/test")
     assert_equal true,  Font.exist?("fonts/test.ttf")
     assert_equal false, Font.exist?("test")
     assert_equal false, Font.exist?("test.ttf")
-    begin
-      Font.load_path.push("./fonts")
-      assert_equal true, Font.exist?("fonts/test")
-      assert_equal true, Font.exist?("fonts/test.ttf")
-      assert_equal true, Font.exist?("test")
-      assert_equal true, Font.exist?("test.ttf")
-    ensure
-      Font.load_path.pop
-    end
   end
 =begin
   def test_new
@@ -577,14 +568,14 @@ class TextureTest < Test::Unit::TestCase
   
   def test_render_text
     texture = Texture.load("images/ruby")
-    font = Font.new("arial", 12)
+    font = Font.new("Arial", 12)
     color = Color.new(255, 255, 255)
     texture.render_text("A", 0, 0, font, color)
   end
   
   def test_render_text_disposed
     texture = Texture.load("images/ruby")
-    font = Font.new("arial", 12)
+    font = Font.new("Arial", 12)
     color = Color.new(255, 255, 255)
     texture.dispose
     assert_raise TypeError do
@@ -594,7 +585,7 @@ class TextureTest < Test::Unit::TestCase
   
   def test_render_text_frozen
     texture = Texture.load("images/ruby")
-    font = Font.new("arial", 12)
+    font = Font.new("Arial", 12)
     color = Color.new(255, 255, 255)
     texture.freeze
     assert_raise TypeError do

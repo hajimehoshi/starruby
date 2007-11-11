@@ -68,6 +68,13 @@ class FontTest < Test::Unit::TestCase
 =end
   
   def test_exist
+    assert_equal false, Font.exist?("arial")
+    assert_equal true,  Font.exist?("Arial")
+    assert_equal false, Font.exist?("arial.ttf")
+    assert_equal false, Font.exist?("arial.ttc")
+    assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("arial")
+    assert_equal (File.exist?("./Arial.ttf") or File.exist?("./Arial.ttc")), Font.exist?("./Arial")
+    assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("./arial")
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
       # Windows
@@ -79,9 +86,6 @@ class FontTest < Test::Unit::TestCase
       assert_equal false, Font.exist?("notfont")
       assert_equal false, Font.exist?("notfont.ttf")
       assert_equal false, Font.exist?("notfont.ttc")
-      assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("arial")
-      assert_equal (File.exist?("./Arial.ttf") or File.exist?("./Arial.ttc")), Font.exist?("./Arial")
-      assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("./arial")
     end
     assert_equal true,  Font.exist?("fonts/test")
     assert_equal true,  Font.exist?("fonts/test.ttf")

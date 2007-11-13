@@ -54,7 +54,6 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
     return Qnil;
 
   Mix_Volume(sdlChannel, DIV255(volume * MIX_MAX_VOLUME));
-
   int sdlLeftPanning  = 255;
   int sdlRightPanning = 255;
   if (panning < 127)
@@ -62,7 +61,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   else if (128 < panning)
     sdlLeftPanning = 254 - (panning - 128) * 2;
   Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning);
-  
+
   return Qnil;
 }
 

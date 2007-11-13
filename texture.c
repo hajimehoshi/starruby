@@ -41,34 +41,8 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
 
 static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
-  char* path = StringValuePtr(rbPath);
-  
-  if (!RTEST(rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbPath))) {
-    VALUE rbPathes = rb_funcall(rb_cDir, rb_intern("[]"), 1,
-                                rb_str_cat2(rb_str_dup(rbPath), ".*"));
-    struct RArray* arrPathes = RARRAY(rbPathes);
-    int len = arrPathes->len;
-    VALUE rbFileName = rb_funcall(rb_cFile, rb_intern("basename"), 1, rbPath);
-    for (int i = 0; i < len; i++) {
-      VALUE rbFileNameWithoutExt = rb_funcall(rb_cFile, rb_intern("basename"), 2,
-                                              arrPathes->ptr[i],
-                                              rb_str_new2(".*"));
-      if (rb_str_cmp(rbFileName, rbFileNameWithoutExt) != 0)
-        arrPathes->ptr[i] = Qnil;
-    }
-    rb_funcall(rbPathes, rb_intern("compact!"), 0);
-    //rb_funcall(rb_mKernel, rb_intern("p"), 1, rbPathes);
-    if (arrPathes->len == 1) {
-      path = StringValuePtr(arrPathes->ptr[0]);
-    } else if (2 <= arrPathes->len) {
-      rb_raise(rb_path2class("ArgumentError"), "ambiguous path: %s", path);
-      return Qnil;
-    } else {
-      rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
-      return Qnil;
-    }
-  }
-  
+  VALUE rbCompletePath = GetCompletePath(rbPath);
+  char* path = StringValuePtr(rbCompletePath);
   SDL_Surface* imageSurface = IMG_Load(path);
   if (!imageSurface) {
     rb_raise_sdl_image_error();

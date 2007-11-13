@@ -108,7 +108,7 @@ static VALUE DoLoop(SDL_Surface* screen)
 
 static VALUE DisposeScreen(SDL_Surface* screen)
 {
-  SDL_FreeSurface(screen);
+  // SDL_FreeSurface(screen);
   screen = NULL;
   VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   if (!NIL_P(rbScreen))
@@ -206,6 +206,6 @@ void InitializeGame(void)
   rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
   rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
 
-  symbol_fullscreen  = ID2SYM(rb_intern("fullscreen"));
+  symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 }

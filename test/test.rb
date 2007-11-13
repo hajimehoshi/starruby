@@ -281,8 +281,11 @@ class TextureTest < Test::Unit::TestCase
     
     assert_not_nil Texture.load("images/ruby");
     assert_not_nil Texture.load("images/rubypng");
-    assert_not_nil Texture.load("images/ruby.foo");
-    assert_not_nil Texture.load("images/ruby.foo.png");
+    assert_raise Errno::ENOENT do
+      assert_not_nil Texture.load("images/foo");
+    end
+    assert_not_nil Texture.load("images/foo.bar");
+    assert_not_nil Texture.load("images/foo.bar.png");
     
     assert_raise StarRubyError do
       Texture.load("images/not_image");
@@ -290,6 +293,10 @@ class TextureTest < Test::Unit::TestCase
     
     assert_raise StarRubyError do
       Texture.load("images/not_image.txt");
+    end
+    
+    assert_raise ArgumentError do
+      Texture.load("images/ambiguous");
     end
   end
   

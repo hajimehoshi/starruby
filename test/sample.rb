@@ -74,5 +74,9 @@ Game.run(320, 240, :window_scale => 2) do
   i += 1
   i %= 10
   Game.title = "%0.2f" % Game.real_fps if i == 0
+  
+  if Input.pressed_keys(:mouse, :duration => 1).include?(:left)
+    Audio.play_se("sounds/sample");
+  end
 
 end

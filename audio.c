@@ -26,7 +26,11 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  //Mix_Chunk* sdlSE = Mix_Load
+  VALUE rbCompletePath = GetCompletePath(rbPath);
+  char* path = StringValuePtr(rbCompletePath);
+  Mix_Chunk* sdlSE = Mix_LoadWAV(path);
+  if (!sdlSE)
+    rb_raise_sdl_mix_error();
 
   int panning = 127;
   int time    = 0;
@@ -41,9 +45,23 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   if (st_lookup(table, symbol_volume, &val))
     volume = NORMALIZE(NUM2INT(val), 0, 255);
 
-  /*int channel;
+  int sdlChannel;
   if (time == 0)
-    channel = Mix_PlayChannel(-1, );*/
+    sdlChannel = Mix_PlayChannel(-1, sdlSE, 0);
+  else
+    sdlChannel = Mix_FadeInChannel(-1, sdlSE, 0, time);
+  if (sdlChannel == -1)
+    return Qnil;
+
+  Mix_Volume(sdlChannel, DIV255(volume * MIX_MAX_VOLUME));
+
+  int sdlLeftPanning  = 255;
+  int sdlRightPanning = 255;
+  if (panning < 127)
+    sdlRightPanning = panning * 2;
+  else if (128 < panning)
+    sdlLeftPanning = 254 - (panning - 128) * 2;
+  Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning);
   
   return Qnil;
 }

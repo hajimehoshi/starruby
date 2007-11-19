@@ -52,21 +52,6 @@ end
 
 class FontTest < Test::Unit::TestCase
   
-  CSIDL_FONTS = 0x0014
-=begin
-  def test_load_path
-    assert_equal ".", Font.load_path[0]
-    case RUBY_PLATFORM
-    when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
-      require "Win32API"
-      path = "\0" * 256
-      p = Win32API.new("SHFOLDER", "SHGetFolderPath", %w(p i p i p), "i")
-      p.call(0, CSIDL_FONTS, 0, 0, path)
-      assert_equal path.delete("\0"), Font.load_path[1]
-    end
-  end
-=end
-  
   def test_exist
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
@@ -88,6 +73,8 @@ class FontTest < Test::Unit::TestCase
     when /linux/
       # Linux
       assert_equal true,  Font.exist?("FreeSans")
+      assert_equal true,  Font.exist?("FreeSans:style=Medium")
+      assert_equal true,  Font.exist?("FreeSans:style=Bold")
       assert_equal false, Font.exist?("FreeSans.ttf")
       assert_equal false, Font.exist?("FreeSans.ttc")
     end

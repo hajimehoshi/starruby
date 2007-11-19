@@ -19,28 +19,28 @@ typedef struct FontFileInfo {
 } FontFileInfo;
 static FontFileInfo* fontFileInfos;
 
-static void SearchFont(VALUE rbFilePath,
+static void SearchFont(VALUE rbFilePathOrName,
                        VALUE* rbRealFilePath,
                        int* ttcIndex)
 {
   *rbRealFilePath = Qnil;
   if (ttcIndex != NULL)
     *ttcIndex = -1;
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePath)) {
-    *rbRealFilePath = rbFilePath;
+  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathOrName)) {
+    *rbRealFilePath = rbFilePathOrName;
     return;
   }
-  VALUE rbFilePathTtf = rb_str_cat2(rb_str_dup(rbFilePath), ".ttf");
+  VALUE rbFilePathTtf = rb_str_cat2(rb_str_dup(rbFilePathOrName), ".ttf");
   if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtf)) {
     *rbRealFilePath = rbFilePathTtf;
     return;
   }
-  VALUE rbFilePathTtc = rb_str_cat2(rb_str_dup(rbFilePath), ".ttc");
+  VALUE rbFilePathTtc = rb_str_cat2(rb_str_dup(rbFilePathOrName), ".ttc");
   if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtc)) {
     *rbRealFilePath = rbFilePathTtc;
     return;
   }
-  VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePath)));
+  VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
@@ -55,6 +55,42 @@ static void SearchFont(VALUE rbFilePath,
     }
     info = info->next;
   }
+#ifdef USE_FONTCONFIG
+  if (!FcInit()) {
+    FcFini();
+    rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
+    return;
+  }
+  FcPattern* pattern = FcNameParse((FcChar8*)StringValuePtr(rbFilePathOrName));
+  FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);
+  FcFontSet* fontSet = FcFontList(0, pattern, objectSet);
+  if (objectSet)
+    FcObjectSetDestroy(objectSet);
+  if (pattern)
+    FcPatternDestroy(pattern);
+  if (fontSet) {
+    for (int i = 0; i < fontSet->nfont; i++) {
+      FcChar8* fontName = NULL;
+      FcChar8* fileName = NULL;
+      fontName = FcNameUnparse(fontSet->fonts[i]);
+      if (FcPatternGetString(fontSet->fonts[i], FC_FILE, 0, &fileName) !=
+	  FcResultMatch)
+	continue;
+      *rbRealFilePath = rb_str_new2((char*)fileName);
+      VALUE rbFontName = rb_str_new2((char*)fontName);
+      free(fontName);
+      fontName = NULL;
+      if (ttcIndex != NULL &&
+          strchr(StringValuePtr(rbFontName), ','))
+        *ttcIndex = 0;
+      break;
+    }
+    FcFontSetDestroy(fontSet);
+  }
+  FcFini();
+  if (!NIL_P(*rbRealFilePath))
+    return;
+#endif
   return;
 }
 
@@ -91,7 +127,7 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
     rbOptions = rb_hash_new();
 
   VALUE rbRealFilePath;
-  int preTtcIndex;
+  int preTtcIndex = -1;
   SearchFont(rbPath, &rbRealFilePath, &preTtcIndex);
   if (NIL_P(rbRealFilePath)) {
     char* path = StringValuePtr(rbPath);
@@ -229,6 +265,7 @@ void InitializeSdlFont(void)
   fontFileInfos->ttcIndex         = -1;
   fontFileInfos->next             = NULL;
   FontFileInfo* currentInfo = fontFileInfos;
+  (void)currentInfo;
   
 #ifdef WIN32
   HKEY hKey;
@@ -301,54 +338,6 @@ void InitializeSdlFont(void)
                              SHGFP_TYPE_CURRENT, windowsFontDirPath))) {
     rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
   }
-#endif
-#ifdef USE_FONTCONFIG
-  if (!FcInit())
-    rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
-  FcPattern* pattern = FcNameParse((FcChar8*)":");
-  FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);
-  FcFontSet* fontSet = FcFontList(0, pattern, objectSet);
-  if (objectSet)
-    FcObjectSetDestroy(objectSet);
-  if (pattern)
-    FcPatternDestroy(pattern);
-  if (fontSet) {
-    for (int i = 0; i < fontSet->nfont; i++) {
-      FcChar8* fontName = NULL;
-      FcChar8* fileName = NULL;
-      fontName = FcNameUnparse(fontSet->fonts[i]);
-      if (FcPatternGetString(fontSet->fonts[i], FC_FILE, 0, &fileName) !=
-	  FcResultMatch)
-	continue;
-      VALUE rbFontName = rb_str_new2((char*)fontName);
-      free(fontName);
-      fontName = NULL;
-      if (strchr(StringValuePtr(rbFontName), ',')) {
-        VALUE rbArr = rb_str_split(rbFontName, ",");
-        VALUE* rbFontNames = RARRAY(rbArr)->ptr;
-        int arrLength = RARRAY(rbArr)->len;
-        int ttcIndex = 0;
-        for (int i = 0; i < arrLength; i++) {
-          rb_funcall(rbFontNames[i], rb_intern("strip!"), 0);
-          rb_funcall(rbFontNames[i], rb_intern("delete!"), 1,
-                     rb_str_new2("\\"));
-          if (0 < RSTRING(rbFontNames[i])->len) {
-            VALUE rbFontNameSymbol = rb_str_intern(rbFontNames[i]);
-            VALUE rbFileNameSymbol = ID2SYM(rb_intern((char*)fileName));
-            ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
-                     ttcIndex);
-            ttcIndex++;
-          }
-        }
-      } else {
-        VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-        VALUE rbFileNameSymbol = ID2SYM(rb_intern((char*)fileName));
-        ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
-      }
-    }
-    FcFontSetDestroy(fontSet);
-  }
-  FcFini();
 #endif
 }
 

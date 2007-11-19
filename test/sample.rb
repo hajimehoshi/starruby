@@ -3,7 +3,7 @@ require "../starruby"
 include StarRuby
 
 # font = Font.new("MS UI Gothic", 12)
-font = Font.new("FreeSans", 12)
+font = Font.new("FreeSans:style=Medium", 12)
 color = Color.new(255, 255, 255)
 
 class Sprite

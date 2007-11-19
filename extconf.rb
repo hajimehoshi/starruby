@@ -16,6 +16,11 @@ $LDFLAGS += " -lSDL_image" # have_library?
 $LDFLAGS += " -lSDL_mixer" # have_library?
 $LDFLAGS += " -lSDL_ttf" # have_library?
 
+if have_header("fontconfig/fontconfig.h") and have_library("fontconfig", "FcInit")
+  $CFLAGS += " -DUSE_FONTCONFIG"
+  $LDFLAGS += " -lfontconfig"
+end
+
 if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0"
 else

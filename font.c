@@ -1,5 +1,8 @@
 #include "starruby.h"
 
+#ifdef USE_FONTCONFIG
+#include <fontconfig/fontconfig.h>
+#endif
 #ifdef WIN32
 static char windowsFontDirPath[256];
 #endif
@@ -229,7 +232,8 @@ void InitializeSdlFont(void)
   
 #ifdef WIN32
   HKEY hKey;
-  char* regPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+  const char* regPath =
+    "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
   if (SUCCEEDED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0,
                              KEY_READ, &hKey))) {
     DWORD type;
@@ -297,6 +301,54 @@ void InitializeSdlFont(void)
                              SHGFP_TYPE_CURRENT, windowsFontDirPath))) {
     rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
   }
+#endif
+#ifdef USE_FONTCONFIG
+  if (!FcInit())
+    rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
+  FcPattern* pattern = FcNameParse((FcChar8*)":");
+  FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);
+  FcFontSet* fontSet = FcFontList(0, pattern, objectSet);
+  if (objectSet)
+    FcObjectSetDestroy(objectSet);
+  if (pattern)
+    FcPatternDestroy(pattern);
+  if (fontSet) {
+    for (int i = 0; i < fontSet->nfont; i++) {
+      FcChar8* fontName = NULL;
+      FcChar8* fileName = NULL;
+      fontName = FcNameUnparse(fontSet->fonts[i]);
+      if (FcPatternGetString(fontSet->fonts[i], FC_FILE, 0, &fileName) !=
+	  FcResultMatch)
+	continue;
+      VALUE rbFontName = rb_str_new2((char*)fontName);
+      free(fontName);
+      fontName = NULL;
+      if (strchr(StringValuePtr(rbFontName), ',')) {
+        VALUE rbArr = rb_str_split(rbFontName, ",");
+        VALUE* rbFontNames = RARRAY(rbArr)->ptr;
+        int arrLength = RARRAY(rbArr)->len;
+        int ttcIndex = 0;
+        for (int i = 0; i < arrLength; i++) {
+          rb_funcall(rbFontNames[i], rb_intern("strip!"), 0);
+          rb_funcall(rbFontNames[i], rb_intern("delete!"), 1,
+                     rb_str_new2("\\"));
+          if (0 < RSTRING(rbFontNames[i])->len) {
+            VALUE rbFontNameSymbol = rb_str_intern(rbFontNames[i]);
+            VALUE rbFileNameSymbol = ID2SYM(rb_intern((char*)fileName));
+            ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
+                     ttcIndex);
+            ttcIndex++;
+          }
+        }
+      } else {
+        VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+        VALUE rbFileNameSymbol = ID2SYM(rb_intern((char*)fileName));
+        ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
+      }
+    }
+    FcFontSetDestroy(fontSet);
+  }
+  FcFini();
 #endif
 }
 

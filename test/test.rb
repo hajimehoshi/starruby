@@ -68,16 +68,15 @@ class FontTest < Test::Unit::TestCase
 =end
   
   def test_exist
-    assert_equal false, Font.exist?("arial")
-    assert_equal true,  Font.exist?("Arial")
-    assert_equal false, Font.exist?("arial.ttf")
-    assert_equal false, Font.exist?("arial.ttc")
-    assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("arial")
-    assert_equal (File.exist?("./Arial.ttf") or File.exist?("./Arial.ttc")), Font.exist?("./Arial")
-    assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("./arial")
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
       # Windows
+      assert_equal true,  Font.exist?("Arial")
+      assert_equal false, Font.exist?("arial.ttf")
+      assert_equal false, Font.exist?("arial.ttc")
+      assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("arial")
+      assert_equal (File.exist?("./Arial.ttf") or File.exist?("./Arial.ttc")), Font.exist?("./Arial")
+      assert_equal (File.exist?("./arial.ttf") or File.exist?("./arial.ttc")), Font.exist?("./arial")
       assert_equal false, Font.exist?("msgothic")
       assert_equal false, Font.exist?("msgothic.ttf")
       assert_equal false, Font.exist?("msgothic.ttc")
@@ -86,6 +85,11 @@ class FontTest < Test::Unit::TestCase
       assert_equal false, Font.exist?("notfont")
       assert_equal false, Font.exist?("notfont.ttf")
       assert_equal false, Font.exist?("notfont.ttc")
+    when /linux/
+      # Linux
+      assert_equal true,  Font.exist?("FreeSans")
+      assert_equal false, Font.exist?("FreeSans.ttf")
+      assert_equal false, Font.exist?("FreeSans.ttc")
     end
     assert_equal true,  Font.exist?("fonts/test")
     assert_equal true,  Font.exist?("fonts/test.ttf")
@@ -94,37 +98,59 @@ class FontTest < Test::Unit::TestCase
   end
 
   def test_new
-    font = Font.new("Arial", 16)
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+      assert_equal "Arial", font.name
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+      assert_equal "FreeSans", font.name
+    else
+      flunk
+    end
     assert_equal 16, font.size
-    assert_equal "Arial", font.name
     assert_equal false, font.bold?
     assert_equal false, font.italic?
-    font = Font.new("MS UI Gothic", 12, {
-      :ttc_index => 1, :bold => true, :italic => true
-    }) # :ttc_index is ignored
-    assert_equal 12, font.size
-    assert_equal "MS UI Gothic", font.name
-    assert_equal true, font.bold?
-    assert_equal true, font.italic?
+    if Font.exist?("MS UI Gothic")
+      font = Font.new("MS UI Gothic", 12, {
+                        :ttc_index => 1, :bold => true, :italic => true
+                      }) # :ttc_index is ignored
+      assert_equal 12, font.size
+      assert_equal "MS UI Gothic", font.name
+      assert_equal true, font.bold?
+      assert_equal true, font.italic?
+    end
     assert_raise Errno::ENOENT do
       Font.new("notfont", 12)
     end
   end
   
   def test_new_nil_option
+    if Font.exist?("Arial")
+      font_name = "Arial"
+    elsif Font.exist?("FreeSans")
+      font_name = ("FreeSans")
+    else
+      flunk
+    end
     [:bold, :italic].each do |key|
-      Font.new("Arial", 12, key => nil)
+      Font.new(font_name, 12, key => nil)
     end
     [:ttc_index].each do |key|
       assert_raise(TypeError, "key: #{key}") do
-        Font.new("Arial", 12, key => nil)
+        Font.new(font_name, 12, key => nil)
       end
     end
     
   end
   
   def test_dispose
-    font = Font.new("Arial", 16)
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
     assert_equal false, font.disposed?
     font.dispose
     assert_equal true, font.disposed?
@@ -157,7 +183,13 @@ class FontTest < Test::Unit::TestCase
       assert_equal [60, h], font.get_size("こんにちは")
       assert_equal [30, h], font.get_size("aaa&a")
     end
-    font = Font.new("Arial", 12);
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
     size = font.get_size("AAAAAAAAAAAAAA");
     size[0] # No Exception
     size[1] # No Exception
@@ -566,14 +598,26 @@ class TextureTest < Test::Unit::TestCase
   
   def test_render_text
     texture = Texture.load("images/ruby")
-    font = Font.new("Arial", 12)
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
     color = Color.new(255, 255, 255)
     texture.render_text("A", 0, 0, font, color)
   end
   
   def test_render_text_disposed
     texture = Texture.load("images/ruby")
-    font = Font.new("Arial", 12)
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
     color = Color.new(255, 255, 255)
     texture.dispose
     assert_raise TypeError do
@@ -583,7 +627,13 @@ class TextureTest < Test::Unit::TestCase
   
   def test_render_text_frozen
     texture = Texture.load("images/ruby")
-    font = Font.new("Arial", 12)
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
     color = Color.new(255, 255, 255)
     texture.freeze
     assert_raise TypeError do

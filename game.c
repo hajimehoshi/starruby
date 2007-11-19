@@ -65,7 +65,7 @@ static VALUE DoLoop(SDL_Surface* screen)
       before2 = now;
     }
 
-    UpdateInput();
+    UpdateInput(windowScale);
     
     rb_yield(Qnil);
     

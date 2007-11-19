@@ -123,7 +123,7 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-void UpdateInput()
+void UpdateInput(int windowScale)
 {
   SDL_JoystickUpdate();
 
@@ -164,8 +164,8 @@ void UpdateInput()
 
   int mouseLocationX, mouseLocationY;
   Uint8 sdlMouseButtons = SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
-  VALUE rbMouseLocation = rb_assoc_new(INT2NUM(mouseLocationX),
-                                       INT2NUM(mouseLocationY));
+  VALUE rbMouseLocation = rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
+                                       INT2NUM(mouseLocationY / windowScale));
   OBJ_FREEZE(rbMouseLocation);
 
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT))

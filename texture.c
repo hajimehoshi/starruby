@@ -336,6 +336,9 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
     rb_raise(rb_eTypeError, "can't use disposed font");
     return Qnil;
   }
+
+  if (RSTRING(rbText)->len == 0)
+    return Qnil;
   
   Color* color;
   Data_Get_Struct(rbColor, Color, color);

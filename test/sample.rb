@@ -48,11 +48,13 @@ class Sprite
   
 end
 
+
 sprites = Array.new(1000) { Sprite.new }
 
 i = 0
+bgm_position = 0
 
-Game.fps = 10000
+#Game.fps = 10000
 Game.run(320, 240, :window_scale => 2) do
   
   screen = Game.screen
@@ -75,15 +77,19 @@ Game.run(320, 240, :window_scale => 2) do
   x, y = Input.mouse_location
   screen.render_text("(#{x}, #{y})", x, y, font, color)
   
+  screen.render_text("BGM Position:", 8, 8 + 96, font, color)
+  screen.render_text(Audio.bgm_position.inspect, 8 + 16, 8 + 112, font, color)
+  
   i += 1
   i %= 10
   Game.title = "%0.2f" % Game.real_fps if i == 0
   
   if Input.pressed_keys(:mouse, :duration => 1).include?(:left)
     unless Audio.playing_bgm?
-      Audio.play_bgm("sounds/Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron")
+      Audio.play_bgm("sounds/Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron", :volume => 16, :position => bgm_position, :time => 0)
     else
-      Audio.stop_bgm
+      bgm_position = Audio.bgm_position
+      Audio.stop_bgm(:time => 0)
     end
   end
 

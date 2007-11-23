@@ -65,6 +65,7 @@ static VALUE DoLoop(SDL_Surface* screen)
       before2 = now;
     }
 
+    UpdateAudio();
     UpdateInput(windowScale);
     
     rb_yield(Qnil);

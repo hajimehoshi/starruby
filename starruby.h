@@ -88,6 +88,7 @@ void InitializeInput(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
 
+void UpdateAudio(void);
 void UpdateInput(int);
 
 void InitializeSdlAudio(void);

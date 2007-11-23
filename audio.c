@@ -1,32 +1,32 @@
 #include "starruby.h"
 
+static bool bgmLoop = false;
+static Uint32 bgmPosition = 0;
+static int bgmVolume;
+static Mix_Music* sdlBgm = NULL;
+static Uint32 sdlPreviousTicks = 0;
+
 static VALUE symbol_loop;
 static VALUE symbol_panning;
+static VALUE symbol_position;
 static VALUE symbol_time;
 static VALUE symbol_volume;
 
 static VALUE Audio_bgm_position(VALUE self)
 {
-  return Qnil;
-}
-
-static VALUE Audio_bgm_position_eq(VALUE self, VALUE rbPosition)
-{
-  return Qnil;
+  return LONG2NUM(bgmPosition);
 }
 
 static VALUE Audio_bgm_volume(VALUE self)
 {
-  return rb_iv_get(rb_mAudio, "volume");
+  return NUM2INT(bgmVolume);
 }
 
 static VALUE Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
 {
-  int volume = NORMALIZE(NUM2INT(rbVolume), 0, 255);
-  rb_iv_set(rb_mAudio, "volume", INT2NUM(volume));
-  int sdlVolume = DIV255((int)(volume * MIX_MAX_VOLUME));
-  Mix_VolumeMusic(sdlVolume);
-  return INT2NUM(volume);
+  bgmVolume = NORMALIZE(NUM2INT(rbVolume), 0, 255);
+  Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
+  return INT2NUM(bgmVolume);
 }
 
 static VALUE Audio_playing_bgm(VALUE self)
@@ -44,24 +44,32 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 
   VALUE rbCompletePath = GetCompletePath(rbPath);
   char* path = StringValuePtr(rbCompletePath);
-  Mix_Music* sdlBgm = Mix_LoadMUS(path);
+  sdlBgm = Mix_LoadMUS(path);
   if (!sdlBgm)
     rb_raise_sdl_mix_error();
 
-  bool loop   = false;
-  int time    = 0;
+  int time     = 0;
+  int volume   = 256;
 
   VALUE val;
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_loop, &val))
-    loop = RTEST(val);
+    bgmLoop = RTEST(val);
+  if (st_lookup(table, symbol_position, &val))
+    bgmPosition = MAX(NUM2INT(val), 0);
   if (st_lookup(table, symbol_time, &val))
     time = NUM2INT(val);
+  if (st_lookup(table, symbol_volume, &val))
+    volume = NORMALIZE(NUM2INT(val), 0, 255);
 
+  Audio_bgm_volume_eq(self, INT2NUM(volume));
   if (time == 0)
-    Mix_PlayMusic(sdlBgm, loop ? -1 : 0);
+    Mix_PlayMusic(sdlBgm, 0);
   else
-    Mix_FadeInMusic(sdlBgm, loop ? -1 : 0, time);
+    Mix_FadeInMusic(sdlBgm, 0, time);
+  Mix_RewindMusic();
+  if (bgmPosition)
+    Mix_SetMusicPosition((int)(bgmPosition / 1000.0) & ~1);
   
   return Qnil;
 }
@@ -153,8 +161,17 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
     Mix_HaltMusic();
   else
     Mix_FadeOutMusic(time);
+  sdlBgm = NULL;
   
   return Qnil;
+}
+
+void SdlMusicFinished(void)
+{
+  if (sdlBgm && bgmLoop) {
+    bgmPosition = 0;
+    Mix_PlayMusic(sdlBgm, 0);
+  }
 }
 
 void InitializeSdlAudio(void)
@@ -162,6 +179,7 @@ void InitializeSdlAudio(void)
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     rb_raise_sdl_mix_error();
   Mix_AllocateChannels(8);
+  Mix_HookMusicFinished(SdlMusicFinished);
   Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
 }
 
@@ -175,8 +193,6 @@ void InitializeAudio(void)
   rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
   rb_define_singleton_method(rb_mAudio, "bgm_position",
                              Audio_bgm_position,    0);
-  rb_define_singleton_method(rb_mAudio, "bgm_position=",
-                             Audio_bgm_position_eq, 1);
   rb_define_singleton_method(rb_mAudio, "bgm_volume",   Audio_bgm_volume,    0);
   rb_define_singleton_method(rb_mAudio, "bgm_volume=",  Audio_bgm_volume_eq, 1);
   rb_define_singleton_method(rb_mAudio, "playing_bgm?", Audio_playing_bgm,   0);
@@ -185,8 +201,19 @@ void InitializeAudio(void)
   rb_define_singleton_method(rb_mAudio, "stop_all_ses", Audio_stop_all_ses, -1);
   rb_define_singleton_method(rb_mAudio, "stop_bgm",     Audio_stop_bgm,     -1);
 
-  symbol_loop    = ID2SYM(rb_intern("loop"));
-  symbol_panning = ID2SYM(rb_intern("panning"));
-  symbol_time    = ID2SYM(rb_intern("time"));
-  symbol_volume  = ID2SYM(rb_intern("volume"));
+  symbol_loop     = ID2SYM(rb_intern("loop"));
+  symbol_panning  = ID2SYM(rb_intern("panning"));
+  symbol_position = ID2SYM(rb_intern("position"));
+  symbol_time     = ID2SYM(rb_intern("time"));
+  symbol_volume   = ID2SYM(rb_intern("volume"));
+}
+
+void UpdateAudio(void)
+{
+  Uint32 now = SDL_GetTicks();
+  if (Mix_PlayingMusic())
+    bgmPosition += now - sdlPreviousTicks;
+  else
+    bgmPosition = 0;
+  sdlPreviousTicks = now;
 }

@@ -594,6 +594,7 @@ class TextureTest < Test::Unit::TestCase
     end
     color = Color.new(255, 255, 255)
     texture.render_text("A", 0, 0, font, color)
+    texture.render_text("", 0, 0, font, color)
   end
   
   def test_render_text_disposed

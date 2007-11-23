@@ -29,6 +29,11 @@ static VALUE Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
   return INT2NUM(volume);
 }
 
+static VALUE Audio_playing_bgm(VALUE self)
+{
+  return Mix_PlayingMusic() ? Qtrue : Qfalse;
+}
+
 static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 {
   VALUE rbPath;
@@ -174,6 +179,7 @@ void InitializeAudio(void)
                              Audio_bgm_position_eq, 1);
   rb_define_singleton_method(rb_mAudio, "bgm_volume",   Audio_bgm_volume,    0);
   rb_define_singleton_method(rb_mAudio, "bgm_volume=",  Audio_bgm_volume_eq, 1);
+  rb_define_singleton_method(rb_mAudio, "playing_bgm?", Audio_playing_bgm,   0);
   rb_define_singleton_method(rb_mAudio, "play_bgm",     Audio_play_bgm,     -1);
   rb_define_singleton_method(rb_mAudio, "play_se",      Audio_play_se,      -1);
   rb_define_singleton_method(rb_mAudio, "stop_all_ses", Audio_stop_all_ses, -1);

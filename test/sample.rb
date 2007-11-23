@@ -1,4 +1,4 @@
-require "../starruby"
+require "starruby"
 
 include StarRuby
 

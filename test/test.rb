@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require "../starruby"
+require "starruby"
 require "test/unit"
 
 include StarRuby

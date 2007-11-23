@@ -2,7 +2,7 @@
 
 static bool bgmLoop = false;
 static Uint32 bgmPosition = 0;
-static int bgmVolume;
+static int bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlPreviousTicks = 0;
 
@@ -19,7 +19,7 @@ static VALUE Audio_bgm_position(VALUE self)
 
 static VALUE Audio_bgm_volume(VALUE self)
 {
-  return NUM2INT(bgmVolume);
+  return INT2NUM(bgmVolume);
 }
 
 static VALUE Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)

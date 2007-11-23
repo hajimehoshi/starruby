@@ -25,6 +25,7 @@ SDL, SDL_image, SDL_mixer, SDL_ttf:
   GNU Lesser General Public License
   http://www.libsdl.org/
 
+
 * Web Site
 
 http://code.google.com/p/starruby/

@@ -68,8 +68,10 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   else
     Mix_FadeInMusic(sdlBgm, 0, time);
   Mix_RewindMusic();
-  if (bgmPosition)
-    Mix_SetMusicPosition((int)(bgmPosition / 1000.0) & ~1);
+  if (bgmPosition) {
+    bgmPosition = (bgmPosition / 2000 * 2000);
+    Mix_SetMusicPosition(bgmPosition / 1000);
+  }
   
   return Qnil;
 }

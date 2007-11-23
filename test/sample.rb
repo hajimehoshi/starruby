@@ -86,10 +86,10 @@ Game.run(320, 240, :window_scale => 2) do
   
   if Input.pressed_keys(:mouse, :duration => 1).include?(:left)
     unless Audio.playing_bgm?
-      Audio.play_bgm("sounds/Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron", :volume => 16, :position => bgm_position, :time => 0)
+      Audio.play_bgm("sounds/Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron", :volume => 16, :position => bgm_position, :time => 500, :loop => true)
     else
       bgm_position = Audio.bgm_position
-      Audio.stop_bgm(:time => 0)
+      Audio.stop_bgm(:time => 500)
     end
   end
 

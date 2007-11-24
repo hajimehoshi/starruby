@@ -193,14 +193,14 @@ class GameTest < Test::Unit::TestCase
     assert_equal 30, Game.fps;
     assert_equal 31, (Game.fps = 31)
     assert_equal 31, Game.fps
-    Game.run do
+    Game.run(320, 240) do
       assert_equal true, Game.running?
       assert_equal "bar", (Game.title = "bar")
       assert_equal "bar", Game.title
       assert_equal 32, (Game.fps = 32)
       assert_equal 32, Game.fps
       assert_raise StarRubyError do
-        Game.run {}
+        Game.run(320, 240) {}
       end
       Game.terminate
       assert_equal true, Game.running?
@@ -221,12 +221,12 @@ class GameTest < Test::Unit::TestCase
   
   def test_running
     assert_equal false, Game.running?
-    Game.run do
+    Game.run(320, 240) do
       assert_equal true, Game.running?
       Game.terminate
     end
     assert_equal false, Game.running?
-    Game.run do
+    Game.run(320, 240) do
       assert_equal true, Game.running?
       Game.terminate
     end
@@ -235,7 +235,7 @@ class GameTest < Test::Unit::TestCase
   
   def test_screen
     assert_nil Game.screen
-    Game.run do
+    Game.run(320, 240) do
       begin
         assert_kind_of Texture, Game.screen
         assert_equal [320, 240], Game.screen.size
@@ -253,7 +253,7 @@ class GameTest < Test::Unit::TestCase
     end
     assert_nil Game.screen
     begin
-      Game.run do
+      Game.run(320, 240) do
         assert_not_nil Game.screen
         raise RuntimeError, "runtime error"
       end

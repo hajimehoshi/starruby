@@ -136,9 +136,9 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   }
 
   VALUE rbBlock, rbWidth, rbHeight, rbOptions;
-  rb_scan_args(argc, argv, "03&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
-  int width  = !NIL_P(rbWidth)  ? NUM2INT(rbWidth)  : 320;
-  int height = !NIL_P(rbHeight) ? NUM2INT(rbHeight) : 240;
+  rb_scan_args(argc, argv, "21&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
+  int width  = NUM2INT(rbWidth);
+  int height = NUM2INT(rbHeight);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 

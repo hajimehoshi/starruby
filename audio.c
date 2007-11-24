@@ -85,14 +85,14 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   if (!sdlSE)
     rb_raise_sdl_mix_error();
 
-  int panning = 127;
+  int panning = 0;
   int time    = 0;
   int volume  = 255;
 
   VALUE val;
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_panning, &val))
-    panning = NORMALIZE(NUM2INT(val), 0, 255);
+    panning = NORMALIZE(NUM2INT(val), -255, 255);
   if (st_lookup(table, symbol_time, &val))
     time = NUM2INT(val);
   if (st_lookup(table, symbol_volume, &val))
@@ -109,11 +109,14 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   Mix_Volume(sdlChannel, DIV255(volume * MIX_MAX_VOLUME));
   int sdlLeftPanning  = 255;
   int sdlRightPanning = 255;
-  if (panning < 127)
-    sdlRightPanning = panning * 2;
-  else if (128 < panning)
-    sdlLeftPanning = 254 - (panning - 128) * 2;
-  Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning);
+  if (panning < 0) {
+    sdlRightPanning = 255 - (-panning);
+  } else if (0 < panning) {
+    sdlLeftPanning = 255 - panning;
+  }
+  if (!Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning)) {
+    rb_raise_sdl_mix_error();
+  }
 
   return Qnil;
 }

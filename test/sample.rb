@@ -84,6 +84,19 @@ Game.run(320, 240, :window_scale => 2) do
   i %= 10
   Game.title = "%0.2f" % Game.real_fps if i == 0
   
+  keys = Input.pressed_keys(:keyboard, :duration => 1)
+  if keys.include?(:a)
+    Audio.play_se("sounds/sample", :panning => -255)
+  elsif keys.include?(:s)
+    Audio.play_se("sounds/sample", :panning => -128)
+  elsif keys.include?(:d)
+    Audio.play_se("sounds/sample", :panning => 0)
+  elsif keys.include?(:f)
+    Audio.play_se("sounds/sample", :panning => 128)
+  elsif keys.include?(:g)
+    Audio.play_se("sounds/sample", :panning => 255)
+  end
+  
   if Input.pressed_keys(:mouse, :duration => 1).include?(:left)
     unless Audio.playing_bgm?
       Audio.play_bgm("sounds/Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron", :volume => 16, :position => bgm_position, :time => 500, :loop => true)

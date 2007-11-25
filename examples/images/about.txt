@@ -1,0 +1,8 @@
+star.png:
+  icon_favorites.gif (Mini Icons)
+  http://famfamfam.com/
+
+ruby.png:
+  Rubin,_biotyt,_Ihosy,_Madagaskar.JPG
+  GNU Free Documentation License
+  http://commons.wikimedia.org/wiki/Image:Rubin%2C_biotyt%2C_Ihosy%2C_Madagaskar.JPG

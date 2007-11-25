@@ -33,12 +33,6 @@ SDL, SDL_image, SDL_mixer, SDL_ttf:
   GNU Lesser General Public License
   http://www.libsdl.org/
 
-Images in examples
-  http://www.famfamfam.com/
-
-Fonts in examples
-  http://www.1001freefonts.com/
-
 
 * Web Site
 

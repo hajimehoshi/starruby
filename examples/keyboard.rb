@@ -6,7 +6,7 @@ include StarRuby
 font = Font.new("fonts/ORANGEKI", 12)
 color = Color.new(255, 255, 255)
 
-Game.title = "Gamepad"
+Game.title = "Keyboard"
 
 Game.run(320, 240) do
   s = Game.screen

@@ -13,8 +13,8 @@ def main
   examples_dir = "#{main_dir}/examples"
   mkdir_p(main_dir)
   mkdir_p(examples_dir)
-  cp(Dir["win32/*\0starruby.so"], main_dir)
-  cp(Dir["examples/*"],           examples_dir)
+  cp(Dir["win32/**/*\0starruby.so"], main_dir)
+  cp(Dir["examples/**/*"],           examples_dir)
 end
 
 def show_usage

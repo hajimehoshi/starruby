@@ -1,7 +1,7 @@
 #define DEFINE_STARRUBY_EXTERN
 #include "starruby.h"
 
-VALUE GetCompletePath(VALUE rbPath)
+VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 {
   char* path = StringValuePtr(rbPath);
   
@@ -21,7 +21,8 @@ VALUE GetCompletePath(VALUE rbPath)
     rb_funcall(rbPathes, rb_intern("compact!"), 0);
     switch (arrPathes->len) {
     case 0:
-      rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
+      if (raiseNotFoundError)
+        rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
       return Qnil;
     case 1:
       return arrPathes->ptr[0];

@@ -37,7 +37,7 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE rbCompletePath = GetCompletePath(rbPath);
+  VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   sdlBgm = Mix_LoadMUS(path);
   if (!sdlBgm)
@@ -79,7 +79,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE rbCompletePath = GetCompletePath(rbPath);
+  VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   Mix_Chunk* sdlSE = Mix_LoadWAV(path);
   if (!sdlSE)

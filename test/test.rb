@@ -78,10 +78,10 @@ class FontTest < Test::Unit::TestCase
       assert_equal false, Font.exist?("FreeSans.ttf")
       assert_equal false, Font.exist?("FreeSans.ttc")
     end
-    assert_equal true,  Font.exist?("fonts/test")
-    assert_equal true,  Font.exist?("fonts/test.ttf")
-    assert_equal false, Font.exist?("test")
-    assert_equal false, Font.exist?("test.ttf")
+    assert_raise ArgumentError do
+      Font.exist?("fonts/maybefont")
+    end
+    assert_equal true, Font.exist?("fonts/maybefont2")
   end
 
   def test_new
@@ -108,6 +108,12 @@ class FontTest < Test::Unit::TestCase
     end
     assert_raise Errno::ENOENT do
       Font.new("notfont", 12)
+    end
+    assert_raise ArgumentError do
+      Font.new("fonts/maybefont", 12)
+    end
+    assert_raise StarRubyError do
+      Font.new("fonts/maybefont2", 12)
     end
   end
   

@@ -26,20 +26,9 @@ static void SearchFont(VALUE rbFilePathOrName,
   *rbRealFilePath = Qnil;
   if (ttcIndex != NULL)
     *ttcIndex = -1;
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathOrName)) {
-    *rbRealFilePath = rbFilePathOrName;
+  *rbRealFilePath = GetCompletePath(rbFilePathOrName, false);
+  if (!NIL_P(*rbRealFilePath))
     return;
-  }
-  VALUE rbFilePathTtf = rb_str_cat2(rb_str_dup(rbFilePathOrName), ".ttf");
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtf)) {
-    *rbRealFilePath = rbFilePathTtf;
-    return;
-  }
-  VALUE rbFilePathTtc = rb_str_cat2(rb_str_dup(rbFilePathOrName), ".ttc");
-  if (rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbFilePathTtc)) {
-    *rbRealFilePath = rbFilePathTtc;
-    return;
-  }
   VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
   while (info) {

@@ -41,7 +41,7 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
 
 static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
-  VALUE rbCompletePath = GetCompletePath(rbPath);
+  VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   SDL_Surface* imageSurface = IMG_Load(path);
   if (!imageSurface) {

@@ -1,4 +1,4 @@
-Star Ruby 0.1.1 (2007-11-25) for 32bit-Windows
+Star Ruby 0.1.2 (2007-??-??) for 32bit-Windows
 
 
 * About Star Ruby

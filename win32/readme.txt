@@ -1,5 +1,4 @@
-Star Ruby 0.1.0 (2007-11-23)
-  by Hajime Hoshi (hajimehoshi at gmail.com)
+Star Ruby 0.1.1 (2007-11-25) for 32bit-Windows
 
 
 * About Star Ruby
@@ -10,6 +9,15 @@ Star Ruby is a ruby extensional library for creating games. You can develop SNES
 * How to Install
 
 (To-do)
+
+
+* How to Work Examples
+
+Enter the following statements in the command prompt.
+
+  ..\starruby-*.*.*-win32>cd examples
+  
+  ..\starruby-*.*.*-win32\examples>ruby -I.. (the file name you want to work)
 
 
 * Licenses
@@ -29,3 +37,9 @@ SDL, SDL_image, SDL_mixer, SDL_ttf:
 * Web Site
 
 http://code.google.com/p/starruby/
+http://starruby.info/
+
+
+* The Author
+
+Hajime Hoshi (hajimehoshi@gmail.com)

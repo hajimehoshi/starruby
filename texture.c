@@ -98,11 +98,11 @@ static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   int width  = NUM2INT(rbWidth);
   int height = NUM2INT(rbHeight);
   if (width <= 0) {
-    rb_raise(rb_eArgError, "negative width");
+    rb_raise(rb_eArgError, "width less than or equal to 0");
     return Qnil;
   }
   if (height <= 0) {
-    rb_raise(rb_eArgError, "negative height");
+    rb_raise(rb_eArgError, "height less than or equal to 0");
     return Qnil;
   }
   texture->width  = width;

@@ -17,7 +17,7 @@ saturation = 255
 
 Game.title = "Tone"
 
-Game.run(320, 240, :window_scale => 2) do
+Game.run(320, 240) do
   s = Game.screen
   s.clear
   keys = Input.pressed_keys(:keyboard, {

@@ -9,12 +9,19 @@ def main
   open("win32/readme.txt") do |fp|
     version = fp.gets[/\d+\.\d+\.\d+/]
   end
-  main_dir     = "starruby-#{version}-win32"
-  examples_dir = "#{main_dir}/examples"
-  mkdir_p(main_dir)
-  mkdir_p(examples_dir)
-  cp(Dir["win32/**/*\0starruby.so"], main_dir)
-  cp(Dir["examples/**/*"],           examples_dir)
+  main_dir = "starruby-#{version}-win32"
+  mkdir_p(main_dir, :verbose => true)
+  Dir["win32/*"].each do |path|
+    cp(path, main_dir, :verbose => true)
+  end
+  Dir["examples/**/*\0starruby.so"].each do |path|
+    next unless FileTest.file?(path)
+    dir = File.join(main_dir, File.dirname(path))
+    unless FileTest.directory?(dir)
+      mkdir_p(dir, :verbose => true)
+    end
+    cp(path, dir, :verbose => true)
+  end
 end
 
 def show_usage

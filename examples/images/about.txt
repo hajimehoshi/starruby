@@ -1,5 +1,13 @@
+music.png:
+  music.png (Silk icon set)
+  http://famfamfam.com/
+
 star.png:
   icon_favorites.gif (Mini Icons)
+  http://famfamfam.com/
+
+soundc.png:
+  sound.png (Silk icon set)
   http://famfamfam.com/
 
 ruby.png:

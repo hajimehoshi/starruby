@@ -3,9 +3,14 @@
 require "starruby"
 include StarRuby
 
-Game.title = "Rectangles"
+Game.title = "Rectangles (Click to speed up!)"
 
 Game.run(320, 240) do
+  if Input.pressed_keys(:mouse).include?(:left)
+    Game.fps = 10000
+  else
+    Game.fps = 30
+  end
   begin
     x1 = rand(320)
     x2 = rand(320)

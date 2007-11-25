@@ -46,9 +46,14 @@ end
 
 sprites = Array.new(200) {Sprite.new}
 
-Game.title = "Sprites"
+Game.title = "Sprites (Click to speed up!)"
 
 Game.run(320, 240) do
+  if Input.pressed_keys(:mouse).include?(:left)
+    Game.fps = 10000
+  else
+    Game.fps = 30
+  end
   sprites.each do |sprite|
     sprite.update
   end

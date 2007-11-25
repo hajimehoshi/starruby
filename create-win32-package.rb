@@ -6,12 +6,12 @@ include FileUtils
 def main
   show_usage if ARGV.length != 0
   version = "0.0.0"
-  open("mswin32/readme.txt") do |fp|
+  open("win32/readme.txt") do |fp|
     version = fp.gets[/\d+\.\d+\.\d+/]
   end
-  main_dir = "starruby-#{version}-mswin32"
+  main_dir = "starruby-#{version}-win32"
   mkdir_p(main_dir, :verbose => true)
-  Dir["mswin32/*"].each do |path|
+  Dir["win32/*"].each do |path|
     cp(path, main_dir, :verbose => true)
   end
   Dir["examples/**/*\0starruby.so"].each do |path|

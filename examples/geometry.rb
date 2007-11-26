@@ -14,7 +14,7 @@ angle   = 0
 scale_x = 0
 scale_y = 0
 
-Game.title = "Tone"
+Game.title = "Geometry"
 
 Game.run(320, 240) do
   s = Game.screen

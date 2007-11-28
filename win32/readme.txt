@@ -8,10 +8,10 @@ Star Ruby is a ruby extensional library for creating games. You can develop SNES
 
 * How to Install
 
-Install Ruby language if you need.
+Install Ruby if you need.
 
-  - One-Click Installer - Windows (Download)
-    http://rubyforge.org/frs/?group_id=167&release_id=15923
+  One-Click Installer - Windows (Download)
+  http://rubyforge.org/frs/?group_id=167&release_id=15923
 
 Execute "install.rb" to install Star Ruby.
 

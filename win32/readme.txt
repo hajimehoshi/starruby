@@ -1,4 +1,4 @@
-Star Ruby 0.1.2 (2007-??-??) for 32bit-Windows
+Star Ruby 0.1.2 (2007-11-28) for 32bit-Windows
 
 
 * About Star Ruby
@@ -13,11 +13,14 @@ Star Ruby is a ruby extensional library for creating games. You can develop SNES
 
 * How to Work Examples
 
+First, install Ruby language if you need.
+
+  - One-Click Installer - Windows (Download)
+    http://rubyforge.org/frs/?group_id=167&release_id=15923
+
 Enter the following statements in the command prompt.
 
-  ..\starruby-*.*.*-win32>cd examples
-  
-  ..\starruby-*.*.*-win32\examples>ruby -I.. (the file name you want to work)
+  ..\starruby-*.*.*-win32>ruby examples\(the file name you want to work)
 
 
 * Licenses

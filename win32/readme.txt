@@ -39,7 +39,6 @@ SDL, SDL_image, SDL_mixer, SDL_ttf:
 
 * Web Site
 
-http://code.google.com/p/starruby/
 http://starruby.info/
 
 

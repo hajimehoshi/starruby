@@ -1,0 +1,46 @@
+Star Ruby 0.1.3 (2007-??-??)
+
+
+* About Star Ruby
+
+Star Ruby is a ruby extensional library for creating games.
+You can develop SNES-like 2D games with Star Ruby.
+
+
+* Dependent Libraries
+
+  - Fontconfig (Optional)
+  - libfreetype
+  - libpng
+  - libogg
+  - libruby
+  - libvorbis
+  - libvorbisfile
+  - SDL
+  - SDL_image
+  - SDL_mixer
+  - SDL_ttf
+  - SMPEG
+  - zlib
+
+
+* How to Install
+
+  $ ruby extconf.rb
+  $ make
+  $ make install
+
+
+* Licenses
+
+MIT License
+
+
+* Web Site
+
+http://starruby.info/
+
+
+* The Author
+
+Hajime Hoshi (hajimehoshi@gmail.com)

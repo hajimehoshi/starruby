@@ -3,7 +3,7 @@
 require "starruby"
 include StarRuby
 
-cursor = Texture.load("images/star")
+cursor = Texture.load("examples/images/star")
 
 angle = 0
 

@@ -3,7 +3,7 @@
 require "starruby"
 include StarRuby
 
-font = Font.new("fonts/ORANGEKI", 12)
+font = Font.new("examples/fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
 
 Game.title = "Hello, World!"

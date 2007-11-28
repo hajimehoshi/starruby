@@ -4,7 +4,7 @@ require "starruby"
 include StarRuby
 
 class Sprite
-  @@texture = Texture.load("examples/images/star")
+  @@texture = Texture.load("images/star")
   MAX_X = 320 - @@texture.width
   MAX_Y = 240 - @@texture.height
   

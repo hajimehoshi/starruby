@@ -3,11 +3,11 @@
 require "starruby"
 include StarRuby
 
-texture = Texture.load("examples/images/ruby")
+texture = Texture.load("images/ruby")
 cover = Texture.new(320, 240)
 cover.fill(Color.new(64, 64, 64))
 
-font = Font.new("examples/fonts/ORANGEKI", 12)
+font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
 
 tone_red   = 0

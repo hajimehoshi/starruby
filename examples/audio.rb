@@ -3,11 +3,11 @@
 require "starruby"
 include StarRuby
 
-font = Font.new("examples/fonts/ORANGEKI", 12)
+font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
 
-music_texture = Texture.load("examples/images/music")
-sound_texture = Texture.load("examples/images/sound")
+music_texture = Texture.load("images/music")
+sound_texture = Texture.load("images/sound")
 
 Game.title = "Audio"
 
@@ -19,11 +19,11 @@ Game.run(320, 240) do
     if Audio.playing_bgm?
       Audio.stop_bgm
     else
-      Audio.play_bgm("examples/sounds/music")
+      Audio.play_bgm("sounds/music")
     end
   end
   if keys.include?(:s)
-    Audio.play_se("examples/sounds/hello")
+    Audio.play_se("sounds/hello")
     sound_alpha = 255
   end
   s = Game.screen

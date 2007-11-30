@@ -670,7 +670,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Texture_save(VALUE self, VALUE rbPath)
+static VALUE Texture_save(VALUE self, VALUE rbPath, VALUE rbAlpha)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -696,7 +696,10 @@ static VALUE Texture_save(VALUE self, VALUE rbPath)
       row[i * 4]     = c.red;
       row[i * 4 + 1] = c.green;
       row[i * 4 + 2] = c.blue;
-      row[i * 4 + 3] = 0xff;
+      if (RTEST(rbAlpha))
+        row[i * 4 + 3] = c.alpha;
+      else
+        row[i * 4 + 3] = 0xff;
     }
     png_write_row(pngPtr, row);
   }
@@ -768,7 +771,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "height",         Texture_height,         0);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,    5);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture, -1);
-  rb_define_method(rb_cTexture, "save",           Texture_save,           1);
+  rb_define_method(rb_cTexture, "save",           Texture_save,           2);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);
   rb_define_method(rb_cTexture, "size",           Texture_size,           0);
   rb_define_method(rb_cTexture, "width",          Texture_width,          0);

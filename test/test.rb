@@ -1011,7 +1011,12 @@ class TextureTest < Test::Unit::TestCase
     assert_equal texture.size, texture2.size
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        c1 = texture.get_pixel(i, j)
+        c2 = texture2.get_pixel(i, j)
+        assert_equal c1.red,   c2.red
+        assert_equal c1.green, c2.green
+        assert_equal c1.blue,  c2.blue
+        assert_equal 255, c2.alpha
       end
     end
     if FileTest.exist?("images/saved_image.png")

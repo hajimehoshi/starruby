@@ -682,18 +682,24 @@ static VALUE Texture_save(VALUE self, VALUE rbPath)
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
   png_structp pngPtr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
-                                                NULL, NULL, NULL);
+                                               NULL, NULL, NULL);
   png_infop infoPtr = png_create_info_struct(pngPtr);
   png_init_io(pngPtr, fp);
   png_set_IHDR(pngPtr, infoPtr, texture->width, texture->height,
                8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
                PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
   png_write_info(pngPtr, infoPtr);
-  png_bytep rows[texture->height];
-  for (int j = 0; j < texture->height; j++)
-    rows[j] = (png_bytep)(&texture->pixels[texture->width * j]);
-  png_set_rows(pngPtr, infoPtr, rows);
-  png_write_png(pngPtr, infoPtr, PNG_TRANSFORM_BGR, NULL);
+  for (int j = 0; j < texture->height; j++) {
+    png_byte row[texture->width * 4];
+    for (int i = 0; i < texture->width; i++) {
+      Color c = texture->pixels[texture->width * j + i].color;
+      row[i * 4]     = c.red;
+      row[i * 4 + 1] = c.green;
+      row[i * 4 + 2] = c.blue;
+      row[i * 4 + 3] = 0xff;
+    }
+    png_write_row(pngPtr, row);
+  }
   png_write_end(pngPtr, infoPtr);
   png_destroy_write_struct(&pngPtr, &infoPtr);
   fclose(fp);

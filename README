@@ -26,7 +26,7 @@ You can develop SNES-like 2D games with Star Ruby.
 
 * How to Install
 
-  $ ruby extconf.rb
+  $ ruby extconf.rb [--with-opt-dir=DIRECTORY]
   $ make
   $ make install
 

@@ -1,4 +1,5 @@
 #include "starruby.h"
+#include <png.h>
 
 #define ALPHA(src, dst, a) (a == 255 ? src :\
                             (a == 0 ? dst :\
@@ -669,6 +670,36 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
+static VALUE Texture_save(VALUE self, VALUE rbPath)
+{
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+  
+  char* path = StringValuePtr(rbPath);
+  FILE* fp = fopen(path, "wb");
+  png_structp pngPtr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
+                                                NULL, NULL, NULL);
+  png_infop infoPtr = png_create_info_struct(pngPtr);
+  png_init_io(pngPtr, fp);
+  png_set_IHDR(pngPtr, infoPtr, texture->width, texture->height,
+               8, PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+               PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
+  png_write_info(pngPtr, infoPtr);
+  png_bytep rows[texture->height];
+  for (int j = 0; j < texture->height; j++)
+    rows[j] = (png_bytep)(&texture->pixels[texture->width * j]);
+  png_set_rows(pngPtr, infoPtr, rows);
+  png_write_png(pngPtr, infoPtr, PNG_TRANSFORM_BGR, NULL);
+  png_write_end(pngPtr, infoPtr);
+  png_destroy_write_struct(&pngPtr, &infoPtr);
+  fclose(fp);
+  return Qnil;
+}
+
 static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
@@ -731,6 +762,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "height",         Texture_height,         0);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,    5);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture, -1);
+  rb_define_method(rb_cTexture, "save",           Texture_save,           1);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);
   rb_define_method(rb_cTexture, "size",           Texture_size,           0);
   rb_define_method(rb_cTexture, "width",          Texture_width,          0);

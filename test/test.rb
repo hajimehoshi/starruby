@@ -997,6 +997,28 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_save
+    texture = Texture.load("images/ruby")
+    texture.save("images/saved_image.png")
+    t = Thread.new do
+      loop do
+        break if FileTest.file?("images/saved_image.png")
+        sleep(0)
+      end
+    end
+    assert_not_nil t.join(1)
+    texture2 = Texture.load("images/saved_image.png")
+    assert_equal texture.size, texture2.size
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
+    end
+    if FileTest.exist?("images/saved_image.png")
+      File.delete("images/saved_image.png")
+    end
+  end
+
 end
 
 class InputTest < Test::Unit::TestCase

@@ -14,15 +14,15 @@ $LDFLAGS += " " + `env libpng-config --libs`.chomp
 
 $CFLAGS += " -finline-functions -Wall -std=c99 -mfpmath=sse -msse2 -funit-at-a-time"
 
-$LDFLAGS += " -lSDL_image" # have_library?
-$LDFLAGS += " -lSDL_mixer" # have_library?
-$LDFLAGS += " -lSDL_ttf" # have_library?
-have_header("png.h")
-have_header("zlib.h")
+have_library("SDL_image") or exit(false)
+have_library("SDL_mixer") or exit(false)
+have_library("SDL_ttf") or exit(false)
+have_header("png.h") or exit(false)
+have_header("zlib.h") or exit(false)
 
 if have_header("fontconfig/fontconfig.h") and have_library("fontconfig", "FcInit")
-  $CFLAGS += " -DUSE_FONTCONFIG"
-  $LDFLAGS += " -lfontconfig"
+  $CFLAGS += " -DUSE_FONTCONFIG" # Modify it!
+  $LDFLAGS += " -lfontconfig" # Modify it!
 end
 
 if arg_config("--debug", false)

@@ -4,8 +4,8 @@ include StarRuby
 
 if Font.exist?("MS UI Gothic")
   font = Font.new("MS UI Gothic", 12)
-elsif Font.exist?("FreeSans:style=Medium")
-  font = Font.new("FreeSans:style=Medium", 12)
+elsif Font.exist?("FreeSans")
+  font = Font.new("FreeSans", 12)
 end
 color = Color.new(255, 255, 255)
 

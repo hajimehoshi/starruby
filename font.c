@@ -50,9 +50,35 @@ static void SearchFont(VALUE rbFilePathOrName,
     rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
     return;
   }
-  FcPattern* pattern = FcNameParse((FcChar8*)StringValuePtr(rbFilePathOrName));
+  VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
+  char* name = StringValuePtr(rbFilePathOrName2);
+  FcPattern* pattern;
+  char* delimiter = strchr(name, ',');
+  char* style = NULL;
+  if (delimiter) {
+    *delimiter = '\0';
+    style = delimiter + 1;
+    char* nameTail = delimiter - 1;
+    while (*nameTail == ' ') {
+      *nameTail = '\0';
+      nameTail--;
+    }
+    while (*style == ' ')
+      style++;
+  }
+  if (style && 0 < strlen(style))
+    pattern = FcPatternBuild(NULL,
+                             FC_FAMILY, FcTypeString, name,
+                             FC_STYLE,  FcTypeString, style, 
+                             NULL);
+  else
+    pattern = FcPatternBuild(NULL,
+                             FC_FAMILY, FcTypeString,  name,
+                             FC_SLANT,  FcTypeInteger, FC_SLANT_ROMAN,
+                             FC_WEIGHT, FcTypeInteger, FC_WEIGHT_NORMAL,
+                             NULL);
   FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);
-  FcFontSet* fontSet = FcFontList(0, pattern, objectSet);
+  FcFontSet* fontSet = FcFontList(NULL, pattern, objectSet);
   if (objectSet)
     FcObjectSetDestroy(objectSet);
   if (pattern)
@@ -69,8 +95,7 @@ static void SearchFont(VALUE rbFilePathOrName,
       VALUE rbFontName = rb_str_new2((char*)fontName);
       free(fontName);
       fontName = NULL;
-      if (ttcIndex != NULL &&
-          strchr(StringValuePtr(rbFontName), ','))
+      if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
         *ttcIndex = 0;
       break;
     }

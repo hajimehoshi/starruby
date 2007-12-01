@@ -73,8 +73,13 @@ class FontTest < Test::Unit::TestCase
     when /linux/
       # Linux
       assert_equal true,  Font.exist?("FreeSans")
-      assert_equal true,  Font.exist?("FreeSans:style=Medium")
-      assert_equal true,  Font.exist?("FreeSans:style=Bold")
+      assert_equal true,  Font.exist?("FreeSans")
+      assert_equal false, Font.exist?("FreeSans:style=Bold")
+      assert_equal true,  Font.exist?("FreeSans, Bold")
+      assert_equal true,  Font.exist?("FreeSans, BoldOblique")
+      assert_equal false, Font.exist?("FreeSans, NotStyle")
+      assert_equal true,  Font.exist?("FreeSans ,Bold")
+      assert_equal true,  Font.exist?("FreeSans ,")
       assert_equal false, Font.exist?("FreeSans.ttf")
       assert_equal false, Font.exist?("FreeSans.ttc")
     end

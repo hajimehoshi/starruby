@@ -40,6 +40,57 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
   }, SDL_HWACCEL | SDL_DOUBLEBUF);
 }
 
+static VALUE Texture_new_text(VALUE self,
+                              VALUE rbText, VALUE rbFont, VALUE rbColor)
+{
+  if (!RSTRING(rbText)->len) {
+    rb_raise(rb_eArgError, "empty text");
+    return Qnil;
+  }
+  char* text = StringValuePtr(rbText);
+  VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
+  VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
+                                2, RARRAY(rbSize)->ptr);
+  Texture* texture;
+  Data_Get_Struct(rbTexture, Texture, texture);
+  
+  Font* font;
+  Data_Get_Struct(rbFont, Font, font);
+  if (!font->sdlFont) {
+    rb_raise(rb_eTypeError, "can't use disposed font");
+    return Qnil;
+  }
+
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
+
+  SDL_Surface* textSurfaceRaw =
+    TTF_RenderUTF8_Solid(font->sdlFont, text, (SDL_Color) {255, 255, 255, 255});
+  if (!textSurfaceRaw) {
+    rb_raise_sdl_ttf_error();
+    return Qnil;
+  }
+  SDL_Surface* textSurface = ConvertSurfaceForScreen(textSurfaceRaw);
+  SDL_FreeSurface(textSurfaceRaw);
+  textSurfaceRaw = NULL;
+  if (!textSurface) {
+    rb_raise_sdl_error();
+    return Qnil;
+  }
+  
+  SDL_LockSurface(textSurface);
+  Pixel* src = (Pixel*)(textSurface->pixels);
+  Pixel* dst = texture->pixels;
+  int size = texture->width * texture->height;
+  for (int i = 0; i < size; i++, src++, dst++)
+    if (src->value)
+      dst->color = *color;
+  SDL_UnlockSurface(textSurface);
+  SDL_FreeSurface(textSurface);
+  
+  return rbTexture;
+}
+
 static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
   VALUE rbCompletePath = GetCompletePath(rbPath, true);
@@ -319,92 +370,16 @@ static VALUE Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
+static VALUE Texture_render_texture(int, VALUE*, VALUE);
 static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
                                  VALUE rbFont, VALUE rbColor)
 {
-  rb_check_frozen(self);
-  
-  Texture* texture;
-  Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+  if (!(RSTRING(rbText)->len))
     return Qnil;
-  }
-
-  Font* font;
-  Data_Get_Struct(rbFont, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eTypeError, "can't use disposed font");
-    return Qnil;
-  }
-
-  if (RSTRING(rbText)->len == 0)
-    return Qnil;
-  
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
-
-  char* text = StringValuePtr(rbText);
-  
-  int dstX = NUM2INT(rbX);
-  int dstY = NUM2INT(rbY);
-  if (texture->width <= dstX || texture->height <= dstY)
-    return Qnil;
-  
-  SDL_Surface* textSurfaceRaw =
-    TTF_RenderUTF8_Solid(font->sdlFont, text, (SDL_Color) {255, 255, 255, 255});
-  if (!textSurfaceRaw) {
-    rb_raise_sdl_ttf_error();
-    return Qnil;
-  }
-  SDL_Surface* textSurface = ConvertSurfaceForScreen(textSurfaceRaw);
-  if (!textSurface) {
-    SDL_FreeSurface(textSurfaceRaw);
-    textSurfaceRaw = NULL;
-    rb_raise_sdl_error();
-    return Qnil;
-  }
-
-  SDL_LockSurface(textSurface);
-  
-  int srcX = 0;
-  int srcY = 0;
-  int width = textSurface->w;
-  int height = textSurface->h;
-  if (dstX < 0) {
-    srcX += -dstX;
-    width -= -dstX;
-    dstX = 0;
-  }
-  if (dstY < 0) {
-    srcY += -dstY;
-    height -= -dstY;
-    dstY = 0;
-  }
-  if (width < 0 || height < 0 ||
-      textSurface->w < srcX + width || textSurface->h < srcY + height)
-    goto EXIT;
-
-  width  = MIN(width,  texture->width  - dstX);
-  height = MIN(height, texture->height - dstY);
-
-  Pixel* src = &(((Pixel*)textSurface->pixels)[srcX + srcY * textSurface->w]);
-  Pixel* dst = &(texture->pixels[dstX + dstY * texture->width]);
-
-  for (int j = 0; j < height; j++,
-       src += -width + textSurface->w, dst += -width + texture->width) {
-    for (int i = 0; i < width; i++, src++, dst++) {
-      if (src->value)
-        dst->color = *color;
-    }
-  }
-
-EXIT:
-  SDL_UnlockSurface(textSurface);
-  SDL_FreeSurface(textSurface);
-  textSurface = NULL;
-  SDL_FreeSurface(textSurfaceRaw);
-  textSurfaceRaw = NULL;
+  VALUE rbTextTexture = Texture_new_text(rb_cTexture, rbText, rbFont, rbColor);
+  VALUE rbArgs[3] = {rbTextTexture, rbX, rbY};
+  Texture_render_texture(3, rbArgs, self);
+  Texture_dispose(rbTextTexture);
   return Qnil;
 }
 
@@ -756,7 +731,8 @@ static VALUE Texture_width(VALUE self)
 void InitializeTexture(void)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
-  rb_define_singleton_method(rb_cTexture, "load", Texture_load, 1);
+  rb_define_singleton_method(rb_cTexture, "new_text", Texture_new_text, 3);
+  rb_define_singleton_method(rb_cTexture, "load",     Texture_load,     1);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",

@@ -395,9 +395,9 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
       if (srcI < srcX || srcX + srcWidth <= srcI ||\
           srcJ < srcY || srcY + srcHeight <= srcJ)\
         continue;\
-      src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
       if (src->color.alpha == 0)\
         continue;\
+      src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
       uint8_t srcR = src->color.red;\
       uint8_t srcG = src->color.green;\
       uint8_t srcB = src->color.blue;\

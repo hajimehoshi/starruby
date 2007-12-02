@@ -390,17 +390,17 @@ static VALUE Texture_height(VALUE self)
 }
 
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
-static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
-                                 VALUE rbFont, VALUE rbColor)
+static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
 {
+  VALUE rbText, rbX, rbY, rbFont, rbColor, rbAntiAlias;
+  rb_scan_args(argc, argv, "51",
+               &rbText, &rbX, &rbY, &rbFont, &rbColor, &rbAntiAlias);
   if (!(RSTRING(rbText)->len))
     return Qnil;
-  VALUE rbArgs[3] = {rbText, rbFont, rbColor};
-  VALUE rbTextTexture = Texture_new_text(3, rbArgs, rb_cTexture);
-  rbArgs[0] = rbTextTexture;
-  rbArgs[1] = rbX;
-  rbArgs[2] = rbY;
-  Texture_render_texture(3, rbArgs, self);
+  VALUE rbTextTexture = Texture_new_text(4, (VALUE[]) {
+    rbText, rbFont, rbColor, rbAntiAlias
+  }, rb_cTexture);
+  Texture_render_texture(3, (VALUE[]) {rbTextTexture, rbX, rbY}, self);
   Texture_dispose(rbTextTexture);
   return Qnil;
 }
@@ -767,7 +767,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,      5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,      2);
   rb_define_method(rb_cTexture, "height",         Texture_height,         0);
-  rb_define_method(rb_cTexture, "render_text",    Texture_render_text,    5);
+  rb_define_method(rb_cTexture, "render_text",    Texture_render_text,    -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture, -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,           2);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);

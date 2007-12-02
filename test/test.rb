@@ -647,6 +647,8 @@ class TextureTest < Test::Unit::TestCase
     end
     color = Color.new(255, 255, 255)
     texture.render_text("A", 0, 0, font, color)
+    texture.render_text("B", 10, 10, font, color, true)
+    texture.render_text("AAAAAAAAAAAAAAAAAAAA", 10, 10, font, color, false)
     texture.render_text("", 0, 0, font, color)
   end
   

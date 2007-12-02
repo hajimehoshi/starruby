@@ -8,6 +8,7 @@
 static VALUE symbol_add;
 static VALUE symbol_alpha;
 static VALUE symbol_angle;
+static VALUE symbol_anti_alias;
 static VALUE symbol_blend_type;
 static VALUE symbol_center_x;
 static VALUE symbol_center_y;
@@ -40,9 +41,18 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
   }, SDL_HWACCEL | SDL_DOUBLEBUF);
 }
 
-static VALUE Texture_new_text(VALUE self,
-                              VALUE rbText, VALUE rbFont, VALUE rbColor)
+static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
 {
+  VALUE rbText;
+  VALUE rbFont;
+  VALUE rbColor;
+  VALUE rbAntiAlias;
+  bool antiAlias = false;
+  rb_scan_args(argc, argv, "31", &rbText, &rbFont, &rbColor, &rbAntiAlias);
+  if (NIL_P(rbAntiAlias))
+    rbAntiAlias = Qfalse;
+  antiAlias = RTEST(rbAntiAlias);
+  
   if (!RSTRING(rbText)->len) {
     rb_raise(rb_eArgError, "empty text");
     return Qnil;
@@ -64,8 +74,15 @@ static VALUE Texture_new_text(VALUE self,
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
 
-  SDL_Surface* textSurfaceRaw =
-    TTF_RenderUTF8_Solid(font->sdlFont, text, (SDL_Color) {255, 255, 255, 255});
+  SDL_Surface* textSurfaceRaw;
+  if (antiAlias)
+    textSurfaceRaw = TTF_RenderUTF8_Shaded(font->sdlFont, text,
+                                           (SDL_Color) {255, 255, 255, 255},
+                                           (SDL_Color) {0, 0, 0, 0});
+  else
+    textSurfaceRaw = TTF_RenderUTF8_Solid(font->sdlFont, text,
+                                          (SDL_Color) {255, 255, 255, 255});
+  
   if (!textSurfaceRaw) {
     rb_raise_sdl_ttf_error();
     return Qnil;
@@ -83,8 +100,10 @@ static VALUE Texture_new_text(VALUE self,
   Pixel* dst = texture->pixels;
   int size = texture->width * texture->height;
   for (int i = 0; i < size; i++, src++, dst++)
-    if (src->value)
+    if (src->value) {
       dst->color = *color;
+      dst->color.alpha = src->color.red;
+    }
   SDL_UnlockSurface(textSurface);
   SDL_FreeSurface(textSurface);
   
@@ -376,8 +395,11 @@ static VALUE Texture_render_text(VALUE self, VALUE rbText, VALUE rbX, VALUE rbY,
 {
   if (!(RSTRING(rbText)->len))
     return Qnil;
-  VALUE rbTextTexture = Texture_new_text(rb_cTexture, rbText, rbFont, rbColor);
-  VALUE rbArgs[3] = {rbTextTexture, rbX, rbY};
+  VALUE rbArgs[3] = {rbText, rbFont, rbColor};
+  VALUE rbTextTexture = Texture_new_text(3, rbArgs, rb_cTexture);
+  rbArgs[0] = rbTextTexture;
+  rbArgs[1] = rbX;
+  rbArgs[2] = rbY;
   Texture_render_texture(3, rbArgs, self);
   Texture_dispose(rbTextTexture);
   return Qnil;
@@ -731,7 +753,7 @@ static VALUE Texture_width(VALUE self)
 void InitializeTexture(void)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
-  rb_define_singleton_method(rb_cTexture, "new_text", Texture_new_text, 3);
+  rb_define_singleton_method(rb_cTexture, "new_text", Texture_new_text, -1);
   rb_define_singleton_method(rb_cTexture, "load",     Texture_load,     1);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
@@ -755,6 +777,7 @@ void InitializeTexture(void)
   symbol_add        = ID2SYM(rb_intern("add"));
   symbol_alpha      = ID2SYM(rb_intern("alpha"));
   symbol_angle      = ID2SYM(rb_intern("angle"));
+  symbol_anti_alias = ID2SYM(rb_intern("anti_alias"));
   symbol_blend_type = ID2SYM(rb_intern("blend_type"));
   symbol_center_x   = ID2SYM(rb_intern("center_x"));
   symbol_center_y   = ID2SYM(rb_intern("center_y"));

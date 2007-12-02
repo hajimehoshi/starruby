@@ -296,7 +296,6 @@ class TextureTest < Test::Unit::TestCase
   end
   
   def test_new_text
-    texture = Texture.load("images/ruby")
     if Font.exist?("Arial")
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
@@ -306,6 +305,27 @@ class TextureTest < Test::Unit::TestCase
     end
     color = Color.new(255, 255, 255)
     texture = Texture.new_text("A", font, color)
+    assert_kind_of Texture, texture
+    assert_equal font.get_size("A"), texture.size
+    assert_raise ArgumentError do
+      Texture.new_text("", font, color)
+    end
+    font.dispose
+    assert_raise TypeError do
+      Texture.new_text("A", font, color)
+    end
+  end
+  
+  def test_new_text_anti_alias
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
+    color = Color.new(255, 255, 255)
+    texture = Texture.new_text("A", font, color, true)
     assert_kind_of Texture, texture
     assert_equal font.get_size("A"), texture.size
     assert_raise ArgumentError do

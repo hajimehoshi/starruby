@@ -20,10 +20,7 @@ have_library("SDL_ttf") or exit(false)
 have_header("png.h") or exit(false)
 have_header("zlib.h") or exit(false)
 
-if have_header("fontconfig/fontconfig.h") and have_library("fontconfig", "FcInit")
-  $CFLAGS += " -DUSE_FONTCONFIG" # Modify it!
-  $LDFLAGS += " -lfontconfig" # Modify it!
-end
+have_header("fontconfig/fontconfig.h") and have_library("fontconfig", "FcInit")
 
 if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0"

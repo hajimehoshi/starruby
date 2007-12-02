@@ -1,6 +1,6 @@
 #include "starruby.h"
 
-#ifdef USE_FONTCONFIG
+#ifdef HAVE_FONTCONFIG_FONTCONFIG_H
 #include <fontconfig/fontconfig.h>
 #endif
 #ifdef WIN32
@@ -44,7 +44,7 @@ static void SearchFont(VALUE rbFilePathOrName,
     }
     info = info->next;
   }
-#ifdef USE_FONTCONFIG
+#ifdef HAVE_FONTCONFIG_FONTCONFIG_H
   if (!FcInit()) {
     FcFini();
     rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");

@@ -99,10 +99,14 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   Pixel* src = (Pixel*)(textSurface->pixels);
   Pixel* dst = texture->pixels;
   int size = texture->width * texture->height;
+  int alpha = color->alpha;
   for (int i = 0; i < size; i++, src++, dst++)
     if (src->value) {
       dst->color = *color;
-      dst->color.alpha = src->color.red;
+      if (alpha == 255)
+        dst->color.alpha = src->color.red;
+      else
+        dst->color.alpha = DIV255(src->color.red * alpha);
     }
   SDL_UnlockSurface(textSurface);
   SDL_FreeSurface(textSurface);

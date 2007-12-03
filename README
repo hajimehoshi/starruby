@@ -17,7 +17,6 @@ You can develop SNES-like 2D games with Star Ruby.
   - libvorbis
   - libvorbisfile
   - SDL
-  - SDL_image
   - SDL_mixer
   - SDL_ttf
   - SMPEG

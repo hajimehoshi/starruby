@@ -154,15 +154,54 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
                                INT2NUM(width), INT2NUM(height));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
+  
+  int channels = png_get_channels(pngPtr, infoPtr);
+  
+  png_colorp palette;
+  int numPalette;
+  int colorKey = -1;
+  uint8_t* trans;
+  int numTrans;
+  png_color_16p transValues;
+  if (colorType == PNG_COLOR_TYPE_PALETTE) {
+    png_get_PLTE(pngPtr, infoPtr, &palette, &numPalette);
+    png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, &transValues);
+    int t = -1;
+    for (int i = 0; i < numTrans; i++) {
+      if (trans[i] == 0) {
+        if (0 <= t)
+          break;
+        colorKey = i;
+      } else if (trans[i] != 255) {
+        break;
+      }
+    }
+  }
+  
   for (int j = 0; j < height; j++) {
-    png_byte row[width * 4];
+    png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);
     for (int i = 0; i < width; i++) {
       Color* c = &(texture->pixels[width * j + i].color);
-      c->red   = row[i * 4];
-      c->green = row[i * 4 + 1];
-      c->blue  = row[i * 4 + 2];
-      c->alpha = row[i * 4 + 3];
+      switch (channels) {
+      case 1:
+        {
+          int index = row[i];
+          png_color pc = palette[index];
+          c->red   = pc.red;
+          c->green = pc.green;
+          c->blue  = pc.blue;
+          c->alpha = (index != colorKey) ? 0xff : 0x00;
+        }
+        break;
+      case 3:
+      case 4:
+        c->red   = row[i * channels];
+        c->green = row[i * channels + 1];
+        c->blue  = row[i * channels + 2];
+        c->alpha = (channels == 4) ? row[i * channels + 3] : 0xff;
+        break;
+      }
     }
   }
   png_read_end(pngPtr, endInfo);

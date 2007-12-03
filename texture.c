@@ -147,9 +147,9 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   png_set_sig_bytes(pngPtr, 8);
   png_read_info(pngPtr, infoPtr);
   png_uint_32 width, height;
-  int bitDepth, colorType, interlaceType, compressionType, filterType;
-  png_get_IHDR(pngPtr, infoPtr, &width, &height, &bitDepth,
-               &colorType, &interlaceType, &compressionType, &filterType);
+  int bitDepth, colorType, interlaceType;
+  png_get_IHDR(pngPtr, infoPtr, &width, &height,
+               &bitDepth, &colorType, &interlaceType, NULL, NULL);
   VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
                                INT2NUM(width), INT2NUM(height));
   Texture* texture;

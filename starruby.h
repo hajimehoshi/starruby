@@ -9,7 +9,6 @@
 #include <ruby.h>
 #include <st.h>
 #include <SDL.h>
-#include <SDL_image.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
 #ifdef WIN32
@@ -65,8 +64,6 @@ STARRUBY_EXTERN VALUE rb_cTexture;
 STARRUBY_EXTERN VALUE rb_cTone;
 
 #define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
-#define rb_raise_sdl_image_error()\
-  rb_raise(rb_eStarRubyError, "%s", IMG_GetError())
 #define rb_raise_sdl_mix_error()\
   rb_raise(rb_eStarRubyError, "%s", Mix_GetError())
 #define rb_raise_sdl_ttf_error()\

@@ -118,35 +118,56 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
   VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
-  SDL_Surface* imageSurface = IMG_Load(path);
-  if (!imageSurface) {
-    rb_raise_sdl_image_error();
+  FILE* fp = fopen(path, "rb");
+  png_byte header[8];
+  fread(&header, 1, 8, fp);
+  if (png_sig_cmp(header, 0, 8)) {
+    rb_raise(rb_eStarRubyError, "invalid PNG file");
     return Qnil;
   }
-  
-  SDL_Surface* surface = ConvertSurfaceForScreen(imageSurface);
-  if (!surface) {
-    SDL_FreeSurface(imageSurface);
-    imageSurface = NULL;
-    rb_raise_sdl_error();
+  png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+                                              NULL, NULL, NULL);
+  if (!pngPtr) {
+    rb_raise(rb_eStarRubyError, "PNG error");
     return Qnil;
   }
-  
+  png_infop infoPtr = png_create_info_struct(pngPtr);
+  if (!infoPtr) {
+    png_destroy_read_struct(&pngPtr, NULL, NULL);
+    rb_raise(rb_eStarRubyError, "PNG error");
+    return Qnil;
+  }
+  png_infop endInfo = png_create_info_struct(pngPtr);
+  if (!endInfo) {
+    png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
+    rb_raise(rb_eStarRubyError, "PNG error");
+    return Qnil;
+  }
+  png_init_io(pngPtr, fp);
+  png_set_sig_bytes(pngPtr, 8);
+  png_read_info(pngPtr, infoPtr);
+  png_uint_32 width, height;
+  int bitDepth, colorType, interlaceType, compressionType, filterType;
+  png_get_IHDR(pngPtr, infoPtr, &width, &height, &bitDepth,
+               &colorType, &interlaceType, &compressionType, &filterType);
   VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
-                               INT2NUM(surface->w), INT2NUM(surface->h));
-
+                               INT2NUM(width), INT2NUM(height));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
-
-  SDL_LockSurface(surface);
-  MEMCPY(texture->pixels, surface->pixels, Pixel,
-         texture->width * texture->height);
-  SDL_UnlockSurface(surface);
-
-  SDL_FreeSurface(surface);
-  surface = NULL;
-  SDL_FreeSurface(imageSurface);
-  imageSurface = NULL;
+  for (int j = 0; j < height; j++) {
+    png_byte row[width * 4];
+    png_read_row(pngPtr, row, NULL);
+    for (int i = 0; i < width; i++) {
+      Color* c = &(texture->pixels[width * j + i].color);
+      c->red   = row[i * 4];
+      c->green = row[i * 4 + 1];
+      c->blue  = row[i * 4 + 2];
+      c->alpha = row[i * 4 + 3];
+    }
+  }
+  png_read_end(pngPtr, endInfo);
+  png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
+  fclose(fp);
 
   return rbTexture;
 }
@@ -693,12 +714,12 @@ static VALUE Texture_save(VALUE self, VALUE rbPath, VALUE rbAlpha)
   for (int j = 0; j < texture->height; j++) {
     png_byte row[texture->width * 4];
     for (int i = 0; i < texture->width; i++) {
-      Color c = texture->pixels[texture->width * j + i].color;
-      row[i * 4]     = c.red;
-      row[i * 4 + 1] = c.green;
-      row[i * 4 + 2] = c.blue;
+      Color* c = &(texture->pixels[texture->width * j + i].color);
+      row[i * 4]     = c->red;
+      row[i * 4 + 1] = c->green;
+      row[i * 4 + 2] = c->blue;
       if (RTEST(rbAlpha))
-        row[i * 4 + 3] = c.alpha;
+        row[i * 4 + 3] = c->alpha;
       else
         row[i * 4 + 3] = 0xff;
     }

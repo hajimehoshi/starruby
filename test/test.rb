@@ -372,6 +372,17 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_load_various_png
+    texture8 = Texture.load("images/ruby8")
+    assert_equal 0, texture8.get_pixel(1, 1).alpha
+    assert_equal Color.new(252, 239, 239, 255), texture8.get_pixel(58, 2)
+    texture32 = Texture.load("images/ruby32")
+    assert_equal Color.new(252, 242, 242, 186), texture32.get_pixel(58, 2)
+    assert_raise StarRubyError do
+      texture32 = Texture.load("images/ruby32_interlace")
+    end
+  end
+  
   def test_clone
     texture = Texture.load("images/ruby")
     texture2 = texture.clone

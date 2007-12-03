@@ -122,25 +122,28 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   png_byte header[8];
   fread(&header, 1, 8, fp);
   if (png_sig_cmp(header, 0, 8)) {
-    rb_raise(rb_eStarRubyError, "invalid PNG file");
+    rb_raise(rb_eStarRubyError, "invalid PNG file: %s", path);
     return Qnil;
   }
   png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                                               NULL, NULL, NULL);
   if (!pngPtr) {
-    rb_raise(rb_eStarRubyError, "PNG error");
+    fclose(fp);
+    rb_raise(rb_eStarRubyError, "PNG error: %s", path);
     return Qnil;
   }
   png_infop infoPtr = png_create_info_struct(pngPtr);
   if (!infoPtr) {
     png_destroy_read_struct(&pngPtr, NULL, NULL);
-    rb_raise(rb_eStarRubyError, "PNG error");
+    fclose(fp);
+    rb_raise(rb_eStarRubyError, "PNG error: %s", path);
     return Qnil;
   }
   png_infop endInfo = png_create_info_struct(pngPtr);
   if (!endInfo) {
     png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
-    rb_raise(rb_eStarRubyError, "PNG error");
+    fclose(fp);
+    rb_raise(rb_eStarRubyError, "PNG error: %s", path);
     return Qnil;
   }
   png_init_io(pngPtr, fp);
@@ -150,6 +153,13 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   int bitDepth, colorType, interlaceType;
   png_get_IHDR(pngPtr, infoPtr, &width, &height,
                &bitDepth, &colorType, &interlaceType, NULL, NULL);
+  if (interlaceType != PNG_INTERLACE_NONE) {
+    png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
+    fclose(fp);
+    rb_raise(rb_eStarRubyError,
+             "not supported interlacing PNG image: %s", path);
+    return Qnil;
+  }
   VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
                                INT2NUM(width), INT2NUM(height));
   Texture* texture;
@@ -166,14 +176,21 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   if (colorType == PNG_COLOR_TYPE_PALETTE) {
     png_get_PLTE(pngPtr, infoPtr, &palette, &numPalette);
     png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, &transValues);
-    int t = -1;
     for (int i = 0; i < numTrans; i++) {
       if (trans[i] == 0) {
-        if (0 <= t)
-          break;
-        colorKey = i;
-      } else if (trans[i] != 255) {
-        break;
+        if (colorKey == -1) {
+          colorKey = i;
+        } else {
+          rb_raise(rb_eStarRubyError, "invalid PNG palette: %s", path);
+          png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
+          fclose(fp);
+          return Qnil;
+        }
+      } else if (trans[i] != 0xff) {
+        rb_raise(rb_eStarRubyError, "invalid PNG palette: %s", path);
+        png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
+        fclose(fp);
+        return Qnil;
       }
     }
   }

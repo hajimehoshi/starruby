@@ -174,19 +174,12 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
     png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, &transValues);
     for (int i = 0; i < numTrans; i++) {
       if (trans[i] == 0) {
-        if (colorKey == -1) {
+        if (colorKey == -1)
           colorKey = i;
-        } else {
-          rb_raise(rb_eStarRubyError, "invalid PNG palette: %s", path);
-          png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-          fclose(fp);
-          return Qnil;
-        }
+        else
+          break;
       } else if (trans[i] != 0xff) {
-        rb_raise(rb_eStarRubyError, "invalid PNG palette: %s", path);
-        png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-        fclose(fp);
-        return Qnil;
+        break;
       }
     }
   }

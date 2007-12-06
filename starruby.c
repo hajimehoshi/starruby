@@ -4,7 +4,6 @@
 VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 {
   char* path = StringValuePtr(rbPath);
-  
   if (!RTEST(rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbPath))) {
     VALUE rbPathes = rb_funcall(rb_cDir, rb_intern("[]"), 1,
                                 rb_str_cat2(rb_str_dup(rbPath), ".*"));

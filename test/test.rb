@@ -295,6 +295,15 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_new_type
+    assert_raise TypeError do
+      Texture.new(nil, 456)
+    end
+    assert_raise TypeError do
+      Texture.new(123, nil)
+    end
+  end
+  
   def test_new_text
     if Font.exist?("Arial")
       font = Font.new("Arial", 16)
@@ -313,6 +322,26 @@ class TextureTest < Test::Unit::TestCase
     font.dispose
     assert_raise TypeError do
       Texture.new_text("A", font, color)
+    end
+  end
+  
+  def test_new_text_type
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
+    color = Color.new(255, 255, 255)
+    assert_raise TypeError do
+      texture = Texture.new_text(nil, font, color)
+    end
+    assert_raise TypeError do
+      texture = Texture.new_text("A", nil, color)
+    end
+    assert_raise TypeError do
+      texture = Texture.new_text("A", font, nil)
     end
   end
   
@@ -369,6 +398,12 @@ class TextureTest < Test::Unit::TestCase
     
     assert_raise ArgumentError do
       Texture.load("images/ambiguous");
+    end
+  end
+  
+  def test_load_type
+    assert_raise TypeError do
+      Texture.load(nil)
     end
   end
   
@@ -513,6 +548,25 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_get_and_set_pixel_type
+    texture = Texture.new(3, 3)
+    assert_raise TypeError do
+      texture.get_pixel(nil, 0)
+    end
+    assert_raise TypeError do
+      texture.get_pixel(0, nil)
+    end
+    assert_raise TypeError do
+      texture.set_pixel(nil, 0, Color.new(0, 0, 0))
+    end
+    assert_raise TypeError do
+      texture.set_pixel(0, nil, Color.new(0, 0, 0))
+    end
+    assert_raise TypeError do
+      texture.set_pixel(0, 0, nil)
+    end
+  end
+  
   def test_clear
     texture = Texture.load("images/ruby")
     texture.clear
@@ -564,6 +618,13 @@ class TextureTest < Test::Unit::TestCase
       texture.fill(Color.new(31, 41, 59, 26))
     end
   end
+  
+  def test_fill_type
+    texture = Texture.load("images/ruby")
+    assert_raise TypeError do
+      texture.fill(nil)
+    end
+  end
 
   def test_fill_rect
     texture = Texture.load("images/ruby")
@@ -584,7 +645,7 @@ class TextureTest < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     texture.freeze
     assert_raise TypeError do
-      texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
+      texture.fill_rect(10, 11, 12, 13, Color.new(12, 34, 56, 78))
     end
   end
   
@@ -592,7 +653,26 @@ class TextureTest < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     texture.dispose
     assert_raise TypeError do
-      texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
+      texture.fill_rect(10, 11, 12, 13, Color.new(12, 34, 56, 78))
+    end
+  end
+  
+  def test_fill_rect_type
+    texture = Texture.load("images/ruby")
+    assert_raise TypeError do
+      texture.fill_rect(nil, 11, 12, 13, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture.fill_rect(10, nil, 12, 13, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture.fill_rect(10, 11, nil, 13, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture.fill_rect(10, 11, 12, nil, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture.fill_rect(10, 11, 12, 13, nil)
     end
   end
   
@@ -646,6 +726,13 @@ class TextureTest < Test::Unit::TestCase
       texture.change_hue(Math::PI)
     end
   end
+  
+  def test_change_hue
+    texture = Texture.load("images/ruby")
+    assert_raise TypeError do
+      texture.change_hue(nil)
+    end
+  end
 
   def test_render_text
     texture = Texture.load("images/ruby")
@@ -692,6 +779,33 @@ class TextureTest < Test::Unit::TestCase
     texture.freeze
     assert_raise TypeError do
       texture.render_text("A", 0, 0, font, color)
+    end
+  end
+  
+  def test_render_text_type
+    texture = Texture.load("images/ruby")
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    else
+      flunk
+    end
+    color = Color.new(255, 255, 255)
+    assert_raise TypeError do
+      texture.render_text(nil, 0, 0, font, color)
+    end
+    assert_raise TypeError do
+      texture.render_text("aa", nil, 0, font, color)
+    end
+    assert_raise TypeError do
+      texture.render_text("aa", 0, nil, font, color)
+    end
+    assert_raise TypeError do
+      texture.render_text("aa", 0, 0, nil, color)
+    end
+    assert_raise TypeError do
+      texture.render_text("aa", 0, 0, font, nil)
     end
   end
   
@@ -753,6 +867,30 @@ class TextureTest < Test::Unit::TestCase
     texture.dispose
     assert_raise TypeError do
       texture3.render_texture(texture, 0, 0)
+    end
+  end
+  
+  def test_render_texture_type
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    assert_raise TypeError do
+      texture2.render_texture(nil, 0, 0, {})
+    end
+    assert_raise TypeError do
+      texture2.render_texture(texture, nil, 0, {})
+    end
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, nil, {})
+    end
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, 0, false)
+    end
+    [:alpha, :angle, :blend_type, :center_x, :center_y,
+    :saturation, :scale_x, :scale_y, :src_width, :src_height,
+    :src_x, :src_y, :tone_red, :tone_green, :tone_blue].each do |key|
+      assert_raise TypeError, "#{key}" do
+        texture2.render_texture(texture, 0, 0, key => false)
+      end
     end
   end
   
@@ -1144,6 +1282,13 @@ class TextureTest < Test::Unit::TestCase
     end
     if FileTest.exist?("images/saved_image.png")
       File.delete("images/saved_image.png")
+    end
+  end
+  
+  def test_save_type
+    texture = Texture.load("images/ruby")
+    assert_raise TypeError do
+      texture.save(nil, true)
     end
   end
   

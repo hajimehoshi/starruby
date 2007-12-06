@@ -47,30 +47,26 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   VALUE rbFont;
   VALUE rbColor;
   VALUE rbAntiAlias;
-  bool antiAlias = false;
   rb_scan_args(argc, argv, "31", &rbText, &rbFont, &rbColor, &rbAntiAlias);
-  if (NIL_P(rbAntiAlias))
-    rbAntiAlias = Qfalse;
-  antiAlias = RTEST(rbAntiAlias);
-  
+  bool antiAlias = RTEST(rbAntiAlias);
+  Check_Type(rbText, T_STRING);
   if (!RSTRING(rbText)->len) {
     rb_raise(rb_eArgError, "empty text");
     return Qnil;
   }
   char* text = StringValuePtr(rbText);
-  VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
-                                2, RARRAY(rbSize)->ptr);
-  Texture* texture;
-  Data_Get_Struct(rbTexture, Texture, texture);
-  
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
   if (!font->sdlFont) {
     rb_raise(rb_eTypeError, "can't use disposed font");
     return Qnil;
   }
-
+  VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
+  VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
+                                2, RARRAY(rbSize)->ptr);
+  Texture* texture;
+  Data_Get_Struct(rbTexture, Texture, texture);
+  
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
 
@@ -476,6 +472,7 @@ static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
   VALUE rbText, rbX, rbY, rbFont, rbColor, rbAntiAlias;
   rb_scan_args(argc, argv, "51",
                &rbText, &rbX, &rbY, &rbFont, &rbColor, &rbAntiAlias);
+  Check_Type(rbText, T_STRING);
   if (!(RSTRING(rbText)->len))
     return Qnil;
   VALUE rbTextTexture = Texture_new_text(4, (VALUE[]) {
@@ -532,6 +529,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  Check_Type(rbOptions, T_HASH);
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);

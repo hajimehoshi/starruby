@@ -1463,6 +1463,38 @@ class AudioTest < Test::Unit::TestCase
         Audio.play_bgm("sounds/music", key => nil)
       end
     end
+    assert_raise TypeError do
+      Audio.play_se(nil)
+    end
+    assert_raise TypeError do
+      Audio.play_se("sounds/sample", false)
+    end
+    [:panning, :volume, :time].each do |key|
+      assert_raise TypeError do
+        Audio.play_se("sounds/sample", key => false)
+      end
+      assert_raise TypeError do
+        Audio.play_se("sounds/sample", key => nil)
+      end
+    end
+    assert_raise TypeError do
+      Audio.stop_all_ses(false)
+    end
+    assert_raise TypeError do
+      Audio.stop_all_ses(:time => false)
+    end
+    assert_raise TypeError do
+      Audio.stop_all_ses(:time => nil)
+    end
+    assert_raise TypeError do
+      Audio.stop_bgm(false)
+    end
+    assert_raise TypeError do
+      Audio.stop_bgm(:time => false)
+    end
+    assert_raise TypeError do
+      Audio.stop_bgm(:time => nil)
+    end
   end
   
   def test_bgm_volume

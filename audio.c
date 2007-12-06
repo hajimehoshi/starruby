@@ -91,6 +91,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   int volume  = 255;
 
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_panning, &val))
     panning = NORMALIZE(NUM2INT(val), -255, 255);
@@ -137,6 +138,7 @@ static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   int time = 0;
   
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_time, &val))
     time = NUM2INT(val);
@@ -159,6 +161,7 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   int time = 0;
   
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_time, &val))
     time = NUM2INT(val);

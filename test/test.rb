@@ -26,6 +26,21 @@ class ColorTest < Test::Unit::TestCase
     assert_equal c1.hash, Color.new(1, 2, 3, 4).hash
     assert_equal c2.hash, Color.new(5, 6, 7).hash
   end
+  
+  def test_color_type
+    assert_raise TypeError do
+      Color.new(nil, 2, 3, 4)
+    end
+    assert_raise TypeError do
+      Color.new(1, nil, 3, 4)
+    end
+    assert_raise TypeError do
+      Color.new(1, 2, nil, 4)
+    end
+    assert_raise TypeError do
+      Color.new(1, 2, 3, false)
+    end
+  end
 
   def test_color_overflow
     c = Color.new(-100, 256, -1, 999)
@@ -86,7 +101,14 @@ class FontTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       Font.exist?("fonts/maybefont")
     end
+    assert_equal true, Font.exist?("fonts/ORANGEKI")
     assert_equal true, Font.exist?("fonts/maybefont2")
+  end
+  
+  def test_exist_type
+    assert_raise TypeError do
+      Font.exist?(nil)
+    end
   end
 
   def test_new
@@ -119,6 +141,15 @@ class FontTest < Test::Unit::TestCase
     end
     assert_raise StarRubyError do
       Font.new("fonts/maybefont2", 12)
+    end
+  end
+  
+  def test_new_type
+    assert_raise TypeError do
+      Font.new(nil, 12)
+    end
+    assert_raise TypeError do
+      Font.new("fonts/ORANGEKI", nil)
     end
   end
   
@@ -191,6 +222,13 @@ class FontTest < Test::Unit::TestCase
     size = font.get_size("AAAAAAAAAAAAAA");
     size[0] # No Exception
     size[1] # No Exception
+  end
+  
+  def test_get_size_type
+    font = Font.new("fonts/ORANGEKI", 12)
+    assert_raise TypeError do
+      font.get_size(nil)
+    end
   end
   
 end

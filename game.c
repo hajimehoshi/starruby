@@ -143,6 +143,7 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
     rbOptions = rb_hash_new();
 
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_fullscreen, &val))
     fullscreen = RTEST(val);

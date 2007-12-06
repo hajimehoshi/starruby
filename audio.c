@@ -43,10 +43,11 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (!sdlBgm)
     rb_raise_sdl_mix_error();
 
-  int time     = 0;
-  int volume   = 256;
+  int time   = 0;
+  int volume = 256;
 
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_loop, &val))
     bgmLoop = RTEST(val);

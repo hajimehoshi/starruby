@@ -529,7 +529,6 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  Check_Type(rbOptions, T_HASH);
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
@@ -560,6 +559,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   uint8_t saturation = 255;
 
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_src_x, &val))
     srcX = NUM2INT(val);

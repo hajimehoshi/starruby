@@ -67,6 +67,7 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 {
   VALUE rbDevice, rbOptions;
   rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
+  Check_Type(rbDevice, T_SYMBOL);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
@@ -78,6 +79,7 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
   int interval     = 0;
 
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_device_number, &val))
     deviceNumber = NUM2INT(val);
@@ -117,6 +119,10 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
       rb_ary_push(rbResult, symbol_middle);
     if (isPressed(mouse->rightState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_right);
+  } else {
+    VALUE rbDeviceInspect = rb_funcall(rbDevice, rb_intern("inspect"), 0);
+    rb_raise(rb_eArgError, "invalid device: %s", StringValuePtr(rbDeviceInspect));
+    return Qnil;
   }
 
   OBJ_FREEZE(rbResult);

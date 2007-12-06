@@ -154,6 +154,7 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
   int ttcIndex = 0;
 
   VALUE val;
+  Check_Type(rbOptions, T_HASH);
   st_table* table = RHASH(rbOptions)->tbl;
   if (st_lookup(table, symbol_bold, &val))
     bold = RTEST(val);

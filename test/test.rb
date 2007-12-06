@@ -151,6 +151,9 @@ class FontTest < Test::Unit::TestCase
     assert_raise TypeError do
       Font.new("fonts/ORANGEKI", nil)
     end
+    assert_raise TypeError do
+      Font.new("fonts/ORANGEKI", 12, false)
+    end
   end
   
   def test_new_nil_option
@@ -260,11 +263,38 @@ class GameTest < Test::Unit::TestCase
     assert_equal 33, (Game.fps = 33)
     assert_equal 33, Game.fps
   end
+
+  def test_game_type
+    assert_raise TypeError do
+      Game.title = nil
+    end
+    assert_raise TypeError do
+      Game.fps = nil
+    end
+  end
   
   def test_run
     Game.run(320, 240, :window_scale => 2) do
       assert_equal [320, 240], Game.screen.size
       Game.terminate
+    end
+  end
+
+  def test_run_type
+    assert_raise TypeError do
+      Game.run(nil, 240) {}
+    end
+    assert_raise TypeError do
+      Game.run(320, nil) {}
+    end
+    assert_raise TypeError do
+      Game.run(320, 240, false) {}
+    end
+    assert_raise TypeError do
+      Game.run(320, 240, :window_scale => nil) {}
+    end
+    assert_raise TypeError do
+      Game.run(320, 240, :window_scale => false) {}
     end
   end
   
@@ -1368,6 +1398,29 @@ class TextureTest < Test::Unit::TestCase
 end
 
 class InputTest < Test::Unit::TestCase
+
+  def test_pressed_keys_type
+    assert_raise TypeError do
+      Input.pressed_keys(nil)
+    end
+    begin
+      Input.pressed_keys(:foo)
+      flunk
+    rescue ArgumentError => e
+      assert_equal "invalid device: :foo", e.message
+    end
+    assert_raise TypeError do
+      Input.pressed_keys(:gamepad, false)
+    end
+    [:duration, :delay, :interval].each do |key|
+      assert_raise TypeError do
+        Input.pressed_keys(:gamepad, key => nil)
+      end
+      assert_raise TypeError do
+        Input.pressed_keys(:gamepad, key => false)
+      end
+    end
+  end
   
   def test_mouse_location
     assert_kind_of Array, Input.mouse_location
@@ -1391,6 +1444,26 @@ class InputTest < Test::Unit::TestCase
 end
 
 class AudioTest < Test::Unit::TestCase
+
+  def test_audio_type
+    assert_raise TypeError do
+      Audio.bgm_volume = nil
+    end
+    assert_raise TypeError do
+      Audio.play_bgm(nil)
+    end
+    assert_raise TypeError do
+      Audio.play_bgm("sounds/music", false)
+    end
+    [:position, :volume, :time].each do |key|
+      assert_raise TypeError do
+        Audio.play_bgm("sounds/music", key => false)
+      end
+      assert_raise TypeError do
+        Audio.play_bgm("sounds/music", key => nil)
+      end
+    end
+  end
   
   def test_bgm_volume
     assert_equal 255, Audio.bgm_volume

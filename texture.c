@@ -757,6 +757,10 @@ static VALUE Texture_save(VALUE self, VALUE rbPath, VALUE rbAlpha)
   
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
+  if (!fp) {
+    rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
+    return Qnil;
+  }
   png_structp pngPtr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
                                                NULL, NULL, NULL);
   png_infop infoPtr = png_create_info_struct(pngPtr);

@@ -1292,6 +1292,14 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_save_failed
+    assert ! FileTest.exist?("images/foo")
+    texture = Texture.load("images/ruby")
+    assert_raise Errno::ENOENT do
+      texture.save("images/foo/saved_image.png", true)
+    end
+  end
+  
   def test_save_without_alpha
     texture = Texture.load("images/ruby")
     texture.save("images/saved_image.png", false)

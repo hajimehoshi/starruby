@@ -1,6 +1,6 @@
 sample.wav, sample2.wav:
   http://osabisi.sakura.ne.jp/m2/
 
-Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron.ogg:
+music.ogg:
   http://commons.wikimedia.org/wiki/Image:Mozart_-_Concerto_in_D_for_Flute_K.314.ladybyron.ogg
   (GNU Free Documentation License)

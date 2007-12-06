@@ -8,7 +8,6 @@
 static VALUE symbol_add;
 static VALUE symbol_alpha;
 static VALUE symbol_angle;
-static VALUE symbol_anti_alias;
 static VALUE symbol_blend_type;
 static VALUE symbol_center_x;
 static VALUE symbol_center_y;
@@ -489,17 +488,16 @@ static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
           srcJ < srcY || srcY + srcHeight <= srcJ)\
         continue;\
       src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
-      if (src->color.alpha == 0)\
-        continue;\
       uint8_t srcR = src->color.red;\
       uint8_t srcG = src->color.green;\
       uint8_t srcB = src->color.blue;\
       uint8_t dstR = dst->color.red;\
       uint8_t dstG = dst->color.green;\
       uint8_t dstB = dst->color.blue;\
-      uint8_t srcAlpha = (alpha == 255) ?\
-        src->color.alpha : DIV255(src->color.alpha * alpha);\
-      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
+      uint8_t srcAlpha =\
+        (dst->color.alpha == 0) ? 255 : DIV255(src->color.alpha * alpha);\
+      dst->color.alpha = MAX(dst->color.alpha,\
+                             DIV255(src->color.alpha * alpha));\
       convertingPixel;\
       dst->color.red   = dstR;\
       dst->color.green = dstG;\
@@ -853,7 +851,6 @@ void InitializeTexture(void)
   symbol_add        = ID2SYM(rb_intern("add"));
   symbol_alpha      = ID2SYM(rb_intern("alpha"));
   symbol_angle      = ID2SYM(rb_intern("angle"));
-  symbol_anti_alias = ID2SYM(rb_intern("anti_alias"));
   symbol_blend_type = ID2SYM(rb_intern("blend_type"));
   symbol_center_x   = ID2SYM(rb_intern("center_x"));
   symbol_center_y   = ID2SYM(rb_intern("center_y"));

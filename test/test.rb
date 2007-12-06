@@ -885,11 +885,7 @@ class TextureTest < Test::Unit::TestCase
       texture.width.times do |x|
         c1 = texture.get_pixel(x, y)
         c2 = texture2.get_pixel(x, y)
-        if 0 < c2.alpha
-          assert_equal c1, c2
-        else
-          assert_equal Color.new(0, 0, 0, 0), c2
-        end
+        assert_equal c1, c2
       end
     end
     texture2.fill(Color.new(128, 128, 128, 128))
@@ -962,6 +958,18 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_render_texture_blending
+    src_texture = Texture.new(256, 1)
+    src_texture.width.times do |i|
+      src_texture.set_pixel(i, 0, Color.new(127, 128, 129, i))
+    end
+    dst_texture = Texture.new(256, 1)
+    dst_texture.render_texture(src_texture, 0, 0)
+    src_texture.width.times do |i|
+      assert_equal Color.new(127, 128, 129, i), dst_texture.get_pixel(i, 0)
+    end
+  end
+  
   def test_render_texture_xy
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
@@ -976,7 +984,7 @@ class TextureTest < Test::Unit::TestCase
           if p2.alpha != 0
             assert_equal p1, p2
           else
-            assert_equal Color.new(0, 0, 0, 0), p2
+            assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
           end
         end
       end
@@ -991,7 +999,7 @@ class TextureTest < Test::Unit::TestCase
           if p2.alpha != 0
             assert_equal p1, p2
           else
-            assert_equal Color.new(0, 0, 0, 0), p2
+            assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
           end
         else
           assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
@@ -1011,7 +1019,7 @@ class TextureTest < Test::Unit::TestCase
         if p2.alpha != 0
           assert_equal p1, p2
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
         end
       end
     end
@@ -1026,7 +1034,7 @@ class TextureTest < Test::Unit::TestCase
         if p2.alpha != 0
           assert_equal p1, p2
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
         end
       end
     end
@@ -1040,7 +1048,7 @@ class TextureTest < Test::Unit::TestCase
           if p2.alpha != 0
             assert_equal p1, p2
           else
-            assert_equal Color.new(0, 0, 0, 0), p2
+            assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
           end
         else
           assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
@@ -1075,50 +1083,51 @@ class TextureTest < Test::Unit::TestCase
   def test_render_texture_alpha
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
+    texture2.fill(Color.new(0, 0, 0, 1))
     texture2.render_texture(texture, 0, 0, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        if p2.alpha != 0
+        if p1.alpha != 0
           assert_in_delta p1.red / 2,   p2.red,   1, "(#{x}, #{y})"
           assert_in_delta p1.green / 2, p2.green, 1, "(#{x}, #{y})"
           assert_in_delta p1.blue / 2,  p2.blue,  1, "(#{x}, #{y})"
           assert_in_delta p1.alpha / 2, p2.alpha, 1, "(#{x}, #{y})"
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(0, 0, 0, 1), p2
         end
       end
     end
-    texture2.clear
+    texture2.fill(Color.new(0, 0, 0, 1))
     texture2.render_texture(texture, 0, 0, :alpha => 64)
     texture2.height.times do |y|
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        if p2.alpha != 0
+        if p1.alpha != 0
           assert_in_delta p1.red / 4,   p2.red,   1
           assert_in_delta p1.green / 4, p2.green, 1
           assert_in_delta p1.blue / 4,  p2.blue,  1
           assert_in_delta p1.alpha / 4, p2.alpha, 1
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(0, 0, 0, 1), p2
         end
       end
     end
-    texture2.clear
+    texture2.fill(Color.new(0, 0, 0, 1))
     texture2.render_texture(texture, 0, 0, :alpha => 192)
     texture2.height.times do |y|
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        if p2.alpha != 0
+        if p1.alpha != 0
           assert_in_delta p1.red * 3 / 4,   p2.red,   1
           assert_in_delta p1.green * 3 / 4, p2.green, 1
           assert_in_delta p1.blue * 3 / 4,  p2.blue,  1
           assert_in_delta p1.alpha * 3 / 4, p2.alpha, 1
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(0, 0, 0, 1), p2
         end
       end
     end
@@ -1136,7 +1145,7 @@ class TextureTest < Test::Unit::TestCase
         if p2.alpha != 0
           assert_equal p1, p2
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
         end
       end
     end
@@ -1199,7 +1208,7 @@ class TextureTest < Test::Unit::TestCase
         if p2.alpha != 0
           assert_equal p1, p2
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
         end
       end
     end
@@ -1219,9 +1228,9 @@ class TextureTest < Test::Unit::TestCase
           assert_in_delta (gray + p1.green) / 2, p2.green, 1
           assert_in_delta (gray + p1.blue) / 2,  p2.blue,  1
         when 0
-          assert_equal 0, p2.red
-          assert_equal 0, p2.green
-          assert_equal 0, p2.blue
+          assert_equal p1.red,   p2.red
+          assert_equal p1.green, p2.green
+          assert_equal p1.blue,  p2.blue
         end
         assert_equal p1.alpha, p2.alpha
       end
@@ -1240,9 +1249,9 @@ class TextureTest < Test::Unit::TestCase
           gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
           assert_in_delta gray, p2.red, 1
         when 0
-          assert_equal 0, p2.red
-          assert_equal 0, p2.green
-          assert_equal 0, p2.blue
+          assert_equal p1.red,   p2.red
+          assert_equal p1.green, p2.green
+          assert_equal p1.blue,  p2.blue
         end
         assert_equal p1.alpha, p2.alpha
       end
@@ -1255,16 +1264,9 @@ class TextureTest < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        case p1.alpha
-        when 255
-          assert_in_delta (255 + p1.red * 3) / 4,  p2.red,   1
-          assert_in_delta (255 + p1.green) / 2,    p2.green, 1
-          assert_in_delta (255 * 3 + p1.blue) / 4, p2.blue,  1
-        when 0
-          assert_equal 0, p2.red
-          assert_equal 0, p2.green
-          assert_equal 0, p2.blue
-        end
+        assert_in_delta (255 + p1.red * 3) / 4,  p2.red,   1
+        assert_in_delta (255 + p1.green) / 2,    p2.green, 1
+        assert_in_delta (255 * 3 + p1.blue) / 4, p2.blue,  1
         assert_equal p1.alpha, p2.alpha
       end
     end
@@ -1276,16 +1278,9 @@ class TextureTest < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        case p1.alpha
-        when 255
-          assert_in_delta p1.red / 4,      p2.red,   1
-          assert_in_delta p1.green / 2,    p2.green, 1
-          assert_in_delta p1.blue * 3 / 4, p2.blue,  1
-        when 0
-          assert_equal 0, p2.red
-          assert_equal 0, p2.green
-          assert_equal 0, p2.blue
-        end
+        assert_in_delta p1.red / 4,      p2.red,   1
+        assert_in_delta p1.green / 2,    p2.green, 1
+        assert_in_delta p1.blue * 3 / 4, p2.blue,  1
         assert_equal p1.alpha, p2.alpha
       end
     end
@@ -1308,7 +1303,7 @@ class TextureTest < Test::Unit::TestCase
         if p2.alpha != 0
           assert_equal p1, p2
         else
-          assert_equal Color.new(0, 0, 0, 0), p2
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
         end
       end
     end

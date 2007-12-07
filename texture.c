@@ -199,6 +199,10 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
           c->alpha = (index != colorKey) ? 0xff : 0x00;
         }
         break;
+      case 2:
+        c->red = c->green = c->blue = row[i * channels];
+        c->alpha = row[i * channels + 1];
+        break;
       case 3:
       case 4:
         c->red   = row[i * channels];

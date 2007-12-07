@@ -70,26 +70,35 @@ static VALUE DoLoop(SDL_Surface* screen)
     
     rb_yield(Qnil);
     
+    Uint32* dst = screen->pixels;
+    int length = texture->width * texture->height;
+    Pixel* p = texture->pixels;
+    Pixel src[length];
+    for (int i = 0; i < length; i++, p++) {
+      src[i].color.red   = DIV255(p->color.red   * p->color.alpha);
+      src[i].color.green = DIV255(p->color.green * p->color.alpha);
+      src[i].color.blue  = DIV255(p->color.blue  * p->color.alpha);
+      src[i].color.alpha = 255;
+    }
+    
     SDL_LockSurface(screen);
     switch (windowScale) {
     case 1:
-      MEMCPY(screen->pixels, texture->pixels, Pixel,
-             texture->width * texture->height);
+      MEMCPY(dst, src, Pixel, length);
       break;
     case 2:
       {
-        Uint32* dst = screen->pixels;
-        Pixel* src = texture->pixels;
+        Pixel* srcP = src;
         int width  = texture->width;
         int width2 = width * 2;
         int height = texture->height;
         for (int j = 0; j < height; j++) {
           for (int i = 0; i < width; i++) {
-            *dst = *(dst + width2) = src->value;
+            *dst = *(dst + width2) = srcP->value;
             dst++;
-            *dst = *(dst + width2) = src->value;
+            *dst = *(dst + width2) = srcP->value;
             dst++;
-            src++;
+            srcP++;
           }
           dst += width2;
         }
@@ -153,13 +162,10 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                               INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen", rbScreen);
-  Texture* texture;
-  Data_Get_Struct(rbScreen, Texture, texture);
   
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
   SDL_Surface* screen =
-    SDL_SetVideoMode(texture->width * windowScale, texture->height * windowScale,
-                     32, options);
+    SDL_SetVideoMode(width * windowScale, height * windowScale, 32, options);
   if (!screen) {
     DisposeScreen(screen);
     rb_raise_sdl_error();

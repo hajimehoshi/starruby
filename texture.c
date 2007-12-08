@@ -756,7 +756,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Texture_save(VALUE self, VALUE rbPath, VALUE rbAlpha)
+static VALUE Texture_save(int argc, VALUE* argv, VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -764,6 +764,12 @@ static VALUE Texture_save(VALUE self, VALUE rbPath, VALUE rbAlpha)
     rb_raise(rb_eTypeError, "can't modify disposed texture");
     return Qnil;
   }
+
+  VALUE rbPath;
+  VALUE rbAlpha;
+  rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
+  if (argc == 1)
+    rbAlpha = Qtrue;
   
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
@@ -863,7 +869,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
-  rb_define_method(rb_cTexture, "save",           Texture_save,            2);
+  rb_define_method(rb_cTexture, "save",           Texture_save,            -1);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,       3);
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);

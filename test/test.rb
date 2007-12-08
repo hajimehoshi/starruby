@@ -1362,14 +1362,22 @@ class TextureTest < Test::Unit::TestCase
   def test_save
     texture = Texture.load("images/ruby")
     texture.save("images/saved_image.png", true)
-    t = Thread.new do
-      loop do
-        break if FileTest.file?("images/saved_image.png")
-        sleep(0)
+    assert FileTest.file?("images/saved_image.png")
+    texture2 = Texture.load("images/saved_image.png")
+    assert_equal texture.size, texture2.size
+    texture.height.times do |j|
+      texture.width.times do |i|
+        c1 = texture.get_pixel(i, j)
+        c2 = texture2.get_pixel(i, j)
+        assert_equal c1.red,   c2.red
+        assert_equal c1.green, c2.green
+        assert_equal c1.blue,  c2.blue
+        assert_equal c1.alpha, c2.alpha
       end
     end
-    assert_not_nil t.join(1)
-    texture2 = Texture.load("images/saved_image.png")
+    texture.save("images/saved_image2.png")
+    assert FileTest.file?("images/saved_image2.png")
+    texture2 = Texture.load("images/saved_image2.png")
     assert_equal texture.size, texture2.size
     texture.height.times do |j|
       texture.width.times do |i|
@@ -1383,6 +1391,9 @@ class TextureTest < Test::Unit::TestCase
     end
     if FileTest.exist?("images/saved_image.png")
       File.delete("images/saved_image.png")
+    end
+    if FileTest.exist?("images/saved_image2.png")
+      File.delete("images/saved_image2.png")
     end
   end
   
@@ -1404,14 +1415,22 @@ class TextureTest < Test::Unit::TestCase
   def test_save_without_alpha
     texture = Texture.load("images/ruby")
     texture.save("images/saved_image.png", false)
-    t = Thread.new do
-      loop do
-        break if FileTest.file?("images/saved_image.png")
-        sleep(0)
+    assert FileTest.file?("images/saved_image.png")
+    texture2 = Texture.load("images/saved_image.png")
+    assert_equal texture.size, texture2.size
+    texture.height.times do |j|
+      texture.width.times do |i|
+        c1 = texture.get_pixel(i, j)
+        c2 = texture2.get_pixel(i, j)
+        assert_equal c1.red,   c2.red
+        assert_equal c1.green, c2.green
+        assert_equal c1.blue,  c2.blue
+        assert_equal 255,      c2.alpha
       end
     end
-    assert_not_nil t.join(1)
-    texture2 = Texture.load("images/saved_image.png")
+    texture.save("images/saved_image2.png", nil)
+    assert FileTest.file?("images/saved_image2.png")
+    texture2 = Texture.load("images/saved_image2.png")
     assert_equal texture.size, texture2.size
     texture.height.times do |j|
       texture.width.times do |i|
@@ -1425,6 +1444,9 @@ class TextureTest < Test::Unit::TestCase
     end
     if FileTest.exist?("images/saved_image.png")
       File.delete("images/saved_image.png")
+    end
+    if FileTest.exist?("images/saved_image2.png")
+      File.delete("images/saved_image2.png")
     end
   end
 

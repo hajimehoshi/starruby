@@ -274,7 +274,22 @@ static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
   return Qnil;
 }
 
+static VALUE Texture_change_hue_bang(VALUE, VALUE);
 static VALUE Texture_change_hue(VALUE self, VALUE rbAngle)
+{
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+  
+  VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
+  Texture_change_hue_bang(rbTexture, rbAngle);
+  return rbTexture;
+}
+
+static VALUE Texture_change_hue_bang(VALUE self, VALUE rbAngle)
 {
   rb_check_frozen(self);
   
@@ -837,20 +852,21 @@ void InitializeTexture(void)
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
-  rb_define_method(rb_cTexture, "change_hue",     Texture_change_hue,     1);
-  rb_define_method(rb_cTexture, "clear",          Texture_clear,          0);
-  rb_define_method(rb_cTexture, "dispose",        Texture_dispose,        0);
-  rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,       0);
-  rb_define_method(rb_cTexture, "fill",           Texture_fill,           1);
-  rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,      5);
-  rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,      2);
-  rb_define_method(rb_cTexture, "height",         Texture_height,         0);
-  rb_define_method(rb_cTexture, "render_text",    Texture_render_text,    -1);
-  rb_define_method(rb_cTexture, "render_texture", Texture_render_texture, -1);
-  rb_define_method(rb_cTexture, "save",           Texture_save,           2);
-  rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,      3);
-  rb_define_method(rb_cTexture, "size",           Texture_size,           0);
-  rb_define_method(rb_cTexture, "width",          Texture_width,          0);
+  rb_define_method(rb_cTexture, "change_hue",     Texture_change_hue,      1);
+  rb_define_method(rb_cTexture, "change_hue!",    Texture_change_hue_bang, 1);
+  rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
+  rb_define_method(rb_cTexture, "dispose",        Texture_dispose,         0);
+  rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,        0);
+  rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
+  rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
+  rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
+  rb_define_method(rb_cTexture, "height",         Texture_height,          0);
+  rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
+  rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
+  rb_define_method(rb_cTexture, "save",           Texture_save,            2);
+  rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,       3);
+  rb_define_method(rb_cTexture, "size",           Texture_size,            0);
+  rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 
   symbol_add        = ID2SYM(rb_intern("add"));
   symbol_alpha      = ID2SYM(rb_intern("alpha"));

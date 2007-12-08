@@ -749,14 +749,20 @@ class TextureTest < Test::Unit::TestCase
   def test_change_hue
     texture = Texture.load("images/ruby")
     orig_texture = texture.clone
-    texture.change_hue(0)
+    texture = orig_texture.change_hue(0)
     texture.height.times do |y|
       texture.width.times do |x|
         assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
       end
     end
     texture = orig_texture.clone
-    texture.change_hue(Math::PI * 2 / 3)
+    texture.change_hue!(0)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+      end
+    end
+    texture = orig_texture.change_hue(Math::PI * 2 / 3)
     texture.height.times do |y|
       texture.width.times do |x|
         p1 = orig_texture.get_pixel(x, y)
@@ -768,7 +774,30 @@ class TextureTest < Test::Unit::TestCase
       end
     end
     texture = orig_texture.clone
-    texture.change_hue(Math::PI * 4 / 3)
+    texture.change_hue!(Math::PI * 2 / 3)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        p1 = orig_texture.get_pixel(x, y)
+        p2 = texture.get_pixel(x, y)
+        assert_in_delta p1.blue,  p2.red,   1
+        assert_in_delta p1.red,   p2.green, 1
+        assert_in_delta p1.green, p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    texture = orig_texture.change_hue(Math::PI * 4 / 3)
+    texture.height.times do |y|
+      texture.width.times do |x|
+        p1 = orig_texture.get_pixel(x, y)
+        p2 = texture.get_pixel(x, y)
+        assert_in_delta p1.green, p2.red,   1
+        assert_in_delta p1.blue,  p2.green, 1
+        assert_in_delta p1.red,   p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    texture = orig_texture.clone
+    texture.change_hue!(Math::PI * 4 / 3)
     texture.height.times do |y|
       texture.width.times do |x|
         p1 = orig_texture.get_pixel(x, y)
@@ -784,8 +813,9 @@ class TextureTest < Test::Unit::TestCase
   def test_change_hue_frozen
     texture = Texture.load("images/ruby")
     texture.freeze
+    texture.change_hue(Math::PI)
     assert_raise TypeError do
-      texture.change_hue(Math::PI)
+      texture.change_hue!(Math::PI)
     end
   end
   
@@ -795,12 +825,18 @@ class TextureTest < Test::Unit::TestCase
     assert_raise TypeError do
       texture.change_hue(Math::PI)
     end
+    assert_raise TypeError do
+      texture.change_hue!(Math::PI)
+    end
   end
   
-  def test_change_hue
+  def test_change_hue_type
     texture = Texture.load("images/ruby")
     assert_raise TypeError do
       texture.change_hue(nil)
+    end
+    assert_raise TypeError do
+      texture.change_hue!(nil)
     end
   end
 
@@ -1409,7 +1445,7 @@ class InputTest < Test::Unit::TestCase
     assert_raise TypeError do
       Input.pressed_keys(:gamepad, false)
     end
-    [:duration, :delay, :interval].each do |key|
+    [:device_number, :duration, :delay, :interval].each do |key|
       assert_raise TypeError do
         Input.pressed_keys(:gamepad, key => nil)
       end

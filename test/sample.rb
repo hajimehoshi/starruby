@@ -54,7 +54,6 @@ sprites = Array.new(1000) { Sprite.new }
 i = 0
 bgm_position = 0
 
-#Game.fps = 10000
 Game.run(320, 240, :window_scale => 2) do
   
   screen = Game.screen

@@ -26,7 +26,7 @@ def main
     end
     cp(path, dir, :verbose => true)
   end
-  Dir["examples/**/*"].each do |path|
+  Dir["samples/**/*"].each do |path|
     next unless FileTest.file?(path)
     dir = File.join(main_dir, File.dirname(path))
     unless FileTest.directory?(dir)

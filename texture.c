@@ -60,10 +60,9 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eTypeError, "can't use disposed font");
     return Qnil;
   }
-  VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  // 'rb_funcall2' is failed. Why?
-  VALUE rbTexture = rb_funcall(rb_cTexture, rb_intern("new"),
-                               2, RARRAY(rbSize)->ptr[0], RARRAY(rbSize)->ptr[1]);
+  volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
+  VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
+                                2, RARRAY(rbSize)->ptr);
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   

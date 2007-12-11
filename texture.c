@@ -61,10 +61,9 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
   VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  int width = RARRAY(rbSize)->ptr[0];
-  int height = RARRAY(rbSize)->ptr[1];
+  // 'rb_funcall2' is failed. Why?
   VALUE rbTexture = rb_funcall(rb_cTexture, rb_intern("new"),
-                               2, NUM2INT(width), NUM2INT(height));
+                               2, RARRAY(rbSize)->ptr[0], RARRAY(rbSize)->ptr[1]);
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   

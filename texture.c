@@ -472,6 +472,42 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
                     INT2NUM(color.alpha));
 }
 
+static VALUE Texture_get_pixels_str(VALUE self, VALUE rbFormat)
+{
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    return Qnil;
+  }
+
+  char* format = StringValuePtr(rbFormat);
+  int textureSize = texture->width * texture->height;
+  int formatLength = RSTRING(rbFormat)->len;
+  VALUE rbResult = rb_str_new(NULL, textureSize * formatLength);
+  uint8_t* strPtr = RSTRING(rbResult)->ptr;
+  Pixel* pixels = texture->pixels;
+  for (int i = 0; i < textureSize; i++, pixels++) {
+    for (int j = 0; j < formatLength; j++, strPtr++) {
+      switch (format[j]) {
+      case 'r':
+        *strPtr = pixels->color.red;
+        break;
+      case 'g':
+        *strPtr = pixels->color.green;
+        break;
+      case 'b':
+        *strPtr = pixels->color.blue;
+        break;
+      case 'a':
+        *strPtr = pixels->color.alpha;
+        break;
+      }
+    }
+  }
+  return rbResult;
+}
+
 static VALUE Texture_height(VALUE self)
 {
   Texture* texture;
@@ -868,6 +904,7 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
+  rb_define_method(rb_cTexture, "get_pixels_str", Texture_get_pixels_str,  1);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);

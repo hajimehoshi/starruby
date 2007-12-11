@@ -1450,6 +1450,51 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_get_pixels
+    texture = Texture.load("images/ruby")
+    str = texture.get_pixels_str("rgb")
+    assert_equal texture.width * texture.height * 3, str.length
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p = texture.get_pixel(i, j)
+        origin = i + j * texture.width
+        assert_equal str[3 * origin],     p.red,   "#{i}, #{j}"
+        assert_equal str[3 * origin + 1], p.green, "#{i}, #{j}"
+        assert_equal str[3 * origin + 2], p.blue,  "#{i}, #{j}"
+      end
+    end
+    str = texture.get_pixels_str("rgba")
+    assert_equal texture.width * texture.height * 4, str.length
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p = texture.get_pixel(i, j)
+        origin = i + j * texture.width
+        assert_equal str[4 * origin],     p.red
+        assert_equal str[4 * origin + 1], p.green
+        assert_equal str[4 * origin + 2], p.blue
+        assert_equal str[4 * origin + 3], p.alpha
+      end
+    end
+    str = texture.get_pixels_str("argb")
+    assert_equal texture.width * texture.height * 4, str.length
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p = texture.get_pixel(i, j)
+        origin = i + j * texture.width
+        assert_equal str[4 * origin],     p.alpha
+        assert_equal str[4 * origin + 1], p.red
+        assert_equal str[4 * origin + 2], p.green
+        assert_equal str[4 * origin + 3], p.blue
+      end
+    end
+  end
+  
+  def test_get_pixels_str_disposed
+  end
+  
+  def test_get_pixels_str_type
+  end
+  
 end
 
 class InputTest < Test::Unit::TestCase

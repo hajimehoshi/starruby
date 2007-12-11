@@ -89,8 +89,8 @@ static void SearchFont(VALUE rbFilePathOrName,
       FcChar8* fileName = NULL;
       fontName = FcNameUnparse(fontSet->fonts[i]);
       if (FcPatternGetString(fontSet->fonts[i], FC_FILE, 0, &fileName) !=
-	  FcResultMatch)
-	continue;
+          FcResultMatch)
+        continue;
       *rbRealFilePath = rb_str_new2((char*)fileName);
       VALUE rbFontName = rb_str_new2((char*)fontName);
       free(fontName);

@@ -11,7 +11,12 @@ sitearchdir = Config::CONFIG["sitearchdir"]
 FileUtils.mkpath(dlldir)
 FileUtils.mkpath(sitearchdir)
 
-Dir.glob("dll/*.dll") {|path| FileUtils.install(path, dlldir, option)}
+Dir.glob("dll/*.dll") do |path|
+  if path =~ /zlib/
+    next if File.exist?(File.join(dlldir, File.basename(path)))
+  end
+  FileUtils.install(path, dlldir, option)
+end
 Dir.glob("ext/*.so")  {|path| FileUtils.install(path, sitearchdir, option)}
 
 puts "Installation Star Ruby completed!"

@@ -363,6 +363,20 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_new_disposed
+    texture = Texture.new(123, 456)
+    texture.dispose
+    assert_raise TypeError do
+      texture.width
+    end
+    assert_raise TypeError do
+      texture.height
+    end
+    assert_raise TypeError do
+      texture.size
+    end
+  end
+  
   def test_new_type
     assert_raise TypeError do
       Texture.new(nil, 456)
@@ -1450,9 +1464,9 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-  def test_get_pixels
+  def test_dump
     texture = Texture.load("images/ruby")
-    str = texture.get_pixels_str("rgb")
+    str = texture.dump("rgb")
     assert_equal texture.width * texture.height * 3, str.length
     texture.height.times do |j|
       texture.width.times do |i|
@@ -1463,7 +1477,7 @@ class TextureTest < Test::Unit::TestCase
         assert_equal str[3 * origin + 2], p.blue,  "#{i}, #{j}"
       end
     end
-    str = texture.get_pixels_str("rgba")
+    str = texture.dump("rgba")
     assert_equal texture.width * texture.height * 4, str.length
     texture.height.times do |j|
       texture.width.times do |i|
@@ -1475,7 +1489,7 @@ class TextureTest < Test::Unit::TestCase
         assert_equal str[4 * origin + 3], p.alpha
       end
     end
-    str = texture.get_pixels_str("argb")
+    str = texture.dump("argb")
     assert_equal texture.width * texture.height * 4, str.length
     texture.height.times do |j|
       texture.width.times do |i|
@@ -1489,10 +1503,107 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-  def test_get_pixels_str_disposed
+  def test_dump_disposed
+    texture = Texture.load("images/ruby")
+    texture.dispose
+    assert_raise TypeError do
+      texture.dump("rgb")
+    end
   end
   
-  def test_get_pixels_str_type
+  def test_dump_type
+    texture = Texture.load("images/ruby")
+    assert_raise TypeError do
+      texture.dump(nil)
+    end
+  end
+  
+  def test_undump
+    orig_texture = Texture.load("images/ruby")
+    texture = Texture.new(orig_texture.width, orig_texture.height)
+    texture.undump(orig_texture.dump("rgb"), "rgb")
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = orig_texture.get_pixel(i, j)
+        assert_equal p2.red,   p1.red
+        assert_equal p2.green, p1.green
+        assert_equal p2.blue,  p1.blue
+        assert_equal 0,        p1.alpha
+      end
+    end
+    texture.undump(orig_texture.dump("rgba"), "rgba")
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = orig_texture.get_pixel(i, j)
+        assert_equal p2.red,   p1.red
+        assert_equal p2.green, p1.green
+        assert_equal p2.blue,  p1.blue
+        assert_equal p2.alpha, p1.alpha
+      end
+    end
+    texture.undump(orig_texture.dump("argb"), "rgba")
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = orig_texture.get_pixel(i, j)
+        assert_equal p2.red,   p1.green
+        assert_equal p2.green, p1.blue
+        assert_equal p2.blue,  p1.alpha
+        assert_equal p2.alpha, p1.red
+      end
+    end
+    texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba")
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        assert_equal 0x12, p1.red
+        assert_equal 0x34, p1.green
+        assert_equal 0x56, p1.blue
+        assert_equal 0x78, p1.alpha
+      end
+    end
+    begin
+      data = ("\x12\x34\x56\x78" * texture.width * texture.height)[0..-2]
+      texture.undump(data, "rgba")
+      flunk
+    rescue ArgumentError => e
+      assert_equal "invalid data size: #{data.size + 1} expected but was #{data.size}", e.message
+    end
+    begin
+      data = "\x12\x34\x56\x78" * texture.width * texture.height + "\0"
+      texture.undump(data, "rgba")
+      flunk
+    rescue ArgumentError => e
+      assert_equal "invalid data size: #{data.size - 1} expected but was #{data.size}", e.message
+    end
+  end
+  
+  def test_undump_frozen
+    texture = Texture.load("images/ruby")
+    texture.freeze
+    assert_raise TypeError do
+      texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba")
+    end
+  end
+  
+  def test_undump_disposed
+    texture = Texture.load("images/ruby")
+    texture.dispose
+    assert_raise TypeError do
+      texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba")
+    end
+  end
+  
+  def test_undump_type
+    texture = Texture.load("images/ruby")
+    assert_raise TypeError do
+      texture.undump(nil, "rgba")
+    end
+    assert_raise TypeError do
+      texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, nil)
+    end
   end
   
 end

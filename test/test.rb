@@ -1449,7 +1449,7 @@ class TextureTest < Test::Unit::TestCase
       File.delete("images/saved_image2.png")
     end
   end
-
+  
 end
 
 class InputTest < Test::Unit::TestCase

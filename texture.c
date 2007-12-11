@@ -61,8 +61,10 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
   VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
-                                2, RARRAY(rbSize)->ptr);
+  int width = RARRAY(rbSize)->ptr[0];
+  int height = RARRAY(rbSize)->ptr[1];
+  VALUE rbTexture = rb_funcall(rb_cTexture, rb_intern("new"),
+                               2, NUM2INT(width), NUM2INT(height));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   
@@ -77,7 +79,6 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   else
     textSurfaceRaw = TTF_RenderUTF8_Solid(font->sdlFont, text,
                                           (SDL_Color) {255, 255, 255, 255});
-  
   if (!textSurfaceRaw) {
     rb_raise_sdl_ttf_error();
     return Qnil;
@@ -95,7 +96,7 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   Pixel* dst = texture->pixels;
   int size = texture->width * texture->height;
   int alpha = color->alpha;
-  for (int i = 0; i < size; i++, src++, dst++)
+  for (int i = 0; i < size; i++, src++, dst++) {
     if (src->value) {
       dst->color = *color;
       if (alpha == 255)
@@ -103,8 +104,10 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
       else
         dst->color.alpha = DIV255(src->color.red * alpha);
     }
+  }
   SDL_UnlockSurface(textSurface);
   SDL_FreeSurface(textSurface);
+  textSurface = NULL;
   
   return rbTexture;
 }

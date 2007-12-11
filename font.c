@@ -309,7 +309,7 @@ void InitializeSdlFont(void)
             (tolower(ext[2]) == 'f' || tolower(ext[2]) == 'c')) {
           char* fontName = fontNameBuff;
           char* fileName = fileNameBuff;
-          // Font name must end with ' (TrueType)'.
+          // A TTF font name must end with ' (TrueType)'.
           fontName[fontNameBuffLength - 11] = '\0'; 
           for (int i = fileNameBuffLength - 1; 0 <= i; i--) {
             if (fileName[i] == '\\') {

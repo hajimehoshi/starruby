@@ -321,7 +321,7 @@ void InitializeSdlFont(void)
           rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
                                   rbNkfOption, rbFontName);
           if (strchr(StringValuePtr(rbFontName), '&')) {
-            VALUE rbArr = rb_str_split(rbFontName, "&");
+            volatile VALUE rbArr = rb_str_split(rbFontName, "&");
             VALUE* rbFontNames = RARRAY(rbArr)->ptr;
             int arrLength = RARRAY(rbArr)->len;
             int ttcIndex = 0;
@@ -361,7 +361,7 @@ void FinalizeSdlFont(void)
   FontFileInfo* fontFileInfo = fontFileInfos;
   while (fontFileInfo) {
     FontFileInfo* nextFontFileInfo = fontFileInfo->next;
-    free(nextFontFileInfo);
+    free(fontFileInfo);
     fontFileInfo = nextFontFileInfo;
   }
   fontFileInfo = NULL;

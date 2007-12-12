@@ -192,19 +192,19 @@ class FontTest < Test::Unit::TestCase
     assert_equal false, font.disposed?
     font.dispose
     assert_equal true, font.disposed?
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       font.bold?
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       font.italic?
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       font.name
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       font.size
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       font.get_size("A")
     end
     font.dispose
@@ -369,13 +369,13 @@ class TextureTest < Test::Unit::TestCase
   def test_new_disposed
     texture = Texture.new(123, 456)
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.width
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.height
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.size
     end
   end
@@ -405,7 +405,7 @@ class TextureTest < Test::Unit::TestCase
       Texture.new_text("", font, color)
     end
     font.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       Texture.new_text("A", font, color)
     end
   end
@@ -446,7 +446,7 @@ class TextureTest < Test::Unit::TestCase
       Texture.new_text("", font, color)
     end
     font.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       Texture.new_text("A", font, color)
     end
   end
@@ -614,7 +614,7 @@ class TextureTest < Test::Unit::TestCase
   def test_get_pixel_disposed
     texture = Texture.new(3, 3)
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.get_pixel(0, 1)
     end
   end
@@ -630,7 +630,7 @@ class TextureTest < Test::Unit::TestCase
   def test_set_pixel_disposed
     texture = Texture.new(3, 3)
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
     end
   end
@@ -675,7 +675,7 @@ class TextureTest < Test::Unit::TestCase
   def test_clear_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.clear
     end
   end
@@ -701,7 +701,7 @@ class TextureTest < Test::Unit::TestCase
   def test_fill_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.fill(Color.new(31, 41, 59, 26))
     end
   end
@@ -739,7 +739,7 @@ class TextureTest < Test::Unit::TestCase
   def test_fill_rect_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.fill_rect(10, 11, 12, 13, Color.new(12, 34, 56, 78))
     end
   end
@@ -839,10 +839,10 @@ class TextureTest < Test::Unit::TestCase
   def test_change_hue_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.change_hue(Math::PI)
     end
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.change_hue!(Math::PI)
     end
   end
@@ -884,7 +884,7 @@ class TextureTest < Test::Unit::TestCase
     end
     color = Color.new(255, 255, 255)
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.render_text("A", 0, 0, font, color)
     end
   end
@@ -979,12 +979,12 @@ class TextureTest < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
     texture2.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture2.render_texture(texture, 0, 0)
     end
     texture3 = Texture.new(texture.width, texture.height)
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture3.render_texture(texture, 0, 0)
     end
   end
@@ -1497,7 +1497,7 @@ class TextureTest < Test::Unit::TestCase
   def test_dump_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.dump("rgb")
     end
   end
@@ -1582,7 +1582,7 @@ class TextureTest < Test::Unit::TestCase
   def test_undump_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
-    assert_raise TypeError do
+    assert_raise RuntimeError do
       texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba")
     end
   end

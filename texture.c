@@ -57,7 +57,7 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
   if (!font->sdlFont) {
-    rb_raise(rb_eTypeError, "can't use disposed font");
+    rb_raise(rb_eRuntimeError, "can't use disposed font");
     return Qnil;
   }
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
@@ -281,7 +281,7 @@ static VALUE Texture_change_hue(VALUE self, VALUE rbAngle)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   
@@ -297,7 +297,7 @@ static VALUE Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   
@@ -370,7 +370,7 @@ static VALUE Texture_clear(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   
@@ -399,7 +399,7 @@ static VALUE Texture_dump(VALUE self, VALUE rbFormat)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
 
@@ -429,7 +429,7 @@ static VALUE Texture_fill(VALUE self, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   
@@ -453,7 +453,7 @@ static VALUE Texture_fill_rect(VALUE self,
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
 
@@ -482,7 +482,7 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   
@@ -504,7 +504,7 @@ static VALUE Texture_height(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   return INT2NUM(texture->height);
@@ -564,7 +564,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   if (!dstTexture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
 
@@ -576,7 +576,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   if (!srcTexture->pixels) {
-    rb_raise(rb_eTypeError, "can't use disposed texture");
+    rb_raise(rb_eRuntimeError, "can't use disposed texture");
     return Qnil;
   }
   
@@ -793,7 +793,7 @@ static VALUE Texture_save(int argc, VALUE* argv, VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
 
@@ -845,7 +845,7 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   Data_Get_Struct(self, Texture, texture);
 
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
 
@@ -867,7 +867,7 @@ static VALUE Texture_size(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
@@ -883,7 +883,7 @@ static VALUE Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
 
@@ -917,7 +917,7 @@ static VALUE Texture_width(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
-    rb_raise(rb_eTypeError, "can't modify disposed texture");
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
   return INT2NUM(texture->width);

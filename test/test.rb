@@ -11,10 +11,6 @@ else
   end
 end
 
-if GC.respond_to? :stress=
-  # GC.stress = true
-end
-
 require "starruby"
 require "test/unit"
 

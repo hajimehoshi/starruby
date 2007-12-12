@@ -29,13 +29,14 @@ static void SearchFont(VALUE rbFilePathOrName,
   *rbRealFilePath = GetCompletePath(rbFilePathOrName, false);
   if (!NIL_P(*rbRealFilePath))
     return;
-  VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
+  volatile VALUE rbFontNameSymbol =
+    ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
       *rbRealFilePath = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
 #ifdef WIN32
-      VALUE rbTemp = rb_str_new2(windowsFontDirPath);
+      volatile VALUE rbTemp = rb_str_new2(windowsFontDirPath);
       *rbRealFilePath = rb_str_concat(rb_str_cat2(rbTemp, "\\"), *rbRealFilePath);
 #endif
       if (ttcIndex != NULL)
@@ -50,7 +51,7 @@ static void SearchFont(VALUE rbFilePathOrName,
     rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
     return;
   }
-  VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
+  volatile VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
   char* name = StringValuePtr(rbFilePathOrName2);
   FcPattern* pattern;
   char* delimiter = strchr(name, ',');
@@ -92,7 +93,7 @@ static void SearchFont(VALUE rbFilePathOrName,
           FcResultMatch)
         continue;
       *rbRealFilePath = rb_str_new2((char*)fileName);
-      VALUE rbFontName = rb_str_new2((char*)fontName);
+      volatile VALUE rbFontName = rb_str_new2((char*)fontName);
       free(fontName);
       fontName = NULL;
       if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
@@ -110,8 +111,8 @@ static void SearchFont(VALUE rbFilePathOrName,
 
 static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 {
-  VALUE rbRealFilePath;
-  SearchFont(rbFilePath, &rbRealFilePath, NULL);
+  volatile VALUE rbRealFilePath = Qnil;
+  SearchFont(rbFilePath, (VALUE*)&rbRealFilePath, NULL);
   return !NIL_P(rbRealFilePath) ? Qtrue : Qfalse;
 }
 
@@ -133,9 +134,7 @@ static VALUE Font_alloc(VALUE klass)
 
 static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbPath;
-  VALUE rbSize;
-  VALUE rbOptions;
+  VALUE rbPath, rbSize, rbOptions;
   rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
@@ -293,8 +292,8 @@ void InitializeSdlFont(void)
     DWORD fontNameBuffLength;
     DWORD fileNameBuffLength;
     rb_require("nkf");
-    VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
-    VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
+    volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
+    volatile VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
     for (DWORD dwIndex = 0; ;dwIndex++) {
       fontNameBuffLength = sizeof(fontNameBuff);
       fileNameBuffLength = sizeof(fileNameBuff);
@@ -316,27 +315,27 @@ void InitializeSdlFont(void)
               break;
             }
           }
-          VALUE rbFontName = rb_str_new2(fontName);
+          volatile VALUE rbFontName = rb_str_new2(fontName);
           rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
                                   rbNkfOption, rbFontName);
           if (strchr(StringValuePtr(rbFontName), '&')) {
             volatile VALUE rbArr = rb_str_split(rbFontName, "&");
-            VALUE* rbFontNames = RARRAY_PTR(rbArr);
             int arrLength = RARRAY_LEN(rbArr);
             int ttcIndex = 0;
             for (int i = 0; i < arrLength; i++) {
-              rb_funcall(rbFontNames[i], rb_intern("strip!"), 0);
-              if (0 < RSTRING_LEN(rbFontNames[i])) {
-                VALUE rbFontNameSymbol = rb_str_intern(rbFontNames[i]);
-                VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+              volatile VALUE rbFontName = rb_ary_entry(rbArr, i);
+              rb_funcall(rbFontName, rb_intern("strip!"), 0);
+              if (0 < RSTRING_LEN(rbFontName)) {
+                volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+                volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
                 ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
                          ttcIndex);
                 ttcIndex++;
               }
             }
           } else {
-            VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-            VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+            volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+            volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
             ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
           }
         }
@@ -369,7 +368,7 @@ void FinalizeSdlFont(void)
 void InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
-  rb_define_singleton_method(rb_cFont, "exist?",    Font_exist,     1);
+  rb_define_singleton_method(rb_cFont, "exist?", Font_exist, 1);
   rb_define_alloc_func(rb_cFont, Font_alloc);
   rb_define_private_method(rb_cFont, "initialize", Font_initialize, -1);
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);

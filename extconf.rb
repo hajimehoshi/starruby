@@ -22,7 +22,7 @@ have_header("zlib.h") or exit(false)
 have_header("fontconfig/fontconfig.h") and have_library("fontconfig", "FcInit")
 
 if arg_config("--debug", false)
-  $CFLAGS += " -DDEBUG -O0"
+  $CFLAGS += " -DDEBUG -O0 -g"
 else
   $CFLAGS += " -O3"
 end

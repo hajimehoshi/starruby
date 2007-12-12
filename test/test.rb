@@ -1,7 +1,18 @@
 #!/usr/bin/env ruby
 
+if "1.9.0" <= RUBY_VERSION
+  FrozenError = RuntimeError
+else
+  FrozenError = TypeError
+  class Fixnum
+    def ord
+      self
+    end
+  end
+end
+
 if GC.respond_to? :stress=
-  GC.stress = true
+  # GC.stress = true
 end
 
 require "starruby"
@@ -611,7 +622,7 @@ class TextureTest < Test::Unit::TestCase
   def test_set_pixel_frozen
     texture = Texture.new(3, 3)
     texture.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
     end
   end
@@ -656,7 +667,7 @@ class TextureTest < Test::Unit::TestCase
   def test_clear_frozen
     texture = Texture.load("images/ruby")
     texture.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.clear
     end
   end
@@ -682,7 +693,7 @@ class TextureTest < Test::Unit::TestCase
   def test_fill_frozen
     texture = Texture.load("images/ruby")
     texture.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.fill(Color.new(31, 41, 59, 26))
     end
   end
@@ -720,7 +731,7 @@ class TextureTest < Test::Unit::TestCase
   def test_fill_rect_frozen
     texture = Texture.load("images/ruby")
     texture.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.fill_rect(10, 11, 12, 13, Color.new(12, 34, 56, 78))
     end
   end
@@ -820,7 +831,7 @@ class TextureTest < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     texture.freeze
     texture.change_hue(Math::PI)
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.change_hue!(Math::PI)
     end
   end
@@ -889,7 +900,7 @@ class TextureTest < Test::Unit::TestCase
     end
     color = Color.new(255, 255, 255)
     texture.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.render_text("A", 0, 0, font, color)
     end
   end
@@ -959,7 +970,7 @@ class TextureTest < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
     texture2.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture2.render_texture(texture, 0, 0)
     end
   end
@@ -1452,9 +1463,9 @@ class TextureTest < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture.get_pixel(i, j)
         origin = i + j * texture.width
-        assert_equal str[3 * origin],     p.red,   "#{i}, #{j}"
-        assert_equal str[3 * origin + 1], p.green, "#{i}, #{j}"
-        assert_equal str[3 * origin + 2], p.blue,  "#{i}, #{j}"
+        assert_equal str[3 * origin].ord,     p.red,   "#{i}, #{j}"
+        assert_equal str[3 * origin + 1].ord, p.green, "#{i}, #{j}"
+        assert_equal str[3 * origin + 2].ord, p.blue,  "#{i}, #{j}"
       end
     end
     str = texture.dump("rgba")
@@ -1463,10 +1474,10 @@ class TextureTest < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture.get_pixel(i, j)
         origin = i + j * texture.width
-        assert_equal str[4 * origin],     p.red
-        assert_equal str[4 * origin + 1], p.green
-        assert_equal str[4 * origin + 2], p.blue
-        assert_equal str[4 * origin + 3], p.alpha
+        assert_equal str[4 * origin].ord,     p.red
+        assert_equal str[4 * origin + 1].ord, p.green
+        assert_equal str[4 * origin + 2].ord, p.blue
+        assert_equal str[4 * origin + 3].ord, p.alpha
       end
     end
     str = texture.dump("argb")
@@ -1475,10 +1486,10 @@ class TextureTest < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture.get_pixel(i, j)
         origin = i + j * texture.width
-        assert_equal str[4 * origin],     p.alpha
-        assert_equal str[4 * origin + 1], p.red
-        assert_equal str[4 * origin + 2], p.green
-        assert_equal str[4 * origin + 3], p.blue
+        assert_equal str[4 * origin].ord,     p.alpha
+        assert_equal str[4 * origin + 1].ord, p.red
+        assert_equal str[4 * origin + 2].ord, p.green
+        assert_equal str[4 * origin + 3].ord, p.blue
       end
     end
   end
@@ -1563,7 +1574,7 @@ class TextureTest < Test::Unit::TestCase
   def test_undump_frozen
     texture = Texture.load("images/ruby")
     texture.freeze
-    assert_raise TypeError do
+    assert_raise FrozenError do
       texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba")
     end
   end

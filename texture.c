@@ -49,7 +49,7 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "31", &rbText, &rbFont, &rbColor, &rbAntiAlias);
   bool antiAlias = RTEST(rbAntiAlias);
   Check_Type(rbText, T_STRING);
-  if (!RSTRING(rbText)->len) {
+  if (!RSTRING_LEN(rbText)) {
     rb_raise(rb_eArgError, "empty text");
     return Qnil;
   }
@@ -62,7 +62,7 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
   }
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
   VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
-                                2, RARRAY(rbSize)->ptr);
+                                2, RARRAY_PTR(rbSize));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   
@@ -405,9 +405,9 @@ static VALUE Texture_dump(VALUE self, VALUE rbFormat)
 
   char* format = StringValuePtr(rbFormat);
   int textureSize = texture->width * texture->height;
-  int formatLength = RSTRING(rbFormat)->len;
+  int formatLength = RSTRING_LEN(rbFormat);
   VALUE rbResult = rb_str_new(NULL, textureSize * formatLength);
-  uint8_t* strPtr = RSTRING(rbResult)->ptr;
+  uint8_t* strPtr = RSTRING_PTR(rbResult);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < textureSize; i++, pixels++) {
     for (int j = 0; j < formatLength; j++, strPtr++) {
@@ -517,7 +517,7 @@ static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "51",
                &rbText, &rbX, &rbY, &rbFont, &rbColor, &rbAntiAlias);
   Check_Type(rbText, T_STRING);
-  if (!(RSTRING(rbText)->len))
+  if (!(RSTRING_LEN(rbText)))
     return Qnil;
   VALUE rbTextTexture = Texture_new_text(4, (VALUE[]) {
     rbText, rbFont, rbColor, rbAntiAlias
@@ -888,15 +888,15 @@ static VALUE Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   }
 
   char* format = StringValuePtr(rbFormat);
-  int formatLength = RSTRING(rbFormat)->len;
+  int formatLength = RSTRING_LEN(rbFormat);
   int textureSize = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
-  if (textureSize * formatLength != RSTRING(rbData)->len) {
-    rb_raise(rb_eArgError, "invalid data size: %d expected but was %d",
-             textureSize * formatLength, RSTRING(rbData)->len);
+  if (textureSize * formatLength != RSTRING_LEN(rbData)) {
+    rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
+             textureSize * formatLength, RSTRING_LEN(rbData));
     return Qnil;
   }
-  uint8_t* data = RSTRING(rbData)->ptr;
+  uint8_t* data = RSTRING_PTR(rbData);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < textureSize; i++, pixels++) {
     for (int j = 0; j < formatLength; j++, data++) {

@@ -321,12 +321,12 @@ void InitializeSdlFont(void)
                                   rbNkfOption, rbFontName);
           if (strchr(StringValuePtr(rbFontName), '&')) {
             volatile VALUE rbArr = rb_str_split(rbFontName, "&");
-            VALUE* rbFontNames = RARRAY(rbArr)->ptr;
-            int arrLength = RARRAY(rbArr)->len;
+            VALUE* rbFontNames = RARRAY_PTR(rbArr);
+            int arrLength = RARRAY_LEN(rbArr);
             int ttcIndex = 0;
             for (int i = 0; i < arrLength; i++) {
               rb_funcall(rbFontNames[i], rb_intern("strip!"), 0);
-              if (0 < RSTRING(rbFontNames[i])->len) {
+              if (0 < RSTRING_LEN(rbFontNames[i])) {
                 VALUE rbFontNameSymbol = rb_str_intern(rbFontNames[i]);
                 VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
                 ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
@@ -346,11 +346,11 @@ void InitializeSdlFont(void)
     }
     RegCloseKey(hKey);
   } else {
-    rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
+    rb_raise(rb_eStarRubyError, "Win32API error: %d", (int)GetLastError());
   }
   if (FAILED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
                              SHGFP_TYPE_CURRENT, windowsFontDirPath))) {
-    rb_raise(rb_eStarRubyError, "Win32API error: %d", GetLastError());
+    rb_raise(rb_eStarRubyError, "Win32API error: %d", (int)GetLastError());
   }
 #endif
 }

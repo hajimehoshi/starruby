@@ -31,13 +31,12 @@ static VALUE Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
 
 static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbPath;
-  VALUE rbOptions;
+  VALUE rbPath, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   sdlBgm = Mix_LoadMUS(path);
   if (!sdlBgm)
@@ -46,8 +45,8 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   int time   = 0;
   int volume = 256;
 
-  VALUE val;
   Check_Type(rbOptions, T_HASH);
+  volatile VALUE val;
   bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position)))
     bgmPosition = MAX(NUM2INT(val), 0);
@@ -72,13 +71,12 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 
 static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbPath;
-  VALUE rbOptions;
+  VALUE rbPath, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   Mix_Chunk* sdlSE = Mix_LoadWAV(path);
   if (!sdlSE)
@@ -88,7 +86,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   int time    = 0;
   int volume  = 255;
 
-  VALUE val;
+  volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning)))
     panning = NORMALIZE(NUM2INT(val), -255, 255);
@@ -134,8 +132,8 @@ static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
 
   int time = 0;
   
-  VALUE val;
   Check_Type(rbOptions, T_HASH);
+  volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   
@@ -156,8 +154,8 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
 
   int time = 0;
   
-  VALUE val;
   Check_Type(rbOptions, T_HASH);
+  volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   

@@ -14,7 +14,6 @@ $LDFLAGS += " " + `env libpng-config --libs`.chomp
 
 $CFLAGS += " -finline-functions -Wall -std=c99 -mfpmath=sse -msse2 -funit-at-a-time"
 
-# have_library("SDL_image") or exit(false)
 have_library("SDL_mixer") or exit(false)
 have_library("SDL_ttf") or exit(false)
 have_header("png.h") or exit(false)

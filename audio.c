@@ -48,14 +48,12 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_loop, &val))
-    bgmLoop = RTEST(val);
-  if (st_lookup(table, symbol_position, &val))
+  bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position)))
     bgmPosition = MAX(NUM2INT(val), 0);
-  if (st_lookup(table, symbol_time, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
-  if (st_lookup(table, symbol_volume, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume)))
     volume = NORMALIZE(NUM2INT(val), 0, 255);
 
   Audio_bgm_volume_eq(self, INT2NUM(volume));
@@ -92,14 +90,13 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
 
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_panning, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning)))
     panning = NORMALIZE(NUM2INT(val), -255, 255);
-  if (st_lookup(table, symbol_time, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
-  if (st_lookup(table, symbol_volume, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume)))
     volume = NORMALIZE(NUM2INT(val), 0, 255);
-
+  
   int sdlChannel;
   if (time == 0)
     sdlChannel = Mix_PlayChannel(-1, sdlSE, 0);
@@ -139,10 +136,9 @@ static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_time, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
-
+  
   if (time == 0)
     Mix_HaltChannel(-1);
   else
@@ -162,10 +158,9 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_time, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
-
+  
   if (time == 0)
     Mix_HaltMusic();
   else

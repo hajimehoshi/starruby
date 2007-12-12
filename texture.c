@@ -603,32 +603,31 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_src_x, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
     srcX = NUM2INT(val);
-  if (st_lookup(table, symbol_src_y, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
     srcY = NUM2INT(val);
-  if (st_lookup(table, symbol_src_width, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
     srcWidth = NUM2INT(val);
   else
     srcWidth = srcTextureWidth - srcX;
-  if (st_lookup(table, symbol_src_height, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
     srcHeight = NUM2INT(val);
   else
     srcHeight = srcTextureHeight - srcY;
-  if (st_lookup(table, symbol_scale_x, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
     scaleX = NUM2DBL(val);
-  if (st_lookup(table, symbol_scale_y, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
     scaleY = NUM2DBL(val);
-  if (st_lookup(table, symbol_angle, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
     angle = NUM2DBL(val);
-  if (st_lookup(table, symbol_center_x, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
     centerX = NUM2INT(val);
-  if (st_lookup(table, symbol_center_y, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
     centerY = NUM2INT(val);
-  if (st_lookup(table, symbol_alpha, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
     alpha = NUM2DBL(val);
-  if (st_lookup(table, symbol_blend_type, &val)) {
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
     Check_Type(val, T_SYMBOL);
     if (val == symbol_alpha)
       blendType = ALPHA;
@@ -637,15 +636,15 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     else if (val == symbol_sub)
       blendType = SUB;
   }
-  if (st_lookup(table, symbol_tone_red, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
     toneRed = NUM2INT(val);
-  if (st_lookup(table, symbol_tone_green, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
     toneGreen = NUM2INT(val);
-  if (st_lookup(table, symbol_tone_blue, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
     toneBlue = NUM2INT(val);
-  if (st_lookup(table, symbol_saturation, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
     saturation = NUM2INT(val);
-
+  
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,
     .b = 0, .d = 1, .ty = 0,

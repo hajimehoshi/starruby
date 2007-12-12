@@ -155,16 +155,15 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
 
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_bold, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_bold)))
     bold = RTEST(val);
-  if (st_lookup(table, symbol_italic, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_italic)))
     italic = RTEST(val);
   if (preTtcIndex != -1)
     ttcIndex = preTtcIndex;
-  else if (st_lookup(table, symbol_ttc_index, &val))
+  else if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_ttc_index)))
     ttcIndex = NUM2INT(val);
-  
+
   char* path = StringValuePtr(rbRealFilePath);
   int size = NUM2INT(rbSize);
   

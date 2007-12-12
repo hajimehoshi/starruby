@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+if GC.respond_to? :stress=
+  GC.stress = true
+end
+
 require "starruby"
 require "test/unit"
 
@@ -164,15 +168,6 @@ class FontTest < Test::Unit::TestCase
     else
       flunk
     end
-    [:bold, :italic].each do |key|
-      Font.new(font_name, 12, key => nil)
-    end
-    [:ttc_index].each do |key|
-      assert_raise(TypeError, "key: #{key}") do
-        Font.new(font_name, 12, key => nil)
-      end
-    end
-    
   end
   
   def test_dispose
@@ -289,9 +284,6 @@ class GameTest < Test::Unit::TestCase
     end
     assert_raise TypeError do
       Game.run(320, 240, false) {}
-    end
-    assert_raise TypeError do
-      Game.run(320, 240, :window_scale => nil) {}
     end
     assert_raise TypeError do
       Game.run(320, 240, :window_scale => false) {}
@@ -1361,18 +1353,6 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
-  def test_render_texture_nil_option
-    texture = Texture.load("images/ruby")
-    texture2 = Texture.new(texture.width, texture.height)
-    [:src_x, :src_y, :src_width, :src_height,
-    :scale_x, :scale_y, :angle, :center_x, :center_y, :alpha, :blend_type,
-    :tone_red, :tone_blue, :tone_green, :saturation].each do |key|
-      assert_raise(TypeError, "key: #{key}") do
-        texture2.render_texture(texture, 0, 0, key => nil)
-      end
-    end
-  end
-
   def test_save
     texture = Texture.load("images/ruby")
     texture.save("images/saved_image.png", true)
@@ -1625,9 +1605,6 @@ class InputTest < Test::Unit::TestCase
     end
     [:device_number, :duration, :delay, :interval].each do |key|
       assert_raise TypeError do
-        Input.pressed_keys(:gamepad, key => nil)
-      end
-      assert_raise TypeError do
         Input.pressed_keys(:gamepad, key => false)
       end
     end
@@ -1642,14 +1619,6 @@ class InputTest < Test::Unit::TestCase
   def test_gamepad_device_number
     assert_equal [], Input.pressed_keys(:gamepad, :device_number => -1)
     assert_equal [], Input.pressed_keys(:gamepad, :device_number => 100)
-  end
-  
-  def test_pressed_keys_nil_option
-    [:device_number, :duration, :delay, :interval].each do |key|
-      assert_raise(TypeError, "key: #{key}") do
-        Input.pressed_keys(:keyboard, key => nil)
-      end
-    end
   end
   
 end
@@ -1670,9 +1639,6 @@ class AudioTest < Test::Unit::TestCase
       assert_raise TypeError do
         Audio.play_bgm("sounds/music", key => false)
       end
-      assert_raise TypeError do
-        Audio.play_bgm("sounds/music", key => nil)
-      end
     end
     assert_raise TypeError do
       Audio.play_se(nil)
@@ -1684,9 +1650,6 @@ class AudioTest < Test::Unit::TestCase
       assert_raise TypeError do
         Audio.play_se("sounds/sample", key => false)
       end
-      assert_raise TypeError do
-        Audio.play_se("sounds/sample", key => nil)
-      end
     end
     assert_raise TypeError do
       Audio.stop_all_ses(false)
@@ -1695,16 +1658,10 @@ class AudioTest < Test::Unit::TestCase
       Audio.stop_all_ses(:time => false)
     end
     assert_raise TypeError do
-      Audio.stop_all_ses(:time => nil)
-    end
-    assert_raise TypeError do
       Audio.stop_bgm(false)
     end
     assert_raise TypeError do
       Audio.stop_bgm(:time => false)
-    end
-    assert_raise TypeError do
-      Audio.stop_bgm(:time => nil)
     end
   end
   

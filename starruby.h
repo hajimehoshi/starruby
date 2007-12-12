@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ruby.h>
-#include <st.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>

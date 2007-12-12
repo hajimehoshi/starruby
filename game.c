@@ -153,12 +153,11 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_fullscreen, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen)))
     fullscreen = RTEST(val);
-  if (st_lookup(table, symbol_window_scale, &val) && !fullscreen)
+  if (!fullscreen && !NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale)))
     windowScale = NORMALIZE(NUM2INT(val), 1, 2);
-
+  
   VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                               INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen", rbScreen);

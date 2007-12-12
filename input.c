@@ -80,16 +80,15 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 
   VALUE val;
   Check_Type(rbOptions, T_HASH);
-  st_table* table = RHASH(rbOptions)->tbl;
-  if (st_lookup(table, symbol_device_number, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_device_number)))
     deviceNumber = NUM2INT(val);
-  if (st_lookup(table, symbol_duration, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_duration)))
     duration = NUM2INT(val);
-  if (st_lookup(table, symbol_delay, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_delay)))
     delay = NUM2INT(val);
-  if (st_lookup(table, symbol_interval, &val))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_interval)))
     interval = NUM2INT(val);
-
+  
   if (rbDevice == symbol_keyboard) {
     KeyboardKey* key = keyboardKeys;
     while (key) {

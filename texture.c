@@ -5,23 +5,23 @@
                             (a == 0 ? dst :\
                              DIV255((dst << 8) - dst + (src - dst) * a)))
 
-static VALUE symbol_add;
-static VALUE symbol_alpha;
-static VALUE symbol_angle;
-static VALUE symbol_blend_type;
-static VALUE symbol_center_x;
-static VALUE symbol_center_y;
-static VALUE symbol_saturation;
-static VALUE symbol_scale_x;
-static VALUE symbol_scale_y;
-static VALUE symbol_src_height;
-static VALUE symbol_src_width;
-static VALUE symbol_src_x;
-static VALUE symbol_src_y;
-static VALUE symbol_sub;
-static VALUE symbol_tone_blue;
-static VALUE symbol_tone_green;
-static VALUE symbol_tone_red;
+volatile static VALUE symbol_add;
+volatile static VALUE symbol_alpha;
+volatile static VALUE symbol_angle;
+volatile static VALUE symbol_blend_type;
+volatile static VALUE symbol_center_x;
+volatile static VALUE symbol_center_y;
+volatile static VALUE symbol_saturation;
+volatile static VALUE symbol_scale_x;
+volatile static VALUE symbol_scale_y;
+volatile static VALUE symbol_src_height;
+volatile static VALUE symbol_src_width;
+volatile static VALUE symbol_src_x;
+volatile static VALUE symbol_src_y;
+volatile static VALUE symbol_sub;
+volatile static VALUE symbol_tone_blue;
+volatile static VALUE symbol_tone_green;
+volatile static VALUE symbol_tone_red;
 
 typedef enum {
   ALPHA,
@@ -42,10 +42,7 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
 
 static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbText;
-  VALUE rbFont;
-  VALUE rbColor;
-  VALUE rbAntiAlias;
+  volatile VALUE rbText, rbFont, rbColor, rbAntiAlias;
   rb_scan_args(argc, argv, "31", &rbText, &rbFont, &rbColor, &rbAntiAlias);
   bool antiAlias = RTEST(rbAntiAlias);
   Check_Type(rbText, T_STRING);
@@ -60,9 +57,9 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't use disposed font");
     return Qnil;
   }
-  VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
-                                2, RARRAY_PTR(rbSize));
+  volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
+  volatile VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
+                                         2, RARRAY_PTR(rbSize));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   
@@ -112,7 +109,7 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
 
 static VALUE Texture_load(VALUE self, VALUE rbPath)
 {
-  VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   FILE* fp = fopen(path, "rb");
   png_byte header[8];
@@ -156,8 +153,8 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
              "not supported interlacing PNG image: %s", path);
     return Qnil;
   }
-  VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
-                               INT2NUM(width), INT2NUM(height));
+  volatile VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
+                                        INT2NUM(width), INT2NUM(height));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   
@@ -285,7 +282,7 @@ static VALUE Texture_change_hue(VALUE self, VALUE rbAngle)
     return Qnil;
   }
   
-  VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
+  volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
   Texture_change_hue_bang(rbTexture, rbAngle);
   return rbTexture;
 }
@@ -406,7 +403,7 @@ static VALUE Texture_dump(VALUE self, VALUE rbFormat)
   char* format = StringValuePtr(rbFormat);
   int textureSize = texture->width * texture->height;
   int formatLength = RSTRING_LEN(rbFormat);
-  VALUE rbResult = rb_str_new(NULL, textureSize * formatLength);
+  volatile VALUE rbResult = rb_str_new(NULL, textureSize * formatLength);
   uint8_t* strPtr = RSTRING_PTR(rbResult);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < textureSize; i++, pixels++) {
@@ -513,13 +510,13 @@ static VALUE Texture_height(VALUE self)
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
 static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbText, rbX, rbY, rbFont, rbColor, rbAntiAlias;
+  volatile VALUE rbText, rbX, rbY, rbFont, rbColor, rbAntiAlias;
   rb_scan_args(argc, argv, "51",
                &rbText, &rbX, &rbY, &rbFont, &rbColor, &rbAntiAlias);
   Check_Type(rbText, T_STRING);
   if (!(RSTRING_LEN(rbText)))
     return Qnil;
-  VALUE rbTextTexture = Texture_new_text(4, (VALUE[]) {
+  volatile VALUE rbTextTexture = Texture_new_text(4, (VALUE[]) {
     rbText, rbFont, rbColor, rbAntiAlias
   }, rb_cTexture);
   Texture_render_texture(3, (VALUE[]) {rbTextTexture, rbX, rbY}, self);
@@ -568,7 +565,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
 
-  VALUE rbTexture, rbX, rbY, rbOptions;
+  volatile VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
@@ -601,7 +598,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int toneBlue  = 0;
   uint8_t saturation = 255;
 
-  VALUE val;
+  volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
     srcX = NUM2INT(val);
@@ -728,7 +725,7 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   Pixel* src;
   Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
   
-  VALUE rbClonedTexture = Qnil;
+  volatile VALUE rbClonedTexture = Qnil;
   if (self == rbTexture) {
     rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
     Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
@@ -797,8 +794,7 @@ static VALUE Texture_save(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
 
-  VALUE rbPath;
-  VALUE rbAlpha;
+  volatile VALUE rbPath, rbAlpha;
   rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
   if (argc == 1)
     rbAlpha = Qtrue;
@@ -870,8 +866,8 @@ static VALUE Texture_size(VALUE self)
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-  VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
-                              INT2NUM(texture->height));
+  volatile VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
+                                       INT2NUM(texture->height));
   OBJ_FREEZE(rbSize);
   return rbSize;
 }

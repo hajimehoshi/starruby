@@ -7,9 +7,9 @@
 static char windowsFontDirPath[256];
 #endif
 
-static VALUE symbol_bold;
-static VALUE symbol_italic;
-static VALUE symbol_ttc_index;
+volatile static VALUE symbol_bold;
+volatile static VALUE symbol_italic;
+volatile static VALUE symbol_ttc_index;
 
 typedef struct FontFileInfo {
   VALUE rbFontNameSymbol;
@@ -29,13 +29,14 @@ static void SearchFont(VALUE rbFilePathOrName,
   *rbRealFilePath = GetCompletePath(rbFilePathOrName, false);
   if (!NIL_P(*rbRealFilePath))
     return;
-  VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
+  volatile VALUE rbFontNameSymbol =
+    ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
       *rbRealFilePath = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
 #ifdef WIN32
-      VALUE rbTemp = rb_str_new2(windowsFontDirPath);
+      volatile VALUE rbTemp = rb_str_new2(windowsFontDirPath);
       *rbRealFilePath = rb_str_concat(rb_str_cat2(rbTemp, "\\"), *rbRealFilePath);
 #endif
       if (ttcIndex != NULL)
@@ -50,7 +51,7 @@ static void SearchFont(VALUE rbFilePathOrName,
     rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
     return;
   }
-  VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
+  volatile VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
   char* name = StringValuePtr(rbFilePathOrName2);
   FcPattern* pattern;
   char* delimiter = strchr(name, ',');
@@ -92,7 +93,7 @@ static void SearchFont(VALUE rbFilePathOrName,
           FcResultMatch)
         continue;
       *rbRealFilePath = rb_str_new2((char*)fileName);
-      VALUE rbFontName = rb_str_new2((char*)fontName);
+      volatile VALUE rbFontName = rb_str_new2((char*)fontName);
       free(fontName);
       fontName = NULL;
       if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
@@ -110,7 +111,7 @@ static void SearchFont(VALUE rbFilePathOrName,
 
 static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 {
-  VALUE rbRealFilePath = Qnil;
+  volatile VALUE rbRealFilePath = Qnil;
   SearchFont(rbFilePath, (VALUE*)&rbRealFilePath, NULL);
   return !NIL_P(rbRealFilePath) ? Qtrue : Qfalse;
 }
@@ -132,14 +133,14 @@ static VALUE Font_alloc(VALUE klass)
 
 static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbPath, rbSize, rbOptions;
+  volatile VALUE rbPath, rbSize, rbOptions;
   rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE rbRealFilePath;
+  volatile VALUE rbRealFilePath;
   int preTtcIndex = -1;
-  SearchFont(rbPath, &rbRealFilePath, &preTtcIndex);
+  SearchFont(rbPath, (VALUE*)&rbRealFilePath, &preTtcIndex);
   if (NIL_P(rbRealFilePath)) {
     char* path = StringValuePtr(rbPath);
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
@@ -150,7 +151,7 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
   bool italic = false;
   int ttcIndex = 0;
 
-  VALUE val;
+  volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_bold)))
     bold = RTEST(val);
@@ -232,7 +233,7 @@ static VALUE Font_get_size(VALUE self, VALUE rbText)
     rb_raise_sdl_ttf_error();
     return Qnil;
   }
-  VALUE rbSize = rb_assoc_new(INT2NUM(width), INT2NUM(height));
+  volatile VALUE rbSize = rb_assoc_new(INT2NUM(width), INT2NUM(height));
   OBJ_FREEZE(rbSize);
   return rbSize;
 }
@@ -291,8 +292,8 @@ void InitializeSdlFont(void)
     DWORD fontNameBuffLength;
     DWORD fileNameBuffLength;
     rb_require("nkf");
-    VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
-    VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
+    volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
+    volatile VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
     for (DWORD dwIndex = 0; ;dwIndex++) {
       fontNameBuffLength = sizeof(fontNameBuff);
       fileNameBuffLength = sizeof(fileNameBuff);
@@ -314,27 +315,27 @@ void InitializeSdlFont(void)
               break;
             }
           }
-          VALUE rbFontName = rb_str_new2(fontName);
+          volatile VALUE rbFontName = rb_str_new2(fontName);
           rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
                                   rbNkfOption, rbFontName);
           if (strchr(StringValuePtr(rbFontName), '&')) {
-            VALUE rbArr = rb_str_split(rbFontName, "&");
+            volatile VALUE rbArr = rb_str_split(rbFontName, "&");
             int arrLength = RARRAY_LEN(rbArr);
             int ttcIndex = 0;
             for (int i = 0; i < arrLength; i++) {
-              VALUE rbFontName = rb_ary_entry(rbArr, i);
+              volatile VALUE rbFontName = rb_ary_entry(rbArr, i);
               rb_funcall(rbFontName, rb_intern("strip!"), 0);
               if (0 < RSTRING_LEN(rbFontName)) {
-                VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-                VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+                volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+                volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
                 ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
                          ttcIndex);
                 ttcIndex++;
               }
             }
           } else {
-            VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-            VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+            volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+            volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
             ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
           }
         }

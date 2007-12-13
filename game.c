@@ -1,7 +1,7 @@
 #include "starruby.h"
 
-static VALUE symbol_fullscreen;
-static VALUE symbol_window_scale;
+volatile static VALUE symbol_fullscreen;
+volatile static VALUE symbol_window_scale;
 
 static int fps = 30;
 static bool fullscreen = false;
@@ -31,7 +31,7 @@ static VALUE DoLoop(SDL_Surface* screen)
   running = true;
   terminated = false;
   
-  VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
   
@@ -120,7 +120,7 @@ static VALUE DisposeScreen(SDL_Surface* screen)
 {
   // SDL_FreeSurface(screen);
   screen = NULL;
-  VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   if (!NIL_P(rbScreen))
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
   rb_iv_set(rb_mGame, "screen", Qnil);
@@ -136,7 +136,6 @@ static VALUE DoLoopEnsure(SDL_Surface* screen)
 }
 
 static VALUE Game_screen(VALUE);
-
 static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running) {
@@ -144,22 +143,22 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
 
-  VALUE rbBlock, rbWidth, rbHeight, rbOptions;
+  volatile VALUE rbBlock, rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
   int width  = NUM2INT(rbWidth);
   int height = NUM2INT(rbHeight);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE val;
+  volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen)))
     fullscreen = RTEST(val);
   if (!fullscreen && !NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale)))
     windowScale = NORMALIZE(NUM2INT(val), 1, 2);
   
-  VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                              INT2NUM(width), INT2NUM(height));
+  volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
+                                       INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen", rbScreen);
   
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;

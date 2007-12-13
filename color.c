@@ -8,7 +8,7 @@ static VALUE Color_alloc(VALUE klass)
 
 static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbRed, rbGreen, rbBlue, rbAlpha;
+  volatile VALUE rbRed, rbGreen, rbBlue, rbAlpha;
   rb_scan_args(argc, argv, "31",
                &rbRed, &rbGreen, &rbBlue, &rbAlpha);
 

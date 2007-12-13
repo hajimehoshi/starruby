@@ -5,14 +5,15 @@ VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 {
   char* path = StringValuePtr(rbPath);
   if (!RTEST(rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbPath))) {
-    VALUE rbPathes = rb_funcall(rb_cDir, rb_intern("[]"), 1,
-                                rb_str_cat2(rb_str_dup(rbPath), ".*"));
-    VALUE rbFileName = rb_funcall(rb_cFile, rb_intern("basename"), 1,
-                                  rbPath);
+    volatile VALUE rbPathes = rb_funcall(rb_cDir, rb_intern("[]"), 1,
+                                         rb_str_cat2(rb_str_dup(rbPath), ".*"));
+    volatile VALUE rbFileName = rb_funcall(rb_cFile, rb_intern("basename"), 1,
+                                           rbPath);
     for (int i = 0; i < RARRAY_LEN(rbPathes); i++) {
-      VALUE rbFileNameWithoutExt = rb_funcall(rb_cFile, rb_intern("basename"), 2,
-                                              RARRAY_PTR(rbPathes)[i],
-                                              rb_str_new2(".*"));
+      volatile VALUE rbFileNameWithoutExt = rb_funcall(rb_cFile,
+                                                       rb_intern("basename"), 2,
+                                                       RARRAY_PTR(rbPathes)[i],
+                                                       rb_str_new2(".*"));
       if (rb_str_cmp(rbFileName, rbFileNameWithoutExt) != 0)
         RARRAY_PTR(rbPathes)[i] = Qnil;
     }

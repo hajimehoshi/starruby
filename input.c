@@ -28,18 +28,18 @@ typedef struct {
 } Mouse;
 static Mouse* mouse;
 
-static VALUE symbol_delay;
-static VALUE symbol_device_number;
-static VALUE symbol_down;
-static VALUE symbol_duration;
-static VALUE symbol_gamepad;
-static VALUE symbol_interval;
-static VALUE symbol_keyboard;
-static VALUE symbol_left;
-static VALUE symbol_middle;
-static VALUE symbol_mouse;
-static VALUE symbol_right;
-static VALUE symbol_up;
+volatile static VALUE symbol_delay;
+volatile static VALUE symbol_device_number;
+volatile static VALUE symbol_down;
+volatile static VALUE symbol_duration;
+volatile static VALUE symbol_gamepad;
+volatile static VALUE symbol_interval;
+volatile static VALUE symbol_keyboard;
+volatile static VALUE symbol_left;
+volatile static VALUE symbol_middle;
+volatile static VALUE symbol_mouse;
+volatile static VALUE symbol_right;
+volatile static VALUE symbol_up;
 
 static VALUE Input_mouse_location(VALUE self)
 {
@@ -65,20 +65,20 @@ static bool isPressed(int status, int duration, int delay, int interval)
 
 static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 {
-  VALUE rbDevice, rbOptions;
+  volatile VALUE rbDevice, rbOptions;
   rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
   Check_Type(rbDevice, T_SYMBOL);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  VALUE rbResult = rb_ary_new();
+  volatile VALUE rbResult = rb_ary_new();
 
   int deviceNumber = 0;
   int duration     = -1;
   int delay        = -1;
   int interval     = 0;
 
-  VALUE val;
+  volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_device_number)))
     deviceNumber = NUM2INT(val);
@@ -119,7 +119,8 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
     if (isPressed(mouse->rightState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_right);
   } else {
-    VALUE rbDeviceInspect = rb_funcall(rbDevice, rb_intern("inspect"), 0);
+    volatile VALUE rbDeviceInspect =
+      rb_funcall(rbDevice, rb_intern("inspect"), 0);
     rb_raise(rb_eArgError, "invalid device: %s", StringValuePtr(rbDeviceInspect));
     return Qnil;
   }
@@ -169,8 +170,9 @@ void UpdateInput(int windowScale)
 
   int mouseLocationX, mouseLocationY;
   Uint8 sdlMouseButtons = SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
-  VALUE rbMouseLocation = rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
-                                       INT2NUM(mouseLocationY / windowScale));
+  volatile VALUE rbMouseLocation =
+    rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
+                 INT2NUM(mouseLocationY / windowScale));
   OBJ_FREEZE(rbMouseLocation);
 
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT))
@@ -304,7 +306,7 @@ void InitializeInput(void)
 #ifdef DEBUG
 static KeyboardKey* searchKey(const char* name)
 {
-  VALUE rbNameSymbol = ID2SYM(rb_intern(name));
+  volatile VALUE rbNameSymbol = ID2SYM(rb_intern(name));
   KeyboardKey* key = keyboardKeys;
   while (key) {
     if (key->rbSymbol == rbNameSymbol)

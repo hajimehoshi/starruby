@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 
+require "starruby"
 require "test/unit"
 
 GC.stress = true if GC.respond_to?(:stress=)
 
-require "starruby"
 include StarRuby
 
 class GCStressTest < Test::Unit::TestCase
@@ -100,6 +100,25 @@ class GCStressTest < Test::Unit::TestCase
     t.undump(str, "gbr")
     t.dispose
     t.disposed?
+  end
+  
+  def test_input
+    Input.pressed_keys(:keyboard, :duration => 0, :delay => 1, :interval => 2)
+    Input.pressed_keys(:gamepad, {
+      :device_number => 3, :duration => 4, :delay => 5, :interval => 6
+    })
+    Input.pressed_keys(:mouse, :duration => 7, :delay => 8, :interval => 9)
+    Input.mouse_location
+  end
+  
+  def test_audio
+    Audio.bgm_volume
+    Audio.bgm_volume = 0
+    Audio.play_bgm("sounds/music", :position => 0, :volume => 1, :time => 2)
+    Audio.playing_bgm?
+    Audio.stop_bgm(:time => 3)
+    Audio.play_se("sounds/sample", :panning => 4, :volume => 5, :time => 6)
+    Audio.stop_all_ses(:time => 7)
   end
   
 end

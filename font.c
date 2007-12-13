@@ -348,9 +348,8 @@ void InitializeSdlFont(void)
     rb_raise(rb_eStarRubyError, "Win32API error: %d", (int)GetLastError());
   }
   if (FAILED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
-                             SHGFP_TYPE_CURRENT, windowsFontDirPath))) {
+                             SHGFP_TYPE_CURRENT, windowsFontDirPath)))
     rb_raise(rb_eStarRubyError, "Win32API error: %d", (int)GetLastError());
-  }
 #endif
 }
 

@@ -1627,7 +1627,7 @@ class InputTest < Test::Unit::TestCase
     assert_equal [], Input.pressed_keys(:gamepad, :device_number => -1)
     assert_equal [], Input.pressed_keys(:gamepad, :device_number => 100)
   end
-  
+
 end
 
 class AudioTest < Test::Unit::TestCase

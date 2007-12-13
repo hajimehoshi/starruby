@@ -69,9 +69,9 @@ void Init_starruby(void)
   InitializeInput();
   InitializeStarRubyError();
   InitializeTexture();
-  
+
   InitializeSdl();
-  rb_set_end_proc(FinalizeSdl, Qnil);
+  // rb_set_end_proc(FinalizeSdl, Qnil);
   
 #ifdef DEBUG
   TestAffineMatrix();

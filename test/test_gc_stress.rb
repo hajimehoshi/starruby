@@ -2,11 +2,7 @@
 
 require "test/unit"
 
-unless GC.respond_to? :stress=
-  abort("GC.stress= method is not supported!")
-end
-
-# GC.stress = true
+GC.stress = true if GC.respond_to?(:stress=)
 
 require "starruby"
 include StarRuby

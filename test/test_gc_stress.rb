@@ -33,6 +33,25 @@ class GCStressTest < Test::Unit::TestCase
     font.italic?
     font.size
   end
+
+  def test_game
+    Game.fps
+    Game.fps = 30
+    Game.title
+    Game.title = "foo"
+    Game.screen
+    Game.running?
+    Game.terminate
+    Game.run(320, 240) do
+      Game.fps
+      Game.fps = 30
+      Game.title
+      Game.title = "foo"
+      Game.screen
+      Game.running?
+      Game.terminate
+    end
+  end
   
 end
 

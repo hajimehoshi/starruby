@@ -29,14 +29,13 @@ static void SearchFont(VALUE rbFilePathOrName,
   *rbRealFilePath = GetCompletePath(rbFilePathOrName, false);
   if (!NIL_P(*rbRealFilePath))
     return;
-  volatile VALUE rbFontNameSymbol =
-    ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
+  VALUE rbFontNameSymbol = ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
       *rbRealFilePath = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
 #ifdef WIN32
-      volatile VALUE rbTemp = rb_str_new2(windowsFontDirPath);
+      VALUE rbTemp = rb_str_new2(windowsFontDirPath);
       *rbRealFilePath = rb_str_concat(rb_str_cat2(rbTemp, "\\"), *rbRealFilePath);
 #endif
       if (ttcIndex != NULL)
@@ -51,7 +50,7 @@ static void SearchFont(VALUE rbFilePathOrName,
     rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
     return;
   }
-  volatile VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
+  VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
   char* name = StringValuePtr(rbFilePathOrName2);
   FcPattern* pattern;
   char* delimiter = strchr(name, ',');
@@ -93,7 +92,7 @@ static void SearchFont(VALUE rbFilePathOrName,
           FcResultMatch)
         continue;
       *rbRealFilePath = rb_str_new2((char*)fileName);
-      volatile VALUE rbFontName = rb_str_new2((char*)fontName);
+      VALUE rbFontName = rb_str_new2((char*)fontName);
       free(fontName);
       fontName = NULL;
       if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
@@ -111,7 +110,7 @@ static void SearchFont(VALUE rbFilePathOrName,
 
 static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 {
-  volatile VALUE rbRealFilePath = Qnil;
+  VALUE rbRealFilePath = Qnil;
   SearchFont(rbFilePath, (VALUE*)&rbRealFilePath, NULL);
   return !NIL_P(rbRealFilePath) ? Qtrue : Qfalse;
 }
@@ -292,8 +291,8 @@ void InitializeSdlFont(void)
     DWORD fontNameBuffLength;
     DWORD fileNameBuffLength;
     rb_require("nkf");
-    volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
-    volatile VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
+    VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
+    VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
     for (DWORD dwIndex = 0; ;dwIndex++) {
       fontNameBuffLength = sizeof(fontNameBuff);
       fileNameBuffLength = sizeof(fileNameBuff);
@@ -315,27 +314,27 @@ void InitializeSdlFont(void)
               break;
             }
           }
-          volatile VALUE rbFontName = rb_str_new2(fontName);
+          VALUE rbFontName = rb_str_new2(fontName);
           rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
                                   rbNkfOption, rbFontName);
           if (strchr(StringValuePtr(rbFontName), '&')) {
-            volatile VALUE rbArr = rb_str_split(rbFontName, "&");
+            VALUE rbArr = rb_str_split(rbFontName, "&");
             int arrLength = RARRAY_LEN(rbArr);
             int ttcIndex = 0;
             for (int i = 0; i < arrLength; i++) {
-              volatile VALUE rbFontName = rb_ary_entry(rbArr, i);
+              VALUE rbFontName = rb_ary_entry(rbArr, i);
               rb_funcall(rbFontName, rb_intern("strip!"), 0);
               if (0 < RSTRING_LEN(rbFontName)) {
-                volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-                volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+                VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+                VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
                 ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
                          ttcIndex);
                 ttcIndex++;
               }
             }
           } else {
-            volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-            volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+            VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
+            VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
             ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
           }
         }

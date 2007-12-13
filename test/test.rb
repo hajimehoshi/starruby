@@ -1001,7 +1001,7 @@ class TextureTest < Test::Unit::TestCase
       texture2.render_texture(texture, 0, 0, false)
     end
     [:alpha, :angle, :blend_type, :center_x, :center_y,
-    :saturation, :scale_x, :scale_y, :src_width, :src_height,
+    :saturation, :scale_x, :scale_y, :src_height, :src_width,
     :src_x, :src_y, :tone_red, :tone_green, :tone_blue].each do |key|
       assert_raise TypeError, "#{key}" do
         texture2.render_texture(texture, 0, 0, key => false)

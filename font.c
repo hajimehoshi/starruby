@@ -352,17 +352,6 @@ void InitializeSdlFont(void)
 #endif
 }
 
-void FinalizeSdlFont(void)
-{
-  FontFileInfo* fontFileInfo = fontFileInfos;
-  while (fontFileInfo) {
-    FontFileInfo* nextFontFileInfo = fontFileInfo->next;
-    free(fontFileInfo);
-    fontFileInfo = nextFontFileInfo;
-  }
-  fontFileInfo = NULL;
-}
-
 void InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);

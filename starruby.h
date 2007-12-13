@@ -90,9 +90,6 @@ void UpdateInput(int);
 void InitializeSdlAudio(void);
 void InitializeSdlFont(void);
 void InitializeSdlInput(void);
-void FinalizeSdlAudio(void);
-void FinalizeSdlFont(void);
-void FinalizeSdlInput(void);
 
 void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);
 void AffineMatrix_Invert(AffineMatrix*);

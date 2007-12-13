@@ -60,7 +60,7 @@ static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't use disposed font");
     return Qnil;
   }
-  volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
+  VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
   VALUE rbTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
                                 2, RARRAY_PTR(rbSize));
   Texture* texture;

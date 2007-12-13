@@ -76,7 +76,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   Mix_Chunk* sdlSE = Mix_LoadWAV(path);
   if (!sdlSE)
@@ -86,7 +86,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   int time    = 0;
   int volume  = 255;
 
-  volatile VALUE val;
+  VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning)))
     panning = NORMALIZE(NUM2INT(val), -255, 255);
@@ -133,7 +133,7 @@ static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   int time = 0;
   
   Check_Type(rbOptions, T_HASH);
-  volatile VALUE val;
+  VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   
@@ -155,7 +155,7 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   int time = 0;
   
   Check_Type(rbOptions, T_HASH);
-  volatile VALUE val;
+  VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   
@@ -183,11 +183,6 @@ void InitializeSdlAudio(void)
   Mix_AllocateChannels(8);
   Mix_HookMusicFinished(SdlMusicFinished);
   Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
-}
-
-void FinalizeSdlAudio(void)
-{
-  Mix_CloseAudio();
 }
 
 void InitializeAudio(void)

@@ -279,31 +279,6 @@ void InitializeSdlInput()
   MEMZERO(mouse, Mouse, 1);
 }
 
-void FinalizeSdlInput(void)
-{
-  free(mouse);
-  mouse = NULL;
-  
-  for (int i = 0; i < gamepadCount; i++) {
-    GamePad* gamepad = &(gamepads[i]);
-    if (SDL_JoystickOpened(i))
-      SDL_JoystickClose(gamepad->sdlJoystick);
-    gamepad->sdlJoystick = NULL;
-    free(gamepad->buttonStates);
-    gamepad->buttonStates = NULL;
-  }
-  free(gamepads);
-  gamepads = NULL;
-  
-  KeyboardKey* key = keyboardKeys;
-  while (key) {
-    KeyboardKey* nextKey = key->next;
-    free(key);
-    key = nextKey;
-  }
-  keyboardKeys = NULL;
-}
-
 void InitializeInput(void)
 {
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");

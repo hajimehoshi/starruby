@@ -99,8 +99,6 @@ void AffineMatrix_Invert(AffineMatrix*);
 bool AffineMatrix_IsRegular(AffineMatrix*);
 void AffineMatrix_Transform(AffineMatrix*, double, double, double*, double*);
 
-bool IsSdlQuitted();
-
 #ifdef DEBUG
 #include <assert.h>
 void TestAffineMatrix(void);

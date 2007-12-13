@@ -118,10 +118,9 @@ static VALUE Font_exist(VALUE self, VALUE rbFilePath)
 
 static void Font_free(Font* font)
 {
-  if (!IsSdlQuitted()) {
+  if (TTF_WasInit())
     TTF_CloseFont(font->sdlFont);
-    font->sdlFont = NULL;
-  }
+  font->sdlFont = NULL;
   free(font);
 }
 
@@ -196,7 +195,8 @@ static VALUE Font_dispose(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  TTF_CloseFont(font->sdlFont);
+  if (TTF_WasInit())
+    TTF_CloseFont(font->sdlFont);
   font->sdlFont = NULL;
   return Qnil;
 }
@@ -261,7 +261,9 @@ static VALUE Font_size(VALUE self)
 }
 
 #define ADD_INFO(currentInfo, _rbFontNameSymbol, _rbFileNameSymbol, _ttcIndex) do {\
-  FontFileInfo* info = ALLOC(FontFileInfo);\
+  FontFileInfo* info = (FontFileInfo*)malloc(sizeof(FontFileInfo));\
+  if (!info)\
+    rb_memerror();\
   info->rbFontNameSymbol = _rbFontNameSymbol;\
   info->rbFileNameSymbol = _rbFileNameSymbol;\
   info->ttcIndex         = _ttcIndex;\
@@ -272,7 +274,9 @@ static VALUE Font_size(VALUE self)
                  
 void InitializeSdlFont(void)
 {
-  fontFileInfos = ALLOC(FontFileInfo);
+  fontFileInfos = (FontFileInfo*)malloc(sizeof(FontFileInfo));
+  if (!fontFileInfos)
+    rb_memerror();
   fontFileInfos->rbFontNameSymbol = Qundef;
   fontFileInfos->rbFileNameSymbol = Qundef;
   fontFileInfos->ttcIndex         = -1;

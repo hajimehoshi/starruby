@@ -1,15 +1,14 @@
 #!/usr/bin/env ruby
 
-require "starruby" # what??
 require "test/unit"
 
 unless GC.respond_to? :stress=
   abort("GC.stress= method is not supported!")
 end
 
-#GC.stress = true
+# GC.stress = true
 
-#require "starruby"
+require "starruby"
 include StarRuby
 
 class GCStressTest < Test::Unit::TestCase

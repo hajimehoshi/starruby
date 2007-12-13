@@ -33,12 +33,6 @@ VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
   }
 }
 
-static bool isSdlQuitted = false;
-bool IsSdlQuitted()
-{
-  return isSdlQuitted;
-}
-
 static void InitializeSdl(void)
 {
   Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
@@ -62,7 +56,6 @@ static void FinalizeSdl(VALUE unused)
   FinalizeSdlFont();
   FinalizeSdlAudio();
   SDL_Quit();
-  isSdlQuitted = true;
 }
 
 void Init_starruby(void)
@@ -76,7 +69,7 @@ void Init_starruby(void)
   InitializeInput();
   InitializeStarRubyError();
   InitializeTexture();
-
+  
   InitializeSdl();
   rb_set_end_proc(FinalizeSdl, Qnil);
   

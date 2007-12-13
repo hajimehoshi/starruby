@@ -261,9 +261,7 @@ static VALUE Font_size(VALUE self)
 }
 
 #define ADD_INFO(currentInfo, _rbFontNameSymbol, _rbFileNameSymbol, _ttcIndex) do {\
-  FontFileInfo* info = (FontFileInfo*)malloc(sizeof(FontFileInfo));\
-  if (!info)\
-    rb_memerror();\
+  FontFileInfo* info = ALLOC(FontFileInfo);\
   info->rbFontNameSymbol = _rbFontNameSymbol;\
   info->rbFileNameSymbol = _rbFileNameSymbol;\
   info->ttcIndex         = _ttcIndex;\
@@ -274,9 +272,7 @@ static VALUE Font_size(VALUE self)
                  
 void InitializeSdlFont(void)
 {
-  fontFileInfos = (FontFileInfo*)malloc(sizeof(FontFileInfo));
-  if (!fontFileInfos)
-    rb_memerror();
+  fontFileInfos = ALLOC(FontFileInfo);
   fontFileInfos->rbFontNameSymbol = Qundef;
   fontFileInfos->rbFileNameSymbol = Qundef;
   fontFileInfos->ttcIndex         = -1;

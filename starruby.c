@@ -42,19 +42,19 @@ static void InitializeSdl(void)
   
   SDL_ShowCursor(SDL_DISABLE);
 
+  if (TTF_Init())
+    rb_raise_sdl_ttf_error();
   InitializeSdlAudio();
   InitializeSdlFont();
   InitializeSdlInput();
-  if (TTF_Init())
-    rb_raise_sdl_ttf_error();
 }
 
 static void FinalizeSdl(VALUE unused)
 {
-  TTF_Quit();
   FinalizeSdlInput();
   FinalizeSdlFont();
   FinalizeSdlAudio();
+  TTF_Quit();
   SDL_Quit();
 }
 

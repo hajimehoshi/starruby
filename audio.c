@@ -36,7 +36,7 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   sdlBgm = Mix_LoadMUS(path);
   if (!sdlBgm)
@@ -46,7 +46,7 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   int volume = 256;
 
   Check_Type(rbOptions, T_HASH);
-  volatile VALUE val;
+  VALUE val;
   bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position)))
     bgmPosition = MAX(NUM2INT(val), 0);
@@ -56,7 +56,7 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     volume = NORMALIZE(NUM2INT(val), 0, 255);
 
   Audio_bgm_volume_eq(self, INT2NUM(volume));
-  if (time == 0)
+  if (time <= 50)
     Mix_PlayMusic(sdlBgm, 0);
   else
     Mix_FadeInMusic(sdlBgm, 0, time);
@@ -96,7 +96,7 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
     volume = NORMALIZE(NUM2INT(val), 0, 255);
   
   int sdlChannel;
-  if (time == 0)
+  if (time <= 50)
     sdlChannel = Mix_PlayChannel(-1, sdlSE, 0);
   else
     sdlChannel = Mix_FadeInChannel(-1, sdlSE, 0, time);
@@ -137,7 +137,7 @@ static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   
-  if (time == 0)
+  if (time <= 50)
     Mix_HaltChannel(-1);
   else
     Mix_FadeOutChannel(-1, time);
@@ -159,7 +159,7 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   
-  if (time == 0)
+  if (time <= 50)
     Mix_HaltMusic();
   else
     Mix_FadeOutMusic(time);

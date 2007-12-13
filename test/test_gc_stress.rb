@@ -114,9 +114,15 @@ class GCStressTest < Test::Unit::TestCase
   def test_audio
     Audio.bgm_volume
     Audio.bgm_volume = 0
+    Audio.play_bgm("sounds/music")
+    Audio.playing_bgm?
+    Audio.stop_bgm
+    Audio.playing_bgm?
     Audio.play_bgm("sounds/music", :position => 0, :volume => 1, :time => 2)
     Audio.playing_bgm?
     Audio.stop_bgm(:time => 3)
+    Audio.play_se("sounds/sample")
+    Audio.stop_all_ses
     Audio.play_se("sounds/sample", :panning => 4, :volume => 5, :time => 6)
     Audio.stop_all_ses(:time => 7)
   end

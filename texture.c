@@ -642,6 +642,11 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
     toneBlue = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
     saturation = NUM2INT(val);
+
+  srcX = MIN(MAX(srcX, 0), srcTexture->width);
+  srcY = MIN(MAX(srcY, 0), srcTexture->height);
+  srcWidth  = MIN(MAX(srcWidth, 0), srcTexture->width  - srcX);
+  srcHeight = MIN(MAX(srcWidth, 0), srcTexture->height - srcY);
   
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,

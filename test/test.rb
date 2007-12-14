@@ -492,6 +492,9 @@ class TextureTest < Test::Unit::TestCase
     texture8 = Texture.load("images/ruby8")
     assert_equal 0, texture8.get_pixel(1, 1).alpha
     assert_equal Color.new(252, 239, 239, 255), texture8.get_pixel(58, 2)
+    texture8 = Texture.load("images/ruby8_without_alpha")
+    assert_equal 255, texture8.get_pixel(1, 1).alpha
+    assert_equal Color.new(252, 239, 239, 255), texture8.get_pixel(58, 2)
     texture16 = Texture.load("images/ruby16")
     assert_equal Color.new(245, 245, 245, 186), texture16.get_pixel(58, 2)
     texture32 = Texture.load("images/ruby32")

@@ -139,6 +139,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
     rb_raise(rb_eStarRubyError, "PNG error: %s", path);
     return Qnil;
   }
+
   png_init_io(pngPtr, fp);
   png_set_sig_bytes(pngPtr, 8);
   png_read_info(pngPtr, infoPtr);
@@ -159,7 +160,7 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   Data_Get_Struct(rbTexture, Texture, texture);
   
   int channels = png_get_channels(pngPtr, infoPtr);
-  
+
   png_colorp palette;
   int numPalette;
   int colorKey = -1;
@@ -168,19 +169,19 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   png_color_16p transValues;
   if (colorType == PNG_COLOR_TYPE_PALETTE) {
     png_get_PLTE(pngPtr, infoPtr, &palette, &numPalette);
-    png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, &transValues);
-    for (int i = 0; i < numTrans; i++) {
-      if (trans[i] == 0) {
-        if (colorKey == -1)
-          colorKey = i;
-        else
+    if (png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, &transValues)) {
+      for (int i = 0; i < numTrans; i++) {
+        if (trans[i] == 0) {
+          if (colorKey == -1)
+            colorKey = i;
+          else
+            break;
+        } else if (trans[i] != 0xff) {
           break;
-      } else if (trans[i] != 0xff) {
-        break;
+        }
       }
     }
   }
-  
   for (int j = 0; j < height; j++) {
     png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);

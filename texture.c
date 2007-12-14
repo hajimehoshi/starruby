@@ -405,7 +405,7 @@ static VALUE Texture_dump(VALUE self, VALUE rbFormat)
   int textureSize = texture->width * texture->height;
   int formatLength = RSTRING_LEN(rbFormat);
   volatile VALUE rbResult = rb_str_new(NULL, textureSize * formatLength);
-  uint8_t* strPtr = RSTRING_PTR(rbResult);
+  uint8_t* strPtr = (uint8_t*)RSTRING_PTR(rbResult);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < textureSize; i++, pixels++) {
     for (int j = 0; j < formatLength; j++, strPtr++) {
@@ -910,7 +910,7 @@ static VALUE Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
              textureSize * formatLength, RSTRING_LEN(rbData));
     return Qnil;
   }
-  uint8_t* data = RSTRING_PTR(rbData);
+  uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < textureSize; i++, pixels++) {
     for (int j = 0; j < formatLength; j++, data++) {

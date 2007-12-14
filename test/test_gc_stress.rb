@@ -1,9 +1,19 @@
 #!/usr/bin/env ruby
 
+if GC.respond_to?(:stress=)
+  GC.stress = true
+else
+  $gc_stress = Thread.new do
+    loop do
+      Thread.critical = true
+      GC.start
+      Thread.critical = false
+    end
+  end
+end
+
 require "starruby"
 require "test/unit"
-
-GC.stress = true if GC.respond_to?(:stress=)
 
 include StarRuby
 

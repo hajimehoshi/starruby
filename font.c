@@ -20,7 +20,7 @@ typedef struct FontFileInfo {
 static FontFileInfo* fontFileInfos;
 
 static void SearchFont(VALUE rbFilePathOrName,
-                       VALUE* rbRealFilePath,
+                       VALUE* volatile rbRealFilePath,
                        int* ttcIndex)
 {
   *rbRealFilePath = Qnil;

@@ -34,22 +34,6 @@ VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
   }
 }
 
-static void InitializeSdl(void)
-{
-  Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-    SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (SDL_Init(flags) < 0)
-    rb_raise_sdl_error();
-  
-  SDL_ShowCursor(SDL_DISABLE);
-
-  if (TTF_Init())
-    rb_raise_sdl_ttf_error();
-  InitializeSdlAudio();
-  InitializeSdlFont();
-  InitializeSdlInput();
-}
-
 void Init_starruby(void)
 {
   rb_mStarRuby = rb_define_module("StarRuby");
@@ -62,7 +46,11 @@ void Init_starruby(void)
   InitializeStarRubyError();
   InitializeTexture();
 
-  InitializeSdl();
+  if (TTF_Init())
+    rb_raise_sdl_ttf_error();
+  InitializeSdlAudio();
+  InitializeSdlFont();
+  InitializeSdlInput();
   
 #ifdef DEBUG
   TestAffineMatrix();

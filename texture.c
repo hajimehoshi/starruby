@@ -643,10 +643,22 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
     saturation = NUM2INT(val);
 
-  srcX = MIN(MAX(srcX, 0), srcTexture->width);
-  srcY = MIN(MAX(srcY, 0), srcTexture->height);
-  srcWidth  = MIN(MAX(srcWidth, 0), srcTexture->width  - srcX);
-  srcHeight = MIN(MAX(srcWidth, 0), srcTexture->height - srcY);
+  if (!(0 <= srcX && srcX < srcTexture->width)) {
+    rb_raise(rb_eArgError, "invalid src_x: %d", srcX);
+    return Qnil;
+  }
+  if (!(0 <= srcY && srcY < srcTexture->height)) {
+    rb_raise(rb_eArgError, "invalid src_y: %d", srcY);
+    return Qnil;
+  }
+  if (!(0 <= srcWidth && srcWidth <= srcTexture->width - srcX)) {
+    rb_raise(rb_eArgError, "invalid src_width: %d", srcWidth);
+    return Qnil;
+  }
+  if (!(0 <= srcHeight && srcHeight <= srcTexture->height - srcY)) {
+    rb_raise(rb_eArgError, "invalid src_height: %d", srcHeight);
+    return Qnil;
+  }
   
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,

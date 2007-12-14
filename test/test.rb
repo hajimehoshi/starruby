@@ -1134,38 +1134,55 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
-  def test_render_texture_src_rect_outed
+  def test_render_texture_src_rect_arg_error
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
-    texture2.render_texture(texture, 0, 0, {
-      :src_x => -100, :src_y => -100,
-      :src_width => texture.width + 200,
-      :src_height => texture.height + 200
-    })
-    texture2.height.times do |y|
-      texture2.width.times do |x|
-        assert_equal texture.get_pixel(x, y), texture2.get_pixel(x, y)
-      end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, {
+        :src_x => -100, :src_y => -100,
+        :src_width => texture.width + 200,
+        :src_height => texture.height + 200
+      })
     end
-    texture2.clear
-    texture2.render_texture(texture, 0, 0, {
-      :src_x => 0, :src_y => 0,
-      :src_width => -100, :src_height => -100
-    })
-    texture2.height.times do |y|
-      texture2.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
-      end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :src_x => -10)
     end
-    texture2.clear
-    texture2.render_texture(texture, 0, 0, {
-      :src_x => texture.width + 100, :src_y => texture.height + 100,
-      :src_width => 100, :src_height => 100
-    })
-    texture2.height.times do |y|
-      texture2.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
-      end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :src_x => texture.width + 10)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :src_y => -10)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :src_y => texture.height + 10)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :src_x => 10, :src_width => -10)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, {
+        :src_x => 10, :src_width => texture.width - 5
+      })
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => -10)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, {
+        :src_y => 10, :src_height => texture.height - 5
+      })
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, {
+        :src_x => -10, :src_y => 0,
+        :src_width => 10, :src_height => 10
+      })
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, {
+        :src_x => texture.width + 100, :src_y => texture.height + 100,
+        :src_width => 100, :src_height => 100
+      })
     end
   end
   

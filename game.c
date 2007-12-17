@@ -130,7 +130,7 @@ static VALUE DisposeScreen(SDL_Surface* screen)
 static VALUE DoLoopEnsure(SDL_Surface* screen)
 {
   DisposeScreen(screen);
-  SDL_Quit();
+  SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_TIMER);
   running = false;
   terminated = false;
   return Qnil;
@@ -144,9 +144,7 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
 
-  Uint32 flags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK |
-    SDL_INIT_AUDIO | SDL_INIT_TIMER;
-  if (SDL_Init(flags) < 0)
+  if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_TIMER))
     rb_raise_sdl_error();
   SDL_ShowCursor(SDL_DISABLE);
 

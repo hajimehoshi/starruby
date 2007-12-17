@@ -178,6 +178,8 @@ void SdlMusicFinished(void)
 
 void InitializeSdlAudio(void)
 {
+  if (SDL_Init(SDL_INIT_AUDIO))
+    rb_raise_sdl_error();
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     rb_raise_sdl_mix_error();
   Mix_AllocateChannels(8);

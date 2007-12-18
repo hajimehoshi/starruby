@@ -187,15 +187,14 @@ void InitializeSdlAudio(void)
 void InitializeAudio(void)
 {
   rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
-  rb_define_singleton_method(rb_mAudio, "bgm_position",
-                             Audio_bgm_position,    0);
-  rb_define_singleton_method(rb_mAudio, "bgm_volume",   Audio_bgm_volume,    0);
-  rb_define_singleton_method(rb_mAudio, "bgm_volume=",  Audio_bgm_volume_eq, 1);
-  rb_define_singleton_method(rb_mAudio, "play_bgm",     Audio_play_bgm,      -1);
-  rb_define_singleton_method(rb_mAudio, "play_se",      Audio_play_se,       -1);
-  rb_define_singleton_method(rb_mAudio, "playing_bgm?", Audio_playing_bgm,   0);
-  rb_define_singleton_method(rb_mAudio, "stop_all_ses", Audio_stop_all_ses,  -1);
-  rb_define_singleton_method(rb_mAudio, "stop_bgm",     Audio_stop_bgm,      -1);
+  rb_define_module_function(rb_mAudio, "bgm_position", Audio_bgm_position,  0);
+  rb_define_module_function(rb_mAudio, "bgm_volume",   Audio_bgm_volume,    0);
+  rb_define_module_function(rb_mAudio, "bgm_volume=",  Audio_bgm_volume_eq, 1);
+  rb_define_module_function(rb_mAudio, "play_bgm",     Audio_play_bgm,      -1);
+  rb_define_module_function(rb_mAudio, "play_se",      Audio_play_se,       -1);
+  rb_define_module_function(rb_mAudio, "playing_bgm?", Audio_playing_bgm,   0);
+  rb_define_module_function(rb_mAudio, "stop_all_ses", Audio_stop_all_ses,  -1);
+  rb_define_module_function(rb_mAudio, "stop_bgm",     Audio_stop_bgm,      -1);
 
   symbol_loop     = ID2SYM(rb_intern("loop"));
   symbol_panning  = ID2SYM(rb_intern("panning"));

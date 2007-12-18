@@ -207,15 +207,15 @@ static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
 void InitializeGame(void)
 {
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
-  rb_define_singleton_method(rb_mGame, "fps",       Game_fps,       0);
-  rb_define_singleton_method(rb_mGame, "fps=",      Game_fps_eq,    1);
-  rb_define_singleton_method(rb_mGame, "real_fps",  Game_real_fps,  0);
-  rb_define_singleton_method(rb_mGame, "run",       Game_run,       -1);
-  rb_define_singleton_method(rb_mGame, "running?",  Game_running,   0);
-  rb_define_singleton_method(rb_mGame, "screen",    Game_screen,    0);
-  rb_define_singleton_method(rb_mGame, "terminate", Game_terminate, 0);
-  rb_define_singleton_method(rb_mGame, "title",     Game_title,     0);
-  rb_define_singleton_method(rb_mGame, "title=",    Game_title_eq,  1);
+  rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);
+  rb_define_module_function(rb_mGame, "fps=",      Game_fps_eq,    1);
+  rb_define_module_function(rb_mGame, "real_fps",  Game_real_fps,  0);
+  rb_define_module_function(rb_mGame, "run",       Game_run,       -1);
+  rb_define_module_function(rb_mGame, "running?",  Game_running,   0);
+  rb_define_module_function(rb_mGame, "screen",    Game_screen,    0);
+  rb_define_module_function(rb_mGame, "terminate", Game_terminate, 0);
+  rb_define_module_function(rb_mGame, "title",     Game_title,     0);
+  rb_define_module_function(rb_mGame, "title=",    Game_title_eq,  1);
 
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));

@@ -36,6 +36,9 @@ VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 
 void Init_starruby(void)
 {
+  if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
+    rb_raise_sdl_error();
+  
   rb_mStarRuby = rb_define_module("StarRuby");
 
   InitializeAudio();
@@ -46,8 +49,6 @@ void Init_starruby(void)
   InitializeStarRubyError();
   InitializeTexture();
 
-  if (TTF_Init())
-    rb_raise_sdl_ttf_error();
   InitializeSdlAudio();
   InitializeSdlFont();
   InitializeSdlInput();

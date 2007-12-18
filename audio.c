@@ -178,8 +178,6 @@ void SdlMusicFinished(void)
 
 void InitializeSdlAudio(void)
 {
-  if (SDL_Init(SDL_INIT_AUDIO))
-    rb_raise_sdl_error();
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     rb_raise_sdl_mix_error();
   Mix_AllocateChannels(8);
@@ -194,11 +192,11 @@ void InitializeAudio(void)
                              Audio_bgm_position,    0);
   rb_define_singleton_method(rb_mAudio, "bgm_volume",   Audio_bgm_volume,    0);
   rb_define_singleton_method(rb_mAudio, "bgm_volume=",  Audio_bgm_volume_eq, 1);
-  rb_define_singleton_method(rb_mAudio, "play_bgm",     Audio_play_bgm,     -1);
-  rb_define_singleton_method(rb_mAudio, "play_se",      Audio_play_se,      -1);
+  rb_define_singleton_method(rb_mAudio, "play_bgm",     Audio_play_bgm,      -1);
+  rb_define_singleton_method(rb_mAudio, "play_se",      Audio_play_se,       -1);
   rb_define_singleton_method(rb_mAudio, "playing_bgm?", Audio_playing_bgm,   0);
-  rb_define_singleton_method(rb_mAudio, "stop_all_ses", Audio_stop_all_ses, -1);
-  rb_define_singleton_method(rb_mAudio, "stop_bgm",     Audio_stop_bgm,     -1);
+  rb_define_singleton_method(rb_mAudio, "stop_all_ses", Audio_stop_all_ses,  -1);
+  rb_define_singleton_method(rb_mAudio, "stop_bgm",     Audio_stop_bgm,      -1);
 
   symbol_loop     = ID2SYM(rb_intern("loop"));
   symbol_panning  = ID2SYM(rb_intern("panning"));

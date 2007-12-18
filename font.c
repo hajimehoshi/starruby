@@ -272,6 +272,8 @@ static VALUE Font_size(VALUE self)
                  
 void InitializeSdlFont(void)
 {
+  if (TTF_Init())
+    rb_raise_sdl_ttf_error();
   fontFileInfos = ALLOC(FontFileInfo);
   fontFileInfos->rbFontNameSymbol = Qundef;
   fontFileInfos->rbFileNameSymbol = Qundef;

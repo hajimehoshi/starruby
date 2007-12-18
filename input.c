@@ -18,8 +18,8 @@ typedef struct {
   int upState;
   int buttonCount;
   int* buttonStates;
-} GamePad;
-static GamePad* gamepads;
+} Gamepad;
+static Gamepad* gamepads;
 
 typedef struct {
   int leftState;
@@ -98,7 +98,7 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
     }
   } else if (rbDevice == symbol_gamepad) {
     if (0 <= deviceNumber && deviceNumber < gamepadCount) {
-      GamePad* gamepad = &(gamepads[deviceNumber]);
+      Gamepad* gamepad = &(gamepads[deviceNumber]);
       if (isPressed(gamepad->downState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_down);
       if (isPressed(gamepad->leftState, duration, delay, interval))
@@ -144,7 +144,7 @@ void UpdateInput(int windowScale)
   }
 
   for (int i = 0; i < gamepadCount; i++) {
-    GamePad* gamepad = &(gamepads[i]);
+    Gamepad* gamepad = &(gamepads[i]);
     if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) > 3200)
       gamepad->downState++;
     else
@@ -266,8 +266,8 @@ void InitializeSdlInput()
 
   SDL_JoystickEventState(SDL_ENABLE);
   gamepadCount = SDL_NumJoysticks();
-  gamepads = ALLOC_N(GamePad, gamepadCount);
-  MEMZERO(gamepads, GamePad, gamepadCount);
+  gamepads = ALLOC_N(Gamepad, gamepadCount);
+  MEMZERO(gamepads, Gamepad, gamepadCount);
   for (int i = 0; i < gamepadCount; i++) {
     SDL_Joystick* ptr = gamepads[i].sdlJoystick = SDL_JoystickOpen(i);
     if (ptr == NULL)

@@ -16,6 +16,14 @@ require "test/unit"
 
 include StarRuby
 
+class StarRubyTest < Test::Unit::TestCase
+  
+  def test_version
+    assert_equal "0.1.10", StarRuby::VERSION
+  end
+  
+end
+
 class ColorTest < Test::Unit::TestCase
 
   def test_color

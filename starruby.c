@@ -38,9 +38,11 @@ void Init_starruby(void)
 {
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
     rb_raise_sdl_error();
+  InitializeSdlAudio();
+  InitializeSdlFont();
+  InitializeSdlInput();
   
   rb_mStarRuby = rb_define_module("StarRuby");
-
   InitializeAudio();
   InitializeColor();
   InitializeFont();
@@ -48,10 +50,6 @@ void Init_starruby(void)
   InitializeInput();
   InitializeStarRubyError();
   InitializeTexture();
-
-  InitializeSdlAudio();
-  InitializeSdlFont();
-  InitializeSdlInput();
   
 #ifdef DEBUG
   TestAffineMatrix();

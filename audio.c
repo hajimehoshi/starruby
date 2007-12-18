@@ -182,7 +182,6 @@ void InitializeSdlAudio(void)
     rb_raise_sdl_mix_error();
   Mix_AllocateChannels(8);
   Mix_HookMusicFinished(SdlMusicFinished);
-  Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
 }
 
 void InitializeAudio(void)
@@ -203,6 +202,8 @@ void InitializeAudio(void)
   symbol_position = ID2SYM(rb_intern("position"));
   symbol_time     = ID2SYM(rb_intern("time"));
   symbol_volume   = ID2SYM(rb_intern("volume"));
+
+  Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
 }
 
 void UpdateAudio(void)

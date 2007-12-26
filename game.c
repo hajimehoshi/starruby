@@ -146,6 +146,8 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
+  volatile VALUE rbTitle = rb_iv_get(self, "title");
+  SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
   SDL_ShowCursor(SDL_DISABLE);
 
   volatile VALUE rbBlock, rbWidth, rbHeight, rbOptions;
@@ -200,7 +202,8 @@ static VALUE Game_title(VALUE self)
 
 static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
 {
-  SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
+  if (SDL_WasInit(SDL_INIT_VIDEO))
+    SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
   return rb_iv_set(self, "title", rbTitle);
 }
 

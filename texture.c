@@ -42,6 +42,8 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
 
 static VALUE Texture_new_text(int argc, VALUE* argv, VALUE self)
 {
+  rb_warn("Texture.new_text is obsolete; use Texture#render_text instead");
+  
   volatile VALUE rbText, rbFont, rbColor, rbAntiAlias;
   rb_scan_args(argc, argv, "31", &rbText, &rbFont, &rbColor, &rbAntiAlias);
   bool antiAlias = RTEST(rbAntiAlias);
@@ -517,9 +519,67 @@ static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
   Check_Type(rbText, T_STRING);
   if (!(RSTRING_LEN(rbText)))
     return Qnil;
-  volatile VALUE rbTextTexture = Texture_new_text(4, (VALUE[]) {
-    rbText, rbFont, rbColor, rbAntiAlias
-  }, rb_cTexture);
+  
+  bool antiAlias = RTEST(rbAntiAlias);
+  Check_Type(rbText, T_STRING);
+  if (!RSTRING_LEN(rbText)) {
+    rb_raise(rb_eArgError, "empty text");
+    return Qnil;
+  }
+  char* text = StringValuePtr(rbText);
+  Font* font;
+  Data_Get_Struct(rbFont, Font, font);
+  if (!font->sdlFont) {
+    rb_raise(rb_eRuntimeError, "can't use disposed font");
+    return Qnil;
+  }
+  volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
+  volatile VALUE rbTextTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
+                                             2, RARRAY_PTR(rbSize));
+  Texture* textTexture;
+  Data_Get_Struct(rbTextTexture, Texture, textTexture);
+  
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
+
+  SDL_Surface* textSurfaceRaw;
+  if (antiAlias)
+    textSurfaceRaw = TTF_RenderUTF8_Shaded(font->sdlFont, text,
+                                           (SDL_Color) {255, 255, 255, 255},
+                                           (SDL_Color) {0, 0, 0, 0});
+  else
+    textSurfaceRaw = TTF_RenderUTF8_Solid(font->sdlFont, text,
+                                          (SDL_Color) {255, 255, 255, 255});
+  if (!textSurfaceRaw) {
+    rb_raise_sdl_ttf_error();
+    return Qnil;
+  }
+  SDL_Surface* textSurface = ConvertSurfaceForScreen(textSurfaceRaw);
+  SDL_FreeSurface(textSurfaceRaw);
+  textSurfaceRaw = NULL;
+  if (!textSurface) {
+    rb_raise_sdl_error();
+    return Qnil;
+  }
+  
+  SDL_LockSurface(textSurface);
+  Pixel* src = (Pixel*)(textSurface->pixels);
+  Pixel* dst = textTexture->pixels;
+  int size = textTexture->width * textTexture->height;
+  int alpha = color->alpha;
+  for (int i = 0; i < size; i++, src++, dst++) {
+    if (src->value) {
+      dst->color = *color;
+      if (alpha == 255)
+        dst->color.alpha = src->color.red;
+      else
+        dst->color.alpha = DIV255(src->color.red * alpha);
+    }
+  }
+  SDL_UnlockSurface(textSurface);
+  SDL_FreeSurface(textSurface);
+  textSurface = NULL;
+
   Texture_render_texture(3, (VALUE[]) {rbTextTexture, rbX, rbY}, self);
   Texture_dispose(rbTextTexture);
   return Qnil;

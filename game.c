@@ -202,6 +202,7 @@ static VALUE Game_title(VALUE self)
 
 static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
 {
+  Check_Type(rbTitle, T_STRING);
   if (SDL_WasInit(SDL_INIT_VIDEO))
     SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
   return rb_iv_set(self, "title", rbTitle);

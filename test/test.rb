@@ -393,68 +393,6 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-  def test_new_text
-    if Font.exist?("Arial")
-      font = Font.new("Arial", 16)
-    elsif Font.exist?("FreeSans")
-      font = Font.new("FreeSans", 16)
-    else
-      flunk
-    end
-    color = Color.new(255, 255, 255)
-    texture = Texture.new_text("A", font, color)
-    assert_kind_of Texture, texture
-    assert_equal font.get_size("A"), texture.size
-    assert_raise ArgumentError do
-      Texture.new_text("", font, color)
-    end
-    font.dispose
-    assert_raise RuntimeError do
-      Texture.new_text("A", font, color)
-    end
-  end
-  
-  def test_new_text_type
-    if Font.exist?("Arial")
-      font = Font.new("Arial", 16)
-    elsif Font.exist?("FreeSans")
-      font = Font.new("FreeSans", 16)
-    else
-      flunk
-    end
-    color = Color.new(255, 255, 255)
-    assert_raise TypeError do
-      texture = Texture.new_text(nil, font, color)
-    end
-    assert_raise TypeError do
-      texture = Texture.new_text("A", nil, color)
-    end
-    assert_raise TypeError do
-      texture = Texture.new_text("A", font, nil)
-    end
-  end
-  
-  def test_new_text_anti_alias
-    if Font.exist?("Arial")
-      font = Font.new("Arial", 16)
-    elsif Font.exist?("FreeSans")
-      font = Font.new("FreeSans", 16)
-    else
-      flunk
-    end
-    color = Color.new(255, 255, 255)
-    texture = Texture.new_text("A", font, color, true)
-    assert_kind_of Texture, texture
-    assert_equal font.get_size("A"), texture.size
-    assert_raise ArgumentError do
-      Texture.new_text("", font, color)
-    end
-    font.dispose
-    assert_raise RuntimeError do
-      Texture.new_text("A", font, color)
-    end
-  end
-  
   def test_load
     texture = Texture.load("images/ruby.png")
     assert_equal 49, texture.width
@@ -878,6 +816,26 @@ class TextureTest < Test::Unit::TestCase
     texture.render_text("B", 10, 10, font, color, true)
     texture.render_text("AAAAAAAAAAAAAAAAAAAA", 10, 10, font, color, false)
     texture.render_text("", 0, 0, font, color)
+  end
+  
+  def test_render_text_hello_world
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 24)
+      texture = Texture.load("images/hello_world")
+      texture2 = Texture.new(320, 240)
+      texture2.fill(Color.new(153, 204, 255))
+      texture2.render_text("Hello, World", 0, 0, font, Color.new(153, 102, 51))
+      texture2.render_text("Hello, World", 0, 24, font, Color.new(153, 102, 51), true)
+      texture2.render_text("Hello, World", 0, 48, font, Color.new(153, 102, 51, 128))
+      texture2.render_text("Hello, World", 0, 72, font, Color.new(153, 102, 51, 128), true)
+      texture2.height.times do |j|
+        texture2.width.times do |i|
+          p1 = texture.get_pixel(i, j)
+          p2 = texture2.get_pixel(i, j)
+          assert_equal p1, p2, "#{i}, #{j}"
+        end
+      end
+    end
   end
   
   def test_render_text_disposed

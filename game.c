@@ -223,4 +223,6 @@ void InitializeGame(void)
 
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
+
+  rb_iv_set(rb_mGame, "title", rb_str_new2(""));
 }

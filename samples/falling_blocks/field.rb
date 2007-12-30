@@ -18,6 +18,9 @@ module FallingBlocks
       @blocks[x + y * width]
     end
     
+    def add_piece(piece, x, y)
+    end
+    
   end
   
 end

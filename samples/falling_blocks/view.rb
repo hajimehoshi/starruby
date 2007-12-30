@@ -4,18 +4,6 @@ module FallingBlocks
   
   class View
     
-    def initialize
-      @textures = {
-        :background => Texture.load("images/falling_blocks/background"),
-        :field_window => Texture.new(100, 200),
-        :next_piece_window => Texture.new(50, 50),
-        :score_window => Texture.new(140, 20),
-        :level_window => Texture.new(140, 20),
-        :lines_window => Texture.new(140, 20),
-      }
-      @font = Font.new("fonts/falling_blocks/flappy_for_famicom", 8)
-    end
-    
     def render_text(screen, text, x, y, in_window = false)
       fore_color = in_window ? Color.new(255, 255, 255) : Color.new(51, 51, 153)
       screen.render_text(text, x + 1, y + 8 + 1, @font, Color.new(0, 0, 0, 64))
@@ -24,21 +12,76 @@ module FallingBlocks
     
     private :render_text
     
+    def render_piece(screen, piece, x, y, angle = 0)
+      blocks = @textures[:blocks]
+      piece.height.times do |j|
+        piece.width.times do |i|
+          if piece[i, j, angle]
+            screen.render_texture(blocks, x + i * 10, y + j * 10, {
+              :src_x => piece.id * 10, :src_width => 10, :src_height => 10
+            })
+          end
+        end
+      end
+    end
+    
+    private :render_piece
+    
+    def initialize
+      @textures = {
+        :background => Texture.load("images/falling_blocks/background"),
+        :blocks => Texture.load("images/falling_blocks/blocks"),
+        :field_window => Texture.new(100, 200),
+        :next_piece_window => Texture.new(50, 50),
+        :score_window => Texture.new(140, 20),
+        :level_window => Texture.new(140, 20),
+        :lines_window => Texture.new(140, 20),
+        :start_info => Texture.new(320, 240),
+      }
+      @font = Font.new("fonts/falling_blocks/flappy_for_famicom", 8)
+      
+      texture = @textures[:start_info]
+      texture.fill(Color.new(0, 0, 0, 128))
+      str = "PRESS ENTER TO PLAY"
+      width, height = @font.get_size(str)
+      render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
+    end
+    
     def update(game, screen)
       # clear windows
       @textures.keys.select{|k| k.to_s =~ /window$/}.each do |key|
         @textures[key].fill(Color.new(0, 0, 0, 192))
       end
       
-      # render field
-      texture = @textures[:field_window]
+      # render the field
+      window = @textures[:field_window]
+      blocks = @textures[:blocks]
       field = game.field
       field.height.times do |j|
         field.width.times do |i|
-          if block = field[i, j]
-            # texture.render_texture()
+          if field[i, j]
+            window.render_texture(blocks, i * 10, j * 10, {
+              :src_x => piece.id * 10, :src_width => 10, :src_height => 10
+            })
           end
         end
+      end
+      
+      # render the falling piece
+      if game.falling_piece
+        window = @textures[:field_window]
+        x = game.falling_piece_x
+        y = game.falling_piece_y
+        angle = game.falling_piece_angle
+        render_piece(window, game.falling_piece, x * 10, y * 10, angle)
+      end
+      
+      # render the next piece
+      if game.next_piece
+        window = @textures[:next_piece_window]
+        x = (window.width - game.next_piece.width * 10) / 2
+        y = (window.height - game.next_piece.height * 10) / 2
+        render_piece(window, game.next_piece, x, y)
       end
       
       # render texts
@@ -62,6 +105,10 @@ module FallingBlocks
       screen.render_texture(@textures[:level_window], 140, 160)
       render_text(screen, "LINES", 140, 180)
       screen.render_texture(@textures[:lines_window], 140, 200)
+      
+      if game.state == :start
+        screen.render_texture(@textures[:start_info], 0, 0)
+      end
     end
     
   end

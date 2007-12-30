@@ -1,14 +1,16 @@
 require "starruby"
-require "falling_blocks/game"
+require "falling_blocks/application_model"
+require "falling_blocks/controller"
 require "falling_blocks/view"
 
 def main
-  game = FallingBlocks::Game.new
+  application_model = FallingBlocks::ApplicationModel.new
+  controller = FallingBlocks::Controller.new
   view = FallingBlocks::View.new
   StarRuby::Game.title = "Falling Blocks Game"
   StarRuby::Game.run(320, 240, :window_scale => 2) do
-    game.update
-    view.update(game, StarRuby::Game.screen)
+    controller.update(application_model)
+    view.update(application_model, StarRuby::Game.screen)
   end
 end
 

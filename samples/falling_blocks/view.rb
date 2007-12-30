@@ -12,14 +12,14 @@ module FallingBlocks
     
     private :render_text
     
-    def render_piece(screen, piece, x, y, angle = 0)
+    def render_piece(screen, piece, x, y, angle = 0, options = {})
       blocks = @textures[:blocks]
       piece.height.times do |j|
         piece.width.times do |i|
           if piece[i, j, angle]
             screen.render_texture(blocks, x + i * 10, y + j * 10, {
               :src_x => piece.id * 10, :src_width => 10, :src_height => 10
-            })
+            }.merge(options))
           end
         end
       end
@@ -42,12 +42,12 @@ module FallingBlocks
       
       texture = @textures[:start_info]
       texture.fill(Color.new(0, 0, 0, 128))
-      str = "PRESS ENTER TO PLAY"
+      str = "PRESS ANY KEY TO PLAY"
       width, height = @font.get_size(str)
       render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
     end
     
-    def update(game, screen)
+    def update(model, screen)
       # clear windows
       @textures.keys.select{|k| k.to_s =~ /window$/}.each do |key|
         @textures[key].fill(Color.new(0, 0, 0, 192))
@@ -56,37 +56,52 @@ module FallingBlocks
       # render the field
       window = @textures[:field_window]
       blocks = @textures[:blocks]
-      field = game.field
+      field = model.field
       field.height.times do |j|
         field.width.times do |i|
           if field[i, j]
             window.render_texture(blocks, i * 10, j * 10, {
-              :src_x => piece.id * 10, :src_width => 10, :src_height => 10
+              :src_x => field[i, j] * 10, :src_width => 10, :src_height => 10
             })
           end
         end
       end
       
       # render the falling piece
-      if game.falling_piece
+      if model.state == :playing and model.falling_piece
         window = @textures[:field_window]
-        x = game.falling_piece_x
-        y = game.falling_piece_y
-        angle = game.falling_piece_angle
-        render_piece(window, game.falling_piece, x * 10, y * 10, angle)
+        x = model.falling_piece_x
+        y = model.falling_piece_y
+        angle = model.falling_piece_angle
+        options = {}
+        options.merge!({
+          :tone_red => 128, :tone_green => 128, :tone_blue => 128
+        }) if model.falling_piece_landing?
+        render_piece(window, model.falling_piece, x * 10, y * 10, angle, options)
+      end
+      
+      # render flashing
+      if model.flashing?
+        window = @textures[:field_window]
+        lines = model.field.flashing_lines
+        flashing_texture = Texture.new(model.field.width * 10, 10)
+        flashing_texture.fill(Color.new(255, 0, 0, 128))
+        lines.each do |line|
+          window.render_texture(flashing_texture, 0, line * 10)
+        end
       end
       
       # render the next piece
-      if game.next_piece
+      if model.state == :playing and model.next_piece
         window = @textures[:next_piece_window]
-        x = (window.width - game.next_piece.width * 10) / 2
-        y = (window.height - game.next_piece.height * 10) / 2
-        render_piece(window, game.next_piece, x, y)
+        x = (window.width - model.next_piece.width * 10) / 2
+        y = (window.height - model.next_piece.height * 10) / 2
+        render_piece(window, model.next_piece, x, y)
       end
       
       # render texts
       %w(score level lines).each do |key|
-        value = game.send(key).to_s
+        value = model.send(key).to_s
         texture = @textures["#{key}_window".intern]
         x = texture.width - @font.get_size(value)[0] - 5
         render_text(texture, value, x, 0, true)
@@ -106,7 +121,7 @@ module FallingBlocks
       render_text(screen, "LINES", 140, 180)
       screen.render_texture(@textures[:lines_window], 140, 200)
       
-      if game.state == :start
+      if model.state == :start
         screen.render_texture(@textures[:start_info], 0, 0)
       end
     end

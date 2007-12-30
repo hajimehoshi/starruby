@@ -19,7 +19,7 @@ module FallingBlocks
     @@pieces << Piece.new(3, 3, [0,0,1, 1,1,1, 0,0,0].map{|n| n != 0})
     @@pieces << Piece.new(4, 3, [1,1,0, 0,1,1, 0,0,0].map{|n| n != 0})
     @@pieces << Piece.new(5, 3, [0,1,1, 1,1,0, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(6, 2, [1,1,1,1].map{|n| n != 0})
+    @@pieces << Piece.new(6, 2, [1,1, 1,1].map{|n| n != 0})
     
     def self.[](id)
       @@pieces[id]

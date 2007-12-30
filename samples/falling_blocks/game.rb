@@ -22,8 +22,6 @@ module FallingBlocks
     
     def update
       
-      
-      
     end
     
   end

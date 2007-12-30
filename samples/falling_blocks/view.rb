@@ -13,7 +13,7 @@ module FallingBlocks
         :level_window => Texture.new(140, 20),
         :lines_window => Texture.new(140, 20),
       }
-      @font = Font.new("fonts/flappy_for_famicom", 8)
+      @font = Font.new("fonts/falling_blocks/flappy_for_famicom", 8)
     end
     
     def render_text(screen, text, x, y, in_window = false)
@@ -25,10 +25,23 @@ module FallingBlocks
     private :render_text
     
     def update(game, screen)
+      # clear windows
       @textures.keys.select{|k| k.to_s =~ /window$/}.each do |key|
         @textures[key].fill(Color.new(0, 0, 0, 192))
       end
       
+      # render field
+      texture = @textures[:field_window]
+      field = game.field
+      field.height.times do |j|
+        field.width.times do |i|
+          if block = field[i, j]
+            # texture.render_texture()
+          end
+        end
+      end
+      
+      # render texts
       %w(score level lines).each do |key|
         value = game.send(key).to_s
         texture = @textures["#{key}_window".intern]

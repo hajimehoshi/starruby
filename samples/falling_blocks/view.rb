@@ -37,12 +37,19 @@ module FallingBlocks
         :level_window => Texture.new(140, 20),
         :lines_window => Texture.new(140, 20),
         :start_info => Texture.new(320, 240),
+        :pause_info => Texture.new(320, 240),
       }
       @font = Font.new("fonts/falling_blocks/flappy_for_famicom", 8)
       
       texture = @textures[:start_info]
       texture.fill(Color.new(0, 0, 0, 128))
       str = "PRESS ANY KEY TO PLAY"
+      width, height = @font.get_size(str)
+      render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
+      
+      texture = @textures[:pause_info]
+      texture.fill(Color.new(0, 0, 0, 128))
+      str = "PAUSE"
       width, height = @font.get_size(str)
       render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
     end
@@ -54,15 +61,17 @@ module FallingBlocks
       end
       
       # render the field
+      if model.state == :playing
       window = @textures[:field_window]
-      blocks = @textures[:blocks]
-      field = model.field
-      field.height.times do |j|
-        field.width.times do |i|
-          if field[i, j]
-            window.render_texture(blocks, i * 10, j * 10, {
-              :src_x => field[i, j] * 10, :src_width => 10, :src_height => 10
-            })
+        blocks = @textures[:blocks]
+        field = model.field
+        field.height.times do |j|
+          field.width.times do |i|
+            if field[i, j]
+              window.render_texture(blocks, i * 10, j * 10, {
+                :src_x => field[i, j] * 10, :src_width => 10, :src_height => 10
+              })
+            end
           end
         end
       end
@@ -81,7 +90,7 @@ module FallingBlocks
       end
       
       # render flashing
-      if model.flashing?
+      if model.state == :playing and model.flashing?
         window = @textures[:field_window]
         lines = model.field.flashing_lines
         flashing_texture = Texture.new(model.field.width * 10, 10)
@@ -123,6 +132,8 @@ module FallingBlocks
       
       if model.state == :start
         screen.render_texture(@textures[:start_info], 0, 0)
+      elsif model.state == :pause
+        screen.render_texture(@textures[:pause_info], 0, 0)
       end
     end
     

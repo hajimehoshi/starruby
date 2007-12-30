@@ -9,7 +9,7 @@ module FallingBlocks
     
     attr_reader :score
     def level
-      @lines / 5 + 1
+      [@lines / 5 + 1, @init_level].max
     end
     attr_reader :lines
     attr_reader :field
@@ -25,7 +25,8 @@ module FallingBlocks
     
     attr_reader :next_piece
     
-    def initialize
+    def initialize(init_level)
+      @init_level = init_level
       @state = :start
       @score = 0
       @lines = 0
@@ -38,7 +39,7 @@ module FallingBlocks
     end
     
     def pause
-      @state = :pause
+      @state = :pause if @state == :playing
     end
     
     def unpause

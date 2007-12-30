@@ -1,3 +1,5 @@
 ORANGEKI.TTF:
   Orange Kid
   http://www.larabiefonts.com/
+flappy_for_famicom.TTF:
+  http://www.jttk.zaq.ne.jp/babwp701/hpfont/font.html

@@ -38,6 +38,7 @@ module FallingBlocks
         :lines_window => Texture.new(140, 20),
         :start_info => Texture.new(320, 240),
         :pause_info => Texture.new(320, 240),
+        :gameover_info => Texture.new(320, 240),
       }
       @font = Font.new("fonts/falling_blocks/flappy_for_famicom", 8)
       
@@ -52,6 +53,12 @@ module FallingBlocks
       str = "PAUSE"
       width, height = @font.get_size(str)
       render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
+      
+      texture = @textures[:gameover_info]
+      texture.fill(Color.new(0, 0, 0, 128))
+      str = "GAME OVER"
+      width, height = @font.get_size(str)
+      render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
     end
     
     def update(model, screen)
@@ -61,7 +68,7 @@ module FallingBlocks
       end
       
       # render the field
-      if model.state == :playing
+      if [:playing, :gameover].include?(model.state)
       window = @textures[:field_window]
         blocks = @textures[:blocks]
         field = model.field
@@ -77,7 +84,7 @@ module FallingBlocks
       end
       
       # render the falling piece
-      if model.state == :playing and model.falling_piece
+      if [:playing, :gameover].include?(model.state)
         window = @textures[:field_window]
         x = model.falling_piece_x
         y = model.falling_piece_y
@@ -101,7 +108,7 @@ module FallingBlocks
       end
       
       # render the next piece
-      if model.state == :playing and model.next_piece
+      if [:playing, :gameover].include?(model.state) and model.next_piece
         window = @textures[:next_piece_window]
         x = (window.width - model.next_piece.width * 10) / 2
         y = (window.height - model.next_piece.height * 10) / 2
@@ -130,10 +137,13 @@ module FallingBlocks
       render_text(screen, "LINES", 140, 180)
       screen.render_texture(@textures[:lines_window], 140, 200)
       
-      if model.state == :start
+      case model.state
+      when :start
         screen.render_texture(@textures[:start_info], 0, 0)
-      elsif model.state == :pause
+      when :pause
         screen.render_texture(@textures[:pause_info], 0, 0)
+      when :gameover
+        screen.render_texture(@textures[:gameover_info], 0, 0)
       end
     end
     

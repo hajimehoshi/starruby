@@ -29,11 +29,16 @@ module FallingBlocks
     end
     
     def add_piece(piece, x, y, angle)
+      result = true
       piece.height.times do |j|
         piece.width.times do |i|
-          @blocks[(x + i) + (y + j) * width] = piece.id if piece[i, j, angle]
+          if piece[i, j, angle]
+            result = false if result and self[x + i, y + j]
+            @blocks[(x + i) + (y + j) * width] = piece.id
+          end
         end
       end
+      result
     end
     
     def flashing_lines

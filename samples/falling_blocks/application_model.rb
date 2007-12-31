@@ -27,6 +27,10 @@ module FallingBlocks
     
     def initialize(init_level)
       @init_level = init_level
+      start
+    end
+    
+    def start
       @state = :start
       @score = 0
       @lines = 0
@@ -113,8 +117,11 @@ module FallingBlocks
       x = @falling_piece_x_100 / 100
       y = @falling_piece_y_100 / 100
       angle = @falling_piece_angle
-      @field.add_piece(@falling_piece, x, y, angle)
-      go_next_piece if @field.flashing_lines.empty?
+      if @field.add_piece(@falling_piece, x, y, angle)
+        go_next_piece if @field.flashing_lines.empty?
+      else
+        @state = :gameover
+      end
     end
     
     def flashing?

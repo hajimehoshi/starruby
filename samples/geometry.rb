@@ -19,9 +19,7 @@ Game.title = "Geometry"
 Game.run(320, 240) do
   s = Game.screen
   s.clear
-  keys = Input.pressed_keys(:keyboard, {
-    :duration => 1, :delay => 8, :interval => 2
-  })
+  keys = Input.keys(:keyboard, :duration => 1, :delay => 8, :interval => 2)
   if keys.include?(:r)
     angle   = 0
     scale_x = 0
@@ -52,7 +50,7 @@ Game.run(320, 240) do
     :center_x => texture.width  / 2,
     :center_y => texture.height / 2,
   })
-  if Input.pressed_keys(:keyboard).include?(:h)
+  if Input.keys(:keyboard).include?(:h)
     s.render_texture(cover, 0, 0, :alpha => 128)
     s.render_text("'z': Rotate right",                 8, 8,        font, white)
     s.render_text("'x': Rotate left",                  8, 8 + 16*1, font, white)

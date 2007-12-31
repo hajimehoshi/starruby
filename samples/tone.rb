@@ -20,9 +20,7 @@ Game.title = "Tone"
 Game.run(320, 240) do
   s = Game.screen
   s.clear
-  keys = Input.pressed_keys(:keyboard, {
-    :duration => 1, :delay => 8, :interval => 2
-  })
+  keys = Input.keys(:keyboard, :duration => 1, :delay => 8, :interval => 2)
   if keys.include?(:r)
     tone_red   = 0
     tone_green = 0
@@ -59,7 +57,7 @@ Game.run(320, 240) do
     :tone_blue  => tone_blue,
     :saturation => saturation
   })
-  if Input.pressed_keys(:keyboard).include?(:h)
+  if Input.keys(:keyboard).include?(:h)
     s.render_texture(cover, 0, 0, :alpha => 128)
     s.render_text("'1': Turn up the red part",     8, 8,         font, white)
     s.render_text("'2': Turn down the red part",   8, 8 + 16,    font, white)

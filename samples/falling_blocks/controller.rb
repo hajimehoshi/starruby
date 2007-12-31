@@ -9,20 +9,20 @@ module FallingBlocks
   class Controller
     
     def update(model)
-      keyboard_keys = Input.pressed_keys(:keyboard)
-      keyboard_keys_trigger = Input.pressed_keys(:keyboard, :duration => 1)
-      keyboard_keys_repeating = Input.pressed_keys(:keyboard, {
+      keyboard_keys = Input.keys(:keyboard)
+      keyboard_keys_trigger = Input.keys(:keyboard, :duration => 1)
+      keyboard_keys_repeating = Input.keys(:keyboard, {
         :duration => 1, :delay => 2, :interval => 0
       })
-      gamepad_keys = Input.pressed_keys(:gamepad)
-      gamepad_keys_trigger = Input.pressed_keys(:gamepad, :duration => 1)
-      gamepad_keys_repeating = Input.pressed_keys(:gamepad, {
+      gamepad_keys = Input.keys(:gamepad)
+      gamepad_keys_trigger = Input.keys(:gamepad, :duration => 1)
+      gamepad_keys_repeating = Input.keys(:gamepad, {
         :duration => 1, :delay => 2, :interval => 0
       })
       case model.state
       when :start
         if [:keyboard, :gamepad].any? do |device|
-            0 < Input.pressed_keys(device, :duration => 1).size
+            0 < Input.keys(device, :duration => 1).size
           end
           model.start_playing
         end
@@ -68,7 +68,7 @@ module FallingBlocks
         end
       when :pause
         if [:keyboard, :gamepad].any? do |device|
-            0 < Input.pressed_keys(device, :duration => 1).size
+            0 < Input.keys(device, :duration => 1).size
           end
           model.unpause
         end

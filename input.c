@@ -63,7 +63,7 @@ static bool isPressed(int status, int duration, int delay, int interval)
   return false;
 }
 
-static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
+static VALUE Input_keys(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbDevice, rbOptions;
   rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
@@ -127,6 +127,12 @@ static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
 
   OBJ_FREEZE(rbResult);
   return rbResult;
+}
+
+static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
+{
+  rb_warn("Input.pressed_keys is obsolete; use Input.keys instead");
+  return Input_keys(argc, argv, self);
 }
 
 void UpdateInput(int windowScale)
@@ -286,6 +292,7 @@ void InitializeInput(void)
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
   rb_define_module_function(rb_mInput, "mouse_location",
                             Input_mouse_location, 0);
+  rb_define_module_function(rb_mInput, "keys", Input_keys, -1);
   rb_define_module_function(rb_mInput, "pressed_keys",
                             Input_pressed_keys, -1);
 

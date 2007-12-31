@@ -11,7 +11,7 @@ Game.title = "Gamepad"
 Game.run(320, 240) do
   s = Game.screen
   s.clear
-  keys = Input.pressed_keys(:gamepad)
+  keys = Input.keys(:gamepad)
   s.render_text("Directions:", 8, 8,  font, white)
   directions = keys.select{|b| b.kind_of?(Symbol)}.map{|b|b.to_s}
   s.render_text(directions.join(","), 24, 24, font, white)

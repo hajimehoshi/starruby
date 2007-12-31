@@ -1618,22 +1618,22 @@ end
 
 class InputTest < Test::Unit::TestCase
 
-  def test_pressed_keys_type
+  def test_keys_type
     assert_raise TypeError do
-      Input.pressed_keys(nil)
+      Input.keys(nil)
     end
     begin
-      Input.pressed_keys(:foo)
+      Input.keys(:foo)
       flunk
     rescue ArgumentError => e
       assert_equal "invalid device: :foo", e.message
     end
     assert_raise TypeError do
-      Input.pressed_keys(:gamepad, false)
+      Input.keys(:gamepad, false)
     end
     [:device_number, :duration, :delay, :interval].each do |key|
       assert_raise TypeError do
-        Input.pressed_keys(:gamepad, key => false)
+        Input.keys(:gamepad, key => false)
       end
     end
   end
@@ -1645,8 +1645,8 @@ class InputTest < Test::Unit::TestCase
   end
   
   def test_gamepad_device_number
-    assert_equal [], Input.pressed_keys(:gamepad, :device_number => -1)
-    assert_equal [], Input.pressed_keys(:gamepad, :device_number => 100)
+    assert_equal [], Input.keys(:gamepad, :device_number => -1)
+    assert_equal [], Input.keys(:gamepad, :device_number => 100)
   end
 
 end

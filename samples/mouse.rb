@@ -14,7 +14,7 @@ Game.run(320, 240) do
   x, y = Input.mouse_location
   alpha = 128
   scale_x = scale_y = 1
-  keys = Input.pressed_keys(:mouse)
+  keys = Input.keys(:mouse)
   if keys.include?(:left)
     alpha = 255
   end

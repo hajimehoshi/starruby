@@ -76,7 +76,7 @@ module FallingBlocks
       if [:keyboard, :gamepad].any? do |device|
           0 < Input.keys(device, :duration => 1).size
         end
-        model.unpause
+        model.resume
       end
     end
     

@@ -46,7 +46,7 @@ module FallingBlocks
       @state = :pause if @state == :playing
     end
     
-    def unpause
+    def resume
       @state = :playing if @state == :pause
     end
     

@@ -1,0 +1,48 @@
+Falling Blocks Game
+
+
+* Usage
+
+  ruby falling_blocks.rb [init-level]
+
+
+* How to Play
+
+  Move left:
+    Left (Keyboard)
+    Left (Gamepad)
+
+  Move right:
+    Right (Keyboard)
+    Right (Gamepad)
+
+  Rotate left:
+    Z        (Keyboard)
+    Button 2 (Gamepad)
+
+  Rotate right:
+    X        (Keyboard)
+    Button 1 (Gamepad)
+
+  Force to fall:
+    Down (Keyboard)
+    Down (Gamepad)
+
+  Pause:
+    C        (Keyboard)
+    Button 3 (GamePad)
+
+  Unpause:
+    Any key (Keyboard)
+    Any key (Gamepad)
+
+
+* Score
+
+(base score) * (level)
+
+  base score:
+    1 line:   100
+    2 lines:  300
+    3 lines:  900
+    4 lines: 2700

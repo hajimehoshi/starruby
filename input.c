@@ -129,12 +129,6 @@ static VALUE Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-static VALUE Input_pressed_keys(int argc, VALUE* argv, VALUE self)
-{
-  rb_warn("Input.pressed_keys is obsolete; use Input.keys instead");
-  return Input_keys(argc, argv, self);
-}
-
 void UpdateInput(int windowScale)
 {
   SDL_JoystickUpdate();
@@ -293,8 +287,6 @@ void InitializeInput(void)
   rb_define_module_function(rb_mInput, "mouse_location",
                             Input_mouse_location, 0);
   rb_define_module_function(rb_mInput, "keys", Input_keys, -1);
-  rb_define_module_function(rb_mInput, "pressed_keys",
-                            Input_pressed_keys, -1);
 
   symbol_delay         = ID2SYM(rb_intern("delay"));
   symbol_device_number = ID2SYM(rb_intern("device_number"));

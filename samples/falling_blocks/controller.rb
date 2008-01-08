@@ -1,11 +1,29 @@
 module FallingBlocks
   
-  input = StarRuby::Input
-  
-  def input.dir?(direction)
+  StarRuby::Input.instance_eval %Q{
+    alias _orig_keys keys
     
-  end
-  
+    def keys(device, options = {})
+      if device.respond_to?(:inject)
+        device.inject([]) do |result, d|
+          result | _orig_keys(d, options)
+        end
+      else
+        _orig_keys(device, options)
+      end
+    end
+    
+    def triggers(device)
+      keys(device, :duration => 1)
+    end
+    
+    def repeatings(device)
+      keys(device, {
+        :duration => 1, :delay => 2, :interval => 0
+      })
+    end
+  }
+
   class Controller
     
     def update(model)
@@ -13,26 +31,14 @@ module FallingBlocks
     end
     
     def update_start(model)
-      if [:keyboard, :gamepad].any? do |device|
-          0 < Input.keys(device, :duration => 1).size
-        end
+      if 0 < Input.triggers([:keyboard, :gamepad]).size
         model.start_playing
       end
     end
   
     def update_playing(model)
-      keyboard_keys = Input.keys(:keyboard)
-      keyboard_keys_trigger = Input.keys(:keyboard, :duration => 1)
-      keyboard_keys_repeating = Input.keys(:keyboard, {
-        :duration => 1, :delay => 2, :interval => 0
-      })
-      gamepad_keys = Input.keys(:gamepad)
-      gamepad_keys_trigger = Input.keys(:gamepad, :duration => 1)
-      gamepad_keys_repeating = Input.keys(:gamepad, {
-        :duration => 1, :delay => 2, :interval => 0
-      })
-      if keyboard_keys_trigger.include?(:c) or
-        gamepad_keys_trigger.include?(3)
+      if Input.triggers(:keyboard).include?(:c) or
+        Input.triggers(:gamepad).include?(3)
         model.pause
       elsif model.flashing?
         @count ||= 20
@@ -42,22 +48,19 @@ module FallingBlocks
           @count = nil
         end
       else
-        if keyboard_keys_repeating.include?(:left) or
-          gamepad_keys_repeating.include?(:left)
+        if Input.repeatings([:keyboard, :gamepad]).include?(:left)
           model.try_move(:left)
-        elsif keyboard_keys_repeating.include?(:right) or
-          gamepad_keys_repeating.include?(:right)
+        elsif Input.repeatings([:keyboard, :gamepad]).include?(:right)
           model.try_move(:right)
         end
-        if keyboard_keys_trigger.include?(:z) or
-          gamepad_keys_trigger.include?(2)
+        if Input.triggers(:keyboard).include?(:z) or
+          Input.triggers(:gamepad).include?(2)
           model.try_rotate(:left)
-        elsif keyboard_keys_trigger.include?(:x) or
-          gamepad_keys_trigger.include?(1)
+        elsif Input.triggers(:keyboard).include?(:x) or
+          Input.triggers(:gamepad).include?(1)
           model.try_rotate(:right)
         end
-        down_pressed = (keyboard_keys.include?(:down) or
-        gamepad_keys.include?(:down))
+        down_pressed = Input.keys([:keyboard, :gamepad]).include?(:down)
         if model.falling_piece_landing?
           @count ||= 20
           @count -= down_pressed ? 3 : 1
@@ -73,17 +76,13 @@ module FallingBlocks
     end
     
     def update_pause(model)
-      if [:keyboard, :gamepad].any? do |device|
-          0 < Input.keys(device, :duration => 1).size
-        end
+      if 0 < Input.triggers([:keyboard, :gamepad]).size
         model.resume
       end
     end
     
     def update_gameover(model)
-      if [:keyboard, :gamepad].any? do |device|
-          0 < Input.keys(device, :duration => 1).size
-        end
+      if 0 < Input.triggers([:keyboard, :gamepad]).size
         model.start
       end
     end

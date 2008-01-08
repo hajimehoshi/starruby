@@ -426,6 +426,9 @@ class TextureTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       Texture.load("images/ambiguous");
     end
+    
+    Texture.load("images/_ruby")
+    Texture.load("images/ruby_")
   end
   
   def test_load_type

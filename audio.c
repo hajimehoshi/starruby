@@ -6,6 +6,8 @@ static int bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlPreviousTicks = 0;
 
+volatile static VALUE rbCache;
+
 volatile static VALUE symbol_loop;
 volatile static VALUE symbol_panning;
 volatile static VALUE symbol_position;
@@ -37,15 +39,14 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     rbOptions = rb_hash_new();
 
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
-  volatile VALUE rbBgmsHash = rb_iv_get(rb_mAudio, "bgms");
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbBgmsHash, rbCompletePath))) {
+  if (!NIL_P(val = rb_hash_aref(rbCache, rbCompletePath))) {
     sdlBgm = (Mix_Music*)NUM2LONG(val);
   } else {
     char* path = StringValuePtr(rbCompletePath);
     if (!(sdlBgm = Mix_LoadMUS(path)))
       rb_raise_sdl_mix_error();
-    rb_hash_aset(rbBgmsHash, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
+    rb_hash_aset(rbCache, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
   }
 
   int time   = 0;
@@ -83,15 +84,14 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   Mix_Chunk* sdlSE = NULL;
-  volatile VALUE rbSEsHash = rb_iv_get(rb_mAudio, "ses");
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbSEsHash, rbCompletePath))) {
+  if (!NIL_P(val = rb_hash_aref(rbCache, rbCompletePath))) {
     sdlSE = (Mix_Chunk*)NUM2ULONG(val);
   } else {
     char* path = StringValuePtr(rbCompletePath);
     if (!(sdlSE = Mix_LoadWAV(path)))
       rb_raise_sdl_mix_error();
-    rb_hash_aset(rbSEsHash, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
+    rb_hash_aset(rbCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
   }
 
   int panning = 0;
@@ -215,8 +215,7 @@ void InitializeAudio(void)
 
   Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
 
-  rb_iv_set(rb_mAudio, "bgms", rb_hash_new());
-  rb_iv_set(rb_mAudio, "ses", rb_hash_new());
+  rbCache = rb_iv_set(rb_mAudio, "cache", rb_hash_new());
 }
 
 void UpdateAudio(void)

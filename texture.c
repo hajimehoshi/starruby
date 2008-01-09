@@ -29,7 +29,8 @@ typedef enum {
   SUB,
 } BlendType;
 
-static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
+static SDL_Surface*
+ConvertSurfaceForScreen(SDL_Surface* surface)
 {
   return SDL_ConvertSurface(surface, &(SDL_PixelFormat) {
     .palette = NULL,
@@ -40,7 +41,8 @@ static SDL_Surface* ConvertSurfaceForScreen(SDL_Surface* surface)
   }, SDL_HWACCEL | SDL_DOUBLEBUF);
 }
 
-static VALUE Texture_load(VALUE self, VALUE rbPath)
+static VALUE
+Texture_load(VALUE self, VALUE rbPath)
 {
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
@@ -152,21 +154,24 @@ static VALUE Texture_load(VALUE self, VALUE rbPath)
   return rbTexture;
 }
 
-static void Texture_free(Texture* texture)
+static void
+Texture_free(Texture* texture)
 {
   free(texture->pixels);
   texture->pixels = NULL;
   free(texture);
 }
 
-static VALUE Texture_alloc(VALUE klass)
+static VALUE
+Texture_alloc(VALUE klass)
 {
   Texture* texture = ALLOC(Texture);
   texture->pixels = NULL;
   return Data_Wrap_Struct(klass, 0, Texture_free, texture);
 }
 
-static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
+static VALUE
+Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -189,7 +194,8 @@ static VALUE Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   return Qnil;
 }
 
-static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
+static VALUE
+Texture_initialize_copy(VALUE self, VALUE rbTexture)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -207,7 +213,8 @@ static VALUE Texture_initialize_copy(VALUE self, VALUE rbTexture)
 }
 
 static VALUE Texture_change_hue_bang(VALUE, VALUE);
-static VALUE Texture_change_hue(VALUE self, VALUE rbAngle)
+static VALUE
+Texture_change_hue(VALUE self, VALUE rbAngle)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -221,7 +228,8 @@ static VALUE Texture_change_hue(VALUE self, VALUE rbAngle)
   return rbTexture;
 }
 
-static VALUE Texture_change_hue_bang(VALUE self, VALUE rbAngle)
+static VALUE
+Texture_change_hue_bang(VALUE self, VALUE rbAngle)
 {
   rb_check_frozen(self);
   
@@ -294,7 +302,8 @@ static VALUE Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   return Qnil;
 }
 
-static VALUE Texture_clear(VALUE self)
+static VALUE
+Texture_clear(VALUE self)
 {
   rb_check_frozen(self);
   
@@ -309,7 +318,8 @@ static VALUE Texture_clear(VALUE self)
   return Qnil;
 }
 
-static VALUE Texture_dispose(VALUE self)
+static VALUE
+Texture_dispose(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -318,14 +328,16 @@ static VALUE Texture_dispose(VALUE self)
   return Qnil;
 }
 
-static VALUE Texture_disposed(VALUE self)
+static VALUE
+Texture_disposed(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   return !texture->pixels ? Qtrue : Qfalse;
 }
 
-static VALUE Texture_dump(VALUE self, VALUE rbFormat)
+static VALUE
+Texture_dump(VALUE self, VALUE rbFormat)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -353,7 +365,8 @@ static VALUE Texture_dump(VALUE self, VALUE rbFormat)
   return rbResult;
 }
 
-static VALUE Texture_fill(VALUE self, VALUE rbColor)
+static VALUE
+Texture_fill(VALUE self, VALUE rbColor)
 {
   rb_check_frozen(self);
   
@@ -375,9 +388,9 @@ static VALUE Texture_fill(VALUE self, VALUE rbColor)
   return Qnil;
 }
 
-static VALUE Texture_fill_rect(VALUE self,
-                               VALUE rbX, VALUE rbY,
-                               VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
+static VALUE
+Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
+                  VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
 {
   rb_check_frozen(self);
   
@@ -405,7 +418,8 @@ static VALUE Texture_fill_rect(VALUE self,
   return Qnil;
 }
 
-static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
+static VALUE
+Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 {
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
@@ -430,7 +444,8 @@ static VALUE Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
                     INT2NUM(color.alpha));
 }
 
-static VALUE Texture_height(VALUE self)
+static VALUE
+Texture_height(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -441,8 +456,40 @@ static VALUE Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
+static VALUE
+Texture_render_in_perspective(VALUE self, VALUE rbTexture,
+                              VALUE rbCameraX, VALUE rbCameraY, 
+                              VALUE rbCameraHeight, VALUE rbCameraAngle,
+                              VALUE rbDistance)
+{
+  Texture* srcTexture;
+  Data_Get_Struct(rbTexture, Texture, srcTexture);
+  if (!srcTexture->pixels) {
+    rb_raise(rb_eRuntimeError, "can't use disposed texture");
+    return Qnil;
+  }
+
+  Texture* dstTexture;
+  Data_Get_Struct(self, Texture, dstTexture);
+  if (!dstTexture->pixels) {
+    rb_raise(rb_eRuntimeError, "can't use disposed texture");
+    return Qnil;
+  }
+
+  int width = dstTexture->width;
+  int height = dstTexture->height;
+  for (int j = 0; j < height; j++) {
+    for (int i = 0; i < width; i++) {
+      
+    }
+  }
+  
+  return Qnil;
+}
+
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
-static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
+static VALUE
+Texture_render_text(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbText, rbX, rbY, rbFont, rbColor, rbAntiAlias;
   rb_scan_args(argc, argv, "51",
@@ -546,7 +593,8 @@ static VALUE Texture_render_text(int argc, VALUE* argv, VALUE self)
     }\
   }\
 
-static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
+static VALUE
+Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
   
@@ -794,7 +842,8 @@ static VALUE Texture_render_texture(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Texture_save(int argc, VALUE* argv, VALUE self)
+static VALUE
+Texture_save(int argc, VALUE* argv, VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -842,7 +891,8 @@ static VALUE Texture_save(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
+static VALUE
+Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
   
@@ -867,7 +917,8 @@ static VALUE Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   return rbColor;
 }
 
-static VALUE Texture_size(VALUE self)
+static VALUE
+Texture_size(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -881,7 +932,8 @@ static VALUE Texture_size(VALUE self)
   return rbSize;
 }
 
-static VALUE Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
+static VALUE
+Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 {
   rb_check_frozen(self);
   
@@ -917,7 +969,8 @@ static VALUE Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   return Qnil;
 }
 
-static VALUE Texture_width(VALUE self)
+static VALUE
+Texture_width(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -928,7 +981,8 @@ static VALUE Texture_width(VALUE self)
   return INT2NUM(texture->width);
 }
 
-void InitializeTexture(void)
+void
+InitializeTexture(void)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_singleton_method(rb_cTexture, "load",     Texture_load,     1);
@@ -946,6 +1000,8 @@ void InitializeTexture(void)
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
+  rb_define_method(rb_cTexture, "render_in_perspective",
+                   Texture_render_in_perspective, 6);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

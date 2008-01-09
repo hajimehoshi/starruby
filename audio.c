@@ -14,24 +14,28 @@ volatile static VALUE symbol_position;
 volatile static VALUE symbol_time;
 volatile static VALUE symbol_volume;
 
-static VALUE Audio_bgm_position(VALUE self)
+static VALUE
+Audio_bgm_position(VALUE self)
 {
   return LONG2NUM(bgmPosition);
 }
 
-static VALUE Audio_bgm_volume(VALUE self)
+static VALUE
+Audio_bgm_volume(VALUE self)
 {
   return INT2NUM(bgmVolume);
 }
 
-static VALUE Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
+static VALUE
+Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
 {
   bgmVolume = NORMALIZE(NUM2INT(rbVolume), 0, 255);
   Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
   return INT2NUM(bgmVolume);
 }
 
-static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
+static VALUE
+Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
@@ -75,7 +79,8 @@ static VALUE Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
+static VALUE
+Audio_play_se(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
@@ -129,12 +134,14 @@ static VALUE Audio_play_se(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Audio_playing_bgm(VALUE self)
+static VALUE
+Audio_playing_bgm(VALUE self)
 {
   return Mix_PlayingMusic() ? Qtrue : Qfalse;
 }
 
-static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
+static VALUE
+Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbOptions;
   rb_scan_args(argc, argv, "01", &rbOptions);
@@ -156,7 +163,8 @@ static VALUE Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
+static VALUE
+Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbOptions;
   rb_scan_args(argc, argv, "01", &rbOptions);
@@ -179,7 +187,8 @@ static VALUE Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-void SdlMusicFinished(void)
+void
+SdlMusicFinished(void)
 {
   if (sdlBgm && bgmLoop) {
     bgmPosition = 0;
@@ -187,7 +196,8 @@ void SdlMusicFinished(void)
   }
 }
 
-void InitializeSdlAudio(void)
+void
+InitializeSdlAudio(void)
 {
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     rb_raise_sdl_mix_error();
@@ -195,7 +205,8 @@ void InitializeSdlAudio(void)
   Mix_HookMusicFinished(SdlMusicFinished);
 }
 
-void InitializeAudio(void)
+void
+InitializeAudio(void)
 {
   rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
   rb_define_module_function(rb_mAudio, "bgm_position", Audio_bgm_position,  0);
@@ -218,7 +229,8 @@ void InitializeAudio(void)
   rbCache = rb_iv_set(rb_mAudio, "cache", rb_hash_new());
 }
 
-void UpdateAudio(void)
+void
+UpdateAudio(void)
 {
   Uint32 now = SDL_GetTicks();
   if (Mix_PlayingMusic())

@@ -1,6 +1,7 @@
 #include "starruby.h"
 
-void AffineMatrix_Concat(AffineMatrix* restrict m1, AffineMatrix* restrict m2)
+void
+AffineMatrix_Concat(AffineMatrix* restrict m1, AffineMatrix* restrict m2)
 {
   *m1 = (AffineMatrix) {
     .a  = m2->a * m1->a  + m2->b * m1->c,
@@ -12,7 +13,8 @@ void AffineMatrix_Concat(AffineMatrix* restrict m1, AffineMatrix* restrict m2)
   };
 }
 
-void AffineMatrix_Invert(AffineMatrix* m)
+void
+AffineMatrix_Invert(AffineMatrix* m)
 {
   double det = m->a * m->d - m->b * m->c;
   if (det == 0)
@@ -27,21 +29,24 @@ void AffineMatrix_Invert(AffineMatrix* m)
   };
 }
 
-bool AffineMatrix_IsRegular(AffineMatrix* m)
+bool
+AffineMatrix_IsRegular(AffineMatrix* m)
 {
   return m->a * m->d - m->b * m->c != 0;
 }
 
-void AffineMatrix_Transform(AffineMatrix* m,
-                            double x, double y,
-                            double* restrict xOut, double* restrict yOut)
+void
+AffineMatrix_Transform(AffineMatrix* m,
+                       double x, double y,
+                       double* restrict xOut, double* restrict yOut)
 {
   *xOut = m->a * x + m->b * y + m->tx;
   *yOut = m->c * x + m->d * y + m->ty;
 }
 
 #ifdef DEBUG
-void TestAffineMatrix(void)
+void
+TestAffineMatrix(void)
 {
   printf("Begin Test: AffineMatrix\n");
   

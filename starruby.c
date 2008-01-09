@@ -1,7 +1,8 @@
 #define DEFINE_STARRUBY_EXTERN
 #include "starruby.h"
 
-VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
+VALUE
+GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 {
   char* path = StringValuePtr(rbPath);
   if (!RTEST(rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbPath))) {
@@ -34,7 +35,8 @@ VALUE GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
   }
 }
 
-void Init_starruby(void)
+void
+Init_starruby(void)
 {
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
     rb_raise_sdl_error();

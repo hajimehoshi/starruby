@@ -41,12 +41,14 @@ volatile static VALUE symbol_mouse;
 volatile static VALUE symbol_right;
 volatile static VALUE symbol_up;
 
-static VALUE Input_mouse_location(VALUE self)
+static VALUE
+Input_mouse_location(VALUE self)
 {
   return rb_iv_get(rb_mInput, "mouse_location");
 }
 
-static bool isPressed(int status, int duration, int delay, int interval)
+static bool
+isPressed(int status, int duration, int delay, int interval)
 {
   if (status <= 0 || duration == 0)
     return false;
@@ -63,7 +65,8 @@ static bool isPressed(int status, int duration, int delay, int interval)
   return false;
 }
 
-static VALUE Input_keys(int argc, VALUE* argv, VALUE self)
+static VALUE
+Input_keys(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbDevice, rbOptions;
   rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
@@ -129,7 +132,8 @@ static VALUE Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-void UpdateInput(int windowScale)
+void
+UpdateInput(int windowScale)
 {
   SDL_JoystickUpdate();
 
@@ -201,7 +205,8 @@ void UpdateInput(int windowScale)
   currentKey = key;\
 } while (false)
 
-void InitializeSdlInput()
+void
+InitializeSdlInput()
 {
   keyboardKeys = ALLOC(KeyboardKey);
   keyboardKeys->rbSymbol = Qundef;
@@ -281,7 +286,8 @@ void InitializeSdlInput()
   MEMZERO(mouse, Mouse, 1);
 }
 
-void InitializeInput(void)
+void
+InitializeInput(void)
 {
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
   rb_define_module_function(rb_mInput, "mouse_location",
@@ -303,7 +309,8 @@ void InitializeInput(void)
 }
 
 #ifdef DEBUG
-static KeyboardKey* searchKey(const char* name)
+static KeyboardKey*
+searchKey(const char* name)
 {
   volatile VALUE rbNameSymbol = ID2SYM(rb_intern(name));
   KeyboardKey* key = keyboardKeys;
@@ -315,7 +322,8 @@ static KeyboardKey* searchKey(const char* name)
   return NULL;
 }
 
-void TestInput(void)
+void
+TestInput(void)
 {
   printf("Begin Test: Input\n");
 

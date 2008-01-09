@@ -19,9 +19,9 @@ typedef struct FontFileInfo {
 } FontFileInfo;
 static FontFileInfo* fontFileInfos;
 
-static void SearchFont(VALUE rbFilePathOrName,
-                       VALUE* volatile rbRealFilePath,
-                       int* ttcIndex)
+static void
+SearchFont(VALUE rbFilePathOrName,
+           VALUE* volatile rbRealFilePath, int* ttcIndex)
 {
   *rbRealFilePath = Qnil;
   if (ttcIndex != NULL)
@@ -109,14 +109,16 @@ static void SearchFont(VALUE rbFilePathOrName,
   return;
 }
 
-static VALUE Font_exist(VALUE self, VALUE rbFilePath)
+static VALUE
+Font_exist(VALUE self, VALUE rbFilePath)
 {
   volatile VALUE rbRealFilePath = Qnil;
   SearchFont(rbFilePath, (VALUE*)&rbRealFilePath, NULL);
   return !NIL_P(rbRealFilePath) ? Qtrue : Qfalse;
 }
 
-static void Font_free(Font* font)
+static void
+Font_free(Font* font)
 {
   if (TTF_WasInit())
     TTF_CloseFont(font->sdlFont);
@@ -124,14 +126,16 @@ static void Font_free(Font* font)
   free(font);
 }
 
-static VALUE Font_alloc(VALUE klass)
+static VALUE
+Font_alloc(VALUE klass)
 {
   Font* font = ALLOC(Font);
   font->sdlFont = NULL;
   return Data_Wrap_Struct(klass, 0, Font_free, font);
 }
 
-static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
+static VALUE
+Font_initialize(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbSize, rbOptions;
   rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
@@ -180,7 +184,8 @@ static VALUE Font_initialize(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Font_bold(VALUE self)
+static VALUE
+Font_bold(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -191,7 +196,8 @@ static VALUE Font_bold(VALUE self)
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_BOLD) ? Qtrue : Qfalse;
 }
 
-static VALUE Font_dispose(VALUE self)
+static VALUE
+Font_dispose(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -201,14 +207,16 @@ static VALUE Font_dispose(VALUE self)
   return Qnil;
 }
 
-static VALUE Font_disposed(VALUE self)
+static VALUE
+Font_disposed(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
   return !(font->sdlFont) ? Qtrue : Qfalse;
 }
 
-static VALUE Font_italic(VALUE self)
+static VALUE
+Font_italic(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -219,7 +227,8 @@ static VALUE Font_italic(VALUE self)
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_ITALIC) ? Qtrue : Qfalse;
 }
 
-static VALUE Font_get_size(VALUE self, VALUE rbText)
+static VALUE
+Font_get_size(VALUE self, VALUE rbText)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -238,7 +247,8 @@ static VALUE Font_get_size(VALUE self, VALUE rbText)
   return rbSize;
 }
 
-static VALUE Font_name(VALUE self)
+static VALUE
+Font_name(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -249,7 +259,8 @@ static VALUE Font_name(VALUE self)
   return rb_str_new2(TTF_FontFaceFamilyName(font->sdlFont));
 }
 
-static VALUE Font_size(VALUE self)
+static VALUE
+Font_size(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -270,7 +281,8 @@ static VALUE Font_size(VALUE self)
   currentInfo = info;\
 } while (false)\
                  
-void InitializeSdlFont(void)
+void
+InitializeSdlFont(void)
 {
   if (TTF_Init())
     rb_raise_sdl_ttf_error();
@@ -355,7 +367,8 @@ void InitializeSdlFont(void)
 #endif
 }
 
-void InitializeFont(void)
+void
+InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
   rb_define_singleton_method(rb_cFont, "exist?", Font_exist, 1);

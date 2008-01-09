@@ -1,12 +1,14 @@
 #include "starruby.h"
 
-static VALUE Color_alloc(VALUE klass)
+static VALUE
+Color_alloc(VALUE klass)
 {
   Color* color = ALLOC(Color);
   return Data_Wrap_Struct(klass, 0, -1, color);
 }
 
-static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
+static VALUE
+Color_initialize(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbRed, rbGreen, rbBlue, rbAlpha;
   rb_scan_args(argc, argv, "31",
@@ -22,21 +24,24 @@ static VALUE Color_initialize(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Color_alpha(VALUE self)
+static VALUE
+Color_alpha(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
   return INT2NUM(color->alpha);
 }
 
-static VALUE Color_blue(VALUE self)
+static VALUE
+Color_blue(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
   return INT2NUM(color->blue);
 }
 
-static VALUE Color_eq(VALUE self, VALUE rbOther)
+static VALUE
+Color_eq(VALUE self, VALUE rbOther)
 {
   if (!rb_obj_is_kind_of(rbOther, rb_cColor))
     return Qfalse;
@@ -53,14 +58,16 @@ static VALUE Color_eq(VALUE self, VALUE rbOther)
           color1->alpha == color2->alpha) ? Qtrue : Qfalse;
 }
 
-static VALUE Color_green(VALUE self)
+static VALUE
+Color_green(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
   return INT2NUM(color->green);
 }
 
-static VALUE Color_hash(VALUE self)
+static VALUE
+Color_hash(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
@@ -68,14 +75,16 @@ static VALUE Color_hash(VALUE self)
                  (color->blue << 2 ) ^ color->alpha);
 }
 
-static VALUE Color_red(VALUE self)
+static VALUE
+Color_red(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
   return INT2NUM(color->red);
 }
 
-static VALUE Color_to_s(VALUE self)
+static VALUE
+Color_to_s(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
@@ -87,7 +96,8 @@ static VALUE Color_to_s(VALUE self)
   return rb_str_new2(str);
 }
 
-void InitializeColor(void)
+void
+InitializeColor(void)
 {
   rb_cColor = rb_define_class_under(rb_mStarRuby, "Color", rb_cObject);
   rb_define_alloc_func(rb_cColor, Color_alloc);

@@ -10,23 +10,27 @@ static bool running = false;
 static bool terminated = false;
 static int windowScale = 1;
 
-static VALUE Game_fps(VALUE self)
+static VALUE
+Game_fps(VALUE self)
 {
   return INT2NUM(fps);
 }
 
-static VALUE Game_fps_eq(VALUE self, VALUE rbFps)
+static VALUE
+Game_fps_eq(VALUE self, VALUE rbFps)
 {
   fps = NUM2INT(rbFps);
   return rbFps;
 }
 
-static VALUE Game_real_fps(VALUE self)
+static VALUE
+Game_real_fps(VALUE self)
 {
   return rb_float_new(realFps);
 }
 
-static VALUE DoLoop(SDL_Surface* screen)
+static VALUE
+DoLoop(SDL_Surface* screen)
 {
   running = true;
   terminated = false;
@@ -116,7 +120,8 @@ static VALUE DoLoop(SDL_Surface* screen)
   return Qnil;
 }
 
-static VALUE DisposeScreen(SDL_Surface* screen)
+static VALUE
+DisposeScreen(SDL_Surface* screen)
 {
   // SDL_FreeSurface(screen);
   screen = NULL;
@@ -127,7 +132,8 @@ static VALUE DisposeScreen(SDL_Surface* screen)
   return Qnil;
 }
 
-static VALUE DoLoopEnsure(SDL_Surface* screen)
+static VALUE
+DoLoopEnsure(SDL_Surface* screen)
 {
   DisposeScreen(screen);
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
@@ -137,7 +143,8 @@ static VALUE DoLoopEnsure(SDL_Surface* screen)
 }
 
 static VALUE Game_screen(VALUE);
-static VALUE Game_run(int argc, VALUE* argv, VALUE self)
+static VALUE
+Game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running) {
     rb_raise(rb_eStarRubyError, "already run");
@@ -179,28 +186,33 @@ static VALUE Game_run(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static VALUE Game_running(VALUE self)
+static VALUE
+Game_running(VALUE self)
 {
   return running ? Qtrue : Qfalse;
 }
 
-static VALUE Game_screen(VALUE self)
+static VALUE
+Game_screen(VALUE self)
 {
   return rb_iv_get(self, "screen");
 }
 
-static VALUE Game_terminate(VALUE self)
+static VALUE
+Game_terminate(VALUE self)
 {
   terminated = true;
   return Qnil;
 }
 
-static VALUE Game_title(VALUE self)
+static VALUE
+Game_title(VALUE self)
 {
   return rb_iv_get(self, "title");
 }
 
-static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
+static VALUE
+Game_title_eq(VALUE self, VALUE rbTitle)
 {
   Check_Type(rbTitle, T_STRING);
   if (SDL_WasInit(SDL_INIT_VIDEO))
@@ -208,7 +220,8 @@ static VALUE Game_title_eq(VALUE self, VALUE rbTitle)
   return rb_iv_set(self, "title", rbTitle);
 }
 
-void InitializeGame(void)
+void
+InitializeGame(void)
 {
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);

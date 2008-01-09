@@ -17,6 +17,7 @@ white = Color.new(255, 255, 255)
 
 Game.title = "Perspective"
 
+i = 0
 Game.run(320, 240, :window_scale => 2) do
   i = (i + 1) % 30
   keys = Input.keys(:keyboard)

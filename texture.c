@@ -268,7 +268,7 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
     h += angle * 6.0 / (2 * PI);
     if (6.0 <= h)
       h -= 6.0;
-    int ii = (int)floor(h);
+    int ii = (int)h;
     double f = h - ii;
     uint8_t v255 = max;
     uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
@@ -513,14 +513,14 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
       dstPixels += dstWidth;
       continue;
     }
+    double srcZInPSystem = -(dstHeight / 2) * j / dHeight + 0.5;
     for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
       double srcXInPSystem = distance * i / dHeight + 0.5;
-      double srcZInPSystem = -(dstHeight / 2) * j / dHeight + 0.5;
       double srcXDbl, srcYDbl;
       AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
                              &srcXDbl, &srcYDbl);
-      int srcX = (int)floor(srcXDbl + cameraX);
-      int srcY = (int)floor(srcYDbl + cameraY - distance);
+      int srcX = (int)(srcXDbl + cameraX);
+      int srcY = (int)(srcYDbl + cameraY - distance);
       if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)
         *dstPixels = srcPixels[srcX + srcY * srcWidth];
     }
@@ -792,7 +792,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   AffineMatrix matInv = mat;
   AffineMatrix_Invert(&matInv);
   double srcOX, srcOY;
-  AffineMatrix_Transform(&matInv, dstX0 + .5, dstY0 + .5, &srcOX, &srcOY);
+  AffineMatrix_Transform(&matInv, dstX0 + 0.5, dstY0 + 0.5, &srcOX, &srcOY);
   srcOX += srcX;
   srcOY += srcY;
   double srcDXX = matInv.a;
@@ -815,12 +815,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
   int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
   
-  int_fast32_t srcOX16  = (int)floor(srcOX  * (1 << 16));
-  int_fast32_t srcOY16  = (int)floor(srcOY  * (1 << 16));
-  int_fast32_t srcDXX16 = (int)floor(srcDXX * (1 << 16));
-  int_fast32_t srcDXY16 = (int)floor(srcDXY * (1 << 16));
-  int_fast32_t srcDYX16 = (int)floor(srcDYX * (1 << 16));
-  int_fast32_t srcDYY16 = (int)floor(srcDYY * (1 << 16));
+  int_fast32_t srcOX16  = (int)(srcOX  * (1 << 16));
+  int_fast32_t srcOY16  = (int)(srcOY  * (1 << 16));
+  int_fast32_t srcDXX16 = (int)(srcDXX * (1 << 16));
+  int_fast32_t srcDXY16 = (int)(srcDXY * (1 << 16));
+  int_fast32_t srcDYX16 = (int)(srcDYX * (1 << 16));
+  int_fast32_t srcDYY16 = (int)(srcDYY * (1 << 16));
   Pixel* src;
   Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
   

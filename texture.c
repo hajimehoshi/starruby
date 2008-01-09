@@ -461,6 +461,8 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
                               VALUE rbCameraX, VALUE rbCameraY, 
                               VALUE rbCameraAngle, VALUE rbDistance)
 {
+  rb_check_frozen(self);
+  
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   if (!srcTexture->pixels) {
@@ -472,6 +474,11 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
   Data_Get_Struct(self, Texture, dstTexture);
   if (!dstTexture->pixels) {
     rb_raise(rb_eRuntimeError, "can't use disposed texture");
+    return Qnil;
+  }
+
+  if (srcTexture == dstTexture) {
+    rb_raise(rb_eRuntimeError, "can't render self in perspective");
     return Qnil;
   }
 
@@ -507,13 +514,13 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
       continue;
     }
     for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
-      double srcXInPSystem = distance * i / dHeight;
-      double srcZInPSystem = -(dstHeight / 2) * j / dHeight;
+      double srcXInPSystem = distance * i / dHeight + 0.5;
+      double srcZInPSystem = -(dstHeight / 2) * j / dHeight + 0.5;
       double srcXDbl, srcYDbl;
       AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
                              &srcXDbl, &srcYDbl);
-      int srcX = (int)floor(srcXDbl + cameraX + 0.5);
-      int srcY = (int)floor(srcYDbl + cameraY - distance + 0.5);
+      int srcX = (int)floor(srcXDbl + cameraX);
+      int srcY = (int)floor(srcYDbl + cameraY - distance);
       if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)
         *dstPixels = srcPixels[srcX + srcY * srcWidth];
     }

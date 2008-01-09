@@ -403,8 +403,8 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
 
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
-  int rectWidth = NUM2INT(rbWidth);
-  int rectHeight= NUM2INT(rbHeight);
+  int rectWidth  = NUM2INT(rbWidth);
+  int rectHeight = NUM2INT(rbHeight);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
 

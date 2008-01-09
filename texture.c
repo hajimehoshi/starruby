@@ -459,8 +459,7 @@ Texture_height(VALUE self)
 static VALUE
 Texture_render_in_perspective(VALUE self, VALUE rbTexture,
                               VALUE rbCameraX, VALUE rbCameraY, 
-                              VALUE rbCameraHeight, VALUE rbCameraAngle,
-                              VALUE rbDistance)
+                              VALUE rbCameraAngle, VALUE rbDistance)
 {
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
@@ -476,11 +475,47 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
     return Qnil;
   }
 
-  int width = dstTexture->width;
-  int height = dstTexture->height;
-  for (int j = 0; j < height; j++) {
-    for (int i = 0; i < width; i++) {
-      
+  int cameraX        = NUM2INT(rbCameraX);
+  int cameraY        = NUM2INT(rbCameraY);
+  double cameraAngle = NUM2DBL(rbCameraAngle);
+  int distance       = NUM2INT(rbDistance);
+
+  int srcWidth  = srcTexture->width;
+  int srcHeight = srcTexture->height;
+  int dstWidth  = dstTexture->width;
+  int dstHeight = dstTexture->height;
+  Pixel* srcPixels = srcTexture->pixels;
+  Pixel* dstPixels = dstTexture->pixels;
+  AffineMatrix mat = {
+    .a = 1, .b = 0, .tx = 0,
+    .c = 0, .d = 1, .ty = -distance,
+  };
+  double c = cos(cameraAngle);
+  double s = sin(cameraAngle);
+  AffineMatrix_Concat(&mat, &(AffineMatrix) {
+    .a = c, .b = -s, .tx = 0,
+    .c = s, .d = c,  .ty = 0,
+  });
+  AffineMatrix_Concat(&mat, &(AffineMatrix) {
+    .a = 1, .b = 0, .tx = 0,
+    .c = 0, .d = 1, .ty = distance,
+  });
+  for (int j = dstHeight / 2 - 1; -dstHeight / 2 <= j; j--) {
+    int dHeight = (dstHeight / 2) - j;
+    if (dHeight <= 0) {
+      dstPixels += dstWidth;
+      continue;
+    }
+    for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
+      double srcXInPSystem = distance * i / dHeight;
+      double srcZInPSystem = -(dstHeight / 2) * j / dHeight;
+      double srcXDbl, srcYDbl;
+      AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
+                             &srcXDbl, &srcYDbl);
+      int srcX = (int)floor(srcXDbl + cameraX + 0.5);
+      int srcY = (int)floor(srcYDbl + cameraY - distance + 0.5);
+      if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)
+        *dstPixels = srcPixels[srcX + srcY * srcWidth];
     }
   }
   
@@ -1001,7 +1036,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
   rb_define_method(rb_cTexture, "render_in_perspective",
-                   Texture_render_in_perspective, 6);
+                   Texture_render_in_perspective, 5);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

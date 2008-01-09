@@ -19,7 +19,7 @@ include StarRuby
 class StarRubyTest < Test::Unit::TestCase
   
   def test_version
-    assert_equal "0.1.11", StarRuby::VERSION
+    assert_equal "0.1.12", StarRuby::VERSION
   end
   
 end

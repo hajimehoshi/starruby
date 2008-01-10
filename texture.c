@@ -503,7 +503,7 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
   double s = sin(cameraAngle);
   AffineMatrix mat = {
     .a = c, .b = -s, .tx = 0,
-    .c = s, .d = c, .ty = 0,
+    .c = s, .d = c,  .ty = 0,
   };
   int jTop, jBottom;
   if (0 < cameraHeight) {
@@ -520,9 +520,10 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
       dstPixels += dstWidth;
       continue;
     }
-    double srcZInPSystem = -distance * cameraHeight / dHeight;
+    double scale = cameraHeight / dHeight;
+    double srcZInPSystem = -distance * scale;
     for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
-      double srcXInPSystem = i * cameraHeight / dHeight;
+      double srcXInPSystem = i * scale;
       double srcXDbl, srcYDbl;
       AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
                              &srcXDbl, &srcYDbl);

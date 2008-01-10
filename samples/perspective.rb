@@ -5,9 +5,10 @@ include StarRuby
 
 texture = Texture.load("images/ruby")
 
-camera = Struct.new(:x, :y, :angle_n).new
+camera = Struct.new(:x, :y, :height, :angle_n).new
 camera.x = texture.width / 2
 camera.y = texture.height / 2
+camera.height = 20
 camera.angle_n = 0
 
 viewport = Texture.new(160, 120)
@@ -31,6 +32,11 @@ Game.run(320, 240, :window_scale => 2) do
   elsif keys.include?(:down)
     camera.y += 1
   end
+  if keys.include?(:w)
+    camera.height += 1
+  elsif keys.include?(:z)
+    camera.height -= 1
+  end
   if keys.include?(:a)
     camera.angle_n = (camera.angle_n + 63) % 64
   elsif keys.include?(:s)
@@ -39,7 +45,7 @@ Game.run(320, 240, :window_scale => 2) do
   
   angle = camera.angle_n * 2 * Math::PI / 64
   viewport.clear
-  viewport.render_in_perspective(texture, camera.x, camera.y, angle, 60)
+  viewport.render_in_perspective(texture, camera.x, camera.y, camera.height, angle, 60)
   
   s = Game.screen
   s.clear

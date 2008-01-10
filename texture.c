@@ -459,7 +459,8 @@ Texture_height(VALUE self)
 static VALUE
 Texture_render_in_perspective(VALUE self, VALUE rbTexture,
                               VALUE rbCameraX, VALUE rbCameraY, 
-                              VALUE rbCameraAngle, VALUE rbDistance)
+                              VALUE rbCameraHeight, VALUE rbCameraAngle,
+                              VALUE rbDistance)
 {
   rb_check_frozen(self);
   
@@ -484,9 +485,12 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
 
   int cameraX        = NUM2INT(rbCameraX);
   int cameraY        = NUM2INT(rbCameraY);
-  int cameraHeight   = dstTexture->height;
+  int cameraHeight   = NUM2DBL(rbCameraHeight);
   double cameraAngle = NUM2DBL(rbCameraAngle);
   double distance    = NUM2DBL(rbDistance);
+
+  if (cameraHeight == 0)
+    return Qnil;
 
   int srcWidth  = srcTexture->width;
   int srcHeight = srcTexture->height;
@@ -501,9 +505,18 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
     .a = c, .b = -s, .tx = 0,
     .c = s, .d = c, .ty = 0,
   };
-  for (int j = dstHeight - 1; 0 <= j; j--) {
+  int jTop, jBottom;
+  if (0 < cameraHeight) {
+    jBottom = cameraHeight - dstHeight;
+    jTop    = cameraHeight;
+  } else {
+    jBottom = cameraHeight;
+    jTop    = cameraHeight + dstHeight;
+  }
+  for (int j = jTop - 1; jBottom <= j; j--) {
     double dHeight = cameraHeight - j;
-    if (dHeight <= 0) {
+    if ((0 < cameraHeight && dHeight <= 0) ||
+        (cameraHeight < 0 && 0 <= dHeight)) {
       dstPixels += dstWidth;
       continue;
     }
@@ -1037,7 +1050,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
   rb_define_method(rb_cTexture, "render_in_perspective",
-                   Texture_render_in_perspective, 5);
+                   Texture_render_in_perspective, 6);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

@@ -486,7 +486,7 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
   int cameraY        = NUM2INT(rbCameraY);
   int cameraHeight   = dstTexture->height;
   double cameraAngle = NUM2DBL(rbCameraAngle);
-  int distance       = NUM2INT(rbDistance);
+  double distance    = NUM2DBL(rbDistance);
 
   int srcWidth  = srcTexture->width;
   int srcHeight = srcTexture->height;
@@ -507,7 +507,7 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
       dstPixels += dstWidth;
       continue;
     }
-    double srcZInPSystem = -distance * j / (double)dHeight + 0.5;
+    double srcZInPSystem = -distance * j / dHeight + 0.5 - distance;
     for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
       double srcXInPSystem = i * cameraHeight / (double)dHeight + 0.5;
       double srcXDbl, srcYDbl;

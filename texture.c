@@ -520,9 +520,9 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
       dstPixels += dstWidth;
       continue;
     }
-    double srcZInPSystem = -distance * cameraHeight / dHeight + 0.5;
+    double srcZInPSystem = -distance * cameraHeight / dHeight;
     for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
-      double srcXInPSystem = i * cameraHeight / dHeight + 0.5;
+      double srcXInPSystem = i * cameraHeight / dHeight;
       double srcXDbl, srcYDbl;
       AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
                              &srcXDbl, &srcYDbl);

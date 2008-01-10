@@ -515,14 +515,14 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
   }
   for (int j = jTop - 1; jBottom <= j; j--) {
     double dHeight = cameraHeight - j;
-    if ((0 < cameraHeight && dHeight <= 0) ||
-        (cameraHeight < 0 && 0 <= dHeight)) {
+    if ((0 < cameraHeight && (dHeight <= 0)) ||
+        (cameraHeight < 0 && (0 <= dHeight))) {
       dstPixels += dstWidth;
       continue;
     }
-    double srcZInPSystem = -distance * j / dHeight + 0.5 - distance;
+    double srcZInPSystem = -distance * cameraHeight / dHeight + 0.5;
     for (int i = -dstWidth / 2; i < dstWidth / 2; i++, dstPixels++) {
-      double srcXInPSystem = i * cameraHeight / (double)dHeight + 0.5;
+      double srcXInPSystem = i * cameraHeight / dHeight + 0.5;
       double srcXDbl, srcYDbl;
       AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
                              &srcXDbl, &srcYDbl);

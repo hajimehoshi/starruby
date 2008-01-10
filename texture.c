@@ -498,13 +498,8 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
   int dstHeight = dstTexture->height;
   Pixel* srcPixels = srcTexture->pixels;
   Pixel* dstPixels = dstTexture->pixels;
-  // Z Axis is in a downward direction
-  double c = cos(cameraAngle);
-  double s = sin(cameraAngle);
-  AffineMatrix mat = {
-    .a = c, .b = -s, .tx = 0,
-    .c = s, .d = c,  .ty = 0,
-  };
+  double cosAngle = cos(cameraAngle);
+  double sinAngle = sin(cameraAngle);
   int screenTop, screenBottom;
   if (0 < cameraHeight) {
     screenBottom = cameraHeight - dstHeight;
@@ -526,11 +521,10 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
     double srcZInPSystem = -distance * scale;
     for (int i = screenLeft; i < screenRight; i++, dstPixels++) {
       double srcXInPSystem = i * scale;
-      double srcXDbl, srcYDbl;
-      AffineMatrix_Transform(&mat, srcXInPSystem, srcZInPSystem,
-                             &srcXDbl, &srcYDbl);
-      int srcX = (int)(srcXDbl + cameraX);
-      int srcY = (int)(srcYDbl + cameraY);
+      int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
+                       + cameraX);
+      int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
+                       + cameraY);
       if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)
         *dstPixels = srcPixels[srcX + srcY * srcWidth];
     }

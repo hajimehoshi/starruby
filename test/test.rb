@@ -273,7 +273,7 @@ class GameTest < Test::Unit::TestCase
     assert_equal 33, (Game.fps = 33)
     assert_equal 33, Game.fps
   end
-
+  
   def test_game_type
     assert_raise TypeError do
       Game.title = nil

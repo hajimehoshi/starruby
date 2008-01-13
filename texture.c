@@ -820,7 +820,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   } else {
     RENDER_TEXTURE_LOOP({
       if (saturation < 255) {
-        uint8_t y = 0.30 * srcR + 0.59 * srcG + 0.11 * srcB;
+        // http://www.poynton.com/ColorFAQ.html
+        uint8_t y = (6969 * srcR + 23434 * srcG + 2365 * srcB) / 32768;
         srcR = ALPHA(srcR, y, saturation);
         srcG = ALPHA(srcG, y, saturation);
         srcB = ALPHA(srcB, y, saturation);

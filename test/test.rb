@@ -1354,7 +1354,7 @@ class TextureTest < Test::Unit::TestCase
         p2 = texture2.get_pixel(x, y)
         case p1.alpha
         when 255
-          gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
+          gray = (6969 * p1.red + 23434 * p1.green + 2365 * p1.blue) / 32768
           assert_in_delta (gray + p1.red) / 2,   p2.red,   1
           assert_in_delta (gray + p1.green) / 2, p2.green, 1
           assert_in_delta (gray + p1.blue) / 2,  p2.blue,  1
@@ -1377,7 +1377,7 @@ class TextureTest < Test::Unit::TestCase
         case p1.alpha
         when 255
           assert(p2.red == p2.green && p2.green == p2.blue)
-          gray = 0.3 * p1.red + 0.59 * p1.green + 0.11 * p1.blue
+          gray = (6969 * p1.red + 23434 * p1.green + 2365 * p1.blue) / 32768
           assert_in_delta gray, p2.red, 1
         when 0
           assert_equal p1.red,   p2.red

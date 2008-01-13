@@ -34,11 +34,13 @@ DoLoop(SDL_Surface* screen)
 {
   running = true;
   terminated = false;
+  realFps = 0;
   
-  volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen  = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen2 = rb_iv_get(rb_mGame, "screen2");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
-  
+
   SDL_Event event;
   Uint32 now;
   int nowX;
@@ -50,9 +52,7 @@ DoLoop(SDL_Surface* screen)
   while (true) {
     if (SDL_PollEvent(&event) != 0 && event.type == SDL_QUIT)
       break;
-    
     counter++;
-    
     while (true) {
       now = SDL_GetTicks();
       nowX = (now - before) * (fps / 10) + errorX;
@@ -62,19 +62,16 @@ DoLoop(SDL_Surface* screen)
     }
     before = now;
     errorX = nowX % 100;
-    
     if ((now - before2) >= 1000) {
       realFps = (double)counter / (now - before2) * 1000;
       counter = 0;
       before2 = now;
     }
-
     UpdateAudio();
     UpdateInput(windowScale);
     
     rb_yield(Qnil);
     
-    Uint32* dst = screen->pixels;
     int length = texture->width * texture->height;
     Pixel* p = texture->pixels;
     Pixel src[length];
@@ -86,6 +83,7 @@ DoLoop(SDL_Surface* screen)
     }
     
     SDL_LockSurface(screen);
+    Uint32* dst = screen->pixels;
     switch (windowScale) {
     case 1:
       MEMCPY(dst, src, Pixel, length);
@@ -93,18 +91,18 @@ DoLoop(SDL_Surface* screen)
     case 2:
       {
         Pixel* srcP = src;
-        int width  = texture->width;
-        int width2 = width * 2;
+        int width   = texture->width;
+        int width2x = width * 2;
         int height = texture->height;
         for (int j = 0; j < height; j++) {
           for (int i = 0; i < width; i++) {
-            *dst = *(dst + width2) = srcP->value;
+            *dst = *(dst + width2x) = srcP->value;
             dst++;
-            *dst = *(dst + width2) = srcP->value;
+            *dst = *(dst + width2x) = srcP->value;
             dst++;
             srcP++;
           }
-          dst += width2;
+          dst += width2x;
         }
       }
       break;
@@ -123,7 +121,6 @@ DoLoop(SDL_Surface* screen)
 static VALUE
 DisposeScreen(SDL_Surface* screen)
 {
-  // SDL_FreeSurface(screen);
   screen = NULL;
   volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   if (!NIL_P(rbScreen))
@@ -174,10 +171,39 @@ Game_run(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                                        INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen", rbScreen);
-  
+  rb_iv_set(self, "screen2", Qnil);
+
   Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
-  SDL_Surface* screen =
-    SDL_SetVideoMode(width * windowScale, height * windowScale, 32, options);
+  if (fullscreen) {
+    options |= SDL_FULLSCREEN;
+    SDL_Rect** modes = SDL_ListModes(NULL, options);
+    if (!modes) {
+      rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
+      return Qnil;
+    }
+    if (modes != (SDL_Rect**)-1) {
+      int width2  = 0;
+      int height2 = 0;
+      for (int i = 0; modes[i]; i++) {
+        if (modes[i]->w < width && modes[i]->h < height) {
+          width2  = modes[i]->w;
+          height2 = modes[i]->h;
+        } else {
+          break;
+        }
+      }
+      if (width2 == 0 || height2 == 0) {
+        rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
+        return Qnil;
+      }
+      volatile VALUE rbScreen2 = rb_funcall(rb_cTexture, rb_intern("new"), 2,
+                                            INT2NUM(width2), INT2NUM(height2));
+      rb_iv_set(self, "screen2", rbScreen2);
+    }
+  }
+  int screenWidth = width * windowScale;
+  int screenHeight = height * windowScale;
+  SDL_Surface* screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, options);
   if (!screen) {
     DisposeScreen(screen);
     rb_raise_sdl_error();

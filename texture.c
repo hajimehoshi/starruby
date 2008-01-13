@@ -312,6 +312,83 @@ Texture_disposed(VALUE self)
 }
 
 static VALUE
+Texture_draw_in_perspective(VALUE self, VALUE rbTexture,
+                            VALUE rbCameraX, VALUE rbCameraY, 
+                            VALUE rbCameraHeight, VALUE rbCameraAngle,
+                            VALUE rbDistance)
+{
+  rb_check_frozen(self);
+  
+  Texture* srcTexture;
+  Data_Get_Struct(rbTexture, Texture, srcTexture);
+  if (!srcTexture->pixels) {
+    rb_raise(rb_eRuntimeError, "can't use disposed texture");
+    return Qnil;
+  }
+
+  Texture* dstTexture;
+  Data_Get_Struct(self, Texture, dstTexture);
+  if (!dstTexture->pixels) {
+    rb_raise(rb_eRuntimeError, "can't use disposed texture");
+    return Qnil;
+  }
+
+  if (srcTexture == dstTexture) {
+    rb_raise(rb_eRuntimeError, "can't render self in perspective");
+    return Qnil;
+  }
+
+  int cameraX        = NUM2INT(rbCameraX);
+  int cameraY        = NUM2INT(rbCameraY);
+  int cameraHeight   = NUM2DBL(rbCameraHeight);
+  double cameraAngle = NUM2DBL(rbCameraAngle);
+  double distance    = NUM2DBL(rbDistance);
+
+  if (cameraHeight == 0)
+    return Qnil;
+
+  int srcWidth  = srcTexture->width;
+  int srcHeight = srcTexture->height;
+  int dstWidth  = dstTexture->width;
+  int dstHeight = dstTexture->height;
+  Pixel* srcPixels = srcTexture->pixels;
+  Pixel* dstPixels = dstTexture->pixels;
+  double cosAngle = cos(cameraAngle);
+  double sinAngle = sin(cameraAngle);
+  int screenTop, screenBottom;
+  if (0 < cameraHeight) {
+    screenBottom = cameraHeight - dstHeight;
+    screenTop    = cameraHeight;
+  } else {
+    screenBottom = cameraHeight;
+    screenTop    = cameraHeight + dstHeight;
+  }
+  int screenLeft  = -dstWidth / 2;
+  int screenRight = dstWidth / 2;
+  for (int j = screenTop - 1; screenBottom <= j; j--) {
+    double dHeight = cameraHeight - j;
+    if ((0 < cameraHeight && (dHeight <= 0)) ||
+        (cameraHeight < 0 && (0 <= dHeight))) {
+      dstPixels += dstWidth;
+      continue;
+    }
+    double scale = cameraHeight / dHeight;
+    double srcZInPSystem = -distance * scale;
+    for (int i = screenLeft; i < screenRight; i++, dstPixels++) {
+      double srcXInPSystem = i * scale;
+      int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
+                       + cameraX);
+      int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
+                       + cameraY);
+      if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)
+        *dstPixels = srcPixels[srcX + srcY * srcWidth];
+    }
+  }
+  
+  return Qnil;
+}
+
+static VALUE
 Texture_dump(VALUE self, VALUE rbFormat)
 {
   Texture* texture;
@@ -429,83 +506,6 @@ Texture_height(VALUE self)
     return Qnil;
   }
   return INT2NUM(texture->height);
-}
-
-static VALUE
-Texture_render_in_perspective(VALUE self, VALUE rbTexture,
-                              VALUE rbCameraX, VALUE rbCameraY, 
-                              VALUE rbCameraHeight, VALUE rbCameraAngle,
-                              VALUE rbDistance)
-{
-  rb_check_frozen(self);
-  
-  Texture* srcTexture;
-  Data_Get_Struct(rbTexture, Texture, srcTexture);
-  if (!srcTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't use disposed texture");
-    return Qnil;
-  }
-
-  Texture* dstTexture;
-  Data_Get_Struct(self, Texture, dstTexture);
-  if (!dstTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't use disposed texture");
-    return Qnil;
-  }
-
-  if (srcTexture == dstTexture) {
-    rb_raise(rb_eRuntimeError, "can't render self in perspective");
-    return Qnil;
-  }
-
-  int cameraX        = NUM2INT(rbCameraX);
-  int cameraY        = NUM2INT(rbCameraY);
-  int cameraHeight   = NUM2DBL(rbCameraHeight);
-  double cameraAngle = NUM2DBL(rbCameraAngle);
-  double distance    = NUM2DBL(rbDistance);
-
-  if (cameraHeight == 0)
-    return Qnil;
-
-  int srcWidth  = srcTexture->width;
-  int srcHeight = srcTexture->height;
-  int dstWidth  = dstTexture->width;
-  int dstHeight = dstTexture->height;
-  Pixel* srcPixels = srcTexture->pixels;
-  Pixel* dstPixels = dstTexture->pixels;
-  double cosAngle = cos(cameraAngle);
-  double sinAngle = sin(cameraAngle);
-  int screenTop, screenBottom;
-  if (0 < cameraHeight) {
-    screenBottom = cameraHeight - dstHeight;
-    screenTop    = cameraHeight;
-  } else {
-    screenBottom = cameraHeight;
-    screenTop    = cameraHeight + dstHeight;
-  }
-  int screenLeft  = -dstWidth / 2;
-  int screenRight = dstWidth / 2;
-  for (int j = screenTop - 1; screenBottom <= j; j--) {
-    double dHeight = cameraHeight - j;
-    if ((0 < cameraHeight && (dHeight <= 0)) ||
-        (cameraHeight < 0 && (0 <= dHeight))) {
-      dstPixels += dstWidth;
-      continue;
-    }
-    double scale = cameraHeight / dHeight;
-    double srcZInPSystem = -distance * scale;
-    for (int i = screenLeft; i < screenRight; i++, dstPixels++) {
-      double srcXInPSystem = i * scale;
-      int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
-                       + cameraX);
-      int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
-                       + cameraY);
-      if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)
-        *dstPixels = srcPixels[srcX + srcY * srcWidth];
-    }
-  }
-  
-  return Qnil;
 }
 
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
@@ -1016,13 +1016,13 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
   rb_define_method(rb_cTexture, "dispose",        Texture_dispose,         0);
   rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,        0);
+  rb_define_method(rb_cTexture, "draw_in_perspective",
+                   Texture_draw_in_perspective, 6);
   rb_define_method(rb_cTexture, "dump",           Texture_dump,            1);
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
-  rb_define_method(rb_cTexture, "render_in_perspective",
-                   Texture_render_in_perspective, 6);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

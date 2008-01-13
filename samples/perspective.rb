@@ -51,7 +51,7 @@ Game.run(320, 240, :window_scale => 2) do
   
   angle = camera.angle_n * 2 * Math::PI / 64
   screen.clear
-  screen.render_in_perspective(texture, camera.x, camera.y, camera.height, angle, distance)
+  screen.draw_in_perspective(texture, camera.x, camera.y, camera.height, angle, distance)
   
   s = Game.screen
   s.clear

@@ -89,50 +89,25 @@ Texture_load(VALUE self, VALUE rbPath)
              "not supported interlacing PNG image: %s", path);
     return Qnil;
   }
+  if (colorType == PNG_COLOR_TYPE_PALETTE)
+    png_set_palette_to_rgb(pngPtr);
+  if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+    png_set_gray_1_2_4_to_8(pngPtr);
+  if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
+    png_set_tRNS_to_alpha(pngPtr);
+  png_read_update_info(pngPtr, infoPtr);
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
                                         INT2NUM(width), INT2NUM(height));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
   
   int channels = png_get_channels(pngPtr, infoPtr);
-
-  png_colorp palette;
-  int numPalette;
-  int colorKey = -1;
-  uint8_t* trans;
-  int numTrans;
-  png_color_16p transValues;
-  if (colorType == PNG_COLOR_TYPE_PALETTE) {
-    png_get_PLTE(pngPtr, infoPtr, &palette, &numPalette);
-    if (png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, &transValues)) {
-      for (int i = 0; i < numTrans; i++) {
-        if (trans[i] == 0) {
-          if (colorKey == -1)
-            colorKey = i;
-          else
-            break;
-        } else if (trans[i] != 0xff) {
-          break;
-        }
-      }
-    }
-  }
   for (int j = 0; j < height; j++) {
     png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);
     for (int i = 0; i < width; i++) {
       Color* c = &(texture->pixels[width * j + i].color);
       switch (channels) {
-      case 1:
-        {
-          int index = row[i];
-          png_color pc = palette[index];
-          c->red   = pc.red;
-          c->green = pc.green;
-          c->blue  = pc.blue;
-          c->alpha = (index != colorKey) ? 0xff : 0x00;
-        }
-        break;
       case 2:
         c->red = c->green = c->blue = row[i * channels];
         c->alpha = row[i * channels + 1];

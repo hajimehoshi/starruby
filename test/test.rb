@@ -808,56 +808,56 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
-  def test_draw_in_perspective
+  def test_render_in_perspective
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)
-    texture2.draw_in_perspective(texture, 0, 0, 20, 0, 30)
+    texture2.render_in_perspective(texture, 0, 0, 20, 0, 30)
     assert_raise TypeError do
-      texture2.draw_in_perspective(nil, 0, 0, 20, 0, 30)
+      texture2.render_in_perspective(nil, 0, 0, 20, 0, 30)
     end
     assert_raise TypeError do
-      texture2.draw_in_perspective(texture, nil, 0, 20, 0, 30)
+      texture2.render_in_perspective(texture, nil, 0, 20, 0, 30)
     end
     assert_raise TypeError do
-      texture2.draw_in_perspective(texture, 0, nil, 20, 0, 30)
+      texture2.render_in_perspective(texture, 0, nil, 20, 0, 30)
     end
     assert_raise TypeError do
-      texture2.draw_in_perspective(texture, 0, 0, nil, 0, 30)
+      texture2.render_in_perspective(texture, 0, 0, nil, 0, 30)
     end
     assert_raise TypeError do
-      texture2.draw_in_perspective(texture, 0, 0, 20, nil, 30)
+      texture2.render_in_perspective(texture, 0, 0, 20, nil, 30)
     end
     assert_raise TypeError do
-      texture2.draw_in_perspective(texture, 0, 0, 20, 0, nil)
+      texture2.render_in_perspective(texture, 0, 0, 20, 0, nil)
     end
     assert_raise RuntimeError do
-      texture2.draw_in_perspective(texture2, 0, 0, 20, 0, 30) # self
+      texture2.render_in_perspective(texture2, 0, 0, 20, 0, 30) # self
     end
   end
   
-  def test_draw_in_perspective_disposed
+  def test_render_in_perspective_disposed
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)
     texture.dispose
     assert_raise RuntimeError do
-      texture2.draw_in_perspective(texture, 0, 0, 20, 0, 30)
+      texture2.render_in_perspective(texture, 0, 0, 20, 0, 30)
     end
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)
     texture2.dispose
     assert_raise RuntimeError do
-      texture2.draw_in_perspective(texture, 0, 0, 20, 0, 30)
+      texture2.render_in_perspective(texture, 0, 0, 20, 0, 30)
     end
   end
   
-  def test_draw_in_perspective_frozen
+  def test_render_in_perspective_frozen
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)
     texture.freeze
-    texture2.draw_in_perspective(texture, 0, 0, 20, 0, 30)
+    texture2.render_in_perspective(texture, 0, 0, 20, 0, 30)
     texture2.freeze
     assert_raise FrozenError do
-      texture2.draw_in_perspective(texture, 0, 0, 20, 0, 30)
+      texture2.render_in_perspective(texture, 0, 0, 20, 0, 30)
     end
   end
 

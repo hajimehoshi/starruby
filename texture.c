@@ -502,10 +502,10 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
                        + cameraY);
       if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight) {
         Color* srcColor = &(src[srcX + srcY * srcWidth].color);
-        uint8_t srcAlpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
-        dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   srcAlpha);
-        dst->color.green = ALPHA(srcColor->green, dst->color.green, srcAlpha);
-        dst->color.blue  = ALPHA(srcColor->blue,  dst->color.blue,  srcAlpha);
+        uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
+        dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   alpha);
+        dst->color.green = ALPHA(srcColor->green, dst->color.green, alpha);
+        dst->color.blue  = ALPHA(srcColor->blue,  dst->color.blue,  alpha);
         dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
       }
     }
@@ -605,10 +605,9 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
       uint8_t dstR = dst->color.red;\
       uint8_t dstG = dst->color.green;\
       uint8_t dstB = dst->color.blue;\
-      uint8_t srcAlpha =\
-        (dst->color.alpha == 0) ? 255 : DIV255(src->color.alpha * alpha);\
-      dst->color.alpha = MAX(dst->color.alpha,\
-                             DIV255(src->color.alpha * alpha));\
+      uint8_t srcAlpha = DIV255(src->color.alpha * alpha);\
+      uint8_t pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;\
+      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
       convertingPixel;\
       dst->color.red   = dstR;\
       dst->color.green = dstG;\
@@ -815,9 +814,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
       blendType == ALPHA) {
     RENDER_TEXTURE_LOOP({
-      dstR = ALPHA(srcR, dstR, srcAlpha);
-      dstG = ALPHA(srcG, dstG, srcAlpha);
-      dstB = ALPHA(srcB, dstB, srcAlpha);
+      dstR = ALPHA(srcR, dstR, pixelAlpha);
+      dstG = ALPHA(srcG, dstG, pixelAlpha);
+      dstB = ALPHA(srcB, dstB, pixelAlpha);
     });
   } else {
     RENDER_TEXTURE_LOOP({
@@ -842,19 +841,19 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         srcB = ALPHA(0,   srcB, -toneBlue);
       switch (blendType) {
       case ALPHA:
-        dstR = ALPHA(srcR, dstR, srcAlpha);
-        dstG = ALPHA(srcG, dstG, srcAlpha);
-        dstB = ALPHA(srcB, dstB, srcAlpha);
+        dstR = ALPHA(srcR, dstR, pixelAlpha);
+        dstG = ALPHA(srcG, dstG, pixelAlpha);
+        dstB = ALPHA(srcB, dstB, pixelAlpha);
         break;
       case ADD:
-        dstR = MIN(255, dstR + DIV255(srcR * srcAlpha));
-        dstG = MIN(255, dstG + DIV255(srcG * srcAlpha));
-        dstB = MIN(255, dstB + DIV255(srcB * srcAlpha));
+        dstR = MIN(255, dstR + DIV255(srcR * pixelAlpha));
+        dstG = MIN(255, dstG + DIV255(srcG * pixelAlpha));
+        dstB = MIN(255, dstB + DIV255(srcB * pixelAlpha));
         break;
       case SUB:
-        dstR = MAX(0, (int)dstR - DIV255(srcR * srcAlpha));
-        dstG = MAX(0, (int)dstG - DIV255(srcG * srcAlpha));
-        dstB = MAX(0, (int)dstB - DIV255(srcB * srcAlpha));
+        dstR = MAX(0, (int)dstR - DIV255(srcR * pixelAlpha));
+        dstG = MAX(0, (int)dstG - DIV255(srcG * pixelAlpha));
+        dstB = MAX(0, (int)dstB - DIV255(srcB * pixelAlpha));
         break;
       }
     });

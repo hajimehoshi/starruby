@@ -7,15 +7,15 @@ texture = Texture.load("images/ruby")
 
 camera = Struct.new(:x, :y, :height, :angle_n).new
 camera.x = texture.width / 2
-camera.y = texture.height / 2
-camera.height = 40
+camera.y = texture.height
+camera.height = texture.height / 2
 camera.angle_n = 0
 
 screen = Texture.new(160, 120)
 
 font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
-distance = 100
+distance = texture.height
 
 Game.title = "Perspective"
 

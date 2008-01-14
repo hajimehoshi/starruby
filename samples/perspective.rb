@@ -15,7 +15,7 @@ screen = Texture.new(160, 120)
 
 font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
-distance = 60
+distance = 100
 
 Game.title = "Perspective"
 
@@ -49,9 +49,9 @@ Game.run(320, 240, :window_scale => 2) do
     distance -= 1
   end
   
+  screen.fill(Color.new(64, 64, 64, 255))
   angle = camera.angle_n * 2 * Math::PI / 64
-  screen.clear
-  screen.draw_in_perspective(texture, camera.x, camera.y, camera.height, angle, distance)
+  screen.render_in_perspective(texture, camera.x, camera.y, camera.height, angle, distance)
   
   s = Game.screen
   s.clear

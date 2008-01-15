@@ -18,7 +18,7 @@ options = {
   :camera_height  => texture.height / 2,
   :camera_angle_n => 0,
   :distance       => texture.height,
-  :vanishing_x    => texture.width / 2,
+  :vanishing_x    => screen_texture.width / 2,
   :vanishing_y    => 0,
   :loop           => false,
 }

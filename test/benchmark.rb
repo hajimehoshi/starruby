@@ -16,7 +16,13 @@ Benchmark.bm do |x|
   end
   x.report("perspective") do
     100.times do |i|
-      texture2.render_in_perspective(texture1, 500, 500, i % 19 + 10, i % 23, i % 27)
+      texture2.render_in_perspective(texture1, {
+        :camera_x => 500,
+        :camera_y => 500,
+        :camera_height => i % 19 + 10,
+        :camera_angle => i % 23,
+        :distance => i % 27,
+      })
     end
   end
 end

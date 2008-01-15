@@ -194,6 +194,63 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
   return Qnil;
 }
 
+static VALUE
+Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
+{
+  volatile VALUE rbX, rbY, rbHeight, rbOptions;
+  rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  double height = NUM2DBL(rbHeight);
+  
+  int cameraX = 0;
+  int cameraY = 0;
+  int cameraHeight = 0;
+  double cameraAngle = 0;
+  double distance = 0;
+  int vanishingX = 0;
+  int vanishingY = 0;
+  
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
+    cameraX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
+    cameraY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
+    cameraHeight = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle)))
+    cameraAngle = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
+    distance = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
+    vanishingX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
+    vanishingY = NUM2INT(val);
+  double cosAngle = cos(cameraAngle);
+  double sinAngle = sin(cameraAngle);
+  double xInPSystem = cosAngle  * (x - cameraX) + sinAngle * (y - cameraY);
+  double zInPSystem = -sinAngle * (x - cameraX) + cosAngle * (y - cameraY);
+
+  volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
+  OBJ_FREEZE(rbResult);
+  
+  if (zInPSystem == 0)
+    return rbResult;
+  
+  double scale = -distance / zInPSystem;
+  int newX = (int)(xInPSystem * scale + vanishingX);
+  int newY = (int)((cameraHeight - height) * scale + vanishingY);
+
+  RARRAY_PTR(rbResult)[0] = FIXABLE(newX) ? INT2FIX(newX) : Qnil;
+  RARRAY_PTR(rbResult)[1] = FIXABLE(newY) ? INT2FIX(newY) : Qnil;
+  RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
+  return rbResult;
+}
+
 static VALUE Texture_change_hue_bang(VALUE, VALUE);
 static VALUE
 Texture_change_hue(VALUE self, VALUE rbAngle)
@@ -471,8 +528,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   int cameraHeight = 0;
   double cameraAngle = 0;
   double distance = 0;
-  int vanishingX;
-  int vanishingY;
+  int vanishingX = 0;
+  int vanishingY = 0;
   
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
@@ -488,12 +545,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     distance = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
     vanishingX = NUM2INT(val);
-  else
-    vanishingX = dstTexture->width / 2;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
     vanishingY = NUM2INT(val);
-  else
-    vanishingY = 0;
   
   if (cameraHeight == 0)
     return Qnil;
@@ -981,73 +1034,6 @@ Texture_size(VALUE self)
 }
 
 static VALUE
-Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
-{
-  volatile VALUE rbX, rbY, rbHeight, rbOptions;
-  rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
-  Texture* dstTexture;
-  Data_Get_Struct(self, Texture, dstTexture);
-  if (!dstTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't use disposed texture");
-    return Qnil;
-  }
-
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
-  double height = NUM2DBL(rbHeight);
-  
-  int cameraX = 0;
-  int cameraY = 0;
-  int cameraHeight = 0;
-  double cameraAngle = 0;
-  double distance = 0;
-  int vanishingX;
-  int vanishingY;
-  
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
-    cameraX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
-    cameraY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
-    cameraHeight = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle)))
-    cameraAngle = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
-    distance = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
-    vanishingX = NUM2INT(val);
-  else
-    vanishingX = dstTexture->width / 2;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
-    vanishingY = NUM2INT(val);
-  else
-    vanishingY = 0;
-  double cosAngle = cos(cameraAngle);
-  double sinAngle = sin(cameraAngle);
-  double xInPSystem = cosAngle  * (x - cameraX) + sinAngle * (y - cameraY);
-  double zInPSystem = -sinAngle * (x - cameraX) + cosAngle * (y - cameraY);
-
-  volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
-  OBJ_FREEZE(rbResult);
-  
-  if (zInPSystem == 0)
-    return rbResult;
-  
-  double scale = -distance / zInPSystem;
-  int newX = (int)(xInPSystem * scale + vanishingX);
-  int newY = (int)((cameraHeight - height) * scale + vanishingY);
-
-  RARRAY_PTR(rbResult)[0] = FIXABLE(newX) ? INT2FIX(newX) : Qnil;
-  RARRAY_PTR(rbResult)[1] = FIXABLE(newY) ? INT2FIX(newY) : Qnil;
-  RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
-  return rbResult;
-}
-
-static VALUE
 Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 {
   rb_check_frozen(self);
@@ -1105,6 +1091,8 @@ InitializeTexture(void)
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
+  rb_define_singleton_method(rb_cTexture, "transform_in_perspective",
+                             Texture_transform_in_perspective, -1);
   rb_define_method(rb_cTexture, "change_hue",     Texture_change_hue,      1);
   rb_define_method(rb_cTexture, "change_hue!",    Texture_change_hue_bang, 1);
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
@@ -1122,8 +1110,6 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,       3);
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
-  rb_define_method(rb_cTexture, "transform_in_perspective",
-                   Texture_transform_in_perspective, -1);
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 

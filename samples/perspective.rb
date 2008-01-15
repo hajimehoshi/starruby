@@ -66,8 +66,10 @@ Game.run(320, 240, :window_scale => 2) do
   options.merge!(:camera_angle => options[:camera_angle_n] * 2 * Math::PI / 64)
   screen_texture.render_in_perspective(texture, options)
   [[-20, -20], [-20, 20], [20, -20], [20, 20], [0, 0]].map do |dx, dy|
+    x = texture.width / 2 + dx
+    y = texture.height / 2 + dy
     height = (dx == 0 and dy == 0) ? 20 : 0
-    screen_texture.transform_in_perspective(texture.width / 2 + dx, texture.height / 2 + dy, height, options)
+    Texture.transform_in_perspective(x, y, height, options)
   end.select do |x, y, scale|
     x and y and scale and 0 < scale
   end.sort do |a, b|

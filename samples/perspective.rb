@@ -5,7 +5,7 @@ include StarRuby
 
 texture = Texture.load("images/ruby")
 
-center_texture = Texture.load("images/star")
+star_texture = Texture.load("images/star")
 
 point_texture = Texture.new(3, 3)
 point_texture.fill(Color.new(255, 255, 0))
@@ -65,16 +65,19 @@ Game.run(320, 240, :window_scale => 2) do
   screen_texture.fill(Color.new(64, 64, 64, 255))
   options.merge!(:camera_angle => options[:camera_angle_n] * 2 * Math::PI / 64)
   screen_texture.render_in_perspective(texture, options)
-  x, y, scale = screen_texture.transform_in_perspective(texture.width / 2, texture.height / 2, 0, options)
-  if x and y and scale
-    if 0 < scale
-      x = x - (center_texture.width * scale) / 2
-      y = y - (center_texture.height * scale)
-      screen_texture.render_texture(center_texture, x, y, {
-        :scale_x => scale, :scale_y => scale
-      })
-    end
-    p "#{x}, #{y}, #{scale}"
+  [[-20, -20], [-20, 20], [20, -20], [20, 20], [0, 0]].map do |dx, dy|
+    height = (dx == 0 and dy == 0) ? 20 : 0
+    screen_texture.transform_in_perspective(texture.width / 2 + dx, texture.height / 2 + dy, height, options)
+  end.select do |x, y, scale|
+    x and y and scale and 0 < scale
+  end.sort do |a, b|
+    a[2] <=> b[2] # scale
+  end.each do |x, y, scale|
+    x = x - (star_texture.width * scale) / 2
+    y = y - (star_texture.height * scale)
+    screen_texture.render_texture(star_texture, x, y, {
+      :scale_x => scale, :scale_y => scale
+    })
   end
   
   s = Game.screen

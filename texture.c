@@ -9,8 +9,13 @@ volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
 volatile static VALUE symbol_blend_type;
+volatile static VALUE symbol_camera_angle;
+volatile static VALUE symbol_camera_height;
+volatile static VALUE symbol_camera_x;
+volatile static VALUE symbol_camera_y;
 volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
+volatile static VALUE symbol_distance;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
 volatile static VALUE symbol_scale_y;
@@ -432,12 +437,18 @@ Texture_height(VALUE self)
 }
 
 static VALUE
-Texture_render_in_perspective(VALUE self, VALUE rbTexture,
+/*Texture_render_in_perspective(VALUE self, VALUE rbTexture,
                               VALUE rbCameraX, VALUE rbCameraY, 
                               VALUE rbCameraHeight, VALUE rbCameraAngle,
-                              VALUE rbDistance)
+                              VALUE rbDistance)*/
+Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
+
+  volatile VALUE rbTexture, rbOptions;
+  rb_scan_args(argc, argv, "11", &rbTexture, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
   
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
@@ -445,7 +456,6 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
     rb_raise(rb_eRuntimeError, "can't use disposed texture");
     return Qnil;
   }
-
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   if (!dstTexture->pixels) {
@@ -458,11 +468,24 @@ Texture_render_in_perspective(VALUE self, VALUE rbTexture,
     return Qnil;
   }
 
-  int cameraX        = NUM2INT(rbCameraX);
-  int cameraY        = NUM2INT(rbCameraY);
-  int cameraHeight   = NUM2DBL(rbCameraHeight);
-  double cameraAngle = NUM2DBL(rbCameraAngle);
-  double distance    = NUM2DBL(rbDistance);
+  int cameraX = 0;
+  int cameraY = 0;
+  int cameraHeight = 0;
+  double cameraAngle = 0;
+  double distance = 0;
+  
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
+    cameraX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
+    cameraY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
+    cameraHeight = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle)))
+    cameraAngle = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
+    distance = NUM2DBL(val);
 
   if (cameraHeight == 0)
     return Qnil;
@@ -1019,7 +1042,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "dispose",        Texture_dispose,         0);
   rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,        0);
   rb_define_method(rb_cTexture, "render_in_perspective",
-                   Texture_render_in_perspective, 6);
+                   Texture_render_in_perspective, -1);
   rb_define_method(rb_cTexture, "dump",           Texture_dump,            1);
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
@@ -1033,21 +1056,26 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 
-  symbol_add        = ID2SYM(rb_intern("add"));
-  symbol_alpha      = ID2SYM(rb_intern("alpha"));
-  symbol_angle      = ID2SYM(rb_intern("angle"));
-  symbol_blend_type = ID2SYM(rb_intern("blend_type"));
-  symbol_center_x   = ID2SYM(rb_intern("center_x"));
-  symbol_center_y   = ID2SYM(rb_intern("center_y"));
-  symbol_saturation = ID2SYM(rb_intern("saturation"));
-  symbol_scale_x    = ID2SYM(rb_intern("scale_x"));
-  symbol_scale_y    = ID2SYM(rb_intern("scale_y"));
-  symbol_src_height = ID2SYM(rb_intern("src_height"));
-  symbol_src_width  = ID2SYM(rb_intern("src_width"));
-  symbol_src_x      = ID2SYM(rb_intern("src_x"));
-  symbol_src_y      = ID2SYM(rb_intern("src_y"));
-  symbol_sub        = ID2SYM(rb_intern("sub"));
-  symbol_tone_blue  = ID2SYM(rb_intern("tone_blue"));
-  symbol_tone_green = ID2SYM(rb_intern("tone_green"));
-  symbol_tone_red   = ID2SYM(rb_intern("tone_red"));
+  symbol_add           = ID2SYM(rb_intern("add"));
+  symbol_alpha         = ID2SYM(rb_intern("alpha"));
+  symbol_angle         = ID2SYM(rb_intern("angle"));
+  symbol_blend_type    = ID2SYM(rb_intern("blend_type"));
+  symbol_camera_angle  = ID2SYM(rb_intern("camera_angle"));
+  symbol_camera_height = ID2SYM(rb_intern("camera_height"));
+  symbol_camera_x      = ID2SYM(rb_intern("camera_x"));
+  symbol_camera_y      = ID2SYM(rb_intern("camera_y"));
+  symbol_center_x      = ID2SYM(rb_intern("center_x"));
+  symbol_center_y      = ID2SYM(rb_intern("center_y"));
+  symbol_distance      = ID2SYM(rb_intern("distance"));
+  symbol_saturation    = ID2SYM(rb_intern("saturation"));
+  symbol_scale_x       = ID2SYM(rb_intern("scale_x"));
+  symbol_scale_y       = ID2SYM(rb_intern("scale_y"));
+  symbol_src_height    = ID2SYM(rb_intern("src_height"));
+  symbol_src_width     = ID2SYM(rb_intern("src_width"));
+  symbol_src_x         = ID2SYM(rb_intern("src_x"));
+  symbol_src_y         = ID2SYM(rb_intern("src_y"));
+  symbol_sub           = ID2SYM(rb_intern("sub"));
+  symbol_tone_blue     = ID2SYM(rb_intern("tone_blue"));
+  symbol_tone_green    = ID2SYM(rb_intern("tone_green"));
+  symbol_tone_red      = ID2SYM(rb_intern("tone_red"));
 }

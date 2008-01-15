@@ -43,15 +43,17 @@ Game.run(320, 240, :window_scale => 2) do
   elsif keys.include?(:s)
     camera.angle_n = (camera.angle_n + 1) % 64
   end
-  if keys.include?(:r)
-    distance += 1
-  elsif keys.include?(:c)
-    distance -= 1
-  end
+  
+  angle = camera.angle_n * 2 * Math::PI / 64
   
   screen.fill(Color.new(64, 64, 64, 255))
-  angle = camera.angle_n * 2 * Math::PI / 64
-  screen.render_in_perspective(texture, camera.x, camera.y, camera.height, angle, distance)
+  screen.render_in_perspective(texture, {
+    :camera_x => camera.x,
+    :camera_y => camera.y,
+    :camera_height => camera.height,
+    :camera_angle => angle,
+    :distance => distance,
+  })
   
   s = Game.screen
   s.clear

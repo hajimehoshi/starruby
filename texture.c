@@ -1026,25 +1026,24 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
     vanishingY = NUM2INT(val);
   else
     vanishingY = 0;
-
   double cosAngle = cos(cameraAngle);
   double sinAngle = sin(cameraAngle);
-  double xInPSystem = cosAngle * (x - cameraX)  + sinAngle * (-y - cameraY);
-  double zInPSystem = -sinAngle * (x - cameraX) + cosAngle * (-y - cameraY);
+  double xInPSystem = cosAngle  * (x - cameraX) + sinAngle * (y - cameraY);
+  double zInPSystem = -sinAngle * (x - cameraX) + cosAngle * (y - cameraY);
 
-  if (zInPSystem == 0) {
-    volatile VALUE rbResult =
-      rb_ary_new3(3, Qnil, Qnil, Qnil);
-    OBJ_FREEZE(rbResult);
+  volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
+  OBJ_FREEZE(rbResult);
+  
+  if (zInPSystem == 0)
     return rbResult;
-  }
+  
   double scale = -distance / zInPSystem;
   int newX = (int)(xInPSystem * scale + vanishingX);
-  int newY = (int)(cameraHeight * scale - vanishingY);
+  int newY = (int)(cameraHeight * scale + vanishingY);
 
-  volatile VALUE rbResult =
-    rb_ary_new3(3, INT2NUM(newX), INT2NUM(newY), rb_float_new(scale));
-  OBJ_FREEZE(rbResult);
+  RARRAY_PTR(rbResult)[0] = INT2NUM(newX);
+  RARRAY_PTR(rbResult)[1] = INT2NUM(newY);
+  RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
   return rbResult;
 }
 

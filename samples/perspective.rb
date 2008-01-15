@@ -74,7 +74,7 @@ Game.run(320, 240, :window_scale => 2) do
         :scale_x => scale, :scale_y => scale
       })
     end
-    p x, y, scale
+    p "#{x}, #{y}, #{scale}"
   end
   
   s = Game.screen

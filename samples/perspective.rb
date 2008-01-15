@@ -4,8 +4,13 @@ require "starruby"
 include StarRuby
 
 texture = Texture.load("images/ruby")
+
+center_texture = Texture.load("images/star")
+
 point_texture = Texture.new(3, 3)
 point_texture.fill(Color.new(255, 255, 0))
+
+screen_texture = Texture.new(160, 120)
 
 options = {
   :camera_x       => texture.width / 2,
@@ -16,8 +21,6 @@ options = {
   :vanishing_x    => texture.width / 2,
   :vanishing_y    => 0,
 }
-
-screen = Texture.new(160, 120)
 
 font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
@@ -59,21 +62,28 @@ Game.run(320, 240, :window_scale => 2) do
     options[:vanishing_y] -= 1
   end
   
-  angle = options[:camera_angle_n] * 2 * Math::PI / 64
-  
-  screen.fill(Color.new(64, 64, 64, 255))
-  screen.render_in_perspective(texture, options.merge(:camera_angle => angle))
+  screen_texture.fill(Color.new(64, 64, 64, 255))
+  options.merge!(:camera_angle => options[:camera_angle_n] * 2 * Math::PI / 64)
+  screen_texture.render_in_perspective(texture, options)
+=begin
+  x, y, scale = screen_texture.transform_in_perspective(texture.width / 2, texture.height / 2, options)
+  x = x - (center_texture.width * scale) / 2
+  y = y - (center_texture.height * scale)
+  screen_texture.render_texture(center_texture, x, y, {
+    :scale_x => scale, :scale_y => scale
+  })
+=end
   
   s = Game.screen
   s.clear
-  s.render_texture(screen, 0, 0)
-  s.render_text("[Left/Right] camera_x: #{options[:camera_x]}", 8, screen.height + 8, font, white)
-  s.render_text("[Up/Down] camera_y: #{options[:camera_y]}", 8, screen.height + 8 + 16, font, white)
-  s.render_text("[W/Z] camera_height: #{options[:camera_height]}", 8, screen.height + 8 + 16 * 2, font, white)
-  s.render_text("[A/S] camera_angle: %0.4f" % angle, 8, screen.height + 8 + 16 * 3, font, white)
-  s.render_text("distance: #{options[:distance]}" % angle, 8, screen.height + 8 + 16 * 4, font, white)
-  s.render_text("[D/F] vanishing_x: #{options[:vanishing_x]}", screen.width + 8, screen.height + 8, font, white)
-  s.render_text("[R/C] vanishing_y: #{options[:vanishing_y]}", screen.width + 8, screen.height + 8 + 16, font, white)
+  s.render_texture(screen_texture, 0, 0)
+  s.render_text("[Left/Right] camera_x: #{options[:camera_x]}", 8, screen_texture.height + 8, font, white)
+  s.render_text("[Up/Down] camera_y: #{options[:camera_y]}", 8, screen_texture.height + 8 + 16, font, white)
+  s.render_text("[W/Z] camera_height: #{options[:camera_height]}", 8, screen_texture.height + 8 + 16 * 2, font, white)
+  s.render_text("[A/S] camera_angle: %0.4f" % options[:camera_angle], 8, screen_texture.height + 8 + 16 * 3, font, white)
+  s.render_text("distance: #{options[:distance]}", 8, screen_texture.height + 8 + 16 * 4, font, white)
+  s.render_text("[D/F] vanishing_x: #{options[:vanishing_x]}", screen_texture.width + 8, screen_texture.height + 8, font, white)
+  s.render_text("[R/C] vanishing_y: #{options[:vanishing_y]}", screen_texture.width + 8, screen_texture.height + 8 + 16, font, white)
   
   x = s.width / 2 + (s.width / 2 - texture.width / 2) / 2
   y = (s.height / 2 - texture.height / 2) / 2

@@ -27,6 +27,8 @@ volatile static VALUE symbol_sub;
 volatile static VALUE symbol_tone_blue;
 volatile static VALUE symbol_tone_green;
 volatile static VALUE symbol_tone_red;
+volatile static VALUE symbol_vanishing_x;
+volatile static VALUE symbol_vanishing_y;
 
 typedef enum {
   ALPHA,
@@ -437,10 +439,6 @@ Texture_height(VALUE self)
 }
 
 static VALUE
-/*Texture_render_in_perspective(VALUE self, VALUE rbTexture,
-                              VALUE rbCameraX, VALUE rbCameraY, 
-                              VALUE rbCameraHeight, VALUE rbCameraAngle,
-                              VALUE rbDistance)*/
 Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
@@ -473,6 +471,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   int cameraHeight = 0;
   double cameraAngle = 0;
   double distance = 0;
+  int vanishingX;
+  int vanishingY;
   
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
@@ -486,7 +486,15 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     cameraAngle = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
     distance = NUM2DBL(val);
-
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
+    vanishingX = NUM2INT(val);
+  else
+    vanishingX = dstTexture->width / 2;
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
+    vanishingY = NUM2INT(val);
+  else
+    vanishingY = 0;
+  
   if (cameraHeight == 0)
     return Qnil;
 
@@ -498,16 +506,10 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Pixel* dst = dstTexture->pixels;
   double cosAngle = cos(cameraAngle);
   double sinAngle = sin(cameraAngle);
-  int screenTop, screenBottom;
-  if (0 < cameraHeight) {
-    screenBottom = cameraHeight - dstHeight;
-    screenTop    = cameraHeight;
-  } else {
-    screenBottom = cameraHeight;
-    screenTop    = cameraHeight + dstHeight;
-  }
-  int screenLeft  = -dstWidth / 2;
-  int screenRight = dstWidth / 2;
+  int screenTop    = cameraHeight - vanishingY;
+  int screenBottom = screenTop - dstHeight;
+  int screenLeft   = -vanishingX;
+  int screenRight  = screenLeft + dstWidth;
   for (int j = screenTop - 1; screenBottom <= j; j--) {
     double dHeight = cameraHeight - j;
     if ((0 < cameraHeight && (dHeight <= 0)) ||
@@ -1078,4 +1080,6 @@ InitializeTexture(void)
   symbol_tone_blue     = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green    = ID2SYM(rb_intern("tone_green"));
   symbol_tone_red      = ID2SYM(rb_intern("tone_red"));
+  symbol_vanishing_x   = ID2SYM(rb_intern("vanishing_x"));
+  symbol_vanishing_y   = ID2SYM(rb_intern("vanishing_y"));
 }

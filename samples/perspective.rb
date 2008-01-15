@@ -11,6 +11,9 @@ camera.y = texture.height
 camera.height = texture.height / 2
 camera.angle_n = 0
 
+vanishing_x = texture.width / 2
+vanishing_y = 0
+
 screen = Texture.new(160, 120)
 
 font = Font.new("fonts/ORANGEKI", 12)
@@ -43,6 +46,16 @@ Game.run(320, 240, :window_scale => 2) do
   elsif keys.include?(:s)
     camera.angle_n = (camera.angle_n + 1) % 64
   end
+  if keys.include?(:d)
+    vanishing_x += 1
+  elsif keys.include?(:f)
+    vanishing_x -= 1
+  end
+  if keys.include?(:c)
+    vanishing_y += 1
+  elsif keys.include?(:r)
+    vanishing_y -= 1
+  end
   
   angle = camera.angle_n * 2 * Math::PI / 64
   
@@ -53,6 +66,8 @@ Game.run(320, 240, :window_scale => 2) do
     :camera_height => camera.height,
     :camera_angle => angle,
     :distance => distance,
+    :vanishing_x => vanishing_x,
+    :vanishing_y => vanishing_y,
   })
   
   s = Game.screen

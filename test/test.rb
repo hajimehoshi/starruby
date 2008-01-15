@@ -815,7 +815,7 @@ class TextureTest < Test::Unit::TestCase
     assert_raise TypeError do
       texture2.render_in_perspective(nil)
     end
-    [:camera_x, :camera_y, :camera_height, :camera_angle, :distance].each do |key|
+    [:camera_x, :camera_y, :camera_height, :camera_angle, :distance, :vanishing_x, :vanishing_y].each do |key|
       assert_raise TypeError do
         texture2.render_in_perspective(texture, key => false)
       end

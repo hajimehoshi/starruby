@@ -850,6 +850,11 @@ class TextureTest < Test::Unit::TestCase
       texture2.render_in_perspective(texture)
     end
   end
+  
+  def test_transform_in_perspective
+    texture = Texture.new(100, 100)
+    texture.transform_in_perspective()
+  end
 
   def test_render_text
     texture = Texture.load("images/ruby")

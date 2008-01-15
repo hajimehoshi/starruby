@@ -65,14 +65,17 @@ Game.run(320, 240, :window_scale => 2) do
   screen_texture.fill(Color.new(64, 64, 64, 255))
   options.merge!(:camera_angle => options[:camera_angle_n] * 2 * Math::PI / 64)
   screen_texture.render_in_perspective(texture, options)
-=begin
-  x, y, scale = screen_texture.transform_in_perspective(texture.width / 2, texture.height / 2, options)
-  x = x - (center_texture.width * scale) / 2
-  y = y - (center_texture.height * scale)
-  screen_texture.render_texture(center_texture, x, y, {
-    :scale_x => scale, :scale_y => scale
-  })
-=end
+  x, y, scale = screen_texture.transform_in_perspective(texture.width / 2, texture.height / 2, 0, options)
+  if x and y and scale
+    if 0 < scale
+      x = x - (center_texture.width * scale) / 2
+      y = y - (center_texture.height * scale)
+      screen_texture.render_texture(center_texture, x, y, {
+        :scale_x => scale, :scale_y => scale
+      })
+    end
+    p x, y, scale
+  end
   
   s = Game.screen
   s.clear

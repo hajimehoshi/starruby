@@ -506,7 +506,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Pixel* dst = dstTexture->pixels;
   double cosAngle = cos(cameraAngle);
   double sinAngle = sin(cameraAngle);
-  int screenTop    = cameraHeight - vanishingY;
+  int screenTop    = cameraHeight + vanishingY;
   int screenBottom = screenTop - dstHeight;
   int screenLeft   = -vanishingX;
   int screenRight  = screenLeft + dstWidth;

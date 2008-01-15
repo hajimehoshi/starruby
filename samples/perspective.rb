@@ -14,7 +14,7 @@ screen_texture = Texture.new(160, 120)
 
 options = {
   :camera_x       => texture.width / 2,
-  :camera_y       => texture.height,
+  :camera_y       => texture.height * 2,
   :camera_height  => texture.height / 2,
   :camera_angle_n => 0,
   :distance       => texture.height,
@@ -29,7 +29,7 @@ white = Color.new(255, 255, 255)
 Game.title = "Perspective"
 
 i = 0
-Game.run(320, 240, :window_scale => 2) do
+Game.run(320, 240) do
   i = (i + 1) % 30
   keys = Input.keys(:keyboard)
   if keys.include?(:left)

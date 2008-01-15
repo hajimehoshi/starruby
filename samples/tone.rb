@@ -27,24 +27,24 @@ Game.run(320, 240) do
     tone_blue  = 0
     saturation = 255
   end
-  if keys.include?(:d1)
+  if keys.include?(:d2)
     tone_red += 15
-  elsif keys.include?(:d2)
+  elsif keys.include?(:d1)
     tone_red -= 15
   end
-  if keys.include?(:q)
+  if keys.include?(:w)
     tone_green += 15
-  elsif keys.include?(:w)
+  elsif keys.include?(:q)
     tone_green -= 15
   end
-  if keys.include?(:a)
+  if keys.include?(:s)
     tone_blue += 15
-  elsif keys.include?(:s)
+  elsif keys.include?(:a)
     tone_blue -= 15
   end
-  if keys.include?(:z)
+  if keys.include?(:x)
     saturation += 15
-  elsif keys.include?(:x)
+  elsif keys.include?(:z)
     saturation -= 15
   end
   tone_red   = [[tone_red,   -255].max, 255].min
@@ -59,14 +59,14 @@ Game.run(320, 240) do
   })
   if Input.keys(:keyboard).include?(:h)
     s.render_texture(cover, 0, 0, :alpha => 128)
-    s.render_text("'1': Turn up the red part",     8, 8,         font, white)
-    s.render_text("'2': Turn down the red part",   8, 8 + 16,    font, white)
-    s.render_text("'q': Turn up the green part",   8, 8 + 16*3,  font, white)
-    s.render_text("'w': Turn down the green part", 8, 8 + 16*4,  font, white)
-    s.render_text("'a': Turn up the blue part",    8, 8 + 16*6,  font, white)
-    s.render_text("'s': Turn down the blue part",  8, 8 + 16*7,  font, white)
-    s.render_text("'z': Turn up the saturation",   8, 8 + 16*9,  font, white)
-    s.render_text("'x': Turn down the saturation", 8, 8 + 16*10, font, white)
+    s.render_text("'2': Turn up the red part",     8, 8,         font, white)
+    s.render_text("'1': Turn down the red part",   8, 8 + 16,    font, white)
+    s.render_text("'w': Turn up the green part",   8, 8 + 16*3,  font, white)
+    s.render_text("'q': Turn down the green part", 8, 8 + 16*4,  font, white)
+    s.render_text("'s': Turn up the blue part",    8, 8 + 16*6,  font, white)
+    s.render_text("'a': Turn down the blue part",  8, 8 + 16*7,  font, white)
+    s.render_text("'x': Turn up the saturation",   8, 8 + 16*9,  font, white)
+    s.render_text("'z': Turn down the saturation", 8, 8 + 16*10, font, white)
     s.render_text("'r': Reset",                    8, 8 + 16*12, font, white)
   else
     s.render_text("Click 'h' to show help", 8, 8, font, white)

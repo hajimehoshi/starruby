@@ -8,7 +8,7 @@ texture = Texture.load("images/ruby")
 star_texture = Texture.load("images/star")
 
 point_texture = Texture.new(3, 3)
-point_texture.fill(Color.new(255, 255, 0))
+point_texture.fill(Color.new(255, 0, 0))
 
 screen_texture = Texture.new(160, 120)
 
@@ -20,6 +20,7 @@ options = {
   :distance       => texture.height,
   :vanishing_x    => texture.width / 2,
   :vanishing_y    => 0,
+  :loop           => false,
 }
 
 font = Font.new("fonts/ORANGEKI", 12)
@@ -61,6 +62,9 @@ Game.run(320, 240, :window_scale => 2) do
   elsif keys.include?(:r)
     options[:vanishing_y] -= 1
   end
+  if Input.keys(:keyboard, :duration => 1).include?(:l)
+    options[:loop] = !options[:loop]
+  end
   
   screen_texture.fill(Color.new(64, 64, 64, 255))
   options.merge!(:camera_angle => options[:camera_angle_n] * 2 * Math::PI / 64)
@@ -90,6 +94,7 @@ Game.run(320, 240, :window_scale => 2) do
   s.render_text("[W/Z] camera_height: #{options[:camera_height]}", 8, screen_texture.height + 8 + 16 * 2, font, white)
   s.render_text("[A/S] camera_angle: %0.4f" % options[:camera_angle], 8, screen_texture.height + 8 + 16 * 3, font, white)
   s.render_text("distance: #{options[:distance]}", 8, screen_texture.height + 8 + 16 * 4, font, white)
+  s.render_text("[L] loop: #{options[:loop]}", 8, screen_texture.height + 8 + 16 * 5, font, white)
   s.render_text("[D/F] vanishing_x: #{options[:vanishing_x]}", screen_texture.width + 8, screen_texture.height + 8, font, white)
   s.render_text("[R/C] vanishing_y: #{options[:vanishing_y]}", screen_texture.width + 8, screen_texture.height + 8 + 16, font, white)
   

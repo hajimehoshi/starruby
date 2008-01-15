@@ -16,6 +16,7 @@ volatile static VALUE symbol_camera_y;
 volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
 volatile static VALUE symbol_distance;
+volatile static VALUE symbol_loop;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
 volatile static VALUE symbol_scale_y;
@@ -530,6 +531,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   double distance = 0;
   int vanishingX = 0;
   int vanishingY = 0;
+  bool isLoop = false;
   
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
@@ -547,6 +549,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     vanishingX = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
     vanishingY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
+    isLoop = RTEST(val);
   
   if (cameraHeight == 0)
     return Qnil;
@@ -578,7 +582,16 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
                        + cameraX);
       int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
                        + cameraY);
-      if (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight) {
+      if (isLoop) {
+        srcX %= srcWidth;
+        if (srcX < 0)
+          srcX += srcWidth;
+        srcY %= srcHeight;
+        if (srcY < 0)
+          srcY += srcHeight;
+      }
+      if (isLoop ||
+          (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)) {
         Color* srcColor = &(src[srcX + srcY * srcWidth].color);
         uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
         dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   alpha);
@@ -1124,6 +1137,7 @@ InitializeTexture(void)
   symbol_center_x      = ID2SYM(rb_intern("center_x"));
   symbol_center_y      = ID2SYM(rb_intern("center_y"));
   symbol_distance      = ID2SYM(rb_intern("distance"));
+  symbol_loop          = ID2SYM(rb_intern("loop"));
   symbol_saturation    = ID2SYM(rb_intern("saturation"));
   symbol_scale_x       = ID2SYM(rb_intern("scale_x"));
   symbol_scale_y       = ID2SYM(rb_intern("scale_y"));

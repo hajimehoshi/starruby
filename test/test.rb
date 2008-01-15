@@ -456,6 +456,57 @@ class TextureTest < Test::Unit::TestCase
     end
   end
   
+  def test_transform_in_perspective
+    assert_raise TypeError do
+      Texture.transform_in_perspective(false, 0, 0)
+    end
+    assert_raise TypeError do
+      Texture.transform_in_perspective(0, false, 0)
+    end
+    assert_raise TypeError do
+      Texture.transform_in_perspective(0, 0, false)
+    end
+    assert_raise TypeError do
+      Texture.transform_in_perspective(0, 0, 0, false)
+    end
+    assert_equal [0, 50, 0.5], Texture.transform_in_perspective(0, -200, 0, {
+      :camera_x       => 0,
+      :camera_y       => 0,
+      :camera_height  => 100,
+      :camera_angle_n => 0,
+      :distance       => 100,
+      :vanishing_x    => 0,
+      :vanishing_y    => 0,
+    })
+    assert_equal [12, 84, 0.5], Texture.transform_in_perspective(0, -200, 0, {
+      :camera_x       => 0,
+      :camera_y       => 0,
+      :camera_height  => 100,
+      :camera_angle_n => 0,
+      :distance       => 100,
+      :vanishing_x    => 12,
+      :vanishing_y    => 34,
+    })
+    assert_equal [100, 50, 0.5], Texture.transform_in_perspective(200, -200, 0, {
+      :camera_x       => 0,
+      :camera_y       => 0,
+      :camera_height  => 100,
+      :camera_angle_n => 0,
+      :distance       => 100,
+      :vanishing_x    => 0,
+      :vanishing_y    => 0,
+    })
+    assert_equal [50, 25, 0.25], Texture.transform_in_perspective(200, -400, 0, {
+      :camera_x       => 0,
+      :camera_y       => 0,
+      :camera_height  => 100,
+      :camera_angle_n => 0,
+      :distance       => 100,
+      :vanishing_x    => 0,
+      :vanishing_y    => 0,
+    })
+  end
+  
   def test_clone
     texture = Texture.load("images/ruby")
     texture2 = texture.clone

@@ -572,32 +572,32 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     if ((0 < cameraHeight && (dHeight <= 0)) ||
         (cameraHeight < 0 && (0 <= dHeight))) {
       dst += dstWidth;
-      continue;
-    }
-    double scale = cameraHeight / dHeight;
-    double srcZInPSystem = -distance * scale;
-    for (int i = screenLeft; i < screenRight; i++, dst++) {
-      double srcXInPSystem = i * scale;
-      int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
-                       + cameraX);
-      int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
-                       + cameraY);
-      if (isLoop) {
-        srcX %= srcWidth;
-        if (srcX < 0)
-          srcX += srcWidth;
-        srcY %= srcHeight;
-        if (srcY < 0)
-          srcY += srcHeight;
-      }
-      if (isLoop ||
-          (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)) {
-        Color* srcColor = &(src[srcX + srcY * srcWidth].color);
-        uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
-        dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   alpha);
-        dst->color.green = ALPHA(srcColor->green, dst->color.green, alpha);
-        dst->color.blue  = ALPHA(srcColor->blue,  dst->color.blue,  alpha);
-        dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
+    } else {
+      double scale = cameraHeight / dHeight;
+      double srcZInPSystem = -distance * scale;
+      for (int i = screenLeft; i < screenRight; i++, dst++) {
+        double srcXInPSystem = i * scale;
+        int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
+                         + cameraX);
+        int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
+                         + cameraY);
+        if (isLoop) {
+          srcX %= srcWidth;
+          if (srcX < 0)
+            srcX += srcWidth;
+          srcY %= srcHeight;
+          if (srcY < 0)
+            srcY += srcHeight;
+        }
+        if (isLoop ||
+            (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)) {
+          Color* srcColor = &(src[srcX + srcY * srcWidth].color);
+          uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
+          dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   alpha);
+          dst->color.green = ALPHA(srcColor->green, dst->color.green, alpha);
+          dst->color.blue  = ALPHA(srcColor->blue,  dst->color.blue,  alpha);
+          dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
+        }
       }
     }
   }
@@ -677,7 +677,9 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-#define RENDER_TEXTURE_LOOP(convertingPixel) \
+#define RENDER_TEXTURE_LOOP(convertingPixel) do {\
+  int srcX2 = srcX + srcWidth;\
+  int srcY2 = srcY + srcHeight;\
   for (int j = 0; j < dstHeight;\
        j++, dst += -dstWidth + dstTextureWidth) {\
     int_fast32_t srcI16 = srcOX16 + j * srcDYX16;\
@@ -686,25 +688,25 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
          i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {\
       int_fast32_t srcI = srcI16 >> 16;\
       int_fast32_t srcJ = srcJ16 >> 16;\
-      if (srcI < srcX || srcX + srcWidth <= srcI ||\
-          srcJ < srcY || srcY + srcHeight <= srcJ)\
-        continue;\
-      src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
-      uint8_t srcR = src->color.red;\
-      uint8_t srcG = src->color.green;\
-      uint8_t srcB = src->color.blue;\
-      uint8_t dstR = dst->color.red;\
-      uint8_t dstG = dst->color.green;\
-      uint8_t dstB = dst->color.blue;\
-      uint8_t srcAlpha = DIV255(src->color.alpha * alpha);\
-      uint8_t pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;\
-      dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
-      convertingPixel;\
-      dst->color.red   = dstR;\
-      dst->color.green = dstG;\
-      dst->color.blue  = dstB;\
+      if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {\
+        src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
+        uint8_t srcR = src->color.red;\
+        uint8_t srcG = src->color.green;\
+        uint8_t srcB = src->color.blue;\
+        uint8_t dstR = dst->color.red;\
+        uint8_t dstG = dst->color.green;\
+        uint8_t dstB = dst->color.blue;\
+        uint8_t srcAlpha = DIV255(src->color.alpha * alpha);\
+        uint8_t pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;\
+        dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
+        convertingPixel;\
+        dst->color.red   = dstR;\
+        dst->color.green = dstG;\
+        dst->color.blue  = dstB;\
+      }\
     }\
   }\
+} while (false)\
 
 static VALUE
 Texture_render_texture(int argc, VALUE* argv, VALUE self)

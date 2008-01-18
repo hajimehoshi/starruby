@@ -291,54 +291,53 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
     uint8_t b = pixel->color.blue;
     uint8_t max = MAX(MAX(r, g), b);
     uint8_t min = MIN(MIN(r, g), b);
-    if (max == 0)
-      continue;
-    double delta255 = max - min;
-    double v = max / 255.0;
-    double s = delta255 / max;
-    double h;
-    if (max == r)
-      h =     (g - b) / delta255;
-    else if (max == g)
-      h = 2 + (b - r) / delta255;
-    else
-      h = 4 + (r - g) / delta255;
-    if (h < 0.0)
-      h += 6.0;
-    h += angle * 6.0 / (2 * PI);
-    if (6.0 <= h)
-      h -= 6.0;
-    int ii = (int)h;
-    double f = h - ii;
-    uint8_t v255 = max;
-    uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
-    uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
-    uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
-    switch (ii) {
-    case 0:
-      r = v255;  g = cc255; b = aa255;
-      break;
-    case 1:
-      r = bb255; g = v255;  b = aa255;
-      break;
-    case 2:
-      r = aa255; g = v255;  b = cc255;
-      break;
-    case 3:
-      r = aa255; g = bb255; b = v255;
-      break;
-    case 4:
-      r = cc255; g = aa255; b = v255;
-      break;
-    case 5:
-      r = v255;  g = aa255; b = bb255;
-      break;
+    if (max != 0) {
+      double delta255 = max - min;
+      double v = max / 255.0;
+      double s = delta255 / max;
+      double h;
+      if (max == r)
+        h =     (g - b) / delta255;
+      else if (max == g)
+        h = 2 + (b - r) / delta255;
+      else
+        h = 4 + (r - g) / delta255;
+      if (h < 0.0)
+        h += 6.0;
+      h += angle * 6.0 / (2 * PI);
+      if (6.0 <= h)
+        h -= 6.0;
+      int ii = (int)h;
+      double f = h - ii;
+      uint8_t v255 = max;
+      uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
+      uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
+      uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
+      switch (ii) {
+      case 0:
+        r = v255;  g = cc255; b = aa255;
+        break;
+      case 1:
+        r = bb255; g = v255;  b = aa255;
+        break;
+      case 2:
+        r = aa255; g = v255;  b = cc255;
+        break;
+      case 3:
+        r = aa255; g = bb255; b = v255;
+        break;
+      case 4:
+        r = cc255; g = aa255; b = v255;
+        break;
+      case 5:
+        r = v255;  g = aa255; b = bb255;
+        break;
+      }
+      pixel->color.red   = r;
+      pixel->color.green = g;
+      pixel->color.blue  = b;
     }
-    pixel->color.red   = r;
-    pixel->color.green = g;
-    pixel->color.blue  = b;
   }
-
   return Qnil;
 }
 

@@ -116,6 +116,9 @@ class FontTest < Test::Unit::TestCase
       assert_equal true,  Font.exist?("FreeSans ,")
       assert_equal false, Font.exist?("FreeSans.ttf")
       assert_equal false, Font.exist?("FreeSans.ttc")
+    when /darwin/
+      # Mac OS X
+      # assert_equal true, Font.exist?("")
     end
     assert_raise ArgumentError do
       Font.exist?("fonts/maybefont")
@@ -137,6 +140,9 @@ class FontTest < Test::Unit::TestCase
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
       assert_equal "FreeSans", font.name
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue")
+      assert_equal "Helvetica Neue", font.name
     else
       flunk
     end
@@ -175,21 +181,13 @@ class FontTest < Test::Unit::TestCase
     end
   end
   
-  def test_new_nil_option
-    if Font.exist?("Arial")
-      font_name = "Arial"
-    elsif Font.exist?("FreeSans")
-      font_name = ("FreeSans")
-    else
-      flunk
-    end
-  end
-  
   def test_dispose
     if Font.exist?("Arial")
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue")
     else
       flunk
     end
@@ -229,6 +227,8 @@ class FontTest < Test::Unit::TestCase
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue")
     else
       flunk
     end

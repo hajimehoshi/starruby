@@ -1,6 +1,6 @@
 module FallingBlocks
   
-  StarRuby::Input.instance_eval %Q{
+  StarRuby::Input.instance_eval do
     alias _orig_keys keys
     
     def keys(device, options = {})
@@ -22,7 +22,7 @@ module FallingBlocks
         :duration => 1, :delay => 2, :interval => 0
       })
     end
-  }
+  end
 
   class Controller
     

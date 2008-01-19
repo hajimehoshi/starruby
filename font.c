@@ -74,7 +74,7 @@ SearchFont(VALUE rbFilePathOrName,
                              NULL);
   else
     pattern = FcPatternBuild(NULL,
-                             //FC_FAMILY, FcTypeString,  name,
+                             FC_FAMILY, FcTypeString,  name,
                              FC_SLANT,  FcTypeInteger, FC_SLANT_ROMAN,
                              FC_WEIGHT, FcTypeInteger, FC_WEIGHT_NORMAL,
                              NULL);
@@ -98,6 +98,8 @@ SearchFont(VALUE rbFilePathOrName,
           *ttcIndex = 0;
         break;
       }
+      free(fileName);
+      fileName = NULL;
     }
     FcFontSetDestroy(fontSet);
   }

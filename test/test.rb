@@ -118,7 +118,10 @@ class FontTest < Test::Unit::TestCase
       assert_equal false, Font.exist?("FreeSans.ttc")
     when /darwin/
       # Mac OS X
-      # assert_equal true, Font.exist?("")
+      assert_equal true,  Font.exist?("Helvetica")
+      assert_equal true,  Font.exist?("Helvetica, Regular")
+      assert_equal true,  Font.exist?("Helvetica, Oblique")
+      assert_equal false, Font.exist?("Helvetica, NotStyle")
     end
     assert_raise ArgumentError do
       Font.exist?("fonts/maybefont")
@@ -126,7 +129,7 @@ class FontTest < Test::Unit::TestCase
     assert_equal true, Font.exist?("fonts/ORANGEKI")
     assert_equal true, Font.exist?("fonts/maybefont2")
   end
-  
+
   def test_exist_type
     assert_raise TypeError do
       Font.exist?(nil)
@@ -141,7 +144,7 @@ class FontTest < Test::Unit::TestCase
       font = Font.new("FreeSans", 16)
       assert_equal "FreeSans", font.name
     elsif Font.exist?("Helvetica Neue")
-      font = Font.new("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
       assert_equal "Helvetica Neue", font.name
     else
       flunk
@@ -168,7 +171,7 @@ class FontTest < Test::Unit::TestCase
       Font.new("fonts/maybefont2", 12)
     end
   end
-  
+
   def test_new_type
     assert_raise TypeError do
       Font.new(nil, 12)
@@ -180,14 +183,14 @@ class FontTest < Test::Unit::TestCase
       Font.new("fonts/ORANGEKI", 12, false)
     end
   end
-  
+
   def test_dispose
     if Font.exist?("Arial")
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
     elsif Font.exist?("Helvetica Neue")
-      font = Font.new("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
     else
       flunk
     end
@@ -211,7 +214,7 @@ class FontTest < Test::Unit::TestCase
     end
     font.dispose
   end
-  
+
   def test_get_size
     if Font.exist?("ＭＳ ゴシック")
       font = Font.new("ＭＳ ゴシック", 12)
@@ -228,7 +231,7 @@ class FontTest < Test::Unit::TestCase
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
     elsif Font.exist?("Helvetica Neue")
-      font = Font.new("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
     else
       flunk
     end
@@ -236,18 +239,18 @@ class FontTest < Test::Unit::TestCase
     size[0] # No Exception
     size[1] # No Exception
   end
-  
+
   def test_get_size_type
     font = Font.new("fonts/ORANGEKI", 12)
     assert_raise TypeError do
       font.get_size(nil)
     end
   end
-  
+
 end
 
 class GameTest < Test::Unit::TestCase
-  
+
   def test_game
     assert_equal false, Game.running?
     assert_equal "foo", (Game.title = "foo")
@@ -273,7 +276,7 @@ class GameTest < Test::Unit::TestCase
     assert_equal 33, (Game.fps = 33)
     assert_equal 33, Game.fps
   end
-  
+
   def test_game_type
     assert_raise TypeError do
       Game.title = nil
@@ -282,7 +285,7 @@ class GameTest < Test::Unit::TestCase
       Game.fps = nil
     end
   end
-  
+
   def test_run
     Game.run(320, 240, :window_scale => 2) do
       assert_equal [320, 240], Game.screen.size
@@ -532,7 +535,7 @@ class TextureTest < Test::Unit::TestCase
       end
     end
   end
-  
+
   def test_dispose
     texture = Texture.load("images/ruby")
     assert_equal false, texture.disposed?
@@ -540,7 +543,7 @@ class TextureTest < Test::Unit::TestCase
     assert_equal true, texture.disposed?
     texture.dispose
   end
-  
+
   def test_get_and_set_pixel
     texture = Texture.new(3, 3)
     texture.height.times do |y|
@@ -548,56 +551,56 @@ class TextureTest < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
       end
     end
-    
+
     begin
       texture.get_pixel(-1, 2)
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (-1, 2)", e.message
     end
-    
+
     begin
       texture.get_pixel(2, -1)
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (2, -1)", e.message
     end
-    
+
     begin
       texture.get_pixel(3, 2)
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (3, 2)", e.message
     end
-    
+
     begin
       texture.get_pixel(2, 3)
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (2, 3)", e.message
     end
-    
+
     assert_equal Color.new(31, 41, 59, 26), texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
     assert_equal Color.new(53, 58, 97, 92), texture.set_pixel(1, 2, Color.new(53, 58, 97, 92))
     assert_equal Color.new(65, 35, 89, 79), texture.set_pixel(2, 0, Color.new(65, 35, 89, 79))
     assert_equal Color.new(31, 41, 59, 26), texture.get_pixel(0, 1);
     assert_equal Color.new(53, 58, 97, 92), texture.get_pixel(1, 2);
     assert_equal Color.new(65, 35, 89, 79), texture.get_pixel(2, 0);
-    
+
     begin
       texture.set_pixel(-1, 2, Color.new(0, 0, 0))
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (-1, 2)", e.message
     end
-    
+
     begin
       texture.set_pixel(2, -1, Color.new(0, 0, 0))
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (2, -1)", e.message
     end
-    
+
     begin
       texture.set_pixel(3, 2, Color.new(0, 0, 0))
       flunk
@@ -908,6 +911,8 @@ class TextureTest < Test::Unit::TestCase
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
     else
       flunk
     end
@@ -944,6 +949,8 @@ class TextureTest < Test::Unit::TestCase
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
     else
       flunk
     end
@@ -960,6 +967,8 @@ class TextureTest < Test::Unit::TestCase
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
     else
       flunk
     end
@@ -976,6 +985,8 @@ class TextureTest < Test::Unit::TestCase
       font = Font.new("Arial", 16)
     elsif Font.exist?("FreeSans")
       font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
     else
       flunk
     end

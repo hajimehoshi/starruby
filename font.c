@@ -67,17 +67,9 @@ SearchFont(VALUE rbFilePathOrName,
     while (*style == ' ')
       style++;
   }
+  pattern = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, name, NULL);
   if (style && 0 < strlen(style))
-    pattern = FcPatternBuild(NULL,
-                             FC_FAMILY, FcTypeString, name,
-                             FC_STYLE,  FcTypeString, style, 
-                             NULL);
-  else
-    pattern = FcPatternBuild(NULL,
-                             FC_FAMILY, FcTypeString,  name,
-                             FC_SLANT,  FcTypeInteger, FC_SLANT_ROMAN,
-                             FC_WEIGHT, FcTypeInteger, FC_WEIGHT_NORMAL,
-                             NULL);
+    FcPatternAddString(pattern, FC_STYLE, (FcChar8*)style);
   FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);
   FcFontSet* fontSet = FcFontList(NULL, pattern, objectSet);
   if (objectSet)
@@ -96,10 +88,7 @@ SearchFont(VALUE rbFilePathOrName,
         fontName = NULL;
         if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
           *ttcIndex = 0;
-        break;
       }
-      free(fileName);
-      fileName = NULL;
     }
     FcFontSetDestroy(fontSet);
   }

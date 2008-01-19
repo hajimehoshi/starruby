@@ -92,7 +92,6 @@ SearchFont(VALUE rbFilePathOrName,
         FcChar8* fontName = FcNameUnparse(fontSet->fonts[i]);
         *rbRealFilePath = rb_str_new2((char*)fileName);
         volatile VALUE rbFontName = rb_str_new2((char*)fontName);
-        printf("%s\n", fontName);
         free(fontName);
         fontName = NULL;
         if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))

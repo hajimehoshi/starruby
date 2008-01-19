@@ -86,18 +86,17 @@ SearchFont(VALUE rbFilePathOrName,
     FcPatternDestroy(pattern);
   if (fontSet) {
     for (int i = 0; i < fontSet->nfont; i++) {
-      FcChar8* fontName = NULL;
       FcChar8* fileName = NULL;
       if (FcPatternGetString(fontSet->fonts[i], FC_FILE, 0, &fileName) ==
           FcResultMatch) {
-	fontName = FcNameUnparse(fontSet->fonts[i]);
-	*rbRealFilePath = rb_str_new2((char*)fileName);
-	volatile VALUE rbFontName = rb_str_new2((char*)fontName);
-	free(fontName);
-	fontName = NULL;
-	if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
-	  *ttcIndex = 0;
-	break;
+        FcChar8* fontName = FcNameUnparse(fontSet->fonts[i]);
+        *rbRealFilePath = rb_str_new2((char*)fileName);
+        volatile VALUE rbFontName = rb_str_new2((char*)fontName);
+        free(fontName);
+        fontName = NULL;
+        if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
+          *ttcIndex = 0;
+        break;
       }
     }
     FcFontSetDestroy(fontSet);

@@ -158,7 +158,7 @@ Font_initialize(int argc, VALUE* argv, VALUE self)
 
   char* path = StringValuePtr(rbRealFilePath);
   int size = NUM2INT(rbSize);
-  
+
   Font* font;
   Data_Get_Struct(self, Font, font);
   font->size = size;
@@ -170,7 +170,7 @@ Font_initialize(int argc, VALUE* argv, VALUE self)
   int style = TTF_STYLE_NORMAL |
     (bold ? TTF_STYLE_BOLD : 0) | (italic ? TTF_STYLE_ITALIC : 0);
   TTF_SetFontStyle(font->sdlFont, style);
-  
+
   return Qnil;
 }
 
@@ -270,7 +270,7 @@ Font_size(VALUE self)
   currentInfo->next = info;\
   currentInfo = info;\
 } while (false)\
-                 
+
 void
 InitializeSdlFont(void)
 {
@@ -283,7 +283,7 @@ InitializeSdlFont(void)
   fontFileInfos->next             = NULL;
   FontFileInfo* currentInfo = fontFileInfos;
   (void)currentInfo;
-  
+
 #ifdef WIN32
   HKEY hKey;
   const char* regPath =

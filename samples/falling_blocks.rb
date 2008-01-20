@@ -8,7 +8,7 @@ def main
   controller = FallingBlocks::Controller.new
   view = FallingBlocks::View.new
   StarRuby::Game.title = "Falling Blocks Game"
-  StarRuby::Game.run(320, 240, :window_scale => 2) do
+  StarRuby::Game.run(320, 240, :window_scale => 1) do
     controller.update(application_model)
     view.update(application_model, StarRuby::Game.screen)
     GC.start

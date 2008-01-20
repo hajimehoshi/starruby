@@ -16,7 +16,10 @@ options = {
   :camera_x       => texture.width / 2,
   :camera_y       => texture.height * 2,
   :camera_height  => texture.height / 2,
-  :camera_angle_n => 0,
+  :camera_angle   => {
+    :vertical_n   => 0,
+    :horizontal_n => 0,
+  },
   :distance       => texture.height,
   :vanishing_x    => screen_texture.width / 2,
   :vanishing_y    => 0,
@@ -48,9 +51,11 @@ Game.run(320, 240) do
     options[:camera_height] -= 1
   end
   if keys.include?(:a)
-    options[:camera_angle_n] = (options[:camera_angle_n] + 63) % 64
+    options[:camera_angle][:vertical_n] =
+      (options[:camera_angle][:vertical_n] + 63) % 64
   elsif keys.include?(:s)
-    options[:camera_angle_n] = (options[:camera_angle_n] + 1) % 64
+    options[:camera_angle][:vertical_n] =
+      (options[:camera_angle][:vertical_n] + 1) % 64
   end
   if keys.include?(:f)
     options[:vanishing_x] += 1
@@ -65,9 +70,11 @@ Game.run(320, 240) do
   if Input.keys(:keyboard, :duration => 1).include?(:l)
     options[:loop] = !options[:loop]
   end
-  
+
   screen_texture.fill(Color.new(64, 64, 64, 255))
-  options.merge!(:camera_angle => options[:camera_angle_n] * 2 * Math::PI / 64)
+  [:vertical, :horizontal].each do |key|
+    options[:camera_angle][key] = options[:camera_angle][:"#{key}_n"] * 2 * Math::PI / 64
+  end
   screen_texture.render_in_perspective(texture, options)
   [[-20, -20], [-20, 20], [20, -20], [20, 20], [0, 0]].map do |dx, dy|
     x = texture.width / 2 + dx
@@ -85,22 +92,22 @@ Game.run(320, 240) do
       :scale_x => scale, :scale_y => scale
     })
   end
-  
+
   s = Game.screen
   s.clear
   s.render_texture(screen_texture, 0, 0)
   s.render_text("[Left/Right] camera_x: #{options[:camera_x]}", 8, screen_texture.height + 8, font, white)
   s.render_text("[Up/Down] camera_y: #{options[:camera_y]}", 8, screen_texture.height + 8 + 16, font, white)
   s.render_text("[W/Z] camera_height: #{options[:camera_height]}", 8, screen_texture.height + 8 + 16 * 2, font, white)
-  s.render_text("[A/S] camera_angle: %0.4f" % options[:camera_angle], 8, screen_texture.height + 8 + 16 * 3, font, white)
+  # s.render_text("[A/S] camera_angle: %0.4f" % options[:camera_angle], 8, screen_texture.height + 8 + 16 * 3, font, white)
   s.render_text("distance: #{options[:distance]}", 8, screen_texture.height + 8 + 16 * 4, font, white)
   s.render_text("[L] loop: #{options[:loop]}", 8, screen_texture.height + 8 + 16 * 5, font, white)
   s.render_text("[D/F] vanishing_x: #{options[:vanishing_x]}", screen_texture.width + 8, screen_texture.height + 8, font, white)
   s.render_text("[R/C] vanishing_y: #{options[:vanishing_y]}", screen_texture.width + 8, screen_texture.height + 8 + 16, font, white)
-  
+
   x = s.width / 2 + (s.width / 2 - texture.width / 2) / 2
   y = (s.height / 2 - texture.height / 2) / 2
   s.render_texture(texture, x, y, :scale_x => 0.5, :scale_y => 0.5)
   s.render_texture(point_texture, x + (options[:camera_x] - 1) / 2, y + (options[:camera_y] - 1) / 2)
-  
+
 end

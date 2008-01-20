@@ -458,7 +458,7 @@ class TextureTest < Test::Unit::TestCase
       texture32 = Texture.load("images/ruby32_interlace")
     end
   end
-  
+
   def test_transform_in_perspective
     assert_raise TypeError do
       Texture.transform_in_perspective(false, 0, 0)
@@ -472,44 +472,60 @@ class TextureTest < Test::Unit::TestCase
     assert_raise TypeError do
       Texture.transform_in_perspective(0, 0, 0, false)
     end
-    assert_equal [0, 50, 0.5], Texture.transform_in_perspective(0, -200, 0, {
-      :camera_x       => 0,
-      :camera_y       => 0,
-      :camera_height  => 100,
-      :camera_angle_n => 0,
-      :distance       => 100,
-      :vanishing_x    => 0,
-      :vanishing_y    => 0,
-    })
-    assert_equal [12, 84, 0.5], Texture.transform_in_perspective(0, -200, 0, {
-      :camera_x       => 0,
-      :camera_y       => 0,
-      :camera_height  => 100,
-      :camera_angle_n => 0,
-      :distance       => 100,
-      :vanishing_x    => 12,
-      :vanishing_y    => 34,
-    })
-    assert_equal [100, 50, 0.5], Texture.transform_in_perspective(200, -200, 0, {
-      :camera_x       => 0,
-      :camera_y       => 0,
-      :camera_height  => 100,
-      :camera_angle_n => 0,
-      :distance       => 100,
-      :vanishing_x    => 0,
-      :vanishing_y    => 0,
-    })
-    assert_equal [50, 25, 0.25], Texture.transform_in_perspective(200, -400, 0, {
-      :camera_x       => 0,
-      :camera_y       => 0,
-      :camera_height  => 100,
-      :camera_angle_n => 0,
-      :distance       => 100,
-      :vanishing_x    => 0,
-      :vanishing_y    => 0,
-    })
+    options = {
+      :camera_x      => 0,
+      :camera_y      => 0,
+      :camera_height => 100,
+      :camera_angle  => {
+        :vertical   => 0,
+        :horizontal => 0,
+      },
+      :distance      => 100,
+      :vanishing_x   => 0,
+      :vanishing_y   => 0,
+    }
+    assert_equal [0, 50, 0.5], Texture.transform_in_perspective(0, -200, 0, options)
+    options = {
+      :camera_x      => 0,
+      :camera_y      => 0,
+      :camera_height => 100,
+      :camera_angle  => {
+        :vertical   => 0,
+        :horizontal => 0,
+      },
+      :distance      => 100,
+      :vanishing_x   => 12,
+      :vanishing_y   => 34,
+    }
+    assert_equal [12, 84, 0.5], Texture.transform_in_perspective(0, -200, 0, options)
+    options = {
+      :camera_x      => 0,
+      :camera_y      => 0,
+      :camera_height => 100,
+      :camera_angle  => {
+        :vertical   => 0,
+        :horizontal => 0,
+      },
+      :distance      => 100,
+      :vanishing_x   => 0,
+      :vanishing_y   => 0,
+    }
+    assert_equal [100, 50, 0.5], Texture.transform_in_perspective(200, -200, 0, options)
+    options = {
+      :camera_x      => 0,
+      :camera_y      => 0,
+      :camera_height => 100,
+      :camera_angle  => {
+        :vertical   => 0,
+        :horizontal => 0,
+      },
+      :distance      => 100,
+      :vanishing_x   => 0,
+      :vanishing_y   => 0,
+    }
+    assert_equal [50, 25, 0.25], Texture.transform_in_perspective(200, -400, 0, options)
   end
-  
+
   def test_clone
     texture = Texture.load("images/ruby")
     texture2 = texture.clone
@@ -840,7 +856,7 @@ class TextureTest < Test::Unit::TestCase
       texture.change_hue!(Math::PI)
     end
   end
-  
+
   def test_change_hue_disposed
     texture = Texture.load("images/ruby")
     texture.dispose
@@ -851,7 +867,7 @@ class TextureTest < Test::Unit::TestCase
       texture.change_hue!(Math::PI)
     end
   end
-  
+
   def test_change_hue_type
     texture = Texture.load("images/ruby")
     assert_raise TypeError do
@@ -861,7 +877,7 @@ class TextureTest < Test::Unit::TestCase
       texture.change_hue!(nil)
     end
   end
-  
+
   def test_render_in_perspective
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)
@@ -878,7 +894,7 @@ class TextureTest < Test::Unit::TestCase
       texture2.render_in_perspective(texture2) # self
     end
   end
-  
+
   def test_render_in_perspective_disposed
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)

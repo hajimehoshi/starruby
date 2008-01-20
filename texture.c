@@ -16,6 +16,7 @@ volatile static VALUE symbol_camera_y;
 volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
 volatile static VALUE symbol_distance;
+volatile static VALUE symbol_horizontal;
 volatile static VALUE symbol_loop;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
@@ -30,12 +31,15 @@ volatile static VALUE symbol_tone_green;
 volatile static VALUE symbol_tone_red;
 volatile static VALUE symbol_vanishing_x;
 volatile static VALUE symbol_vanishing_y;
+volatile static VALUE symbol_vertical;
 
 typedef enum {
   ALPHA,
   ADD,
   SUB,
 } BlendType;
+
+
 
 static SDL_Surface*
 ConvertSurfaceForScreen(SDL_Surface* surface)
@@ -108,7 +112,7 @@ Texture_load(VALUE self, VALUE rbPath)
                                         INT2NUM(width), INT2NUM(height));
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
-  
+
   int channels = png_get_channels(pngPtr, infoPtr);
   for (int j = 0; j < height; j++) {
     png_byte row[width * channels];
@@ -158,7 +162,6 @@ Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-
   int width  = NUM2INT(rbWidth);
   int height = NUM2INT(rbHeight);
   if (width <= 0) {
@@ -171,7 +174,6 @@ Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   }
   texture->width  = width;
   texture->height = height;
-  
   texture->pixels = ALLOC_N(Pixel, texture->width * texture->height);
   MEMZERO(texture->pixels, Pixel, texture->width * texture->height);
   return Qnil;
@@ -182,17 +184,70 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-
   Texture* origTexture;
   Data_Get_Struct(rbTexture, Texture, origTexture);
-
   texture->width  = origTexture->width;
   texture->height = origTexture->height;
   int length = texture->width * texture->height;
   texture->pixels = ALLOC_N(Pixel, length);
   MEMCPY(texture->pixels, origTexture->pixels, Pixel, length);
-  
   return Qnil;
+}
+
+typedef struct {
+  int cameraX;
+  int cameraY;
+  int cameraHeight;
+  double cameraAngleVertical;
+  double cameraAngleHorizontal;
+  double distance;
+  int vanishingX;
+  int vanishingY;
+  bool isLoop;
+} PerspectiveOptions;
+
+static void
+AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
+{
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  MEMZERO(options, PerspectiveOptions, 1);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
+    options->cameraX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
+    options->cameraY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
+    options->cameraHeight = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle))) {
+    switch (TYPE(val)) {
+    case T_FIXNUM:
+    case T_BIGNUM:
+    case T_FLOAT:
+      rb_warn("Numeric object for :camera_angle is deprecated");
+      options->cameraAngleVertical = NUM2DBL(val);
+      break;
+    case T_HASH:
+      {
+        volatile VALUE rbH = val;
+        if (!NIL_P(val = rb_hash_aref(rbH, symbol_vertical)))
+          options->cameraAngleVertical = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbH, symbol_horizontal)))
+          options->cameraAngleHorizontal = NUM2DBL(val);
+      }
+      break;
+    default:
+      Check_Type(val, T_HASH);
+      break;
+    }
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
+    options->distance = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
+    options->vanishingX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
+    options->vanishingY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
+    options->isLoop = RTEST(val);
 }
 
 static VALUE
@@ -202,50 +257,25 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
   double height = NUM2DBL(rbHeight);
-  
-  int cameraX = 0;
-  int cameraY = 0;
-  int cameraHeight = 0;
-  double cameraAngle = 0;
-  double distance = 0;
-  int vanishingX = 0;
-  int vanishingY = 0;
-  
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
-    cameraX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
-    cameraY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
-    cameraHeight = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle)))
-    cameraAngle = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
-    distance = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
-    vanishingX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
-    vanishingY = NUM2INT(val);
-  double cosAngle = cos(cameraAngle);
-  double sinAngle = sin(cameraAngle);
-  double xInPSystem = cosAngle  * (x - cameraX) + sinAngle * (y - cameraY);
-  double zInPSystem = -sinAngle * (x - cameraX) + cosAngle * (y - cameraY);
-
+  PerspectiveOptions options;
+  AssignPerspectiveOptions(&options, rbOptions);
+  double cosAngle = cos(options.cameraAngleVertical);
+  double sinAngle = sin(options.cameraAngleVertical);
+  double xInPSystem = cosAngle  * (x - options.cameraX)
+    + sinAngle * (y - options.cameraY);
+  double zInPSystem = -sinAngle * (x - options.cameraX)
+    + cosAngle * (y - options.cameraY);
   volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
   OBJ_FREEZE(rbResult);
-  
   if (zInPSystem == 0)
     return rbResult;
-  
-  double scale = -distance / zInPSystem;
-  int newX = (int)(xInPSystem * scale + vanishingX);
-  int newY = (int)((cameraHeight - height) * scale + vanishingY);
-
+  double scale = -options.distance / zInPSystem;
+  int newX = (int)(xInPSystem * scale + options.vanishingX);
+  int newY = (int)((options.cameraHeight - height) * scale
+                   + options.vanishingY);
   RARRAY_PTR(rbResult)[0] = FIXABLE(newX) ? INT2FIX(newX) : Qnil;
   RARRAY_PTR(rbResult)[1] = FIXABLE(newY) ? INT2FIX(newY) : Qnil;
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
@@ -262,7 +292,7 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-  
+
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
   Texture_change_hue_bang(rbTexture, rbAngle);
   return rbTexture;
@@ -272,14 +302,14 @@ static VALUE
 Texture_change_hue_bang(VALUE self, VALUE rbAngle)
 {
   rb_check_frozen(self);
-  
+
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-  
+
   double angle = NUM2DBL(rbAngle);
   if (angle == 0)
     return Qnil;
@@ -345,14 +375,12 @@ static VALUE
 Texture_clear(VALUE self)
 {
   rb_check_frozen(self);
-  
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-  
   MEMZERO(texture->pixels, Color, texture->width * texture->height);
   return Qnil;
 }
@@ -408,22 +436,18 @@ static VALUE
 Texture_fill(VALUE self, VALUE rbColor)
 {
   rb_check_frozen(self);
-  
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-  
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
-
   int length = texture->width * texture->height;
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < length; i++, pixels++)
     pixels->color = *color;
-  
   return Qnil;
 }
 
@@ -432,28 +456,23 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
                   VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
 {
   rb_check_frozen(self);
-  
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
-
   int width = texture->width;
   Pixel* pixels = texture->pixels;
-  
   for (int j = rectY; j < rectY + rectHeight; j++)
     for (int i = rectX; i < rectX + rectWidth; i++)
       pixels[i + j * width].color = *color;
-  
   return Qnil;
 }
 
@@ -462,19 +481,16 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 {
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
-  
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-  
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
     return Qnil;
   }
-  
   Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(rb_cColor, rb_intern("new"), 4,
                     INT2NUM(color.red),
@@ -499,12 +515,10 @@ static VALUE
 Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
-
   volatile VALUE rbTexture, rbOptions;
   rb_scan_args(argc, argv, "11", &rbTexture, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   if (!srcTexture->pixels) {
@@ -517,70 +531,41 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't use disposed texture");
     return Qnil;
   }
-
   if (srcTexture == dstTexture) {
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
     return Qnil;
   }
-
-  int cameraX = 0;
-  int cameraY = 0;
-  int cameraHeight = 0;
-  double cameraAngle = 0;
-  double distance = 0;
-  int vanishingX = 0;
-  int vanishingY = 0;
-  bool isLoop = false;
-  
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
-    cameraX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
-    cameraY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
-    cameraHeight = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle)))
-    cameraAngle = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
-    distance = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
-    vanishingX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
-    vanishingY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
-    isLoop = RTEST(val);
-  
-  if (cameraHeight == 0)
+  PerspectiveOptions options;
+  AssignPerspectiveOptions(&options, rbOptions);
+  if (options.cameraHeight == 0)
     return Qnil;
-
   int srcWidth  = srcTexture->width;
   int srcHeight = srcTexture->height;
   int dstWidth  = dstTexture->width;
   int dstHeight = dstTexture->height;
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
-  double cosAngle = cos(cameraAngle);
-  double sinAngle = sin(cameraAngle);
-  int screenTop    = cameraHeight + vanishingY;
+  double cosAngle = cos(options.cameraAngleVertical);
+  double sinAngle = sin(options.cameraAngleVertical);
+  int screenTop    = options.cameraHeight + options.vanishingY;
   int screenBottom = screenTop - dstHeight;
-  int screenLeft   = -vanishingX;
+  int screenLeft   = -options.vanishingX;
   int screenRight  = screenLeft + dstWidth;
   for (int j = screenTop - 1; screenBottom <= j; j--) {
-    double dHeight = cameraHeight - j;
-    if ((0 < cameraHeight && (dHeight <= 0)) ||
-        (cameraHeight < 0 && (0 <= dHeight))) {
+    double dHeight = options.cameraHeight - j;
+    if ((0 < options.cameraHeight && (dHeight <= 0)) ||
+        (options.cameraHeight < 0 && (0 <= dHeight))) {
       dst += dstWidth;
     } else {
-      double scale = cameraHeight / dHeight;
-      double srcZInPSystem = -distance * scale;
+      double scale = options.cameraHeight / dHeight;
+      double srcZInPSystem = -options.distance * scale;
       for (int i = screenLeft; i < screenRight; i++, dst++) {
         double srcXInPSystem = i * scale;
         int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
-                         + cameraX);
+                         + options.cameraX);
         int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
-                         + cameraY);
-        if (isLoop) {
+                         + options.cameraY);
+        if (options.isLoop) {
           srcX %= srcWidth;
           if (srcX < 0)
             srcX += srcWidth;
@@ -588,7 +573,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
           if (srcY < 0)
             srcY += srcHeight;
         }
-        if (isLoop ||
+        if (options.isLoop ||
             (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)) {
           Color* srcColor = &(src[srcX + srcY * srcWidth].color);
           uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
@@ -600,7 +585,6 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
       }
     }
   }
-  
   return Qnil;
 }
 
@@ -614,7 +598,6 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   Check_Type(rbText, T_STRING);
   if (!(RSTRING_LEN(rbText)))
     return Qnil;
-  
   bool antiAlias = RTEST(rbAntiAlias);
   Check_Type(rbText, T_STRING);
   if (!RSTRING_LEN(rbText)) {
@@ -633,7 +616,6 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
                                              2, RARRAY_PTR(rbSize));
   Texture* textTexture;
   Data_Get_Struct(rbTextTexture, Texture, textTexture);
-  
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
 
@@ -656,7 +638,6 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     rb_raise_sdl_error();
     return Qnil;
   }
-  
   SDL_LockSurface(textSurface);
   Pixel* src = (Pixel*)(textSurface->pixels);
   Pixel* dst = textTexture->pixels;
@@ -711,7 +692,6 @@ static VALUE
 Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
-  
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   if (!dstTexture->pixels) {
@@ -730,7 +710,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't use disposed texture");
     return Qnil;
   }
-  
+
   int srcTextureWidth  = srcTexture->width;
   int srcTextureHeight = srcTexture->height;
   int dstTextureWidth  = dstTexture->width;
@@ -1138,6 +1118,7 @@ InitializeTexture(void)
   symbol_center_x      = ID2SYM(rb_intern("center_x"));
   symbol_center_y      = ID2SYM(rb_intern("center_y"));
   symbol_distance      = ID2SYM(rb_intern("distance"));
+  symbol_horizontal    = ID2SYM(rb_intern("horizontal"));
   symbol_loop          = ID2SYM(rb_intern("loop"));
   symbol_saturation    = ID2SYM(rb_intern("saturation"));
   symbol_scale_x       = ID2SYM(rb_intern("scale_x"));
@@ -1152,4 +1133,5 @@ InitializeTexture(void)
   symbol_tone_red      = ID2SYM(rb_intern("tone_red"));
   symbol_vanishing_x   = ID2SYM(rb_intern("vanishing_x"));
   symbol_vanishing_y   = ID2SYM(rb_intern("vanishing_y"));
+  symbol_vertical      = ID2SYM(rb_intern("vertical"));
 }

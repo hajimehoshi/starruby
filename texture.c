@@ -792,7 +792,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eArgError, "invalid src_height: %d", srcHeight);
     return Qnil;
   }
-  
+
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,
     .b = 0, .d = 1, .ty = 0,
@@ -827,7 +827,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   });
   if (!AffineMatrix_IsRegular(&mat))
     return Qnil;
-  
+
   double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
   AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
   AffineMatrix_Transform(&mat, 0,        srcHeight, &dstX01, &dstY01);
@@ -866,7 +866,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstY0Int = (int)dstY0;
   int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
   int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
-  
+
   int_fast32_t srcOX16  = (int)(srcOX  * (1 << 16));
   int_fast32_t srcOY16  = (int)(srcOY  * (1 << 16));
   int_fast32_t srcDXX16 = (int)(srcDXX * (1 << 16));
@@ -875,7 +875,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int_fast32_t srcDYY16 = (int)(srcDYY * (1 << 16));
   Pixel* src;
   Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
-  
+
   volatile VALUE rbClonedTexture = Qnil;
   if (self == rbTexture) {
     rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
@@ -933,7 +933,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   if (!NIL_P(rbClonedTexture))
     Texture_dispose(rbClonedTexture);
-  
+
   return Qnil;
 }
 
@@ -946,12 +946,10 @@ Texture_save(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-
   volatile VALUE rbPath, rbAlpha;
   rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
   if (argc == 1)
     rbAlpha = Qtrue;
-  
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
   if (!fp) {
@@ -990,24 +988,19 @@ static VALUE
 Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
-  
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-
   int x = NUM2INT(rbX), y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
     return Qnil;
   }
-
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
-  
   texture->pixels[x + y * texture->width].color = *color;
   return rbColor;
 }
@@ -1031,14 +1024,12 @@ static VALUE
 Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 {
   rb_check_frozen(self);
-  
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-
   char* format = StringValuePtr(rbFormat);
   int formatLength = RSTRING_LEN(rbFormat);
   int textureSize = texture->width * texture->height;
@@ -1060,7 +1051,6 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
       }
     }
   }
-  
   return Qnil;
 }
 

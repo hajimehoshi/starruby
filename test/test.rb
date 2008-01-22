@@ -184,37 +184,6 @@ class FontTest < Test::Unit::TestCase
     end
   end
 
-  def test_dispose
-    if Font.exist?("Arial")
-      font = Font.new("Arial", 16)
-    elsif Font.exist?("FreeSans")
-      font = Font.new("FreeSans", 16)
-    elsif Font.exist?("Helvetica Neue")
-      font = Font.new("Helvetica Neue", 16)
-    else
-      flunk
-    end
-    assert_equal false, font.disposed?
-    font.dispose
-    assert_equal true, font.disposed?
-    assert_raise RuntimeError do
-      font.bold?
-    end
-    assert_raise RuntimeError do
-      font.italic?
-    end
-    assert_raise RuntimeError do
-      font.name
-    end
-    assert_raise RuntimeError do
-      font.size
-    end
-    assert_raise RuntimeError do
-      font.get_size("A")
-    end
-    font.dispose
-  end
-
   def test_get_size
     if Font.exist?("ＭＳ ゴシック")
       font = Font.new("ＭＳ ゴシック", 12)

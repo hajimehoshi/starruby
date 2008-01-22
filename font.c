@@ -189,6 +189,7 @@ Font_bold(VALUE self)
 static VALUE
 Font_dispose(VALUE self)
 {
+  rb_warn("Font#dispose is deprecated");
   Font* font;
   Data_Get_Struct(self, Font, font);
   if (TTF_WasInit())
@@ -200,6 +201,7 @@ Font_dispose(VALUE self)
 static VALUE
 Font_disposed(VALUE self)
 {
+  rb_warn("Font#disposed? is deprecated");
   Font* font;
   Data_Get_Struct(self, Font, font);
   return !(font->sdlFont) ? Qtrue : Qfalse;

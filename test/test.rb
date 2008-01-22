@@ -450,8 +450,8 @@ class TextureTest < Test::Unit::TestCase
         :horizontal => 0,
       },
       :distance      => 100,
-      :vanishing_x   => 0,
-      :vanishing_y   => 0,
+      :intersection_x   => 0,
+      :intersection_y   => 0,
     }
     assert_equal [0, 50, 0.5], Texture.transform_in_perspective(0, -200, 0, options)
     options = {
@@ -463,8 +463,8 @@ class TextureTest < Test::Unit::TestCase
         :horizontal => 0,
       },
       :distance      => 100,
-      :vanishing_x   => 12,
-      :vanishing_y   => 34,
+      :intersection_x   => 12,
+      :intersection_y   => 34,
     }
     assert_equal [12, 84, 0.5], Texture.transform_in_perspective(0, -200, 0, options)
     options = {
@@ -476,8 +476,8 @@ class TextureTest < Test::Unit::TestCase
         :horizontal => 0,
       },
       :distance      => 100,
-      :vanishing_x   => 0,
-      :vanishing_y   => 0,
+      :intersection_x   => 0,
+      :intersection_y   => 0,
     }
     assert_equal [100, 50, 0.5], Texture.transform_in_perspective(200, -200, 0, options)
     options = {
@@ -489,8 +489,8 @@ class TextureTest < Test::Unit::TestCase
         :horizontal => 0,
       },
       :distance      => 100,
-      :vanishing_x   => 0,
-      :vanishing_y   => 0,
+      :intersection_x   => 0,
+      :intersection_y   => 0,
     }
     assert_equal [50, 25, 0.25], Texture.transform_in_perspective(200, -400, 0, options)
   end
@@ -854,7 +854,8 @@ class TextureTest < Test::Unit::TestCase
     assert_raise TypeError do
       texture2.render_in_perspective(nil)
     end
-    [:camera_x, :camera_y, :camera_height, :camera_angle, :distance, :vanishing_x, :vanishing_y].each do |key|
+    [:camera_x, :camera_y, :camera_height, :camera_angle,
+     :distance, :intersection_x, :intersection_y].each do |key|
       assert_raise TypeError do
         texture2.render_in_perspective(texture, key => false)
       end

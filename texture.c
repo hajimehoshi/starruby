@@ -17,6 +17,8 @@ volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
 volatile static VALUE symbol_distance;
 volatile static VALUE symbol_horizontal;
+volatile static VALUE symbol_intersection_x;
+volatile static VALUE symbol_intersection_y;
 volatile static VALUE symbol_loop;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
@@ -38,8 +40,6 @@ typedef enum {
   ADD,
   SUB,
 } BlendType;
-
-
 
 static SDL_Surface*
 ConvertSurfaceForScreen(SDL_Surface* surface)
@@ -201,8 +201,8 @@ typedef struct {
   double cameraAngleVertical;
   double cameraAngleHorizontal;
   double distance;
-  int vanishingX;
-  int vanishingY;
+  int intersectionX;
+  int intersectionY;
   bool isLoop;
 } PerspectiveOptions;
 
@@ -242,10 +242,18 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
     options->distance = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x)))
-    options->vanishingX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y)))
-    options->vanishingY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x))) {
+    rb_warn(":vanishing_x is desprecated; use :intersection_x instead");
+    options->intersectionX = NUM2INT(val);
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y))) {
+    rb_warn(":vanishing_y is desprecated; use :intersection_y instead");
+    options->intersectionY = NUM2INT(val);
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))
+    options->intersectionX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y)))
+    options->intersectionY = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
     options->isLoop = RTEST(val);
 }
@@ -273,9 +281,9 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   if (zInPSystem == 0)
     return rbResult;
   double scale = -options.distance / zInPSystem;
-  int newX = (int)(xInPSystem * scale + options.vanishingX);
+  int newX = (int)(xInPSystem * scale + options.intersectionX);
   int newY = (int)((options.cameraHeight - height) * scale
-                   + options.vanishingY);
+                   + options.intersectionY);
   RARRAY_PTR(rbResult)[0] = FIXABLE(newX) ? INT2FIX(newX) : Qnil;
   RARRAY_PTR(rbResult)[1] = FIXABLE(newY) ? INT2FIX(newY) : Qnil;
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
@@ -547,9 +555,9 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Pixel* dst = dstTexture->pixels;
   double cosAngle = cos(options.cameraAngleVertical);
   double sinAngle = sin(options.cameraAngleVertical);
-  int screenTop    = options.cameraHeight + options.vanishingY;
+  int screenTop    = options.cameraHeight + options.intersectionY;
   int screenBottom = screenTop - dstHeight;
-  int screenLeft   = -options.vanishingX;
+  int screenLeft   = -options.intersectionX;
   int screenRight  = screenLeft + dstWidth;
   for (int j = screenTop - 1; screenBottom <= j; j--) {
     double dHeight = options.cameraHeight - j;
@@ -1035,8 +1043,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   int textureSize = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
   if (textureSize * formatLength != RSTRING_LEN(rbData)) {
-    rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
-             textureSize * formatLength, RSTRING_LEN(rbData));
+    rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",             textureSize * formatLength, RSTRING_LEN(rbData));
     return Qnil;
   }
   uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
@@ -1097,31 +1104,33 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 
-  symbol_add           = ID2SYM(rb_intern("add"));
-  symbol_alpha         = ID2SYM(rb_intern("alpha"));
-  symbol_angle         = ID2SYM(rb_intern("angle"));
-  symbol_blend_type    = ID2SYM(rb_intern("blend_type"));
-  symbol_camera_angle  = ID2SYM(rb_intern("camera_angle"));
-  symbol_camera_height = ID2SYM(rb_intern("camera_height"));
-  symbol_camera_x      = ID2SYM(rb_intern("camera_x"));
-  symbol_camera_y      = ID2SYM(rb_intern("camera_y"));
-  symbol_center_x      = ID2SYM(rb_intern("center_x"));
-  symbol_center_y      = ID2SYM(rb_intern("center_y"));
-  symbol_distance      = ID2SYM(rb_intern("distance"));
-  symbol_horizontal    = ID2SYM(rb_intern("horizontal"));
-  symbol_loop          = ID2SYM(rb_intern("loop"));
-  symbol_saturation    = ID2SYM(rb_intern("saturation"));
-  symbol_scale_x       = ID2SYM(rb_intern("scale_x"));
-  symbol_scale_y       = ID2SYM(rb_intern("scale_y"));
-  symbol_src_height    = ID2SYM(rb_intern("src_height"));
-  symbol_src_width     = ID2SYM(rb_intern("src_width"));
-  symbol_src_x         = ID2SYM(rb_intern("src_x"));
-  symbol_src_y         = ID2SYM(rb_intern("src_y"));
-  symbol_sub           = ID2SYM(rb_intern("sub"));
-  symbol_tone_blue     = ID2SYM(rb_intern("tone_blue"));
-  symbol_tone_green    = ID2SYM(rb_intern("tone_green"));
-  symbol_tone_red      = ID2SYM(rb_intern("tone_red"));
-  symbol_vanishing_x   = ID2SYM(rb_intern("vanishing_x"));
-  symbol_vanishing_y   = ID2SYM(rb_intern("vanishing_y"));
-  symbol_vertical      = ID2SYM(rb_intern("vertical"));
+  symbol_add            = ID2SYM(rb_intern("add"));
+  symbol_alpha          = ID2SYM(rb_intern("alpha"));
+  symbol_angle          = ID2SYM(rb_intern("angle"));
+  symbol_blend_type     = ID2SYM(rb_intern("blend_type"));
+  symbol_camera_angle   = ID2SYM(rb_intern("camera_angle"));
+  symbol_camera_height  = ID2SYM(rb_intern("camera_height"));
+  symbol_camera_x       = ID2SYM(rb_intern("camera_x"));
+  symbol_camera_y       = ID2SYM(rb_intern("camera_y"));
+  symbol_center_x       = ID2SYM(rb_intern("center_x"));
+  symbol_center_y       = ID2SYM(rb_intern("center_y"));
+  symbol_distance       = ID2SYM(rb_intern("distance"));
+  symbol_horizontal     = ID2SYM(rb_intern("horizontal"));
+  symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
+  symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
+  symbol_loop           = ID2SYM(rb_intern("loop"));
+  symbol_saturation     = ID2SYM(rb_intern("saturation"));
+  symbol_scale_x        = ID2SYM(rb_intern("scale_x"));
+  symbol_scale_y        = ID2SYM(rb_intern("scale_y"));
+  symbol_src_height     = ID2SYM(rb_intern("src_height"));
+  symbol_src_width      = ID2SYM(rb_intern("src_width"));
+  symbol_src_x          = ID2SYM(rb_intern("src_x"));
+  symbol_src_y          = ID2SYM(rb_intern("src_y"));
+  symbol_sub            = ID2SYM(rb_intern("sub"));
+  symbol_tone_blue      = ID2SYM(rb_intern("tone_blue"));
+  symbol_tone_green     = ID2SYM(rb_intern("tone_green"));
+  symbol_tone_red       = ID2SYM(rb_intern("tone_red"));
+  symbol_vanishing_x    = ID2SYM(rb_intern("vanishing_x"));
+  symbol_vanishing_y    = ID2SYM(rb_intern("vanishing_y"));
+  symbol_vertical       = ID2SYM(rb_intern("vertical"));
 }

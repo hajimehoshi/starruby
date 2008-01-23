@@ -16,10 +16,11 @@ volatile static VALUE symbol_camera_y;
 volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
 volatile static VALUE symbol_distance;
-volatile static VALUE symbol_horizontal;
 volatile static VALUE symbol_intersection_x;
 volatile static VALUE symbol_intersection_y;
 volatile static VALUE symbol_loop;
+volatile static VALUE symbol_pitch;
+volatile static VALUE symbol_roll;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
 volatile static VALUE symbol_scale_y;
@@ -33,7 +34,7 @@ volatile static VALUE symbol_tone_green;
 volatile static VALUE symbol_tone_red;
 volatile static VALUE symbol_vanishing_x;
 volatile static VALUE symbol_vanishing_y;
-volatile static VALUE symbol_vertical;
+volatile static VALUE symbol_yaw;
 
 typedef enum {
   ALPHA,
@@ -198,8 +199,9 @@ typedef struct {
   int cameraX;
   int cameraY;
   int cameraHeight;
-  double cameraAngleVertical;
-  double cameraAngleHorizontal;
+  double cameraAngleYaw;
+  double cameraAnglePitch;
+  double cameraAngleRoll;
   double distance;
   int intersectionX;
   int intersectionY;
@@ -224,15 +226,17 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     case T_BIGNUM:
     case T_FLOAT:
       rb_warn("Numeric object for :camera_angle is deprecated");
-      options->cameraAngleVertical = NUM2DBL(val);
+      options->cameraAngleYaw = NUM2DBL(val);
       break;
     case T_HASH:
       {
         volatile VALUE rbH = val;
-        if (!NIL_P(val = rb_hash_aref(rbH, symbol_vertical)))
-          options->cameraAngleVertical = NUM2DBL(val);
-        if (!NIL_P(val = rb_hash_aref(rbH, symbol_horizontal)))
-          options->cameraAngleHorizontal = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbH, symbol_yaw)))
+          options->cameraAngleYaw = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbH, symbol_pitch)))
+          options->cameraAnglePitch = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbH, symbol_roll)))
+          options->cameraAngleRoll = NUM2DBL(val);
       }
       break;
     default:
@@ -270,8 +274,8 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   double height = NUM2DBL(rbHeight);
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  double cosAngle = cos(options.cameraAngleVertical);
-  double sinAngle = sin(options.cameraAngleVertical);
+  double cosAngle = cos(options.cameraAngleYaw);
+  double sinAngle = sin(options.cameraAngleYaw);
   double xInPSystem = cosAngle  * (x - options.cameraX)
     + sinAngle * (y - options.cameraY);
   double zInPSystem = -sinAngle * (x - options.cameraX)
@@ -558,8 +562,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   int dstHeight = dstTexture->height;
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
-  double cosAngle = cos(options.cameraAngleVertical);
-  double sinAngle = sin(options.cameraAngleVertical);
+  double cosAngle = cos(options.cameraAngleYaw);
+  double sinAngle = sin(options.cameraAngleYaw);
   int screenTop    = options.cameraHeight + options.intersectionY;
   int screenBottom = screenTop - dstHeight;
   int screenLeft   = -options.intersectionX;
@@ -1120,10 +1124,11 @@ InitializeTexture(void)
   symbol_center_x       = ID2SYM(rb_intern("center_x"));
   symbol_center_y       = ID2SYM(rb_intern("center_y"));
   symbol_distance       = ID2SYM(rb_intern("distance"));
-  symbol_horizontal     = ID2SYM(rb_intern("horizontal"));
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
+  symbol_pitch          = ID2SYM(rb_intern("pitch"));
+  symbol_roll           = ID2SYM(rb_intern("roll"));
   symbol_saturation     = ID2SYM(rb_intern("saturation"));
   symbol_scale_x        = ID2SYM(rb_intern("scale_x"));
   symbol_scale_y        = ID2SYM(rb_intern("scale_y"));
@@ -1137,5 +1142,5 @@ InitializeTexture(void)
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));
   symbol_vanishing_x    = ID2SYM(rb_intern("vanishing_x"));
   symbol_vanishing_y    = ID2SYM(rb_intern("vanishing_y"));
-  symbol_vertical       = ID2SYM(rb_intern("vertical"));
+  symbol_yaw            = ID2SYM(rb_intern("yaw"));
 }

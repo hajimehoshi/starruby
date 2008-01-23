@@ -17,12 +17,13 @@ options = {
   :camera_y       => texture.height * 2,
   :camera_height  => texture.height / 2,
   :camera_angle   => {
-    :vertical_n   => 0,
-    :horizontal_n => 0,
+    :yaw_n   => 0,
+    :pitch_n => 0,
+    :roll_n  => 0,
   },
   :distance       => texture.height,
-  :vanishing_x    => screen_texture.width / 2,
-  :vanishing_y    => 0,
+  :intersection_x    => screen_texture.width / 2,
+  :intersection_y    => 0,
   :loop           => false,
 }
 
@@ -51,28 +52,28 @@ Game.run(320, 240) do
     options[:camera_height] -= 1
   end
   if keys.include?(:a)
-    options[:camera_angle][:vertical_n] =
-      (options[:camera_angle][:vertical_n] + 63) % 64
+    options[:camera_angle][:yaw_n] =
+      (options[:camera_angle][:yaw_n] + 63) % 64
   elsif keys.include?(:s)
-    options[:camera_angle][:vertical_n] =
-      (options[:camera_angle][:vertical_n] + 1) % 64
+    options[:camera_angle][:yaw_n] =
+      (options[:camera_angle][:yaw_n] + 1) % 64
   end
   if keys.include?(:f)
-    options[:vanishing_x] += 1
+    options[:intersection_x] += 1
   elsif keys.include?(:d)
-    options[:vanishing_x] -= 1
+    options[:intersection_x] -= 1
   end
   if keys.include?(:c)
-    options[:vanishing_y] += 1
+    options[:intersection_y] += 1
   elsif keys.include?(:r)
-    options[:vanishing_y] -= 1
+    options[:intersection_y] -= 1
   end
   if Input.keys(:keyboard, :duration => 1).include?(:l)
     options[:loop] = !options[:loop]
   end
 
   screen_texture.fill(Color.new(64, 64, 64, 255))
-  [:vertical, :horizontal].each do |key|
+  [:yaw, :pitch, :roll].each do |key|
     options[:camera_angle][key] = options[:camera_angle][:"#{key}_n"] * 2 * Math::PI / 64
   end
   screen_texture.render_in_perspective(texture, options)
@@ -102,8 +103,8 @@ Game.run(320, 240) do
   # s.render_text("[A/S] camera_angle: %0.4f" % options[:camera_angle], 8, screen_texture.height + 8 + 16 * 3, font, white)
   s.render_text("distance: #{options[:distance]}", 8, screen_texture.height + 8 + 16 * 4, font, white)
   s.render_text("[L] loop: #{options[:loop]}", 8, screen_texture.height + 8 + 16 * 5, font, white)
-  s.render_text("[D/F] vanishing_x: #{options[:vanishing_x]}", screen_texture.width + 8, screen_texture.height + 8, font, white)
-  s.render_text("[R/C] vanishing_y: #{options[:vanishing_y]}", screen_texture.width + 8, screen_texture.height + 8 + 16, font, white)
+  s.render_text("[D/F] intersection_x: #{options[:intersection_x]}", screen_texture.width + 8, screen_texture.height + 8, font, white)
+  s.render_text("[R/C] intersection_y: #{options[:intersection_y]}", screen_texture.width + 8, screen_texture.height + 8 + 16, font, white)
 
   x = s.width / 2 + (s.width / 2 - texture.width / 2) / 2
   y = (s.height / 2 - texture.height / 2) / 2

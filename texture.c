@@ -284,8 +284,13 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   int newX = (int)(xInPSystem * scale + options.intersectionX);
   int newY = (int)((options.cameraHeight - height) * scale
                    + options.intersectionY);
+#if SIZEOF_INT == SIZEOF_LONG
   RARRAY_PTR(rbResult)[0] = FIXABLE(newX) ? INT2FIX(newX) : Qnil;
   RARRAY_PTR(rbResult)[1] = FIXABLE(newY) ? INT2FIX(newY) : Qnil;
+#else
+  RARRAY_PTR(rbResult)[0] = INT2FIX(newX);
+  RARRAY_PTR(rbResult)[1] = INT2FIX(newY);
+#endif
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
   return rbResult;
 }

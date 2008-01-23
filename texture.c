@@ -275,8 +275,8 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
   double cosAngle = cos(options.cameraAngleYaw);
-  double sinAngle == sin(options.cameraAngleYaw);
-  double xInPSystem = cosAngle  * (x - options.cameraX)
+  double sinAngle = sin(options.cameraAngleYaw);
+  double xInPSystem = cosAngle * (x - options.cameraX)
     + sinAngle * (y - options.cameraY);
   double zInPSystem = -sinAngle * (x - options.cameraX)
     + cosAngle * (y - options.cameraY);

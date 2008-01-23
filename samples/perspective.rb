@@ -32,9 +32,7 @@ white = Color.new(255, 255, 255)
 
 Game.title = "Perspective"
 
-i = 0
 Game.run(320, 240) do
-  i = (i + 1) % 30
   keys = Input.keys(:keyboard)
   if keys.include?(:left)
     options[:camera_x] -= 1

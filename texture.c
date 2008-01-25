@@ -42,6 +42,30 @@ typedef enum {
   SUB,
 } BlendType;
 
+typedef struct {
+  int x, y, z;
+} Point;
+
+typedef struct {
+  double x, y, z;
+} PointF;
+
+typedef Point Vector;
+typedef PointF VectorF;
+
+typedef struct {
+  int cameraX;
+  int cameraY;
+  int cameraHeight;
+  double cameraAngleYaw;
+  double cameraAnglePitch;
+  double cameraAngleRoll;
+  double distance;
+  int intersectionX;
+  int intersectionY;
+  bool isLoop;
+} PerspectiveOptions;
+
 static SDL_Surface*
 ConvertSurfaceForScreen(SDL_Surface* surface)
 {
@@ -194,19 +218,6 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
   MEMCPY(texture->pixels, origTexture->pixels, Pixel, length);
   return Qnil;
 }
-
-typedef struct {
-  int cameraX;
-  int cameraY;
-  int cameraHeight;
-  double cameraAngleYaw;
-  double cameraAnglePitch;
-  double cameraAngleRoll;
-  double distance;
-  int intersectionX;
-  int intersectionY;
-  bool isLoop;
-} PerspectiveOptions;
 
 static void
 AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
@@ -560,39 +571,68 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   int srcHeight = srcTexture->height;
   int dstWidth  = dstTexture->width;
   int dstHeight = dstTexture->height;
+  double cosYaw   = cos(options.cameraAngleYaw);
+  double sinYaw   = sin(options.cameraAngleYaw);
+  double cosPitch = cos(options.cameraAnglePitch);
+  double sinPitch = sin(options.cameraAnglePitch);
+  double cosRoll  = cos(options.cameraAngleRoll);
+  double sinRoll  = sin(options.cameraAngleRoll);
+  /*VectorF screenDX = {cosYaw, 0, sinYaw};
+    VectorF screenDY = {+sinPitch * sinYaw, -cosPitch, -sinPitch * cosYaw};*/
+  VectorF screenDX = {
+    cosYaw * cosRoll + sinPitch * sinYaw * sinRoll,
+    -cosPitch * sinRoll,
+    sinYaw * cosRoll - sinPitch * cosYaw * sinRoll,
+  };
+  VectorF screenDY = {
+    -cosYaw * sinRoll + sinPitch * sinYaw * cosRoll,
+    -cosPitch * cosRoll,
+    -sinYaw * sinRoll - sinPitch * cosYaw * cosRoll,
+  };
+  PointF intersection = {
+    options.distance * (cosPitch * sinYaw),
+    options.distance * sinPitch + options.cameraHeight,
+    options.distance * (-cosPitch * cosYaw),
+  };
+  PointF screenO;
+  screenO.x = intersection.x
+    - options.intersectionX * screenDX.x
+    - options.intersectionY * screenDY.x;
+  screenO.y = intersection.y
+    - options.intersectionX * screenDX.y
+    - options.intersectionY * screenDY.y;
+  screenO.z = intersection.z
+    - options.intersectionX * screenDX.z
+    - options.intersectionY * screenDY.z;
+  int cameraHeight = options.cameraHeight;
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
-  double cosAngle = cos(options.cameraAngleYaw);
-  double sinAngle = sin(options.cameraAngleYaw);
-  int screenTop    = options.cameraHeight + options.intersectionY;
-  int screenBottom = screenTop - dstHeight;
-  int screenLeft   = -options.intersectionX;
-  int screenRight  = screenLeft + dstWidth;
-  for (int j = screenTop - 1; screenBottom <= j; j--) {
-    double dHeight = options.cameraHeight - j;
-    if ((0 < options.cameraHeight && (dHeight <= 0)) ||
-        (options.cameraHeight < 0 && (0 <= dHeight))) {
-      dst += dstWidth;
-    } else {
-      double scale = options.cameraHeight / dHeight;
-      double srcZInPSystem = -options.distance * scale;
-      for (int i = screenLeft; i < screenRight; i++, dst++) {
-        double srcXInPSystem = i * scale;
-        int srcX = (int)(cosAngle * srcXInPSystem - sinAngle * srcZInPSystem
-                         + options.cameraX);
-        int srcY = (int)(sinAngle * srcXInPSystem + cosAngle * srcZInPSystem
-                         + options.cameraY);
+  PointF screenP;
+  for (int j = 0; j < dstHeight; j++) {
+    screenP.x = screenO.x + j * screenDY.x;
+    screenP.y = screenO.y + j * screenDY.y;
+    screenP.z = screenO.z + j * screenDY.z;
+    for (int i = 0; i < dstWidth; i++, dst++,
+           screenP.x += screenDX.x,
+           screenP.y += screenDX.y,
+           screenP.z += screenDX.z) {
+      if (cameraHeight != screenP.y &&
+          ((0 < cameraHeight && screenP.y < cameraHeight) ||
+           (cameraHeight < 0 && cameraHeight < screenP.y))) {
+        double scale = cameraHeight / (cameraHeight - screenP.y);
+        int srcX = (int)((screenP.x) * scale + options.cameraX);
+        int srcZ = (int)((screenP.z) * scale + options.cameraY);
         if (options.isLoop) {
           srcX %= srcWidth;
           if (srcX < 0)
             srcX += srcWidth;
-          srcY %= srcHeight;
-          if (srcY < 0)
-            srcY += srcHeight;
+          srcZ %= srcHeight;
+          if (srcZ < 0)
+            srcZ += srcHeight;
         }
         if (options.isLoop ||
-            (0 <= srcX && srcX < srcWidth && 0 <= srcY && srcY < srcHeight)) {
-          Color* srcColor = &(src[srcX + srcY * srcWidth].color);
+            (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
+          Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
           uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
           dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   alpha);
           dst->color.green = ALPHA(srcColor->green, dst->color.green, alpha);

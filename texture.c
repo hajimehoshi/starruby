@@ -577,8 +577,6 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   double sinPitch = sin(options.cameraAnglePitch);
   double cosRoll  = cos(options.cameraAngleRoll);
   double sinRoll  = sin(options.cameraAngleRoll);
-  /*VectorF screenDX = {cosYaw, 0, sinYaw};
-    VectorF screenDY = {+sinPitch * sinYaw, -cosPitch, -sinPitch * cosYaw};*/
   VectorF screenDX = {
     cosYaw * cosRoll + sinPitch * sinYaw * sinRoll,
     -cosPitch * sinRoll,

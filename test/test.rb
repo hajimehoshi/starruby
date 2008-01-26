@@ -445,11 +445,9 @@ class TextureTest < Test::Unit::TestCase
       :camera_x      => 0,
       :camera_y      => 0,
       :camera_height => 100,
-      :camera_angle  => {
-        :yaw   => 0,
-        :pitch => 0,
-        :roll  => 0,
-      },
+      :camera_yaw    => 0,
+      :camera_pitch  => 0,
+      :camera_roll   => 0,
       :distance      => 100,
       :intersection_x   => 0,
       :intersection_y   => 0,
@@ -459,11 +457,9 @@ class TextureTest < Test::Unit::TestCase
       :camera_x      => 0,
       :camera_y      => 0,
       :camera_height => 100,
-      :camera_angle  => {
-        :yaw   => 0,
-        :pitch => 0,
-        :roll  => 0,
-      },
+      :camera_yaw    => 0,
+      :camera_pitch  => 0,
+      :camera_roll   => 0,
       :distance      => 100,
       :intersection_x   => 12,
       :intersection_y   => 34,
@@ -473,11 +469,9 @@ class TextureTest < Test::Unit::TestCase
       :camera_x      => 0,
       :camera_y      => 0,
       :camera_height => 100,
-      :camera_angle  => {
-        :yaw   => 0,
-        :pitch => 0,
-        :roll  => 0,
-      },
+      :camera_yaw    => 0,
+      :camera_pitch  => 0,
+      :camera_roll   => 0,
       :distance      => 100,
       :intersection_x   => 0,
       :intersection_y   => 0,
@@ -487,11 +481,9 @@ class TextureTest < Test::Unit::TestCase
       :camera_x      => 0,
       :camera_y      => 0,
       :camera_height => 100,
-      :camera_angle  => {
-        :yaw   => 0,
-        :pitch => 0,
-        :roll  => 0,
-      },
+      :camera_yaw    => 0,
+      :camera_pitch  => 0,
+      :camera_roll   => 0,
       :distance      => 100,
       :intersection_x   => 0,
       :intersection_y   => 0,
@@ -858,7 +850,7 @@ class TextureTest < Test::Unit::TestCase
     assert_raise TypeError do
       texture2.render_in_perspective(nil)
     end
-    [:camera_x, :camera_y, :camera_height, :camera_angle,
+    [:camera_x, :camera_y, :camera_height, :camera_yaw, :camera_pitch, :camera_roll,
      :distance, :intersection_x, :intersection_y].each do |key|
       assert_raise TypeError do
         texture2.render_in_perspective(texture, key => false)

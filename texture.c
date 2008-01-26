@@ -9,18 +9,19 @@ volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
 volatile static VALUE symbol_blend_type;
-volatile static VALUE symbol_camera_angle;
+volatile static VALUE symbol_camera_angle; // deprecated
 volatile static VALUE symbol_camera_height;
+volatile static VALUE symbol_camera_pitch;
+volatile static VALUE symbol_camera_roll;
 volatile static VALUE symbol_camera_x;
 volatile static VALUE symbol_camera_y;
+volatile static VALUE symbol_camera_yaw;
 volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
 volatile static VALUE symbol_distance;
 volatile static VALUE symbol_intersection_x;
 volatile static VALUE symbol_intersection_y;
 volatile static VALUE symbol_loop;
-volatile static VALUE symbol_pitch;
-volatile static VALUE symbol_roll;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
 volatile static VALUE symbol_scale_y;
@@ -34,7 +35,6 @@ volatile static VALUE symbol_tone_green;
 volatile static VALUE symbol_tone_red;
 volatile static VALUE symbol_vanishing_x;
 volatile static VALUE symbol_vanishing_y;
-volatile static VALUE symbol_yaw;
 
 typedef enum {
   ALPHA,
@@ -57,9 +57,9 @@ typedef struct {
   int cameraX;
   int cameraY;
   int cameraHeight;
-  double cameraAngleYaw;
-  double cameraAnglePitch;
-  double cameraAngleRoll;
+  double cameraYaw;
+  double cameraPitch;
+  double cameraRoll;
   double distance;
   int intersectionX;
   int intersectionY;
@@ -232,29 +232,15 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
     options->cameraHeight = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle))) {
-    switch (TYPE(val)) {
-    case T_FIXNUM:
-    case T_BIGNUM:
-    case T_FLOAT:
-      rb_warn("Numeric object for :camera_angle is deprecated");
-      options->cameraAngleYaw = NUM2DBL(val);
-      break;
-    case T_HASH:
-      {
-        volatile VALUE rbH = val;
-        if (!NIL_P(val = rb_hash_aref(rbH, symbol_yaw)))
-          options->cameraAngleYaw = NUM2DBL(val);
-        if (!NIL_P(val = rb_hash_aref(rbH, symbol_pitch)))
-          options->cameraAnglePitch = NUM2DBL(val);
-        if (!NIL_P(val = rb_hash_aref(rbH, symbol_roll)))
-          options->cameraAngleRoll = NUM2DBL(val);
-      }
-      break;
-    default:
-      Check_Type(val, T_HASH);
-      break;
-    }
+    rb_warn("Numeric object for :camera_angle is deprecated");
+    options->cameraYaw = NUM2DBL(val);
   }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_yaw)))
+    options->cameraYaw = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_pitch)))
+    options->cameraPitch = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_roll)))
+    options->cameraRoll = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
     options->distance = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x))) {
@@ -285,8 +271,8 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   double height = NUM2DBL(rbHeight);
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  double cosAngle = cos(options.cameraAngleYaw);
-  double sinAngle = sin(options.cameraAngleYaw);
+  double cosAngle = cos(options.cameraYaw);
+  double sinAngle = sin(options.cameraYaw);
   double xInPSystem = cosAngle * (x - options.cameraX)
     + sinAngle * (y - options.cameraY);
   double zInPSystem = -sinAngle * (x - options.cameraX)
@@ -571,12 +557,12 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   int srcHeight = srcTexture->height;
   int dstWidth  = dstTexture->width;
   int dstHeight = dstTexture->height;
-  double cosYaw   = cos(options.cameraAngleYaw);
-  double sinYaw   = sin(options.cameraAngleYaw);
-  double cosPitch = cos(options.cameraAnglePitch);
-  double sinPitch = sin(options.cameraAnglePitch);
-  double cosRoll  = cos(options.cameraAngleRoll);
-  double sinRoll  = sin(options.cameraAngleRoll);
+  double cosYaw   = cos(options.cameraYaw);
+  double sinYaw   = sin(options.cameraYaw);
+  double cosPitch = cos(options.cameraPitch);
+  double sinPitch = sin(options.cameraPitch);
+  double cosRoll  = cos(options.cameraRoll);
+  double sinRoll  = sin(options.cameraRoll);
   VectorF screenDX = {
     cosYaw * cosRoll + sinPitch * sinYaw * sinRoll,
     -cosPitch * sinRoll,
@@ -1157,16 +1143,17 @@ InitializeTexture(void)
   symbol_blend_type     = ID2SYM(rb_intern("blend_type"));
   symbol_camera_angle   = ID2SYM(rb_intern("camera_angle"));
   symbol_camera_height  = ID2SYM(rb_intern("camera_height"));
+  symbol_camera_pitch   = ID2SYM(rb_intern("camera_pitch"));
+  symbol_camera_roll    = ID2SYM(rb_intern("camera_roll"));
   symbol_camera_x       = ID2SYM(rb_intern("camera_x"));
   symbol_camera_y       = ID2SYM(rb_intern("camera_y"));
+  symbol_camera_yaw     = ID2SYM(rb_intern("camera_yaw"));
   symbol_center_x       = ID2SYM(rb_intern("center_x"));
   symbol_center_y       = ID2SYM(rb_intern("center_y"));
   symbol_distance       = ID2SYM(rb_intern("distance"));
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
-  symbol_pitch          = ID2SYM(rb_intern("pitch"));
-  symbol_roll           = ID2SYM(rb_intern("roll"));
   symbol_saturation     = ID2SYM(rb_intern("saturation"));
   symbol_scale_x        = ID2SYM(rb_intern("scale_x"));
   symbol_scale_y        = ID2SYM(rb_intern("scale_y"));
@@ -1180,5 +1167,4 @@ InitializeTexture(void)
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));
   symbol_vanishing_x    = ID2SYM(rb_intern("vanishing_x"));
   symbol_vanishing_y    = ID2SYM(rb_intern("vanishing_y"));
-  symbol_yaw            = ID2SYM(rb_intern("yaw"));
 }

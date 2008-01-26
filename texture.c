@@ -56,7 +56,7 @@ typedef PointF VectorF;
 typedef struct {
   int cameraX;
   int cameraY;
-  int cameraHeight;
+  double cameraHeight;
   double cameraYaw;
   double cameraPitch;
   double cameraRoll;
@@ -266,31 +266,44 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
-  double height = NUM2DBL(rbHeight);
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  double cosYaw = cos(options.cameraYaw);
-  double sinYaw = sin(options.cameraYaw);
-  double xInPSystem = cosYaw * (x - options.cameraX)
-    + sinYaw * (y - options.cameraY);
-  double zInPSystem = -sinYaw * (x - options.cameraX)
-    + cosYaw * (y - options.cameraY);
+  double cosYaw   = cos(options.cameraYaw);
+  double sinYaw   = sin(options.cameraYaw);
+  double cosPitch = cos(options.cameraPitch);
+  double sinPitch = sin(options.cameraPitch);
+  double cosRoll  = cos(options.cameraRoll);
+  double sinRoll  = sin(options.cameraRoll);
+  double x = NUM2INT(rbX) - options.cameraX;
+  double y = NUM2DBL(rbHeight);
+  double z = NUM2INT(rbY) - options.cameraY;
+  double x2, y2, z2;
+  x2 = cosYaw * x  + sinYaw * z;
+  z2 = -sinYaw * x + cosYaw * z;
+  x = x2;
+  z = z2;
+  y2 = sinPitch * z + cosPitch * (y - options.cameraHeight)
+    + options.cameraHeight;
+  z2 = cosPitch * z - sinPitch * (y - options.cameraHeight);
+  y = y2;
+  z = z2;
   volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
   OBJ_FREEZE(rbResult);
-  if (zInPSystem == 0)
+  if (z == 0)
     return rbResult;
-  double scale = -options.distance / zInPSystem;
-  int newX = (int)(xInPSystem * scale + options.intersectionX);
-  int newY = (int)((options.cameraHeight - height) * scale
-                   + options.intersectionY);
-#if SIZEOF_INT == SIZEOF_LONG
-  RARRAY_PTR(rbResult)[0] = FIXABLE(newX) ? INT2FIX(newX) : Qnil;
-  RARRAY_PTR(rbResult)[1] = FIXABLE(newY) ? INT2FIX(newY) : Qnil;
+  double scale = -options.distance / z;
+  double screenX = x * scale;
+  double screenY = (options.cameraHeight - y) * scale;
+  double screenX2 = cosRoll  * screenX + sinRoll * screenY;
+  double screenY2 = -sinRoll * screenX + cosRoll * screenY;
+  screenX = screenX2 + options.intersectionX;
+  screenY = screenY2 + options.intersectionY;
+#if FIXNUM_MAX < INT_MAX
+  RARRAY_PTR(rbResult)[0] = FIXABLE(screenX) ? INT2FIX(screenX) : Qnil;
+  RARRAY_PTR(rbResult)[1] = FIXABLE(screenY) ? INT2FIX(screenY) : Qnil;
 #else
-  RARRAY_PTR(rbResult)[0] = INT2FIX(newX);
-  RARRAY_PTR(rbResult)[1] = INT2FIX(newY);
+  RARRAY_PTR(rbResult)[0] = INT2FIX(screenX);
+  RARRAY_PTR(rbResult)[1] = INT2FIX(screenY);
 #endif
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
   return rbResult;

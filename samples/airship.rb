@@ -9,7 +9,7 @@ star_texture  = Texture.load("images/star")
 Airship = Struct.new(:x, :y, :yaw_int, :pitch_int, :roll_int, :height, :screen_x, :screen_y)
 airship = Airship.new
 airship.x          = field_texture.width / 2
-airship.y          = field_texture.height / 2
+airship.y          = field_texture.height
 airship.yaw_int    = 0
 airship.pitch_int  = 0
 airship.roll_int   = 0
@@ -101,13 +101,13 @@ Game.run(320, 240) do
   end.sort do |a, b|
     a[2] <=> b[2] # scale
   end.each do |x, y, scale|
-    x -= (star_texture.width) / 2
+    x -= star_texture.width / 2
     y -= star_texture.height
     s.render_texture(star_texture, x, y,
                      :scale_x => scale,
                      :scale_y => scale,
-                     :center_x => (star_texture.width * scale) / 2,
-                     :center_y => (star_texture.height * scale) / 2,
+                     :center_x => star_texture.width / 2,
+                     :center_y => star_texture.height / 2,
                      :angle => 2 * Math::PI - options[:camera_roll])
   end
   s.render_text("[Arrow] Rotate Camera", 8, 8, font, yellow)

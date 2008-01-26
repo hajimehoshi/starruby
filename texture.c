@@ -271,12 +271,12 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   double height = NUM2DBL(rbHeight);
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  double cosAngle = cos(options.cameraYaw);
-  double sinAngle = sin(options.cameraYaw);
-  double xInPSystem = cosAngle * (x - options.cameraX)
-    + sinAngle * (y - options.cameraY);
-  double zInPSystem = -sinAngle * (x - options.cameraX)
-    + cosAngle * (y - options.cameraY);
+  double cosYaw = cos(options.cameraYaw);
+  double sinYaw = sin(options.cameraYaw);
+  double xInPSystem = cosYaw * (x - options.cameraX)
+    + sinYaw * (y - options.cameraY);
+  double zInPSystem = -sinYaw * (x - options.cameraX)
+    + cosYaw * (y - options.cameraY);
   volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
   OBJ_FREEZE(rbResult);
   if (zInPSystem == 0)
@@ -564,14 +564,14 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   double cosRoll  = cos(options.cameraRoll);
   double sinRoll  = sin(options.cameraRoll);
   VectorF screenDX = {
-    cosYaw * cosRoll + sinPitch * sinYaw * sinRoll,
-    -cosPitch * sinRoll,
-    sinYaw * cosRoll - sinPitch * cosYaw * sinRoll,
+    cosRoll * cosYaw + sinRoll * sinPitch * sinYaw,
+    sinRoll * -cosPitch,
+    cosRoll * sinYaw - sinRoll * sinPitch * cosYaw,
   };
   VectorF screenDY = {
-    -cosYaw * sinRoll + sinPitch * sinYaw * cosRoll,
-    -cosPitch * cosRoll,
-    -sinYaw * sinRoll - sinPitch * cosYaw * cosRoll,
+    -sinRoll * cosYaw + cosRoll * sinPitch * sinYaw,
+    cosRoll * -cosPitch,
+    -sinRoll * sinYaw - cosRoll * sinPitch * cosYaw,
   };
   PointF intersection = {
     options.distance * (cosPitch * sinYaw),

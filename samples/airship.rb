@@ -4,6 +4,7 @@ require "starruby"
 include StarRuby
 
 field_texture = Texture.load("images/ruby-logo-R")
+star_texture  = Texture.load("images/star")
 
 Airship = Struct.new(:x, :y, :yaw_int, :pitch_int, :roll_int, :height)
 airship = Airship.new
@@ -78,6 +79,23 @@ Game.run(320, 240) do
     :loop => true,
   }
   s.render_in_perspective(field_texture, options)
+  [[-20, -20, 0],
+   [-20, 20, 0],
+   [20, -20, 0],
+   [20, 20, 0],
+   [0, 0, 20]].map do |x, y, height|
+    x += s.width / 2
+    y += s.height / 2
+    Texture.transform_in_perspective(x, y, height, options)
+  end.select do |x, y, scale|
+    x and y and scale and 0 < scale
+  end.sort do |a, b|
+    a[2] <=> b[2] # scale
+  end.each do |x, y, scale|
+    x -= (star_texture.width * scale) / 2
+    y -= star_texture.height * scale
+    s.render_texture(star_texture, x, y, :scale_x => scale, :scale_y => scale)
+  end
   s.render_text("[Arrow] Rotate Camera", 8, 8, font, yellow)
   s.render_text("[Space] Go Forward", 8, 8 + 16, font, yellow)
   str = "[F] Fearless? #{fearless ? '(Yes)' : '(No)'}"

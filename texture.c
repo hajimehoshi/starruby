@@ -712,36 +712,38 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-#define RENDER_TEXTURE_LOOP(convertingPixel) do {\
-  int srcX2 = srcX + srcWidth;\
-  int srcY2 = srcY + srcHeight;\
-  for (int j = 0; j < dstHeight;\
-       j++, dst += -dstWidth + dstTextureWidth) {\
-    int_fast32_t srcI16 = srcOX16 + j * srcDYX16;\
-    int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;\
-    for (int i = 0; i < dstWidth;\
-         i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {\
-      int_fast32_t srcI = srcI16 >> 16;\
-      int_fast32_t srcJ = srcJ16 >> 16;\
-      if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {\
-        src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);\
-        uint8_t srcR = src->color.red;\
-        uint8_t srcG = src->color.green;\
-        uint8_t srcB = src->color.blue;\
-        uint8_t dstR = dst->color.red;\
-        uint8_t dstG = dst->color.green;\
-        uint8_t dstB = dst->color.blue;\
-        uint8_t srcAlpha = DIV255(src->color.alpha * alpha);\
-        uint8_t pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;\
-        dst->color.alpha = MAX(dst->color.alpha, srcAlpha);\
-        convertingPixel;\
-        dst->color.red   = dstR;\
-        dst->color.green = dstG;\
-        dst->color.blue  = dstB;\
-      }\
-    }\
-  }\
-} while (false)\
+#define RENDER_TEXTURE_LOOP(convertingPixel) do {                       \
+    int srcX2 = srcX + srcWidth;                                        \
+    int srcY2 = srcY + srcHeight;                                       \
+    for (int j = 0; j < dstHeight;                                      \
+         j++, dst += -dstWidth + dstTextureWidth) {                     \
+      int_fast32_t srcI16 = srcOX16 + j * srcDYX16;                     \
+      int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;                     \
+      for (int i = 0; i < dstWidth;                                     \
+           i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {        \
+        int_fast32_t srcI = srcI16 >> 16;                               \
+        int_fast32_t srcJ = srcJ16 >> 16;                               \
+        if (srcX <= srcI && srcI < srcX2 &&                             \
+            srcY <= srcJ && srcJ < srcY2) {                             \
+          src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);   \
+          uint8_t srcR = src->color.red;                                \
+          uint8_t srcG = src->color.green;                              \
+          uint8_t srcB = src->color.blue;                               \
+          uint8_t dstR = dst->color.red;                                \
+          uint8_t dstG = dst->color.green;                              \
+          uint8_t dstB = dst->color.blue;                               \
+          uint8_t srcAlpha = DIV255(src->color.alpha * alpha);          \
+          uint8_t pixelAlpha = (dst->color.alpha == 0) ? 255            \
+            : srcAlpha;                                                 \
+          dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
+          convertingPixel;                                              \
+          dst->color.red   = dstR;                                      \
+          dst->color.green = dstG;                                      \
+          dst->color.blue  = dstB;                                      \
+        }                                                               \
+      }                                                                 \
+    }                                                                   \
+  } while (false)                                                       \
 
 static VALUE
 Texture_render_texture(int argc, VALUE* argv, VALUE self)

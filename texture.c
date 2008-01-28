@@ -730,10 +730,12 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
           uint8_t srcAlpha, pixelAlpha;                                 \
           if (alpha == 255)                                             \
             srcAlpha = src->color.alpha;                                \
-          else if (0 < alpha)                                           \
-            srcAlpha = DIV255(src->color.alpha * alpha);                \
-          else                                                          \
+          else if (src->color.alpha == 255)                             \
+            srcAlpha = alpha;                                           \
+          else if (src->color.alpha == 0 || alpha == 0)                 \
             srcAlpha = 0;                                               \
+          else                                                          \
+            srcAlpha = DIV255(src->color.alpha * alpha);                \
           pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;        \
           dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
           convertingPixel;                                              \

@@ -849,10 +849,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     .b = 0, .d = 1, .ty = 0,
   };
   if (scaleX != 1 || scaleY != 1 || angle != 0) {
-    AffineMatrix_Concat(&mat, &(AffineMatrix) {
-      .a = 1, .b = 0, .tx = -centerX,
-      .c = 0, .d = 1, .ty = -centerY,
-    });
+    mat.tx -= centerX;
+    mat.ty -= centerY;
     if (scaleX != 1 || scaleY != 1) {
       AffineMatrix_Concat(&mat, &(AffineMatrix) {
         .a = scaleX, .b = 0,      .tx = 0,
@@ -867,10 +865,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         .c = s, .d = c,  .ty = 0,
       });
     }
-    AffineMatrix_Concat(&mat, &(AffineMatrix) {
-      .a = 1, .b = 0, .tx = centerX,
-      .c = 0, .d = 1, .ty = centerY,
-    });
+    mat.tx += centerX;
+    mat.ty += centerY;
   }
   mat.tx += NUM2DBL(rbX);
   mat.ty += NUM2DBL(rbY);

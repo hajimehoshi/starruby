@@ -43,6 +43,10 @@ typedef enum {
 } BlendType;
 
 typedef struct {
+  double a, b, c, d, tx, ty;
+} AffineMatrix;
+
+typedef struct {
   int x, y, z;
 } Point;
 
@@ -857,9 +861,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       mat.tx *= scaleX;
     }
     if (scaleY != 1) {
-      mat.c  *= scaleX;
-      mat.d  *= scaleX;
-      mat.ty *= scaleX;
+      mat.c  *= scaleY;
+      mat.d  *= scaleY;
+      mat.ty *= scaleY;
     }
     if (angle != 0) {
       double a  = mat.a;
@@ -882,14 +886,18 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   }
   mat.tx += NUM2DBL(rbX);
   mat.ty += NUM2DBL(rbY);
-  if (!AffineMatrix_IsRegular(&mat))
+  double det = mat.a * mat.d - mat.b * mat.c;
+  if (det == 0)
     return Qnil;
 
-  double dstX00, dstX01, dstX10, dstX11, dstY00, dstY01, dstY10, dstY11;
-  AffineMatrix_Transform(&mat, 0,        0,         &dstX00, &dstY00);
-  AffineMatrix_Transform(&mat, 0,        srcHeight, &dstX01, &dstY01);
-  AffineMatrix_Transform(&mat, srcWidth, 0,         &dstX10, &dstY10);
-  AffineMatrix_Transform(&mat, srcWidth, srcHeight, &dstX11, &dstY11);
+  double dstX00 = mat.tx;
+  double dstY00 = mat.ty;
+  double dstX01 = mat.b * srcHeight + mat.tx;
+  double dstY01 = mat.d * srcHeight + mat.ty;
+  double dstX10 = mat.a * srcWidth  + mat.tx;
+  double dstY10 = mat.c * srcWidth  + mat.ty;
+  double dstX11 = mat.a * srcWidth  + mat.b * srcHeight + mat.tx;
+  double dstY11 = mat.c * srcWidth  + mat.d * srcHeight + mat.ty;
   double dstX0 = MIN(MIN(MIN(dstX00, dstX01), dstX10), dstX11);
   double dstY0 = MIN(MIN(MIN(dstY00, dstY01), dstY10), dstY11);
   double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
@@ -898,10 +906,16 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       dstX1 < 0 || dstY1 < 0)
     return Qnil;
 
-  AffineMatrix matInv = mat;
-  AffineMatrix_Invert(&matInv);
-  double srcOX, srcOY;
-  AffineMatrix_Transform(&matInv, dstX0 + 0.5, dstY0 + 0.5, &srcOX, &srcOY);
+  AffineMatrix matInv = {
+    .a = mat.d  / det,
+    .b = -mat.b / det,
+    .c = -mat.c / det,
+    .d = mat.a  / det,
+  };
+  matInv.tx = -(matInv.a * mat.tx + matInv.b * mat.ty);
+  matInv.ty = -(matInv.c * mat.tx + matInv.d * mat.ty);
+  double srcOX = matInv.a * (dstX0 + 0.5) + matInv.b * (dstY0 + 0.5) + matInv.tx;
+  double srcOY = matInv.c * (dstX0 + 0.5) + matInv.d * (dstY0 + 0.5) + matInv.ty;
   srcOX += srcX;
   srcOY += srcY;
   double srcDXX = matInv.a;

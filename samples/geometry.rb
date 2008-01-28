@@ -17,6 +17,7 @@ scale_y = 0
 Game.title = "Geometry"
 
 Game.run(320, 240) do
+  Game.terminate if Input.keys(:keyboard).include?(:escape)
   s = Game.screen
   s.clear
   keys = Input.keys(:keyboard, :duration => 1, :delay => 8, :interval => 2)

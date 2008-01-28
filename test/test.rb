@@ -1136,6 +1136,19 @@ class TextureTest < Test::Unit::TestCase
         end
       end
     end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :scale_x => 3, :scale_y => 4)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x / 3, y / 4)
+        p2 = texture2.get_pixel(x, y)
+        if p2.alpha != 0
+          assert_equal p1, p2
+        else
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
+        end
+      end
+    end
     w = texture.width
     h = texture.height
     texture2.clear

@@ -40,10 +40,6 @@ typedef struct {
 } Texture;
 
 typedef struct {
-  double a, b, c, d, tx, ty;
-} AffineMatrix;
-
-typedef struct {
   int size;
   TTF_Font* sdlFont;
 } Font;
@@ -91,13 +87,8 @@ void InitializeSdlAudio(void);
 void InitializeSdlFont(void);
 void InitializeSdlInput(void);
 
-void AffineMatrix_Invert(AffineMatrix*);
-bool AffineMatrix_IsRegular(AffineMatrix*);
-void AffineMatrix_Transform(AffineMatrix*, double, double, double*, double*);
-
 #ifdef DEBUG
 #include <assert.h>
-void TestAffineMatrix(void);
 void TestInput(void);
 #endif
 

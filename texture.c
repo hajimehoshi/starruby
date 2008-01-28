@@ -716,8 +716,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   do {                                                                  \
     int srcX2 = srcX + srcWidth;                                        \
     int srcY2 = srcY + srcHeight;                                       \
-    for (int j = 0; j < dstHeight;                                      \
-         j++, dst += -dstWidth + dstTextureWidth) {                     \
+    int dstGap = -dstWidth + dstTextureWidth;                           \
+    for (int j = 0; j < dstHeight; j++, dst += dstGap) {                \
       int_fast32_t srcI16 = srcOX16 + j * srcDYX16;                     \
       int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;                     \
       for (int i = 0; i < dstWidth;                                     \
@@ -727,20 +727,11 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         if (srcX <= srcI && srcI < srcX2 &&                             \
             srcY <= srcJ && srcJ < srcY2) {                             \
           src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);   \
-          uint8_t srcR = src->color.red;                                \
-          uint8_t srcG = src->color.green;                              \
-          uint8_t srcB = src->color.blue;                               \
-          uint8_t dstR = dst->color.red;                                \
-          uint8_t dstG = dst->color.green;                              \
-          uint8_t dstB = dst->color.blue;                               \
           uint8_t srcAlpha = DIV255(src->color.alpha * alpha);          \
-          uint8_t pixelAlpha = (dst->color.alpha == 0) ? 255            \
-            : srcAlpha;                                                 \
+          uint8_t pixelAlpha = (dst->color.alpha == 0)                  \
+            ? 255 : srcAlpha;                                           \
           dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
           convertingPixel;                                              \
-          dst->color.red   = dstR;                                      \
-          dst->color.green = dstG;                                      \
-          dst->color.blue  = dstB;                                      \
         }                                                               \
       }                                                                 \
     }                                                                   \
@@ -960,49 +951,61 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
       blendType == ALPHA) {
     RENDER_TEXTURE_LOOP({
-      dstR = ALPHA(srcR, dstR, pixelAlpha);
-      dstG = ALPHA(srcG, dstG, pixelAlpha);
-      dstB = ALPHA(srcB, dstB, pixelAlpha);
-    });
+        dst->color.red =
+          ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
+        dst->color.green =
+          ALPHA(src->color.green, dst->color.green, pixelAlpha);
+        dst->color.blue =
+          ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+      });
   } else {
     RENDER_TEXTURE_LOOP({
-      if (saturation < 255) {
-        // http://www.poynton.com/ColorFAQ.html
-        uint8_t y = (6969 * srcR + 23434 * srcG + 2365 * srcB) / 32768;
-        srcR = ALPHA(srcR, y, saturation);
-        srcG = ALPHA(srcG, y, saturation);
-        srcB = ALPHA(srcB, y, saturation);
-      }
-      if (0 < toneRed)
-        srcR = ALPHA(255, srcR, toneRed);
-      else if (toneRed < 0)
-        srcR = ALPHA(0,   srcR, -toneRed);
-      if (0 < toneGreen)
-        srcG = ALPHA(255, srcG, toneGreen);
-      else if (toneGreen < 0)
-        srcG = ALPHA(0,   srcG, -toneGreen);
-      if (0 < toneBlue)
-        srcB = ALPHA(255, srcB, toneBlue);
-      else if (toneBlue < 0)
-        srcB = ALPHA(0,   srcB, -toneBlue);
-      switch (blendType) {
-      case ALPHA:
-        dstR = ALPHA(srcR, dstR, pixelAlpha);
-        dstG = ALPHA(srcG, dstG, pixelAlpha);
-        dstB = ALPHA(srcB, dstB, pixelAlpha);
-        break;
-      case ADD:
-        dstR = MIN(255, dstR + DIV255(srcR * pixelAlpha));
-        dstG = MIN(255, dstG + DIV255(srcG * pixelAlpha));
-        dstB = MIN(255, dstB + DIV255(srcB * pixelAlpha));
-        break;
-      case SUB:
-        dstR = MAX(0, (int)dstR - DIV255(srcR * pixelAlpha));
-        dstG = MAX(0, (int)dstG - DIV255(srcG * pixelAlpha));
-        dstB = MAX(0, (int)dstB - DIV255(srcB * pixelAlpha));
-        break;
-      }
-    });
+        uint8_t srcR = src->color.red;
+        uint8_t srcG = src->color.green;
+        uint8_t srcB = src->color.blue;
+        uint8_t dstR = dst->color.red;
+        uint8_t dstG = dst->color.green;
+        uint8_t dstB = dst->color.blue;
+        if (saturation < 255) {
+          // http://www.poynton.com/ColorFAQ.html
+          uint8_t y = (6969 * srcR + 23434 * srcG + 2365 * srcB) / 32768;
+          srcR = ALPHA(srcR, y, saturation);
+          srcG = ALPHA(srcG, y, saturation);
+          srcB = ALPHA(srcB, y, saturation);
+        }
+        if (0 < toneRed)
+          srcR = ALPHA(255, srcR, toneRed);
+        else if (toneRed < 0)
+          srcR = ALPHA(0,   srcR, -toneRed);
+        if (0 < toneGreen)
+          srcG = ALPHA(255, srcG, toneGreen);
+        else if (toneGreen < 0)
+          srcG = ALPHA(0,   srcG, -toneGreen);
+        if (0 < toneBlue)
+          srcB = ALPHA(255, srcB, toneBlue);
+        else if (toneBlue < 0)
+          srcB = ALPHA(0,   srcB, -toneBlue);
+        switch (blendType) {
+        case ALPHA:
+          dstR = ALPHA(srcR, dstR, pixelAlpha);
+          dstG = ALPHA(srcG, dstG, pixelAlpha);
+          dstB = ALPHA(srcB, dstB, pixelAlpha);
+          break;
+        case ADD:
+          dstR = MIN(255, dstR + DIV255(srcR * pixelAlpha));
+          dstG = MIN(255, dstG + DIV255(srcG * pixelAlpha));
+          dstB = MIN(255, dstB + DIV255(srcB * pixelAlpha));
+          break;
+        case SUB:
+          dstR = MAX(0, (int)dstR - DIV255(srcR * pixelAlpha));
+          dstG = MAX(0, (int)dstG - DIV255(srcG * pixelAlpha));
+          dstB = MAX(0, (int)dstB - DIV255(srcB * pixelAlpha));
+          break;
+        }
+        dst->color.red   = dstR;
+        dst->color.green = dstG;
+        dst->color.blue  = dstB;
+      });
   }
 
   if (!NIL_P(rbClonedTexture))

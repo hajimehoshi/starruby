@@ -717,8 +717,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   do {                                                                  \
     int srcX2 = srcX + srcWidth;                                        \
     int srcY2 = srcY + srcHeight;                                       \
-    int dstGap = -dstWidth + dstTextureWidth;                           \
-    for (int j = 0; j < dstHeight; j++, dst += dstGap) {                \
+    int dstPadding = -dstWidth + dstTextureWidth;                       \
+    for (int j = 0; j < dstHeight; j++, dst += dstPadding) {            \
       int_fast32_t srcI16 = srcOX16 + j * srcDYX16;                     \
       int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;                     \
       for (int i = 0; i < dstWidth;                                     \
@@ -728,7 +728,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         if (srcX <= srcI && srcI < srcX2 &&                             \
             srcY <= srcJ && srcJ < srcY2) {                             \
           src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);   \
-          uint8_t srcAlpha, pixelAlpha;                                 \
+          uint8_t srcAlpha;                                             \
           if (alpha == 255)                                             \
             srcAlpha = src->color.alpha;                                \
           else if (src->color.alpha == 255)                             \
@@ -737,9 +737,10 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
             srcAlpha = 0;                                               \
           else                                                          \
             srcAlpha = DIV255(src->color.alpha * alpha);                \
-          pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;        \
+          uint8_t pixelAlpha =                                          \
+            (dst->color.alpha == 0) ? 255 : srcAlpha;                   \
           dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
-          convertingPixel;                                              \
+          convertingPixel                                               \
         }                                                               \
       }                                                                 \
     }                                                                   \

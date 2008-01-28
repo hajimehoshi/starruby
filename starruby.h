@@ -91,7 +91,6 @@ void InitializeSdlAudio(void);
 void InitializeSdlFont(void);
 void InitializeSdlInput(void);
 
-void AffineMatrix_Concat(AffineMatrix*, AffineMatrix*);
 void AffineMatrix_Invert(AffineMatrix*);
 bool AffineMatrix_IsRegular(AffineMatrix*);
 void AffineMatrix_Transform(AffineMatrix*, double, double, double*, double*);

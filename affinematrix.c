@@ -1,19 +1,6 @@
 #include "starruby.h"
 
 void
-AffineMatrix_Concat(AffineMatrix* restrict m1, AffineMatrix* restrict m2)
-{
-  *m1 = (AffineMatrix) {
-    .a  = m2->a * m1->a  + m2->b * m1->c,
-    .b  = m2->a * m1->b  + m2->b * m1->d,
-    .c  = m2->c * m1->a  + m2->d * m1->c,
-    .d  = m2->c * m1->b  + m2->d * m1->d,
-    .tx = m2->a * m1->tx + m2->b * m1->ty + m2->tx,
-    .ty = m2->c * m1->tx + m2->d * m1->ty + m2->ty,
-  };
-}
-
-void
 AffineMatrix_Invert(AffineMatrix* m)
 {
   double det = m->a * m->d - m->b * m->c;
@@ -67,28 +54,6 @@ TestAffineMatrix(void)
     .c = 1, .d = 0, .ty = 16,
   }));
   
-  AffineMatrix m1 = {
-    .a = 7, .b = 8,  .tx = 11,
-    .c = 9, .d = 10, .ty = 12,
-  };
-  AffineMatrix m2 = {
-    .a = 1, .b = 2, .tx = 5,
-    .c = 3, .d = 4, .ty = 6,
-  };
-  AffineMatrix_Concat(&m1, &m2);
-  assert(m1.a  == 25);
-  assert(m1.b  == 28);
-  assert(m1.c  == 57);
-  assert(m1.d  == 64);
-  assert(m1.tx == 40);
-  assert(m1.ty == 87);
-  assert(m2.a  == 1);
-  assert(m2.b  == 2);
-  assert(m2.c  == 3);
-  assert(m2.d  == 4);
-  assert(m2.tx == 5);
-  assert(m2.ty == 6);
-
   AffineMatrix m3 = {
     .a = 1, .b = 2, .tx = 5,
     .c = 3, .d = 4, .ty = 6,

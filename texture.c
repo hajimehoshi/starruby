@@ -851,19 +851,31 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (scaleX != 1 || scaleY != 1 || angle != 0) {
     mat.tx -= centerX;
     mat.ty -= centerY;
-    if (scaleX != 1 || scaleY != 1) {
-      AffineMatrix_Concat(&mat, &(AffineMatrix) {
-        .a = scaleX, .b = 0,      .tx = 0,
-        .c = 0,      .d = scaleY, .ty = 0,
-      });
+    if (scaleX != 1) {
+      mat.a  *= scaleX;
+      mat.b  *= scaleX;
+      mat.tx *= scaleX;
+    }
+    if (scaleY != 1) {
+      mat.c  *= scaleX;
+      mat.d  *= scaleX;
+      mat.ty *= scaleX;
     }
     if (angle != 0) {
-      double c = cos(angle);
-      double s = sin(angle);
-      AffineMatrix_Concat(&mat, &(AffineMatrix) {
-        .a = c, .b = -s, .tx = 0,
-        .c = s, .d = c,  .ty = 0,
-      });
+      double a  = mat.a;
+      double b  = mat.b;
+      double c  = mat.c;
+      double d  = mat.d;
+      double tx = mat.tx;
+      double ty = mat.ty;
+      double cosAngle = cos(angle);
+      double sinAngle = sin(angle);
+      mat.a  = cosAngle * a  - sinAngle * c;
+      mat.b  = cosAngle * b  - sinAngle * d;
+      mat.c  = sinAngle * a  + cosAngle * c;
+      mat.d  = sinAngle * b  + cosAngle * d;
+      mat.tx = cosAngle * tx - sinAngle * ty;
+      mat.ty = sinAngle * tx + cosAngle * ty;
     }
     mat.tx += centerX;
     mat.ty += centerY;

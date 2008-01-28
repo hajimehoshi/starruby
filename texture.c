@@ -298,13 +298,10 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   double screenY2 = -sinRoll * screenX + cosRoll * screenY;
   screenX = screenX2 + options.intersectionX;
   screenY = screenY2 + options.intersectionY;
-#if FIXNUM_MAX < INT_MAX
-  RARRAY_PTR(rbResult)[0] = FIXABLE(screenX) ? INT2FIX(screenX) : Qnil;
-  RARRAY_PTR(rbResult)[1] = FIXABLE(screenY) ? INT2FIX(screenY) : Qnil;
-#else
-  RARRAY_PTR(rbResult)[0] = INT2FIX(screenX);
-  RARRAY_PTR(rbResult)[1] = INT2FIX(screenY);
-#endif
+  long screenXLong = (long)screenX;
+  long screenYLong = (long)screenY;
+  RARRAY_PTR(rbResult)[0] = FIXABLE(screenXLong) ? LONG2FIX(screenXLong) : Qnil; 
+  RARRAY_PTR(rbResult)[1] = FIXABLE(screenYLong) ? LONG2FIX(screenYLong) : Qnil;
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
   return rbResult;
 }
@@ -875,10 +872,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       .c = 0, .d = 1, .ty = centerY,
     });
   }
-  AffineMatrix_Concat(&mat, &(AffineMatrix) {
-    .a = 1, .b = 0, .tx = NUM2INT(rbX),
-    .c = 0, .d = 1, .ty = NUM2INT(rbY),
-  });
+  mat.tx += NUM2DBL(rbX);
+  mat.ty += NUM2DBL(rbY);
   if (!AffineMatrix_IsRegular(&mat))
     return Qnil;
 

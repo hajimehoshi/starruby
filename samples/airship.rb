@@ -103,12 +103,14 @@ Game.run(320, 240) do
   end.each do |x, y, scale|
     x -= star_texture.width / 2
     y -= star_texture.height
-    s.render_texture(star_texture, x, y,
-                     :scale_x => scale,
-                     :scale_y => scale,
-                     :center_x => star_texture.width / 2,
-                     :center_y => star_texture.height / 2,
-                     :angle => 2 * Math::PI - options[:camera_roll])
+    if x.kind_of?(Fixnum) and y.kind_of?(Fixnum)
+      s.render_texture(star_texture, x, y,
+                       :scale_x => scale,
+                       :scale_y => scale,
+                       :center_x => star_texture.width / 2,
+                       :center_y => star_texture.height / 2,
+                       :angle => 2 * Math::PI - options[:camera_roll])
+    end
   end
   s.render_text("[Arrow] Rotate Camera", 8, 8, font, yellow)
   s.render_text("[Space] Go Forward", 8, 8 + 16, font, yellow)

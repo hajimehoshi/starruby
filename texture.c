@@ -727,9 +727,14 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         if (srcX <= srcI && srcI < srcX2 &&                             \
             srcY <= srcJ && srcJ < srcY2) {                             \
           src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);   \
-          uint8_t srcAlpha = DIV255(src->color.alpha * alpha);          \
-          uint8_t pixelAlpha = (dst->color.alpha == 0)                  \
-            ? 255 : srcAlpha;                                           \
+          uint8_t srcAlpha, pixelAlpha;                                 \
+          if (alpha == 255)                                             \
+            srcAlpha = src->color.alpha;                                \
+          else if (0 < alpha)                                           \
+            srcAlpha = DIV255(src->color.alpha * alpha);                \
+          else                                                          \
+            srcAlpha = 0;                                               \
+          pixelAlpha = (dst->color.alpha == 0) ? 255 : srcAlpha;        \
           dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
           convertingPixel;                                              \
         }                                                               \

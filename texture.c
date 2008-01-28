@@ -932,13 +932,13 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   double srcDYY = matInv.d;
 
   if (dstX0 < 0) {
-    srcOX += -dstX0 * srcDXX;
-    srcOY += -dstX0 * srcDXY;
+    srcOX -= dstX0 * srcDXX;
+    srcOY -= dstX0 * srcDXY;
     dstX0 = 0;
   }
   if (dstY0 < 0) {
-    srcOX += -dstY0 * srcDYX;
-    srcOY += -dstY0 * srcDYY;
+    srcOX -= dstY0 * srcDYX;
+    srcOY -= dstY0 * srcDYY;
     dstY0 = 0;
   }
   int dstX0Int = (int)dstX0;

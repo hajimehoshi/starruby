@@ -179,10 +179,6 @@ Font_bold(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eRuntimeError, "can't use disposed font");
-    return Qnil;
-  }
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_BOLD) ? Qtrue : Qfalse;
 }
 
@@ -205,10 +201,6 @@ Font_italic(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eRuntimeError, "can't use disposed font");
-    return Qnil;
-  }
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_ITALIC) ? Qtrue : Qfalse;
 }
 
@@ -217,10 +209,6 @@ Font_get_size(VALUE self, VALUE rbText)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eRuntimeError, "can't use disposed font");
-    return Qnil;
-  }
   char* text = StringValuePtr(rbText);
   int width, height;
   if (TTF_SizeUTF8(font->sdlFont, text, &width, &height)) {
@@ -237,10 +225,6 @@ Font_name(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eRuntimeError, "can't use disposed font");
-    return Qnil;
-  }
   return rb_str_new2(TTF_FontFaceFamilyName(font->sdlFont));
 }
 
@@ -249,10 +233,6 @@ Font_size(VALUE self)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eRuntimeError, "can't use disposed font");
-    return Qnil;
-  }
   return INT2NUM(font->size);
 }
 

@@ -914,10 +914,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   };
   matInv.tx = -(matInv.a * mat.tx + matInv.b * mat.ty);
   matInv.ty = -(matInv.c * mat.tx + matInv.d * mat.ty);
-  double srcOX = matInv.a * (dstX0 + 0.5) + matInv.b * (dstY0 + 0.5) + matInv.tx;
-  double srcOY = matInv.c * (dstX0 + 0.5) + matInv.d * (dstY0 + 0.5) + matInv.ty;
-  srcOX += srcX;
-  srcOY += srcY;
+  double srcOX = matInv.a * (dstX0 + 0.5) + matInv.b * (dstY0 + 0.5)
+    + matInv.tx + srcX;
+  double srcOY = matInv.c * (dstX0 + 0.5) + matInv.d * (dstY0 + 0.5)
+    + matInv.ty + srcY;
   double srcDXX = matInv.a;
   double srcDXY = matInv.c;
   double srcDYX = matInv.b;

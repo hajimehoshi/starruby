@@ -712,7 +712,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-#define RENDER_TEXTURE_LOOP(convertingPixel) do {                       \
+#define RENDER_TEXTURE_LOOP(convertingPixel)                            \
+  do {                                                                  \
     int srcX2 = srcX + srcWidth;                                        \
     int srcY2 = srcY + srcHeight;                                       \
     for (int j = 0; j < dstHeight;                                      \
@@ -743,7 +744,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         }                                                               \
       }                                                                 \
     }                                                                   \
-  } while (false)                                                       \
+  } while (false)
 
 static VALUE
 Texture_render_texture(int argc, VALUE* argv, VALUE self)

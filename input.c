@@ -195,15 +195,16 @@ UpdateInput(int windowScale)
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 }
 
-#define ADD_KEY(currentKey, _name, _sdlKey) do {\
-  KeyboardKey* key = ALLOC(KeyboardKey);\
-  key->rbSymbol = ID2SYM(rb_intern(_name));\
-  key->sdlKey   = _sdlKey;\
-  key->state    = 0;\
-  key->next     = NULL;\
-  currentKey->next = key;\
-  currentKey = key;\
-} while (false)
+#define ADD_KEY(currentKey, _name, _sdlKey)     \
+  do {                                          \
+    KeyboardKey* key = ALLOC(KeyboardKey);      \
+    key->rbSymbol = ID2SYM(rb_intern(_name));   \
+    key->sdlKey   = _sdlKey;                    \
+    key->state    = 0;                          \
+    key->next     = NULL;                       \
+    currentKey->next = key;                     \
+    currentKey = key;                           \
+  } while (false)
 
 void
 InitializeSdlInput()

@@ -236,15 +236,16 @@ Font_size(VALUE self)
   return INT2NUM(font->size);
 }
 
-#define ADD_INFO(currentInfo, _rbFontNameSymbol, _rbFileNameSymbol, _ttcIndex) do {\
-  FontFileInfo* info = ALLOC(FontFileInfo);\
-  info->rbFontNameSymbol = _rbFontNameSymbol;\
-  info->rbFileNameSymbol = _rbFileNameSymbol;\
-  info->ttcIndex         = _ttcIndex;\
-  info->next             = NULL;\
-  currentInfo->next = info;\
-  currentInfo = info;\
-} while (false)\
+#define ADD_INFO(currentInfo, _rbFontNameSymbol, _rbFileNameSymbol, _ttcIndex)\
+  do {                                                                  \
+    FontFileInfo* info = ALLOC(FontFileInfo);                           \
+    info->rbFontNameSymbol = _rbFontNameSymbol;                         \
+    info->rbFileNameSymbol = _rbFileNameSymbol;                         \
+    info->ttcIndex         = _ttcIndex;                                 \
+    info->next             = NULL;                                      \
+    currentInfo->next = info;                                           \
+    currentInfo = info;                                                 \
+  } while (false)
 
 void
 InitializeSdlFont(void)

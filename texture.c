@@ -740,7 +740,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
           uint8_t pixelAlpha =                                          \
             (dst->color.alpha == 0) ? 255 : srcAlpha;                   \
           dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
-          convertingPixel                                               \
+          convertingPixel;                                              \
         }                                                               \
       }                                                                 \
     }                                                                   \

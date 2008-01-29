@@ -1,10 +1,7 @@
 #include "starruby.h"
 #include <png.h>
 
-#define ALPHA(src, dst, a)                                              \
-  (a == 255 ? src :                                                     \
-   (a == 0 ? dst :                                                      \
-    DIV255((dst << 8) - dst + (src - dst) * a)))
+#define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;

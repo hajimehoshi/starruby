@@ -35,11 +35,11 @@ Benchmark.bm do |b|
       dst.render_texture(src, x, y, :scale_x => 2)
     end
   end
-  b.report "add   " do
+  b.report "tone  " do
     10000.times do |i|
       x = i % dst.width
       y = i % dst.height
-      dst.render_texture(src, x, y, :blend_type => :add)
+      dst.render_texture(src, x, y, :tone_red => 100)
     end
   end
 end

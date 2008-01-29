@@ -951,23 +951,24 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         }
         if (saturation < 255) {
           // http://www.poynton.com/ColorFAQ.html
-          uint8_t y = (6969 * src.color.red + 23434 * src.color.green + 2365 * src.color.blue) / 32768;
+          uint8_t y = (6969 * src.color.red +
+                       23434 * src.color.green +
+                       2365 * src.color.blue) / 32768;
           src.color.red   = ALPHA(src.color.red,   y, saturation);
           src.color.green = ALPHA(src.color.green, y, saturation);
           src.color.blue  = ALPHA(src.color.blue,  y, saturation);
         }
         if (toneRed)
-          src.color.red   = ALPHA((0 < toneRed) * 255,   src.color.red,   abs(toneRed));
+          src.color.red   = ALPHA((0 < toneRed)   * 255, src.color.red,   abs(toneRed));
         if (toneGreen)
           src.color.green = ALPHA((0 < toneGreen) * 255, src.color.green, abs(toneGreen));
         if (toneBlue)
-          src.color.blue  = ALPHA((0 < toneBlue) * 255,  src.color.blue,  abs(toneBlue));
+          src.color.blue  = ALPHA((0 < toneBlue)  * 255, src.color.blue,  abs(toneBlue));
         switch (blendType) {
         case ALPHA:
           dst->color.red   = ALPHA(src.color.red,   dst->color.red,   pixelAlpha);
           dst->color.green = ALPHA(src.color.green, dst->color.green, pixelAlpha);
           dst->color.blue  = ALPHA(src.color.blue,  dst->color.blue,  pixelAlpha);
-          break;
         case ADD:
           dst->color.red   = MIN(255, dst->color.red   + DIV255(src.color.red * pixelAlpha));
           dst->color.green = MIN(255, dst->color.green + DIV255(src.color.green * pixelAlpha));

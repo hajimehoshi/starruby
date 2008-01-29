@@ -1310,7 +1310,24 @@ class TextureTest < Test::Unit::TestCase
       end
     end
   end
-  
+
+  def test_render_texture_alpha2
+    texture = Texture.new(256, 1)
+    texture2 = Texture.new(texture.width, texture.height)
+    texture.undump(Array.new(256){|i| i.chr * 4}.join, "rgba")
+    texture2.fill(Color.new(0, 0, 0, 128))
+    alpha = 100
+    texture2.render_texture(texture, 0, 0, :alpha => alpha)
+    256.times do |i|
+      p1 = texture.get_pixel(i, 0)
+      p2 = texture2.get_pixel(i, 0)
+      assert_in_delta p1.red   * alpha.quo(256) * i.quo(256), p2.red,   2
+      assert_in_delta p1.green * alpha.quo(256) * i.quo(256), p2.green, 2
+      assert_in_delta p1.blue  * alpha.quo(256) * i.quo(256), p2.blue,  2
+      assert [i, 128].max, p2.alpha
+    end
+  end
+    
   def test_render_texture_blend_type
     # alpha
     texture = Texture.load("images/ruby")

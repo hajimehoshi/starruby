@@ -733,9 +733,9 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
             pixelAlpha = 255;                                           \
             dst->color.alpha = MAX(dst->color.alpha, src->color.alpha); \
           } else {                                                      \
-              if (alpha < 255) {                                        \
-                if (src->color.alpha == 255)                            \
-                  pixelAlpha = alpha;                                   \
+            if (alpha < 255) {                                          \
+              if (src->color.alpha == 255)                              \
+                pixelAlpha = alpha;                                     \
               else                                                      \
                 pixelAlpha = DIV255(src->color.alpha * alpha);          \
             }                                                           \

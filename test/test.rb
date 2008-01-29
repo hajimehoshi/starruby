@@ -1321,10 +1321,21 @@ class TextureTest < Test::Unit::TestCase
     256.times do |i|
       p1 = texture.get_pixel(i, 0)
       p2 = texture2.get_pixel(i, 0)
-      assert_in_delta p1.red   * alpha.quo(256) * i.quo(256), p2.red,   2
-      assert_in_delta p1.green * alpha.quo(256) * i.quo(256), p2.green, 2
-      assert_in_delta p1.blue  * alpha.quo(256) * i.quo(256), p2.blue,  2
-      assert [i, 128].max, p2.alpha
+      assert_in_delta p1.red   * alpha.quo(255) * i.quo(255), p2.red,   2
+      assert_in_delta p1.green * alpha.quo(255) * i.quo(255), p2.green, 2
+      assert_in_delta p1.blue  * alpha.quo(255) * i.quo(255), p2.blue,  2
+      assert_in_delta [i * alpha.quo(255), 128].max, p2.alpha, 2
+    end
+    texture2.clear # Color.new(0, 0, 0, 0)
+    alpha = 100
+    texture2.render_texture(texture, 0, 0, :alpha => alpha)
+    256.times do |i|
+      p1 = texture.get_pixel(i, 0)
+      p2 = texture2.get_pixel(i, 0)
+      assert_equal p1.red,   p2.red
+      assert_equal p1.green, p2.green
+      assert_equal p1.blue,  p2.blue
+      assert_in_delta i * alpha.quo(255), p2.alpha, 2
     end
   end
     

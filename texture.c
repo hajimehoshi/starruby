@@ -728,16 +728,20 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         if (srcX <= srcI && srcI < srcX2 &&                             \
             srcY <= srcJ && srcJ < srcY2) {                             \
           src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);   \
-          uint8_t srcAlpha = src->color.alpha;                          \
-          if (alpha < 255) {                                            \
-            if (src->color.alpha == 255)                                \
-              srcAlpha = alpha;                                         \
-            else                                                        \
-              srcAlpha = DIV255(src->color.alpha * alpha);              \
+          uint8_t pixelAlpha = src->color.alpha;                        \
+          if (dst->color.alpha == 0) {                                  \
+            pixelAlpha = 255;                                           \
+            dst->color.alpha = MAX(dst->color.alpha, src->color.alpha); \
+          } else {                                                      \
+            if (alpha < 255) {                                          \
+              if (src->color.alpha == 255)                              \
+                pixelAlpha = alpha;                                     \
+              else                                                      \
+                pixelAlpha =                                            \
+                  DIV255(src->color.alpha * src->color.alpha);          \
+            }                                                           \
+            dst->color.alpha = MAX(dst->color.alpha, pixelAlpha);       \
           }                                                             \
-          uint8_t pixelAlpha =                                          \
-            (dst->color.alpha == 0) ? 255 : srcAlpha;                   \
-          dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
           convertingPixel;                                              \
         }                                                               \
       }                                                                 \

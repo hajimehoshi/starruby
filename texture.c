@@ -978,9 +978,6 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         uint8_t srcR = src->color.red;
         uint8_t srcG = src->color.green;
         uint8_t srcB = src->color.blue;
-        uint8_t dstR = dst->color.red;
-        uint8_t dstG = dst->color.green;
-        uint8_t dstB = dst->color.blue;
         if (saturation < 255) {
           // http://www.poynton.com/ColorFAQ.html
           uint8_t y = (6969 * srcR + 23434 * srcG + 2365 * srcB) / 32768;
@@ -1002,24 +999,21 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           srcB = ALPHA(0,   srcB, -toneBlue);
         switch (blendType) {
         case ALPHA:
-          dstR = ALPHA(srcR, dstR, pixelAlpha);
-          dstG = ALPHA(srcG, dstG, pixelAlpha);
-          dstB = ALPHA(srcB, dstB, pixelAlpha);
+          dst->color.red   = ALPHA(srcR, dst->color.red,   pixelAlpha);
+          dst->color.green = ALPHA(srcG, dst->color.green, pixelAlpha);
+          dst->color.blue  = ALPHA(srcB, dst->color.blue,  pixelAlpha);
           break;
         case ADD:
-          dstR = MIN(255, dstR + DIV255(srcR * pixelAlpha));
-          dstG = MIN(255, dstG + DIV255(srcG * pixelAlpha));
-          dstB = MIN(255, dstB + DIV255(srcB * pixelAlpha));
+          dst->color.red   = MIN(255, dst->color.red   + DIV255(srcR * pixelAlpha));
+          dst->color.green = MIN(255, dst->color.green + DIV255(srcG * pixelAlpha));
+          dst->color.blue  = MIN(255, dst->color.blue  + DIV255(srcB * pixelAlpha));
           break;
         case SUB:
-          dstR = MAX(0, (int)dstR - DIV255(srcR * pixelAlpha));
-          dstG = MAX(0, (int)dstG - DIV255(srcG * pixelAlpha));
-          dstB = MAX(0, (int)dstB - DIV255(srcB * pixelAlpha));
+          dst->color.red   = MAX(0, (int)dst->color.red   - DIV255(srcR * pixelAlpha));
+          dst->color.green = MAX(0, (int)dst->color.green - DIV255(srcG * pixelAlpha));
+          dst->color.blue  = MAX(0, (int)dst->color.blue  - DIV255(srcB * pixelAlpha));
           break;
         }
-        dst->color.red   = dstR;
-        dst->color.green = dstG;
-        dst->color.blue  = dstB;
       });
   }
 

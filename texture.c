@@ -966,12 +966,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
       blendType == ALPHA) {
     RENDER_TEXTURE_LOOP({
-        dst->color.red =
+        /*dst->color.red =
           ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
         dst->color.green =
           ALPHA(src->color.green, dst->color.green, pixelAlpha);
         dst->color.blue =
-          ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+        ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);*/
       });
   } else {
     RENDER_TEXTURE_LOOP({

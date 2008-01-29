@@ -701,7 +701,10 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   for (int i = 0; i < size; i++, src++, dst++) {
     if (src->value) {
       dst->color = *color;
-      dst->color.alpha = DIV255(src->color.red * color->alpha);
+      if (color->alpha == 255)
+        dst->color.alpha = src->color.red;
+      else
+        dst->color.alpha = DIV255(src->color.red * color->alpha);
     }
   }
   SDL_UnlockSurface(textSurface);
@@ -728,15 +731,13 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         if (srcX <= srcI && srcI < srcX2 &&                             \
             srcY <= srcJ && srcJ < srcY2) {                             \
           src = &(srcTexture->pixels[srcI + srcJ * srcTextureWidth]);   \
-          uint8_t srcAlpha;                                             \
-          if (alpha == 255)                                             \
-            srcAlpha = src->color.alpha;                                \
-          else if (src->color.alpha == 255)                             \
-            srcAlpha = alpha;                                           \
-          else if (src->color.alpha == 0 || alpha == 0)                 \
-            srcAlpha = 0;                                               \
-          else                                                          \
-            srcAlpha = DIV255(src->color.alpha * alpha);                \
+          uint8_t srcAlpha = src->color.alpha;                          \
+          if (alpha < 255) {                                            \
+            if (src->color.alpha == 255)                                \
+              srcAlpha = alpha;                                         \
+            else                                                        \
+              srcAlpha = DIV255(src->color.alpha * alpha);              \
+          }                                                             \
           uint8_t pixelAlpha =                                          \
             (dst->color.alpha == 0) ? 255 : srcAlpha;                   \
           dst->color.alpha = MAX(dst->color.alpha, srcAlpha);           \
@@ -789,8 +790,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   uint8_t saturation = 255;
 
   bool srcWidthAssigned = false, srcHeightAssigned = false;
-  volatile VALUE val;
   if (!NIL_P(rbOptions)) {
+    volatile VALUE val;
     Check_Type(rbOptions, T_HASH);
     if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
       srcX = NUM2INT(val);

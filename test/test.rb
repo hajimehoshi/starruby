@@ -1326,7 +1326,7 @@ class TextureTest < Test::Unit::TestCase
       assert_in_delta p1.blue  * alpha.quo(255) * i.quo(255), p2.blue,  2
       assert_in_delta [i * alpha.quo(255), 128].max, p2.alpha, 2
     end
-    texture2.clear # Color.new(0, 0, 0, 0)
+    texture2.fill(Color.new(12, 34, 56, 0))
     alpha = 100
     texture2.render_texture(texture, 0, 0, :alpha => alpha)
     256.times do |i|

@@ -1097,7 +1097,7 @@ class TextureTest < Test::Unit::TestCase
           if p2.alpha != 0
             assert_equal p1, p2
           else
-            assert_equal Color.new(p1.red, p1.green, p1.blue, 0)
+            assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
           end
         end
       end

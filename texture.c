@@ -985,15 +985,6 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       int_fast32_t srcJ = srcJ16 >> 16;
       if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {
         Pixel src = srcTexture->pixels[srcI + srcJ * srcTextureWidth];
-        uint8_t pixelAlpha;
-        if (dst->color.alpha == 0) {
-          pixelAlpha = 255;
-          dst->color.alpha = MAX(dst->color.alpha,
-                                 DIV255(src.color.alpha * alpha));
-        } else {
-          pixelAlpha = DIV255(src.color.alpha * alpha);
-          dst->color.alpha = MAX(dst->color.alpha, pixelAlpha);
-        }
         if (saturation < 255) {
           // http://www.poynton.com/ColorFAQ.html
           uint8_t y = (6969 * src.color.red +
@@ -1009,22 +1000,46 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           src.color.green = ALPHA((0 < toneGreen) * 255, src.color.green, abs(toneGreen));
         if (toneBlue)
           src.color.blue  = ALPHA((0 < toneBlue)  * 255, src.color.blue,  abs(toneBlue));
-        switch (blendType) {
-        case ALPHA:
-          dst->color.red   = ALPHA(src.color.red,   dst->color.red,   pixelAlpha);
-          dst->color.green = ALPHA(src.color.green, dst->color.green, pixelAlpha);
-          dst->color.blue  = ALPHA(src.color.blue,  dst->color.blue,  pixelAlpha);
-          break;
-        case ADD:
-          dst->color.red   = MIN(255, dst->color.red   + DIV255(src.color.red * pixelAlpha));
-          dst->color.green = MIN(255, dst->color.green + DIV255(src.color.green * pixelAlpha));
-          dst->color.blue  = MIN(255, dst->color.blue  + DIV255(src.color.blue * pixelAlpha));
-          break;
-        case SUB:
-          dst->color.red   = MAX(0, (int)dst->color.red   - DIV255(src.color.red * pixelAlpha));
-          dst->color.green = MAX(0, (int)dst->color.green - DIV255(src.color.green * pixelAlpha));
-          dst->color.blue  = MAX(0, (int)dst->color.blue  - DIV255(src.color.blue * pixelAlpha));
-          break;
+        if (dst->color.alpha == 0) {
+          dst->color.alpha = MAX(dst->color.alpha,
+                                 DIV255(src.color.alpha * alpha));
+          switch (blendType) {
+          case ALPHA:
+            dst->color.red   = src.color.red;
+            dst->color.green = src.color.green;
+            dst->color.blue  = src.color.blue;
+            break;
+          case ADD:
+            dst->color.red   = MIN(255, dst->color.red   + src.color.red);
+            dst->color.green = MIN(255, dst->color.green + src.color.green);
+            dst->color.blue  = MIN(255, dst->color.blue  + src.color.blue);
+            break;
+          case SUB:
+            dst->color.red   = MAX(0, (int)dst->color.red   - src.color.red);
+            dst->color.green = MAX(0, (int)dst->color.green - src.color.green);
+            dst->color.blue  = MAX(0, (int)dst->color.blue  - src.color.blue);
+            break;
+          }
+        } else {
+          uint8_t pixelAlpha = DIV255(src.color.alpha * alpha);
+          dst->color.alpha = MAX(dst->color.alpha, pixelAlpha);
+          switch (blendType) {
+          case ALPHA:
+            dst->color.red   = ALPHA(src.color.red,   dst->color.red,   pixelAlpha);
+            dst->color.green = ALPHA(src.color.green, dst->color.green, pixelAlpha);
+            dst->color.blue  = ALPHA(src.color.blue,  dst->color.blue,  pixelAlpha);
+            break;
+          case ADD:
+            dst->color.red   = MIN(255, dst->color.red   + DIV255(src.color.red * pixelAlpha));
+            dst->color.green = MIN(255, dst->color.green + DIV255(src.color.green * pixelAlpha));
+            dst->color.blue  = MIN(255, dst->color.blue  + DIV255(src.color.blue * pixelAlpha));
+            break;
+          case SUB:
+            dst->color.red   = MAX(0, (int)dst->color.red   - DIV255(src.color.red * pixelAlpha));
+            dst->color.green = MAX(0, (int)dst->color.green - DIV255(src.color.green * pixelAlpha));
+            dst->color.blue  = MAX(0, (int)dst->color.blue  - DIV255(src.color.blue * pixelAlpha));
+            break;
+          }
         }
       }
     }

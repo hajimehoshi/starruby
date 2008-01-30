@@ -985,60 +985,60 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       int_fast32_t srcI = srcI16 >> 16;
       int_fast32_t srcJ = srcJ16 >> 16;
       if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {
-        Pixel src = srcTexture->pixels[srcI + srcJ * srcTextureWidth];
+        Color srcColor = srcTexture->pixels[srcI + srcJ * srcTextureWidth].color;
         if (saturation < 255) {
           // http://www.poynton.com/ColorFAQ.html
-          uint8_t y = (6969 * src.color.red +
-                       23434 * src.color.green +
-                       2365 * src.color.blue) / 32768;
-          src.color.red   = ALPHA(src.color.red,   y, saturation);
-          src.color.green = ALPHA(src.color.green, y, saturation);
-          src.color.blue  = ALPHA(src.color.blue,  y, saturation);
+          uint8_t y = (6969 * srcColor.red +
+                       23434 * srcColor.green +
+                       2365 * srcColor.blue) / 32768;
+          srcColor.red   = ALPHA(srcColor.red,   y, saturation);
+          srcColor.green = ALPHA(srcColor.green, y, saturation);
+          srcColor.blue  = ALPHA(srcColor.blue,  y, saturation);
         }
         if (toneRed)
-          src.color.red   = ALPHA((0 < toneRed)   * 255, src.color.red,   abs(toneRed));
+          srcColor.red   = ALPHA((0 < toneRed)   * 255, srcColor.red,   abs(toneRed));
         if (toneGreen)
-          src.color.green = ALPHA((0 < toneGreen) * 255, src.color.green, abs(toneGreen));
+          srcColor.green = ALPHA((0 < toneGreen) * 255, srcColor.green, abs(toneGreen));
         if (toneBlue)
-          src.color.blue  = ALPHA((0 < toneBlue)  * 255, src.color.blue,  abs(toneBlue));
+          srcColor.blue  = ALPHA((0 < toneBlue)  * 255, srcColor.blue,  abs(toneBlue));
         if (dst->color.alpha == 0) {
-          dst->color.alpha = DIV255(src.color.alpha * alpha);
+          dst->color.alpha = DIV255(srcColor.alpha * alpha);
           switch (blendType) {
           case ALPHA:
-            dst->color.red   = src.color.red;
-            dst->color.green = src.color.green;
-            dst->color.blue  = src.color.blue;
+            dst->color.red   = srcColor.red;
+            dst->color.green = srcColor.green;
+            dst->color.blue  = srcColor.blue;
             break;
           case ADD:
-            dst->color.red   = MIN(255, dst->color.red   + src.color.red);
-            dst->color.green = MIN(255, dst->color.green + src.color.green);
-            dst->color.blue  = MIN(255, dst->color.blue  + src.color.blue);
+            dst->color.red   = MIN(255, dst->color.red   + srcColor.red);
+            dst->color.green = MIN(255, dst->color.green + srcColor.green);
+            dst->color.blue  = MIN(255, dst->color.blue  + srcColor.blue);
             break;
           case SUB:
-            dst->color.red   = MAX(0, -src.color.red   + dst->color.red);
-            dst->color.green = MAX(0, -src.color.green + dst->color.green);
-            dst->color.blue  = MAX(0, -src.color.blue  + dst->color.blue);
+            dst->color.red   = MAX(0, -srcColor.red   + dst->color.red);
+            dst->color.green = MAX(0, -srcColor.green + dst->color.green);
+            dst->color.blue  = MAX(0, -srcColor.blue  + dst->color.blue);
             break;
           }
         } else {
-          uint8_t pixelAlpha = DIV255(src.color.alpha * alpha);
+          uint8_t pixelAlpha = DIV255(srcColor.alpha * alpha);
           if (dst->color.alpha < pixelAlpha)
             dst->color.alpha = pixelAlpha;
           switch (blendType) {
           case ALPHA:
-            dst->color.red   = ALPHA(src.color.red,   dst->color.red,   pixelAlpha);
-            dst->color.green = ALPHA(src.color.green, dst->color.green, pixelAlpha);
-            dst->color.blue  = ALPHA(src.color.blue,  dst->color.blue,  pixelAlpha);
+            dst->color.red   = ALPHA(srcColor.red,   dst->color.red,   pixelAlpha);
+            dst->color.green = ALPHA(srcColor.green, dst->color.green, pixelAlpha);
+            dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  pixelAlpha);
             break;
           case ADD:
-            dst->color.red   = MIN(255, dst->color.red   + DIV255(src.color.red * pixelAlpha));
-            dst->color.green = MIN(255, dst->color.green + DIV255(src.color.green * pixelAlpha));
-            dst->color.blue  = MIN(255, dst->color.blue  + DIV255(src.color.blue * pixelAlpha));
+            dst->color.red   = MIN(255, dst->color.red   + DIV255(srcColor.red * pixelAlpha));
+            dst->color.green = MIN(255, dst->color.green + DIV255(srcColor.green * pixelAlpha));
+            dst->color.blue  = MIN(255, dst->color.blue  + DIV255(srcColor.blue * pixelAlpha));
             break;
           case SUB:
-            dst->color.red   = MAX(0, (int)dst->color.red   - DIV255(src.color.red * pixelAlpha));
-            dst->color.green = MAX(0, (int)dst->color.green - DIV255(src.color.green * pixelAlpha));
-            dst->color.blue  = MAX(0, (int)dst->color.blue  - DIV255(src.color.blue * pixelAlpha));
+            dst->color.red   = MAX(0, (int)dst->color.red   - DIV255(srcColor.red * pixelAlpha));
+            dst->color.green = MAX(0, (int)dst->color.green - DIV255(srcColor.green * pixelAlpha));
+            dst->color.blue  = MAX(0, (int)dst->color.blue  - DIV255(srcColor.blue * pixelAlpha));
             break;
           }
         }

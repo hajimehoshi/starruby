@@ -965,7 +965,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int_fast32_t srcDXY16 = (int_fast32_t)(srcDXY * (1 << 16));
   int_fast32_t srcDYX16 = (int_fast32_t)(srcDYX * (1 << 16));
   int_fast32_t srcDYY16 = (int_fast32_t)(srcDYY * (1 << 16));
-  Pixel* dst = &(dstTexture->pixels[dstX0Int + dstY0Int * dstTextureWidth]);
+  
 
   volatile VALUE rbClonedTexture = Qnil;
   if (self == rbTexture) {
@@ -975,10 +975,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   int srcX2 = srcX + srcWidth;
   int srcY2 = srcY + srcHeight;
-  int dstPadding = -dstWidth + dstTextureWidth;
-  for (int j = 0; j < dstHeight; j++, dst += dstPadding) {
+  for (int j = 0; j < dstHeight; j++) {
     int_fast32_t srcI16 = srcOX16 + j * srcDYX16;
     int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;
+    Pixel* dst =
+      &(dstTexture->pixels[dstX0Int + (dstY0Int + j) * dstTextureWidth]);
     for (int i = 0; i < dstWidth;
          i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {
       int_fast32_t srcI = srcI16 >> 16;
@@ -1041,8 +1042,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             break;
           }
         }
-      } else if (((srcI < srcX && srcDXX <= 0) || (srcX2 <= srcI && 0 <= srcDXX)) &&
-                 ((srcJ < srcY && srcDXY <= 0) || (srcY2 <= srcJ && 0 <= srcDXY))) {
+      } else if ((srcI < srcX && srcDXX <= 0) || (srcX2 <= srcI && 0 <= srcDXX) ||
+                 (srcJ < srcY && srcDXY <= 0) || (srcY2 <= srcJ && 0 <= srcDXY)) {
         break;
       }
     }

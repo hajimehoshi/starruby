@@ -852,8 +852,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
       for (int i = 0; i < width; i++, src++, dst++) {
         if (dst->color.alpha == 0) {
-          dst->color.alpha = MAX(dst->color.alpha,
-                                 DIV255(src->color.alpha * alpha));
+          dst->color.alpha = DIV255(src->color.alpha * alpha);
           dst->color.red   = src->color.red;
           dst->color.green = src->color.green;
           dst->color.blue  = src->color.blue;
@@ -1001,8 +1000,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         if (toneBlue)
           src.color.blue  = ALPHA((0 < toneBlue)  * 255, src.color.blue,  abs(toneBlue));
         if (dst->color.alpha == 0) {
-          dst->color.alpha = MAX(dst->color.alpha,
-                                 DIV255(src.color.alpha * alpha));
+          dst->color.alpha = DIV255(src.color.alpha * alpha);
           switch (blendType) {
           case ALPHA:
             dst->color.red   = src.color.red;

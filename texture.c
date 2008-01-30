@@ -1041,6 +1041,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             break;
           }
         }
+      } else if (((srcI < srcX && srcDXX <= 0) || (srcX2 <= srcI && 0 <= srcDXX)) &&
+                 ((srcJ < srcY && srcDXY <= 0) || (srcY2 <= srcJ && 0 <= srcDXY))) {
+        break;
       }
     }
   }

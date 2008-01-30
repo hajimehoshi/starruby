@@ -31,11 +31,12 @@ Benchmark.bm do |b|
     end
   end
   dst.clear
-  b.report "scale " do
+  angle = Math::PI / 4
+  b.report "geo   " do
     10000.times do |i|
       x = i % dst.width
       y = i % dst.height
-      dst.render_texture(src, x, y, :scale_x => 2)
+      dst.render_texture(src, x, y, :scale_x => 2, :angle => angle)
     end
   end
   dst.clear

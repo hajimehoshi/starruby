@@ -858,7 +858,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           dst->color.blue  = src->color.blue;
         } else {
           uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
-          dst->color.alpha = MAX(dst->color.alpha, pixelAlpha);
+          if (dst->color.alpha < pixelAlpha)
+            dst->color.alpha = pixelAlpha;
           dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
           dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
           dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
@@ -1013,14 +1014,15 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.blue  = MIN(255, dst->color.blue  + src.color.blue);
             break;
           case SUB:
-            dst->color.red   = MAX(0, (int)dst->color.red   - src.color.red);
-            dst->color.green = MAX(0, (int)dst->color.green - src.color.green);
-            dst->color.blue  = MAX(0, (int)dst->color.blue  - src.color.blue);
+            dst->color.red   = MAX(0, -src.color.red   + dst->color.red);
+            dst->color.green = MAX(0, -src.color.green + dst->color.green);
+            dst->color.blue  = MAX(0, -src.color.blue  + dst->color.blue);
             break;
           }
         } else {
           uint8_t pixelAlpha = DIV255(src.color.alpha * alpha);
-          dst->color.alpha = MAX(dst->color.alpha, pixelAlpha);
+          if (dst->color.alpha < pixelAlpha)
+            dst->color.alpha = pixelAlpha;
           switch (blendType) {
           case ALPHA:
             dst->color.red   = ALPHA(src.color.red,   dst->color.red,   pixelAlpha);

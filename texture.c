@@ -806,20 +806,66 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!srcHeightAssigned)
     srcHeight = srcTextureHeight - srcY;
 
-  if (!(0 <= srcX && srcX < srcTexture->width)) {
+  if (!(0 <= srcX && srcX < srcTextureWidth)) {
     rb_raise(rb_eArgError, "invalid src_x: %d", srcX);
     return Qnil;
   }
-  if (!(0 <= srcY && srcY < srcTexture->height)) {
+  if (!(0 <= srcY && srcY < srcTextureHeight)) {
     rb_raise(rb_eArgError, "invalid src_y: %d", srcY);
     return Qnil;
   }
-  if (!(0 <= srcWidth && srcWidth <= srcTexture->width - srcX)) {
+  if (!(0 <= srcWidth && srcWidth <= srcTextureWidth - srcX)) {
     rb_raise(rb_eArgError, "invalid src_width: %d", srcWidth);
     return Qnil;
   }
-  if (!(0 <= srcHeight && srcHeight <= srcTexture->height - srcY)) {
+  if (!(0 <= srcHeight && srcHeight <= srcTextureHeight - srcY)) {
     rb_raise(rb_eArgError, "invalid src_height: %d", srcHeight);
+    return Qnil;
+  }
+
+  if (srcTexture != dstTexture &&
+      scaleX == 1 && scaleY == 1 && angle == 0 &&
+      saturation == 255 && toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
+      blendType == ALPHA) {
+    int dstX = (int)NUM2DBL(rbX);
+    int dstY = (int)NUM2DBL(rbY);
+    if (dstX < 0) {
+      srcX -= dstX;
+      srcWidth += dstX;
+      if (srcTextureWidth <= srcX || srcWidth < 0)
+        return Qnil;
+      dstX = 0;
+    }
+    if (dstY < 0) {
+      srcY -= dstY;
+      srcHeight += dstY;
+      if (srcTextureHeight <= srcY || srcHeight < 0)
+        return Qnil;
+      dstY = 0;
+    }
+    int width  = MIN(srcWidth,  dstTextureWidth - dstX);
+    int height = MIN(srcHeight, dstTextureHeight - dstY);
+    Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
+    Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
+    int srcPadding = srcTextureWidth - width;
+    int dstPadding = dstTextureWidth - width;
+    for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
+      for (int i = 0; i < width; i++, src++, dst++) {
+        if (dst->color.alpha == 0) {
+          dst->color.alpha = MAX(dst->color.alpha,
+                                 DIV255(src->color.alpha * alpha));
+          dst->color.red   = src->color.red;
+          dst->color.green = src->color.green;
+          dst->color.blue  = src->color.blue;
+        } else {
+          uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
+          dst->color.alpha = MAX(dst->color.alpha, pixelAlpha);
+          dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
+          dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
+          dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+        }
+      }
+    }
     return Qnil;
   }
 

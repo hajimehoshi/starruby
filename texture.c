@@ -937,8 +937,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
          i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {
       int_fast32_t srcI = srcI16 >> 16;
       int_fast32_t srcJ = srcJ16 >> 16;
-      if (srcX <= srcI && srcI < srcX2 &&
-          srcY <= srcJ && srcJ < srcY2) {
+      if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {
         Pixel src = srcTexture->pixels[srcI + srcJ * srcTextureWidth];
         uint8_t pixelAlpha;
         if (dst->color.alpha == 0) {
@@ -969,6 +968,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           dst->color.red   = ALPHA(src.color.red,   dst->color.red,   pixelAlpha);
           dst->color.green = ALPHA(src.color.green, dst->color.green, pixelAlpha);
           dst->color.blue  = ALPHA(src.color.blue,  dst->color.blue,  pixelAlpha);
+          break;
         case ADD:
           dst->color.red   = MIN(255, dst->color.red   + DIV255(src.color.red * pixelAlpha));
           dst->color.green = MIN(255, dst->color.green + DIV255(src.color.green * pixelAlpha));

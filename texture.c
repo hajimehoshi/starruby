@@ -846,19 +846,18 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     int dstPadding = dstTextureWidth - width;
     for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
       for (int i = 0; i < width; i++, src++, dst++) {
+        uint8_t pixelAlpha;
         if (dst->color.alpha == 0) {
+          pixelAlpha = 255;
           dst->color.alpha = DIV255(src->color.alpha * alpha);
-          dst->color.red   = src->color.red;
-          dst->color.green = src->color.green;
-          dst->color.blue  = src->color.blue;
         } else {
-          uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
+          pixelAlpha = DIV255(src->color.alpha * alpha);
           if (dst->color.alpha < pixelAlpha)
             dst->color.alpha = pixelAlpha;
-          dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
-          dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
-          dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
         }
+        dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
+        dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
+        dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
       }
     }
     return Qnil;
@@ -960,7 +959,6 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int_fast32_t srcDXY16 = (int_fast32_t)(srcDXY * (1 << 16));
   int_fast32_t srcDYX16 = (int_fast32_t)(srcDYX * (1 << 16));
   int_fast32_t srcDYY16 = (int_fast32_t)(srcDYY * (1 << 16));
-  
 
   volatile VALUE rbClonedTexture = Qnil;
   if (self == rbTexture) {
@@ -990,52 +988,49 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           srcColor.green = ALPHA(srcColor.green, y, saturation);
           srcColor.blue  = ALPHA(srcColor.blue,  y, saturation);
         }
-        if (toneRed)
-          srcColor.red   = ALPHA((0 < toneRed)   * 255, srcColor.red,   abs(toneRed));
-        if (toneGreen)
-          srcColor.green = ALPHA((0 < toneGreen) * 255, srcColor.green, abs(toneGreen));
-        if (toneBlue)
-          srcColor.blue  = ALPHA((0 < toneBlue)  * 255, srcColor.blue,  abs(toneBlue));
+        if (toneRed) {
+          if (0 < toneRed)
+            srcColor.red   = ALPHA(255, srcColor.red, toneRed);
+          else
+            srcColor.red = ALPHA(0,   srcColor.red, -toneRed);
+        }
+        if (toneGreen) {
+          if (0 < toneGreen)
+            srcColor.green = ALPHA(255, srcColor.green, toneGreen);
+          else
+            srcColor.green = ALPHA(0,   srcColor.green, -toneGreen);
+        }
+        if (toneBlue) {
+          if (0 < toneBlue)
+            srcColor.blue = ALPHA(255, srcColor.blue, toneBlue);
+          else
+            srcColor.blue = ALPHA(0, srcColor.blue, -toneBlue);
+        }
+        uint8_t pixelAlpha;
         if (dst->color.alpha == 0) {
+          pixelAlpha = 255;
           dst->color.alpha = DIV255(srcColor.alpha * alpha);
-          switch (blendType) {
-          case ALPHA:
-            dst->color.red   = srcColor.red;
-            dst->color.green = srcColor.green;
-            dst->color.blue  = srcColor.blue;
-            break;
-          case ADD:
-            dst->color.red   = MIN(255, dst->color.red   + srcColor.red);
-            dst->color.green = MIN(255, dst->color.green + srcColor.green);
-            dst->color.blue  = MIN(255, dst->color.blue  + srcColor.blue);
-            break;
-          case SUB:
-            dst->color.red   = MAX(0, -srcColor.red   + dst->color.red);
-            dst->color.green = MAX(0, -srcColor.green + dst->color.green);
-            dst->color.blue  = MAX(0, -srcColor.blue  + dst->color.blue);
-            break;
-          }
         } else {
-          uint8_t pixelAlpha = DIV255(srcColor.alpha * alpha);
+          pixelAlpha = DIV255(srcColor.alpha * alpha);
           if (dst->color.alpha < pixelAlpha)
             dst->color.alpha = pixelAlpha;
-          switch (blendType) {
-          case ALPHA:
-            dst->color.red   = ALPHA(srcColor.red,   dst->color.red,   pixelAlpha);
-            dst->color.green = ALPHA(srcColor.green, dst->color.green, pixelAlpha);
-            dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  pixelAlpha);
-            break;
-          case ADD:
-            dst->color.red   = MIN(255, dst->color.red   + DIV255(srcColor.red * pixelAlpha));
-            dst->color.green = MIN(255, dst->color.green + DIV255(srcColor.green * pixelAlpha));
-            dst->color.blue  = MIN(255, dst->color.blue  + DIV255(srcColor.blue * pixelAlpha));
-            break;
-          case SUB:
-            dst->color.red   = MAX(0, (int)dst->color.red   - DIV255(srcColor.red * pixelAlpha));
-            dst->color.green = MAX(0, (int)dst->color.green - DIV255(srcColor.green * pixelAlpha));
-            dst->color.blue  = MAX(0, (int)dst->color.blue  - DIV255(srcColor.blue * pixelAlpha));
-            break;
-          }
+        }
+        switch (blendType) {
+        case ALPHA:
+          dst->color.red   = ALPHA(srcColor.red,   dst->color.red,   pixelAlpha);
+          dst->color.green = ALPHA(srcColor.green, dst->color.green, pixelAlpha);
+          dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  pixelAlpha);
+          break;
+        case ADD:
+          dst->color.red   = MIN(255, dst->color.red   + DIV255(srcColor.red * pixelAlpha));
+          dst->color.green = MIN(255, dst->color.green + DIV255(srcColor.green * pixelAlpha));
+          dst->color.blue  = MIN(255, dst->color.blue  + DIV255(srcColor.blue * pixelAlpha));
+          break;
+        case SUB:
+          dst->color.red   = MAX(0, -DIV255(srcColor.red * pixelAlpha)   + dst->color.red);
+          dst->color.green = MAX(0, -DIV255(srcColor.green * pixelAlpha) + dst->color.green);
+          dst->color.blue  = MAX(0, -DIV255(srcColor.blue * pixelAlpha)  + dst->color.blue);
+          break;
         }
       } else if ((srcI < srcX && srcDXX <= 0) || (srcX2 <= srcI && 0 <= srcDXX) ||
                  (srcJ < srcY && srcDXY <= 0) || (srcY2 <= srcJ && 0 <= srcDXY)) {

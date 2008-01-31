@@ -726,6 +726,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
@@ -755,56 +757,49 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int toneBlue  = 0;
   uint8_t saturation = 255;
 
-  bool srcWidthAssigned = false, srcHeightAssigned = false;
-  if (!NIL_P(rbOptions)) {
-    volatile VALUE val;
-    Check_Type(rbOptions, T_HASH);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
-      srcX = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
-      srcY = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width))) {
-      srcWidth = NUM2INT(val);
-      srcWidthAssigned = true;
-    }
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height))) {
-      srcHeight = NUM2INT(val);
-      srcHeightAssigned = true;
-    }
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
-      scaleX = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
-      scaleY = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
-      angle = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
-      centerX = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
-      centerY = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
-      alpha = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
-      Check_Type(val, T_SYMBOL);
-      if (val == symbol_alpha)
-        blendType = ALPHA;
-      else if (val == symbol_add)
-        blendType = ADD;
-      else if (val == symbol_sub)
-        blendType = SUB;
-    }
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
-      toneRed = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
-      toneGreen = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
-      toneBlue = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
-      saturation = NUM2INT(val);
-  }
-  if (!srcWidthAssigned)
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
+    srcX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
+    srcY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
+    srcWidth = NUM2INT(val);
+  else
     srcWidth = srcTextureWidth - srcX;
-  if (!srcHeightAssigned)
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
+    srcHeight = NUM2INT(val);
+  else
     srcHeight = srcTextureHeight - srcY;
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
+    scaleX = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
+    scaleY = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
+    angle = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
+    centerX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
+    centerY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
+    alpha = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
+    Check_Type(val, T_SYMBOL);
+    if (val == symbol_alpha)
+      blendType = ALPHA;
+    else if (val == symbol_add)
+      blendType = ADD;
+    else if (val == symbol_sub)
+      blendType = SUB;
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
+    toneRed = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
+    toneGreen = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
+    toneBlue = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
+    saturation = NUM2INT(val);
 
   if (!(0 <= srcX && srcX < srcTextureWidth)) {
     rb_raise(rb_eArgError, "invalid src_x: %d", srcX);

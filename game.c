@@ -10,6 +10,12 @@ static bool running = false;
 static bool terminated = false;
 static int windowScale = 1;
 
+int
+GetWindowScale(void)
+{
+  return windowScale;
+}
+
 static VALUE
 Game_fps(VALUE self)
 {
@@ -70,7 +76,7 @@ DoLoop(SDL_Surface* screen)
       before2 = now;
     }
     UpdateAudio();
-    UpdateInput(windowScale);
+    rb_funcall(rb_mInput, rb_intern("update"), 0);
     
     rb_yield(Qnil);
 
@@ -248,6 +254,8 @@ Game_screen(VALUE self)
 static VALUE
 Game_terminate(VALUE self)
 {
+  if (!running)
+    rb_raise(rb_eStarRubyError, "A game has not run yet");
   terminated = true;
   return Qnil;
 }

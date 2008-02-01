@@ -81,11 +81,12 @@ void InitializeStarRubyError(void);
 void InitializeTexture(void);
 
 void UpdateAudio(void);
-void UpdateInput(int);
 
 void InitializeSdlAudio(void);
 void InitializeSdlFont(void);
 void InitializeSdlInput(void);
+
+int GetWindowScale(void);
 
 #ifdef DEBUG
 #include <assert.h>

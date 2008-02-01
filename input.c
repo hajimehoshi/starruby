@@ -132,8 +132,8 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-void
-UpdateInput(int windowScale)
+static VALUE
+Input_update(VALUE self)
 {
   SDL_JoystickUpdate();
 
@@ -172,6 +172,7 @@ UpdateInput(int windowScale)
         gamepad->buttonStates[j] = 0;
   }
 
+  int windowScale = GetWindowScale();
   int mouseLocationX, mouseLocationY;
   Uint8 sdlMouseButtons = SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
   volatile VALUE rbMouseLocation =
@@ -193,6 +194,8 @@ UpdateInput(int windowScale)
     mouse->rightState = 0;
   
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
+
+  return Qnil;
 }
 
 #define ADD_KEY(currentKey, _name, _sdlKey)     \
@@ -293,7 +296,8 @@ InitializeInput(void)
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
   rb_define_module_function(rb_mInput, "mouse_location",
                             Input_mouse_location, 0);
-  rb_define_module_function(rb_mInput, "keys", Input_keys, -1);
+  rb_define_module_function(rb_mInput, "keys",   Input_keys, -1);
+  rb_define_module_function(rb_mInput, "update", Input_update, 0);
 
   symbol_delay         = ID2SYM(rb_intern("delay"));
   symbol_device_number = ID2SYM(rb_intern("device_number"));

@@ -16,6 +16,7 @@ Benchmark.bm do |b|
   dst.clear
   b.report "normal" do
     10000.times do |i|
+      dst.clear if i & 3 == 0
       x = i % dst.width
       y = i % dst.height
       dst.render_texture(src, x, y)
@@ -24,6 +25,7 @@ Benchmark.bm do |b|
   dst.clear
   b.report "alpha " do
     10000.times do |i|
+      dst.clear if i & 3 == 0
       x = i % dst.width
       y = i % dst.height
       alpha = i % 256
@@ -34,6 +36,7 @@ Benchmark.bm do |b|
   angle = Math::PI / 4
   b.report "geo   " do
     10000.times do |i|
+      dst.clear if i & 3 == 0
       x = i % dst.width
       y = i % dst.height
       dst.render_texture(src, x, y, :scale_x => 2, :angle => angle)
@@ -42,6 +45,7 @@ Benchmark.bm do |b|
   dst.clear
   b.report "tone  " do
     10000.times do |i|
+      dst.clear if i & 3 == 0
       x = i % dst.width
       y = i % dst.height
       dst.render_texture(src, x, y, :tone_red => 100)
@@ -50,6 +54,7 @@ Benchmark.bm do |b|
   dst.clear
   b.report "sub   " do
     10000.times do |i|
+      dst.clear if i & 3 == 0
       x = i % dst.width
       y = i % dst.height
       dst.render_texture(src, x, y, :blend_type => :sub)

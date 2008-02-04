@@ -438,7 +438,6 @@ Texture_dump(VALUE self, VALUE rbFormat)
     rb_raise(rb_eRuntimeError, "can't modify disposed texture");
     return Qnil;
   }
-
   char* format = StringValuePtr(rbFormat);
   int textureSize = texture->width * texture->height;
   int formatLength = RSTRING_LEN(rbFormat);
@@ -492,6 +491,12 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
+  if (rectX < 0 || texture->width <= rectX + rectWidth ||
+      rectY < 0 || texture->height <= rectY + rectHeight) {
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)",
+             rectX, rectY, rectWidth, rectHeight);
+    return Qnil;
+  }
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   int width = texture->width;
@@ -638,6 +643,14 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
       }
     }
   }
+  return Qnil;
+}
+
+static VALUE
+Texture_render_line(VALUE self,
+                    VALUE rbX1, VALUE rbY1, VALUE rbX2, VALUE rbY2, VALUE rbColor)
+{
+  
   return Qnil;
 }
 
@@ -1159,7 +1172,8 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   int textureSize = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
   if (textureSize * formatLength != RSTRING_LEN(rbData)) {
-    rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",             textureSize * formatLength, RSTRING_LEN(rbData));
+    rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
+             textureSize * formatLength, RSTRING_LEN(rbData));
     return Qnil;
   }
   uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
@@ -1205,13 +1219,14 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
   rb_define_method(rb_cTexture, "dispose",        Texture_dispose,         0);
   rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,        0);
-  rb_define_method(rb_cTexture, "render_in_perspective",
-                   Texture_render_in_perspective, -1);
   rb_define_method(rb_cTexture, "dump",           Texture_dump,            1);
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
+  rb_define_method(rb_cTexture, "render_in_perspective",
+                   Texture_render_in_perspective, -1);
+  rb_define_method(rb_cTexture, "render_line",    Texture_render_line,     5);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

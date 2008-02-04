@@ -712,6 +712,19 @@ class TextureTest < Test::Unit::TestCase
         end
       end
     end
+    texture = Texture.new(900, 100)
+    assert_raise ArgumentError do
+      texture.fill_rect(-16, 16, 16, 16, Color.new(0, 0, 0, 0))
+    end
+    assert_raise ArgumentError do
+      texture.fill_rect(16, -16, 16, 16, Color.new(0, 0, 0, 0))
+    end
+    assert_raise ArgumentError do
+      texture.fill_rect(16, 16, texture.width + 16, 16, Color.new(0, 0, 0, 0))
+    end
+    assert_raise ArgumentError do
+      texture.fill_rect(16, 16, 16, texture.height + 16, Color.new(0, 0, 0, 0))
+    end
   end
   
   def test_fill_rect_frozen
@@ -886,6 +899,28 @@ class TextureTest < Test::Unit::TestCase
       texture2.render_in_perspective(texture)
     end
   end
+
+=begin
+  def test_render_line
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.render_line(10, 11, 10, 22, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if i == 10 and 11 <= j and j < 22
+          assert_in_delta (12 * 78 + p1.red   * (255 - 78)) / 255, p2.red, 2
+          assert_in_delta (34 * 78 + p1.green * (255 - 78)) / 255, p2.red, 2
+          assert_in_delta (56 * 78 + p1.blue  * (255 - 78)) / 255, p2.red, 2
+          assert_equal [p1.alpha, 78].max, p2.alpha
+        else
+          assert_equal p1, p2
+        end
+      end
+    end
+  end
+=end
   
   def test_render_text
     texture = Texture.load("images/ruby")
@@ -1641,6 +1676,21 @@ class TextureTest < Test::Unit::TestCase
         assert_equal str[4 * origin + 1].ord, p.red
         assert_equal str[4 * origin + 2].ord, p.green
         assert_equal str[4 * origin + 3].ord, p.blue
+      end
+    end
+    str = texture.dump("rrrragb")
+    assert_equal texture.width * texture.height * 7, str.length
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p = texture.get_pixel(i, j)
+        origin = i + j * texture.width
+        assert_equal str[7 * origin].ord,     p.red
+        assert_equal str[7 * origin + 1].ord, p.red
+        assert_equal str[7 * origin + 2].ord, p.red
+        assert_equal str[7 * origin + 3].ord, p.red
+        assert_equal str[7 * origin + 4].ord, p.alpha
+        assert_equal str[7 * origin + 5].ord, p.green
+        assert_equal str[7 * origin + 6].ord, p.blue
       end
     end
   end

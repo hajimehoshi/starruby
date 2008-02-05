@@ -1,6 +1,7 @@
 require "starruby"
 include StarRuby
 
+puts "The count of Gamepad: #{Input.gamepad_count}"
 puts "Press any gamepad key"
 puts "Exit if you press the button 1 and the button 2"
 

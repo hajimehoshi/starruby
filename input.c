@@ -42,6 +42,12 @@ volatile static VALUE symbol_right;
 volatile static VALUE symbol_up;
 
 static VALUE
+Input_gamepad_count(VALUE self)
+{
+  return INT2NUM(gamepadCount);
+}
+
+static VALUE
 Input_mouse_location(VALUE self)
 {
   return rb_iv_get(rb_mInput, "mouse_location");
@@ -294,6 +300,8 @@ void
 InitializeInput(void)
 {
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
+  rb_define_module_function(rb_mInput, "gamepad_count",
+                            Input_gamepad_count, 0);
   rb_define_module_function(rb_mInput, "mouse_location",
                             Input_mouse_location, 0);
   rb_define_module_function(rb_mInput, "keys",   Input_keys, -1);

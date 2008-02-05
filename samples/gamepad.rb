@@ -9,6 +9,7 @@ white = Color.new(255, 255, 255)
 Game.title = "Gamepad"
 
 Game.run(320, 240) do
+  Game.terminate if Input.keys(:keyboard).include?(:escape)
   s = Game.screen
   s.clear
   keys = Input.keys(:gamepad)

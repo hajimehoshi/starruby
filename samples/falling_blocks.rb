@@ -9,6 +9,7 @@ def main
   view = FallingBlocks::View.new
   StarRuby::Game.title = "Falling Blocks Game"
   StarRuby::Game.run(320, 240, :window_scale => 1) do
+    Game.terminate if Input.keys(:keyboard).include?(:escape)
     controller.update(application_model)
     view.update(application_model, StarRuby::Game.screen)
     GC.start

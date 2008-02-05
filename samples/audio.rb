@@ -15,6 +15,7 @@ Game.run(320, 240) do
   music_alpha = Audio.playing_bgm? ? 255 : 128
   sound_alpha = 128
   keys = Input.keys(:keyboard, :duration => 1)
+  Game.terminate if keys.include?(:escape)
   if keys.include?(:m)
     if Audio.playing_bgm?
       Audio.stop_bgm

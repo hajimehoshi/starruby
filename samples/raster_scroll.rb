@@ -10,6 +10,7 @@ counter = 0
 Game.title = "Raster scroll"
 
 Game.run(320, 240) do
+  Game.terminate if Input.keys(:keyboard).include?(:escape)
   counter = (counter + 1) % 60
   s = Game.screen
   s.clear

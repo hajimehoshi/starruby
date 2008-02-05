@@ -10,6 +10,7 @@ angle = 0
 Game.title = "Mouse (Click buttons!)"
 
 Game.run(320, 240) do
+  Game.terminate if Input.keys(:keyboard).include?(:escape)
   Game.screen.clear
   x, y = Input.mouse_location
   alpha = 128

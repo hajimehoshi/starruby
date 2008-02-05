@@ -72,12 +72,12 @@ static SDL_Surface*
 ConvertSurfaceForScreen(SDL_Surface* surface)
 {
   return SDL_ConvertSurface(surface, &(SDL_PixelFormat) {
-    .palette = NULL,
-    .BitsPerPixel = 32, .BytesPerPixel = 4,
-    .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
-    .Bmask = 0x000000ff, .Amask = 0xff000000,
-    .colorkey = 0, .alpha = 255,
-  }, SDL_HWACCEL | SDL_DOUBLEBUF);
+      .palette = NULL,
+        .BitsPerPixel = 32, .BytesPerPixel = 4,
+        .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
+        .Bmask = 0x000000ff, .Amask = 0xff000000,
+        .colorkey = 0, .alpha = 255,
+        }, SDL_HWACCEL | SDL_DOUBLEBUF);
 }
 
 static VALUE
@@ -542,6 +542,19 @@ Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
+#define RENDER_PIXEL(_dst, _srcP)                                       \
+  do {                                                                  \
+    if (_dst.alpha == 0) {                                              \
+      _dst = *_srcP;                                                    \
+    } else {                                                            \
+      if (_dst.alpha < _srcP->alpha)                                    \
+        _dst.alpha = _srcP->alpha;                                      \
+      _dst.red   = ALPHA(_srcP->red,   _dst.red,   _srcP->alpha);       \
+      _dst.green = ALPHA(_srcP->green, _dst.green, _srcP->alpha);       \
+      _dst.blue  = ALPHA(_srcP->blue,  _dst.blue,  _srcP->alpha);       \
+    }                                                                   \
+  } while (false)
+
 static VALUE
 Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
 {
@@ -634,11 +647,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
         if (options.isLoop ||
             (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
           Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
-          uint8_t alpha = (dst->color.alpha == 0) ? 255 : srcColor->alpha;
-          dst->color.red   = ALPHA(srcColor->red,   dst->color.red,   alpha);
-          dst->color.green = ALPHA(srcColor->green, dst->color.green, alpha);
-          dst->color.blue  = ALPHA(srcColor->blue,  dst->color.blue,  alpha);
-          dst->color.alpha = MAX(dst->color.alpha, src->color.alpha);
+          RENDER_PIXEL(dst->color, srcColor);
         }
       }
     }
@@ -650,7 +659,55 @@ static VALUE
 Texture_render_line(VALUE self,
                     VALUE rbX1, VALUE rbY1, VALUE rbX2, VALUE rbY2, VALUE rbColor)
 {
-  
+  int x1 = NUM2INT(rbX1);
+  int y1 = NUM2INT(rbY1);
+  int x2 = NUM2INT(rbX2);
+  int y2 = NUM2INT(rbY2);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  if (!texture->pixels) {
+    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
+    return Qnil;
+  }
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
+  int x = x1;
+  int y = y1;
+  int dx = abs(x2 - x1);
+  int dy = abs(y2 - y1);
+  int signX = (x1 <= x2) ? 1 : -1;
+  int signY = (y1 <= y2) ? 1 : -1;
+  if (dy <= dx) {
+    int e = dx;
+    int eLimit = dx * 2;
+    for (int i = 0; i <= dx; i++) {
+      if (0 <= x && x < texture->width && 0 <= y && y < texture->height) {
+        Pixel* pixel = &(texture->pixels[x + y * texture->width]);
+        RENDER_PIXEL(pixel->color, color);
+      }
+      x += signX;
+      e += 2 * dy;
+      if (eLimit <= e) {
+        e -= eLimit;
+        y += signY;
+      }
+    }
+  } else {
+    int e = dy;
+    int eLimit = dy * 2;
+    for (int i = 0; i <= dy; i++) {
+      if (0 <= x && x < texture->width && 0 <= y && y < texture->height) {
+        Pixel* pixel = &(texture->pixels[x + y * texture->width]);
+        RENDER_PIXEL(pixel->color, color);
+      }
+      y += signY;
+      e += 2 * dx;
+      if (eLimit <= e) {
+        e -= eLimit;
+        x += signX;
+      }
+    }
+  }
   return Qnil;
 }
 
@@ -673,10 +730,6 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   char* text = StringValuePtr(rbText);
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
-  if (!font->sdlFont) {
-    rb_raise(rb_eRuntimeError, "can't use disposed font");
-    return Qnil;
-  }
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
   volatile VALUE rbTextTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
                                              2, RARRAY_PTR(rbSize));

@@ -659,6 +659,7 @@ static VALUE
 Texture_render_line(VALUE self,
                     VALUE rbX1, VALUE rbY1, VALUE rbX2, VALUE rbY2, VALUE rbColor)
 {
+  rb_check_frozen(self);
   int x1 = NUM2INT(rbX1);
   int y1 = NUM2INT(rbY1);
   int x2 = NUM2INT(rbX2);

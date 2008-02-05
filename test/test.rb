@@ -976,6 +976,24 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_render_line_disposed
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.dispose
+    assert_raise RuntimeError do
+      texture2.render_line(12, 34, 12, 56, Color.new(12, 34, 56, 255))
+    end
+  end
+
+  def test_render_line_frozen
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.freeze
+    assert_raise FrozenError do
+      texture2.render_line(12, 34, 12, 56, Color.new(12, 34, 56, 255))
+    end
+  end
+
   def test_render_text
     texture = Texture.load("images/ruby")
     if Font.exist?("Arial")

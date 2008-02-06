@@ -183,20 +183,6 @@ Font_bold(VALUE self)
 }
 
 static VALUE
-Font_dispose(VALUE self)
-{
-  rb_warn("Font#dispose is deprecated");
-  return Qnil;
-}
-
-static VALUE
-Font_disposed(VALUE self)
-{
-  rb_warn("Font#disposed? is deprecated");
-  return Qfalse;
-}
-
-static VALUE
 Font_italic(VALUE self)
 {
   Font* font;
@@ -341,8 +327,6 @@ InitializeFont(void)
   rb_define_alloc_func(rb_cFont, Font_alloc);
   rb_define_private_method(rb_cFont, "initialize", Font_initialize, -1);
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);
-  rb_define_method(rb_cFont, "dispose",   Font_dispose,  0);
-  rb_define_method(rb_cFont, "disposed?", Font_disposed, 0);
   rb_define_method(rb_cFont, "get_size",  Font_get_size, 1);
   rb_define_method(rb_cFont, "italic?",   Font_italic,   0);
   rb_define_method(rb_cFont, "name",      Font_name,     0);

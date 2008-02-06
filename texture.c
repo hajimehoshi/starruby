@@ -7,7 +7,6 @@ volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
 volatile static VALUE symbol_blend_type;
-volatile static VALUE symbol_camera_angle; // deprecated
 volatile static VALUE symbol_camera_height;
 volatile static VALUE symbol_camera_pitch;
 volatile static VALUE symbol_camera_roll;
@@ -31,8 +30,6 @@ volatile static VALUE symbol_sub;
 volatile static VALUE symbol_tone_blue;
 volatile static VALUE symbol_tone_green;
 volatile static VALUE symbol_tone_red;
-volatile static VALUE symbol_vanishing_x;
-volatile static VALUE symbol_vanishing_y;
 
 typedef enum {
   ALPHA,
@@ -233,10 +230,6 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     options->cameraY = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
     options->cameraHeight = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_angle))) {
-    rb_warn("Numeric object for :camera_angle is deprecated");
-    options->cameraYaw = NUM2DBL(val);
-  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_yaw)))
     options->cameraYaw = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_pitch)))
@@ -245,14 +238,6 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     options->cameraRoll = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
     options->distance = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_x))) {
-    rb_warn(":vanishing_x is desprecated; use :intersection_x instead");
-    options->intersectionX = NUM2INT(val);
-  }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vanishing_y))) {
-    rb_warn(":vanishing_y is desprecated; use :intersection_y instead");
-    options->intersectionY = NUM2INT(val);
-  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))
     options->intersectionX = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y)))
@@ -499,7 +484,6 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   }
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
-  int width = texture->width;
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
@@ -1294,7 +1278,6 @@ InitializeTexture(void)
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
   symbol_blend_type     = ID2SYM(rb_intern("blend_type"));
-  symbol_camera_angle   = ID2SYM(rb_intern("camera_angle"));
   symbol_camera_height  = ID2SYM(rb_intern("camera_height"));
   symbol_camera_pitch   = ID2SYM(rb_intern("camera_pitch"));
   symbol_camera_roll    = ID2SYM(rb_intern("camera_roll"));
@@ -1318,6 +1301,4 @@ InitializeTexture(void)
   symbol_tone_blue      = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green     = ID2SYM(rb_intern("tone_green"));
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));
-  symbol_vanishing_x    = ID2SYM(rb_intern("vanishing_x"));
-  symbol_vanishing_y    = ID2SYM(rb_intern("vanishing_y"));
 }

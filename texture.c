@@ -1,6 +1,15 @@
 #include "starruby.h"
 #include <png.h>
 
+#define Check_Disposed(texture)                                         \
+  do {                                                                  \
+    if (!texture->pixels) {                                             \
+      rb_raise(rb_eRuntimeError,                                        \
+               "can't modify disposed StarRuby::Texture");              \
+      return Qnil;                                                      \
+    }                                                                   \
+  } while (false)
+
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 volatile static VALUE symbol_add;
@@ -299,11 +308,7 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
-
+  Check_Disposed(texture);
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
   Texture_change_hue_bang(rbTexture, rbAngle);
   return rbTexture;
@@ -313,14 +318,9 @@ static VALUE
 Texture_change_hue_bang(VALUE self, VALUE rbAngle)
 {
   rb_check_frozen(self);
-
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
-
+  Check_Disposed(texture);
   double angle = NUM2DBL(rbAngle);
   if (angle == 0)
     return Qnil;
@@ -388,10 +388,7 @@ Texture_clear(VALUE self)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   MEMZERO(texture->pixels, Color, texture->width * texture->height);
   return Qnil;
 }
@@ -419,10 +416,7 @@ Texture_dump(VALUE self, VALUE rbFormat)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   char* format = StringValuePtr(rbFormat);
   int textureSize = texture->width * texture->height;
   int formatLength = RSTRING_LEN(rbFormat);
@@ -448,10 +442,7 @@ Texture_fill(VALUE self, VALUE rbColor)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   int length = texture->width * texture->height;
@@ -468,10 +459,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
@@ -499,10 +487,7 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   int y = NUM2INT(rbY);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
     return Qnil;
@@ -520,10 +505,7 @@ Texture_height(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   return INT2NUM(texture->height);
 }
 
@@ -550,16 +532,10 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     rbOptions = rb_hash_new();
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
-  if (!srcTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't use disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(srcTexture);
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
-  if (!dstTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't use disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(dstTexture);
   if (srcTexture == dstTexture) {
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
     return Qnil;
@@ -651,10 +627,7 @@ Texture_render_line(VALUE self,
   int y2 = NUM2INT(rbY2);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   int x = x1;
@@ -771,10 +744,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   rb_check_frozen(self);
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
-  if (!dstTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(dstTexture);
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
@@ -783,10 +753,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
-  if (!srcTexture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't use disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(srcTexture);
 
   int srcTextureWidth  = srcTexture->width;
   int srcTextureHeight = srcTexture->height;
@@ -1118,10 +1085,7 @@ Texture_save(int argc, VALUE* argv, VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   volatile VALUE rbPath, rbAlpha;
   rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
   if (argc == 1)
@@ -1166,10 +1130,7 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   int x = NUM2INT(rbX), y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
@@ -1186,10 +1147,7 @@ Texture_size(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   volatile VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
                                        INT2NUM(texture->height));
   OBJ_FREEZE(rbSize);
@@ -1202,10 +1160,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   char* format = StringValuePtr(rbFormat);
   int formatLength = RSTRING_LEN(rbFormat);
   int textureSize = texture->width * texture->height;
@@ -1235,10 +1190,7 @@ Texture_width(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  if (!texture->pixels) {
-    rb_raise(rb_eRuntimeError, "can't modify disposed texture");
-    return Qnil;
-  }
+  Check_Disposed(texture);
   return INT2NUM(texture->width);
 }
 

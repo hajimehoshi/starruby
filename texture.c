@@ -500,10 +500,11 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   int width = texture->width;
-  Pixel* pixels = texture->pixels;
-  for (int j = rectY; j < rectY + rectHeight; j++)
-    for (int i = rectX; i < rectX + rectWidth; i++)
-      pixels[i + j * width].color = *color;
+  Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
+  int paddingJ = texture->width - rectWidth;
+  for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
+    for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
+      pixels->color = *color;
   return Qnil;
 }
 

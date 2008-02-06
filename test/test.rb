@@ -725,8 +725,28 @@ class TextureTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       texture.fill_rect(16, 16, 16, texture.height + 16, Color.new(0, 0, 0, 0))
     end
-    texture.fill_rect(0, 0, texture.width - 1, texture.height, Color.new(0, 0, 0, 0))
-    texture.fill_rect(0, 0, texture.width, texture.height - 1, Color.new(0, 0, 0, 0))
+    texture = orig_texture.clone
+    texture.fill_rect(1, 0, texture.width - 1, texture.height, Color.new(12, 34, 56, 78))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if 1 <= x
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
+    end
+    texture = orig_texture.clone
+    texture.fill_rect(0, 1, texture.width, texture.height - 1, Color.new(12, 34, 56, 78))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if 1 <= y
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
+    end
   end
 
   def test_fill_rect_frozen

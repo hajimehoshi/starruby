@@ -491,9 +491,9 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (rectX < 0 || texture->width <= rectX + rectWidth ||
-      rectY < 0 || texture->height <= rectY + rectHeight) {
-    rb_raise(rb_eArgError, "index out of range: (%d, %d)",
+  if (rectX < 0 || texture->width < rectX + rectWidth ||
+      rectY < 0 || texture->height < rectY + rectHeight) {
+    rb_raise(rb_eArgError, "index out of range: (%d, %d, %d, %d)",
              rectX, rectY, rectWidth, rectHeight);
     return Qnil;
   }

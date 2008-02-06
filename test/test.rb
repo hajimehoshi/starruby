@@ -725,8 +725,10 @@ class TextureTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       texture.fill_rect(16, 16, 16, texture.height + 16, Color.new(0, 0, 0, 0))
     end
+    texture.fill_rect(0, 0, texture.width - 1, texture.height, Color.new(0, 0, 0, 0))
+    texture.fill_rect(0, 0, texture.width, texture.height - 1, Color.new(0, 0, 0, 0))
   end
-  
+
   def test_fill_rect_frozen
     texture = Texture.load("images/ruby")
     texture.freeze

@@ -1,5 +1,35 @@
 require "mkmf"
 
+lib_base     = ""
+include_base = ""
+sdl_base     = ""
+
+if arg_config("--gp2x", false)
+  case CONFIG["arch"]
+  when /darwin/
+    # http://wiki.gp2x.org/wiki/Setting_up_a_development_environment_%28Mac%29
+    sdl_base      = "/opt/local/gp2x/bin/arm-open2x-linux-"
+    cross_compile = "/opt/local/devkitpro/devkitGP2X/bin/arm-linux-"
+    CONFIG["CC"]    = "#{cross_compile}gcc"
+    CONFIG["STRIP"] = "#{cross_compile}strip"
+
+    $CFLAGS  += " " + `#{sdl_base}sdl-config --cflags`.chomp
+    # $CFLAGS  += " " + `libpng-config --cflags`.chomp
+    $LDFLAGS += " " + `#{sdl_base}sdl-config --libs`.chomp
+    # $LDFLAGS += " " + `libpng-config --libs`.chomp
+    $CFLAGS += " -finline-functions -Wall -std=c99 -funit-at-a-time"
+
+    $libs += " -lSDL_mixer -lSDL_ttf"
+    have_header("png.h") or exit(false)
+    have_header("zlib.h") or exit(false)
+
+    create_makefile("starruby")
+    exit
+  else
+    raise "not supported arch: #{CONFIG["arch"]}"
+  end
+end
+
 case CONFIG["arch"]
 when /mingw32/
   $CFLAGS += " -DWIN32"

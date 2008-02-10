@@ -928,17 +928,6 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
-  def test_render_in_perspective_type
-    texture = Texture.load("images/ruby")
-    texture2 = Texture.new(100, 100)
-    assert_raise TypeError do
-      texture2.render_in_perspective(nil)
-    end
-    assert_raise TypeError do
-      texture2.render_in_perspective(texture, false)
-    end
-  end
-
   def test_render_line
     texture = Texture.load("images/ruby")
     texture2 = texture.dup

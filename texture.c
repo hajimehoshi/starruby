@@ -670,6 +670,25 @@ Texture_render_line(VALUE self,
   return Qnil;
 }
 
+static VALUE
+Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  Check_Disposed(texture);
+  int x = NUM2INT(rbX), y = NUM2INT(rbY);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
+    return Qnil;
+  }
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
+  Pixel* pixel = &(texture->pixels[x + y * texture->width]);
+  RENDER_PIXEL(pixel->color, color);
+  return Qnil;
+}
+
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
 static VALUE
 Texture_render_text(int argc, VALUE* argv, VALUE self)
@@ -1218,6 +1237,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "render_in_perspective",
                    Texture_render_in_perspective, -1);
   rb_define_method(rb_cTexture, "render_line",    Texture_render_line,     5);
+  rb_define_method(rb_cTexture, "render_pixel",   Texture_render_pixel,    3);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

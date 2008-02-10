@@ -1016,6 +1016,64 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_render_pixel
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.render_pixel(12, 34, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if i == 12 and j == 34
+          if 0 < p1.alpha
+            assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
+            assert_in_delta (34 * 78 + p1.green * (255 - 78)).quo(255), p2.green, 2
+            assert_in_delta (56 * 78 + p1.blue  * (255 - 78)).quo(255), p2.blue,  2
+            assert_equal [p1.alpha, 78].max, p2.alpha
+          else
+            assert_equal Color.new(12, 34, 56, 78), p2
+          end
+        else
+          assert_equal p1, p2
+        end
+      end
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_pixel(-1, 0, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_pixel(0, -1, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_pixel(texture2.width, 0, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_pixel(0, texture2.height, Color.new(255, 255, 255))
+    end
+  end
+
+  def test_render_pixel_disposed
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.dispose
+    assert_raise RuntimeError do
+      texture2.render_pixel(12, 34, Color.new(12, 34, 56, 78))
+    end
+  end
+
+  def test_render_pixel_frozen
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.freeze
+    assert_raise FrozenError do
+      texture2.render_pixel(12, 34, Color.new(12, 34, 56, 78))
+    end
+  end
+
   def test_render_text
     texture = Texture.load("images/ruby")
     if Font.exist?("Arial")

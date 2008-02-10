@@ -23,7 +23,5 @@ Game.run(320, 240) do
   x = [x1, x2].min
   y = [y1, y2].min
   color = Color.new(rand(256), rand(256), rand(256), rand(256))
-  texture = Texture.new(width, height)
-  texture.fill(color)
-  Game.screen.render_texture(texture, x, y)
+  Game.screen.render_rect(x, y, width, height, color)
 end

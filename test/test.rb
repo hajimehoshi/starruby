@@ -725,6 +725,12 @@ class TextureTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       texture.fill_rect(16, 16, 16, texture.height + 16, Color.new(0, 0, 0, 0))
     end
+    assert_raise ArgumentError do
+      texture.fill_rect(16, 16, 16, -1, Color.new(0, 0, 0, 0))
+    end
+    assert_raise ArgumentError do
+      texture.fill_rect(16, 16, -1, 16, Color.new(0, 0, 0, 0))
+    end
     texture = orig_texture.clone
     texture.fill_rect(1, 0, texture.width - 1, texture.height, Color.new(12, 34, 56, 78))
     texture.height.times do |y|
@@ -922,6 +928,17 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_render_in_perspective_type
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(100, 100)
+    assert_raise TypeError do
+      texture2.render_in_perspective(nil)
+    end
+    assert_raise TypeError do
+      texture2.render_in_perspective(texture, false)
+    end
+  end
+
   def test_render_line
     texture = Texture.load("images/ruby")
     texture2 = texture.dup
@@ -1016,6 +1033,26 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_render_line_type
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    assert_raise TypeError do
+      texture2.render_line(nil, 34, 12, 56, Color.new(12, 34, 56, 255))
+    end
+    assert_raise TypeError do
+      texture2.render_line(12, nil, 12, 56, Color.new(12, 34, 56, 255))
+    end
+    assert_raise TypeError do
+      texture2.render_line(12, 34, nil, 56, Color.new(12, 34, 56, 255))
+    end
+    assert_raise TypeError do
+      texture2.render_line(12, 34, 12, nil, Color.new(12, 34, 56, 255))
+    end
+    assert_raise TypeError do
+      texture2.render_line(12, 34, 12, 56, nil)
+    end
+  end
+
   def test_render_pixel
     texture = Texture.load("images/ruby")
     texture2 = texture.dup
@@ -1074,6 +1111,20 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_render_pixel_type
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    assert_raise TypeError do
+      texture2.render_pixel(nil, 34, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture2.render_pixel(12, nil, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture2.render_pixel(12, 34, nil)
+    end
+  end
+
   def test_render_rect
     texture = Texture.load("images/ruby")
     texture2 = texture.dup
@@ -1112,6 +1163,14 @@ class TextureTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       texture2.render_rect(0, 0, 0, texture2.height + 1, Color.new(255, 255, 255))
     end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_rect(0, 0, -1, 1, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_rect(0, 0, 1, -1, Color.new(255, 255, 255))
+    end
   end
 
   def test_render_rect_disposed
@@ -1129,6 +1188,26 @@ class TextureTest < Test::Unit::TestCase
     texture2.freeze
     assert_raise FrozenError do
       texture2.render_rect(12, 34, 5, 6, Color.new(12, 34, 56, 78))
+    end
+  end
+
+  def test_render_rect_type
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    assert_raise TypeError do
+      texture2.render_rect(nil, 34, 5, 6, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture2.render_rect(12, nil, 5, 6, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture2.render_rect(12, 34, nil, 6, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture2.render_rect(12, 34, 5, nil, Color.new(12, 34, 56, 78))
+    end
+    assert_raise TypeError do
+      texture2.render_rect(12, 34, 5, 6, nil)
     end
   end
 

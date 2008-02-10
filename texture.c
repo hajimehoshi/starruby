@@ -689,6 +689,34 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   return Qnil;
 }
 
+static VALUE
+Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
+                    VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  Check_Disposed(texture);
+  int rectX = NUM2INT(rbX);
+  int rectY = NUM2INT(rbY);
+  int rectWidth  = NUM2INT(rbWidth);
+  int rectHeight = NUM2INT(rbHeight);
+  if (rectX < 0 || texture->width < rectX + rectWidth ||
+      rectY < 0 || texture->height < rectY + rectHeight) {
+    rb_raise(rb_eArgError, "index out of range: (%d, %d, %d, %d)",
+             rectX, rectY, rectWidth, rectHeight);
+    return Qnil;
+  }
+  Color* color;
+  Data_Get_Struct(rbColor, Color, color);
+  Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
+  int paddingJ = texture->width - rectWidth;
+  for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
+    for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
+      RENDER_PIXEL(pixels->color, color);
+  return Qnil;
+}
+
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
 static VALUE
 Texture_render_text(int argc, VALUE* argv, VALUE self)
@@ -1238,6 +1266,7 @@ InitializeTexture(void)
                    Texture_render_in_perspective, -1);
   rb_define_method(rb_cTexture, "render_line",    Texture_render_line,     5);
   rb_define_method(rb_cTexture, "render_pixel",   Texture_render_pixel,    3);
+  rb_define_method(rb_cTexture, "render_rect",    Texture_render_rect,     5);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);

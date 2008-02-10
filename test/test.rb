@@ -1074,6 +1074,64 @@ class TextureTest < Test::Unit::TestCase
     end
   end
 
+  def test_render_rect
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.render_rect(12, 34, 5, 6, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if 12 <= i and i < 12 + 5 and 34 <= j and j < 34 + 6
+          if 0 < p1.alpha
+            assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
+            assert_in_delta (34 * 78 + p1.green * (255 - 78)).quo(255), p2.green, 2
+            assert_in_delta (56 * 78 + p1.blue  * (255 - 78)).quo(255), p2.blue,  2
+            assert_equal [p1.alpha, 78].max, p2.alpha
+          else
+            assert_equal Color.new(12, 34, 56, 78), p2
+          end
+        else
+          assert_equal p1, p2
+        end
+      end
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_rect(-1, 0, 5, 5, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_rect(0, -1, 5, 5, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_rect(0, 0, texture2.width + 1, 0, Color.new(255, 255, 255))
+    end
+    texture2 = texture.dup
+    assert_raise ArgumentError do
+      texture2.render_rect(0, 0, 0, texture2.height + 1, Color.new(255, 255, 255))
+    end
+  end
+
+  def test_render_rect_disposed
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.dispose
+    assert_raise RuntimeError do
+      texture2.render_rect(12, 34, 5, 6, Color.new(12, 34, 56, 78))
+    end
+  end
+
+  def test_render_rect_frozen
+    texture = Texture.load("images/ruby")
+    texture2 = texture.dup
+    texture2.freeze
+    assert_raise FrozenError do
+      texture2.render_rect(12, 34, 5, 6, Color.new(12, 34, 56, 78))
+    end
+  end
+
   def test_render_text
     texture = Texture.load("images/ruby")
     if Font.exist?("Arial")

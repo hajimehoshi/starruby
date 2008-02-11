@@ -190,7 +190,7 @@ Game_run(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale)))
     windowScale = NORMALIZE(NUM2INT(val), 1, 2);
 
-  Uint32 options = SDL_HWACCEL | SDL_DOUBLEBUF;
+  Uint32 options = SDL_SWSURFACE | SDL_DOUBLEBUF;
   volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                                        INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen",  rbScreen);

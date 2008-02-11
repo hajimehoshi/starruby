@@ -1,15 +1,6 @@
 #include "starruby.h"
 #include <png.h>
 
-#define Check_Disposed(texture)                                         \
-  do {                                                                  \
-    if (!texture->pixels) {                                             \
-      rb_raise(rb_eRuntimeError,                                        \
-               "can't modify disposed StarRuby::Texture");              \
-      return Qnil;                                                      \
-    }                                                                   \
-  } while (false)
-
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 volatile static VALUE symbol_add;
@@ -74,16 +65,12 @@ typedef struct {
   bool isLoop;
 } PerspectiveOptions;
 
-static SDL_Surface*
-ConvertSurfaceForScreen(SDL_Surface* surface)
+inline static void
+Check_Disposed(Texture* texture)
 {
-  return SDL_ConvertSurface(surface, &(SDL_PixelFormat) {
-      .palette = NULL,
-        .BitsPerPixel = 32, .BytesPerPixel = 4,
-        .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
-        .Bmask = 0x000000ff, .Amask = 0xff000000,
-        .colorkey = 0, .alpha = 255,
-        }, SDL_HWACCEL | SDL_DOUBLEBUF);
+  if (!texture->pixels)
+    rb_raise(rb_eRuntimeError,
+             "can't modify disposed StarRuby::Texture");
 }
 
 static VALUE
@@ -772,7 +759,12 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     rb_raise_sdl_ttf_error();
     return Qnil;
   }
-  SDL_Surface* textSurface = ConvertSurfaceForScreen(textSurfaceRaw);
+  SDL_Surface* textSurface = SDL_ConvertSurface(textSurfaceRaw, &(SDL_PixelFormat) {
+      .palette = NULL, .BitsPerPixel = 32, .BytesPerPixel = 4,
+        .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
+        .Bmask = 0x000000ff, .Amask = 0xff000000,
+        .colorkey = 0, .alpha = 255,
+        }, SDL_SWSURFACE);
   SDL_FreeSurface(textSurfaceRaw);
   textSurfaceRaw = NULL;
   if (!textSurface) {

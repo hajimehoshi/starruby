@@ -29,7 +29,11 @@ Audio_bgm_volume(VALUE self)
 static VALUE
 Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
 {
-  bgmVolume = NORMALIZE(NUM2INT(rbVolume), 0, 255);
+  bgmVolume = NUM2INT(rbVolume);
+  if (bgmVolume < 0 || 256 <= bgmVolume) {
+    rb_raise(rb_eArgError, "invalid bgm volume: %d", bgmVolume);
+    return Qnil;
+  }
   Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
   return INT2NUM(bgmVolume);
 }
@@ -62,8 +66,13 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     bgmPosition = MAX(NUM2INT(val), 0);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume)))
-    volume = NORMALIZE(NUM2INT(val), 0, 255);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
+    volume = NUM2INT(val);
+    if (volume < 0 || 256 <= volume) {
+      rb_raise(rb_eArgError, "invalid volume: %d", volume);
+      return Qnil;
+    }
+  }
 
   Audio_bgm_volume_eq(self, INT2NUM(volume));
   if (time <= 50)
@@ -104,12 +113,22 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   int volume  = 255;
 
   Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning)))
-    panning = NORMALIZE(NUM2INT(val), -255, 255);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning))) {
+    panning = NUM2INT(val);
+    if (panning <= -256 || 256 <= panning) {
+      rb_raise(rb_eArgError, "invalid panning: %d", panning);
+      return Qnil;
+    }
+  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume)))
-    volume = NORMALIZE(NUM2INT(val), 0, 255);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
+    volume = NUM2INT(val);
+    if (volume < 0 || 256 <= volume) {
+      rb_raise(rb_eArgError, "invalid volume: %d", volume);
+      return Qnil;
+    }
+  }
   
   int sdlChannel;
   if (time <= 50)

@@ -62,17 +62,30 @@ class ColorTest < Test::Unit::TestCase
   end
 
   def test_color_overflow
-    c = Color.new(-100, 256, -1, 999)
-    assert_equal 0,   c.red
-    assert_equal 255, c.green
-    assert_equal 0,   c.blue
-    assert_equal 255, c.alpha
-
-    c = Color.new(999, -1, 256, -100)
-    assert_equal 255, c.red
-    assert_equal 0,   c.green
-    assert_equal 255, c.blue
-    assert_equal 0,   c.alpha
+    assert_raise ArgumentError do
+      Color.new(-1, 0, 0, 0)
+    end
+    assert_raise ArgumentError do
+      Color.new(256, 0, 0, 0)
+    end
+    assert_raise ArgumentError do
+      Color.new(0, -1, 0, 0)
+    end
+    assert_raise ArgumentError do
+      Color.new(0, 256, 0, 0)
+    end
+    assert_raise ArgumentError do
+      Color.new(0, 0, -1, 0)
+    end
+    assert_raise ArgumentError do
+      Color.new(0, 0, 256, 0)
+    end
+    assert_raise ArgumentError do
+      Color.new(0, 0, 0, -1)
+    end
+    assert_raise ArgumentError do
+      Color.new(0, 0, 0, 256)
+    end
   end
 
   def test_to_s
@@ -2090,17 +2103,56 @@ class AudioTest < Test::Unit::TestCase
       Audio.stop_bgm(:time => false)
     end
   end
-  
+
   def test_bgm_volume
     assert_equal 255, Audio.bgm_volume
     (0..255).each do |volume|
       Audio.bgm_volume = volume
       assert_equal volume, Audio.bgm_volume
     end
-    Audio.bgm_volume = -100
-    assert_equal 0, Audio.bgm_volume
-    Audio.bgm_volume = 10000
-    assert_equal 255, Audio.bgm_volume
+    assert_raise ArgumentError do
+      Audio.bgm_volume = -1
+    end
+    assert_raise ArgumentError do
+      Audio.bgm_volume = 256
+    end
+  end
+
+  def test_play_bgm
+    (0..255).each do |volume|
+      Audio.play_bgm("sounds/music", :volume => volume)
+      assert_equal volume, Audio.bgm_volume
+      Audio.stop_bgm
+    end
+    assert_raise ArgumentError do
+      Audio.play_bgm("sounds/music", :volume => -1)
+    end
+    assert_raise ArgumentError do
+      Audio.play_bgm("sounds/music", :volume => 256)
+    end
+  end
+
+  def test_play_se
+    (0..255).each do |volume|
+      Audio.play_se("sounds/sample", :volume => volume)
+      Audio.stop_all_ses
+    end
+    assert_raise ArgumentError do
+      Audio.play_se("sounds/sample", :volume => -1)
+    end
+    assert_raise ArgumentError do
+      Audio.play_se("sounds/sample", :volume => 256)
+    end
+    (-255..255).each do |volume|
+      Audio.play_se("sounds/sample", :panning => volume)
+      Audio.stop_all_ses
+    end
+    assert_raise ArgumentError do
+      Audio.play_se("sounds/sample", :panning => -256)
+    end
+    assert_raise ArgumentError do
+      Audio.play_se("sounds/sample", :panning => 256)
+    end
   end
   
 end

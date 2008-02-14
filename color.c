@@ -13,14 +13,22 @@ Color_initialize(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbRed, rbGreen, rbBlue, rbAlpha;
   rb_scan_args(argc, argv, "31",
                &rbRed, &rbGreen, &rbBlue, &rbAlpha);
-
+  int red   = NUM2INT(rbRed);
+  int green = NUM2INT(rbGreen);
+  int blue  = NUM2INT(rbBlue);
+  int alpha = !NIL_P(rbAlpha) ? NUM2INT(rbAlpha) : 255;
+  if (red < 0 || 256 <= red || green < 0 || 256 <= green ||
+      blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha) {
+    rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
+             red, green, blue, alpha);
+    return Qnil;
+  }
   Color* color;
   Data_Get_Struct(self, Color, color);
-  color->red   = NORMALIZE(NUM2INT(rbRed),   0, 255);
-  color->green = NORMALIZE(NUM2INT(rbGreen), 0, 255);
-  color->blue  = NORMALIZE(NUM2INT(rbBlue),  0, 255);
-  color->alpha = !NIL_P(rbAlpha) ?
-    NORMALIZE(NUM2INT(rbAlpha), 0, 255) : 255;
+  color->red   = red;
+  color->green = green;
+  color->blue  = blue;
+  color->alpha = alpha;
   return Qnil;
 }
 

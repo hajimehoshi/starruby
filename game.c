@@ -187,8 +187,13 @@ Game_run(int argc, VALUE* argv, VALUE self)
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen)))
     fullscreen = RTEST(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale)))
-    windowScale = NORMALIZE(NUM2INT(val), 1, 2);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
+    windowScale = NUM2INT(val);
+    if (windowScale < 1 || 2 < windowScale) {
+      rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
+      return Qnil;
+    }
+  }
 
   Uint32 options = SDL_SWSURFACE | SDL_DOUBLEBUF;
   volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,

@@ -79,6 +79,9 @@ void InitializeInput(void);
 void InitializeStarRubyError(void);
 void InitializeTexture(void);
 
+void FinalizeAudio(void);
+void FinalizeInput(void);
+
 void UpdateAudio(void);
 
 void InitializeSdlAudio(void);

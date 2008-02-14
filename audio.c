@@ -1,4 +1,5 @@
 #include "starruby.h"
+#include "st.h"
 
 static bool bgmLoop = false;
 static Uint32 bgmPosition = 0;
@@ -6,7 +7,8 @@ static int bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlPreviousTicks = 0;
 
-volatile static VALUE rbCache;
+volatile static VALUE rbChunkCache;
+volatile static VALUE rbMusicCache;
 
 volatile static VALUE symbol_loop;
 volatile static VALUE symbol_panning;
@@ -48,13 +50,13 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbCache, rbCompletePath))) {
+  if (!NIL_P(val = rb_hash_aref(rbMusicCache, rbCompletePath))) {
     sdlBgm = (Mix_Music*)NUM2LONG(val);
   } else {
     char* path = StringValuePtr(rbCompletePath);
     if (!(sdlBgm = Mix_LoadMUS(path)))
       rb_raise_sdl_mix_error();
-    rb_hash_aset(rbCache, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
+    rb_hash_aset(rbMusicCache, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
   }
 
   int time   = 0;
@@ -99,13 +101,13 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   Mix_Chunk* sdlSE = NULL;
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbCache, rbCompletePath))) {
+  if (!NIL_P(val = rb_hash_aref(rbChunkCache, rbCompletePath))) {
     sdlSE = (Mix_Chunk*)NUM2ULONG(val);
   } else {
     char* path = StringValuePtr(rbCompletePath);
     if (!(sdlSE = Mix_LoadWAV(path)))
       rb_raise_sdl_mix_error();
-    rb_hash_aset(rbCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
+    rb_hash_aset(rbChunkCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
   }
 
   int panning = 0;
@@ -245,7 +247,8 @@ InitializeAudio(void)
 
   Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
 
-  rbCache = rb_iv_set(rb_mAudio, "cache", rb_hash_new());
+  rbMusicCache = rb_iv_set(rb_mAudio, "music_cache", rb_hash_new());
+  rbChunkCache = rb_iv_set(rb_mAudio, "chunk_cache", rb_hash_new());
 }
 
 void
@@ -257,4 +260,30 @@ UpdateAudio(void)
   else
     bgmPosition = 0;
   sdlPreviousTicks = now;
+}
+
+static int
+FreeChunkCacheItem(VALUE rbKey, VALUE rbValue)
+{
+  Mix_Chunk* chunk = (Mix_Chunk*)NUM2ULONG(rbValue);
+  if (chunk)
+    Mix_FreeChunk(chunk);
+  return ST_CONTINUE;
+}
+
+static int
+FreeMusicCacheItem(VALUE rbKey, VALUE rbValue)
+{
+  Mix_Music* music = (Mix_Music*)NUM2ULONG(rbValue);
+  if (music)
+    Mix_FreeMusic(music);
+  return ST_CONTINUE;
+}
+
+void
+FinalizeAudio(void)
+{
+  rb_hash_foreach(rbChunkCache, FreeChunkCacheItem, 0);
+  rb_hash_foreach(rbMusicCache, FreeMusicCacheItem, 0);
+  Mix_CloseAudio();
 }

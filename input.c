@@ -321,6 +321,32 @@ InitializeInput(void)
   symbol_up            = ID2SYM(rb_intern("up"));
 }
 
+void
+FinalizeInput(void)
+{
+  free(mouse);
+  mouse = NULL;
+
+  for (int i = 0; i < gamepadCount; i++) {
+    Gamepad* gamepad = &(gamepads[i]);
+    if (SDL_JoystickOpened(i))
+      SDL_JoystickClose(gamepad->sdlJoystick);
+    gamepad->sdlJoystick = NULL;
+    free(gamepad->buttonStates);
+    gamepad->buttonStates = NULL;
+  }
+  free(gamepads);
+  gamepads = NULL;
+  
+  KeyboardKey* key = keyboardKeys;
+  while (key) {
+    KeyboardKey* nextKey = key->next;
+    free(key);
+    key = nextKey;
+  }
+  keyboardKeys = NULL;
+}
+
 #ifdef DEBUG
 static KeyboardKey*
 searchKey(const char* name)

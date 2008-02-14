@@ -35,6 +35,15 @@ GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
   }
 }
 
+static void
+FinalizeStarRuby(VALUE unused)
+{
+  TTF_Quit();
+  FinalizeAudio();
+  FinalizeInput();
+  SDL_Quit();
+}
+
 void
 Init_starruby(void)
 {
@@ -55,6 +64,8 @@ Init_starruby(void)
   InitializeInput();
   InitializeStarRubyError();
   InitializeTexture();
+
+  rb_set_end_proc(FinalizeStarRuby, Qnil);
   
 #ifdef DEBUG
   TestInput();

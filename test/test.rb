@@ -2071,6 +2071,7 @@ class AudioTest < Test::Unit::TestCase
     assert_raise TypeError do
       Audio.play_bgm(nil)
     end
+    Audio.play_bgm("sounds/music")
     assert_raise TypeError do
       Audio.play_bgm("sounds/music", false)
     end

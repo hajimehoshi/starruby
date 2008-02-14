@@ -58,7 +58,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   }
 
   int time   = 0;
-  int volume = 256;
+  int volume = 255;
 
   Check_Type(rbOptions, T_HASH);
   bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));

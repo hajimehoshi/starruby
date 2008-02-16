@@ -66,11 +66,24 @@ typedef struct {
 } PerspectiveOptions;
 
 inline static void
-Check_Disposed(Texture* texture)
+CheckDisposed(Texture* texture)
 {
   if (!texture->pixels)
     rb_raise(rb_eRuntimeError,
              "can't modify disposed StarRuby::Texture");
+}
+
+inline static void
+CheckInRect(Texture* texture, int x, int y, int width, int height)
+{
+  if (width < 0)
+    rb_raise(rb_eArgError, "invalid width: %d", width);
+  if (height < 0)
+    rb_raise(rb_eArgError, "invalid height: %d", height);
+  if (x < 0 || texture->width  < x + width ||
+      y < 0 || texture->height < y + height)
+    rb_raise(rb_eArgError, "rect out of range: (%d, %d, %d, %d)",
+             x, y, width, height);
 }
 
 static VALUE
@@ -295,7 +308,7 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
   Texture_change_hue_bang(rbTexture, rbAngle);
   return rbTexture;
@@ -307,7 +320,7 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   double angle = NUM2DBL(rbAngle);
   if (angle == 0)
     return Qnil;
@@ -375,7 +388,7 @@ Texture_clear(VALUE self)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   MEMZERO(texture->pixels, Color, texture->width * texture->height);
   return Qnil;
 }
@@ -403,7 +416,7 @@ Texture_dump(VALUE self, VALUE rbFormat)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   char* format = StringValuePtr(rbFormat);
   int textureSize = texture->width * texture->height;
   int formatLength = RSTRING_LEN(rbFormat);
@@ -429,7 +442,7 @@ Texture_fill(VALUE self, VALUE rbColor)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   int length = texture->width * texture->height;
@@ -446,25 +459,12 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (rectWidth < 0) {
-    rb_raise(rb_eArgError, "invalid width: %d", rectWidth);
-    return Qnil;
-  }
-  if (rectHeight < 0) {
-    rb_raise(rb_eArgError, "invalid height: %d", rectHeight);
-    return Qnil;
-  }
-  if (rectX < 0 || texture->width < rectX + rectWidth ||
-      rectY < 0 || texture->height < rectY + rectHeight) {
-    rb_raise(rb_eArgError, "index out of range: (%d, %d, %d, %d)",
-             rectX, rectY, rectWidth, rectHeight);
-    return Qnil;
-  }
+  CheckInRect(texture, rectX, rectY, rectWidth, rectHeight);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
@@ -482,7 +482,7 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   int y = NUM2INT(rbY);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
     return Qnil;
@@ -500,7 +500,7 @@ Texture_height(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   return INT2NUM(texture->height);
 }
 
@@ -527,10 +527,10 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     rbOptions = rb_hash_new();
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
-  Check_Disposed(srcTexture);
+  CheckDisposed(srcTexture);
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
-  Check_Disposed(dstTexture);
+  CheckDisposed(dstTexture);
   if (srcTexture == dstTexture) {
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
     return Qnil;
@@ -622,7 +622,7 @@ Texture_render_line(VALUE self,
   int y2 = NUM2INT(rbY2);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   int x = x1;
@@ -671,7 +671,7 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   int x = NUM2INT(rbX), y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
@@ -691,25 +691,12 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (rectWidth < 0) {
-    rb_raise(rb_eArgError, "invalid width: %d", rectWidth);
-    return Qnil;
-  }
-  if (rectHeight < 0) {
-    rb_raise(rb_eArgError, "invalid height: %d", rectHeight);
-    return Qnil;
-  }
-  if (rectX < 0 || texture->width < rectX + rectWidth ||
-      rectY < 0 || texture->height < rectY + rectHeight) {
-    rb_raise(rb_eArgError, "index out of range: (%d, %d, %d, %d)",
-             rectX, rectY, rectWidth, rectHeight);
-    return Qnil;
-  }
+  CheckInRect(texture, rectX, rectY, rectWidth, rectHeight);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
@@ -799,7 +786,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   rb_check_frozen(self);
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
-  Check_Disposed(dstTexture);
+  CheckDisposed(dstTexture);
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
@@ -808,7 +795,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
-  Check_Disposed(srcTexture);
+  CheckDisposed(srcTexture);
 
   int srcTextureWidth  = srcTexture->width;
   int srcTextureHeight = srcTexture->height;
@@ -1140,7 +1127,7 @@ Texture_save(int argc, VALUE* argv, VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   volatile VALUE rbPath, rbAlpha;
   rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
   if (argc == 1)
@@ -1185,7 +1172,7 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   int x = NUM2INT(rbX), y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
@@ -1202,7 +1189,7 @@ Texture_size(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   volatile VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
                                        INT2NUM(texture->height));
   OBJ_FREEZE(rbSize);
@@ -1215,7 +1202,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   char* format = StringValuePtr(rbFormat);
   int formatLength = RSTRING_LEN(rbFormat);
   int textureSize = texture->width * texture->height;
@@ -1245,7 +1232,7 @@ Texture_width(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Check_Disposed(texture);
+  CheckDisposed(texture);
   return INT2NUM(texture->width);
 }
 

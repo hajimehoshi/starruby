@@ -7,6 +7,8 @@ static int fps = 30;
 static bool fullscreen = false;
 static double realFps = 0;
 static bool running = false;
+static int screenWidth = 0;
+static int screenHeight = 0;
 static bool terminated = false;
 static int windowScale = 1;
 
@@ -43,11 +45,8 @@ DoLoop(SDL_Surface* screen)
   realFps = 0;
   
   volatile VALUE rbScreen  = rb_iv_get(rb_mGame, "screen");
-  volatile VALUE rbScreen2 = rb_iv_get(rb_mGame, "screen2");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
-  Texture* texture2;
-  Data_Get_Struct(rbScreen2, Texture, texture2);
   
   SDL_Event event;
   Uint32 now;
@@ -80,44 +79,44 @@ DoLoop(SDL_Surface* screen)
     
     rb_yield(Qnil);
 
-    if (texture != texture2) {
-      int index = (texture2->width - texture->width) / 2
-        + (texture2->height - texture->height) / 2
-          * texture2->width;
-      int padding = texture2->width - texture->width;
-      Pixel* src = texture->pixels;
-      Pixel* dst = &(texture2->pixels[index]);
-      for (int j = 0; j < texture->height; j++, dst += padding)
-        for (int i = 0; i < texture->width; i++, src++, dst++)
-          *dst = *src;
-    }
-    
-    int length = texture2->width * texture2->height;
-    Pixel* src = texture2->pixels;
+    int length = texture->width * texture->height;
+    Pixel* src = texture->pixels;
 
     SDL_LockSurface(screen);
     Pixel* dst = (Pixel*)screen->pixels;
     switch (windowScale) {
     case 1:
-      for (int i = 0; i < length; i++, src++, dst++) {
-        dst->color.red   = DIV255(src->color.red   * src->color.alpha);
-        dst->color.green = DIV255(src->color.green * src->color.alpha);
-        dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+      if (texture->width == screenWidth && texture->height == screenHeight) {
+        for (int i = 0; i < length; i++, src++, dst++) {
+          dst->color.red   = DIV255(src->color.red   * src->color.alpha);
+          dst->color.green = DIV255(src->color.green * src->color.alpha);
+          dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+        }
+      } else {
+        dst += (screenWidth - texture->width) / 2
+          + (screenHeight - texture->height) / 2 * screenWidth;
+        int padding = screenWidth - texture->width;
+        for (int j = 0; j < texture->height; j++, dst += padding) {
+          for (int i = 0; i < texture->width; i++, src++, dst++) {
+            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
+            dst->color.green = DIV255(src->color.green * src->color.alpha);
+            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+          }
+        }
       }
       break;
     case 2:
       {
-        int width   = texture2->width;
+        int width   = texture->width;
         int width2x = width * 2;
-        int height  = texture2->height;
-        for (int j = 0; j < height; j++) {
+        int height  = texture->height;
+        for (int j = 0; j < height; j++, dst += width2x) {
           for (int i = 0; i < width; i++, src++, dst += 2) {
             dst->color.red   = DIV255(src->color.red   * src->color.alpha);
             dst->color.green = DIV255(src->color.green * src->color.alpha);
             dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
             *(dst + width2x) = *(dst + width2x + 1) = *(dst + 1) = *dst;
           }
-          dst += width2x;
         }
       }
       break;
@@ -171,8 +170,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "21&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
   int width   = NUM2INT(rbWidth);
   int height  = NUM2INT(rbHeight);
-  int width2  = 0;
-  int height2 = 0;
+  screenWidth  = width;
+  screenHeight = height;
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
@@ -185,44 +184,36 @@ Game_run(int argc, VALUE* argv, VALUE self)
     if (windowScale < 1 || 2 < windowScale)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
-
+  
   Uint32 options = SDL_SWSURFACE | SDL_DOUBLEBUF;
-  volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                                       INT2NUM(width), INT2NUM(height));
-  rb_iv_set(self, "screen",  rbScreen);
-  volatile VALUE rbScreen2 = Qnil;
   if (fullscreen) {
     options |= SDL_FULLSCREEN;
+    windowScale = 1;    
     SDL_Rect** modes = SDL_ListModes(NULL, options);
     if (!modes)
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     if (modes != (SDL_Rect**)-1) {
+      screenWidth = 0;
+      screenHeight = 0;
       for (int i = 0; modes[i]; i++) {
-        if (width * windowScale <= modes[i]->w &&
-            height * windowScale <= modes[i]->h) {
-          width2  = modes[i]->w / windowScale;
-          height2 = modes[i]->h / windowScale;
+        if (width <= modes[i]->w && height <= modes[i]->h) {
+          screenWidth  = modes[i]->w;
+          screenHeight = modes[i]->h;
         } else {
           break;
         }
       }
-      if (width2 == 0 || height2 == 0)
+      if (screenWidth == 0 || screenHeight == 0)
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
-      if (width == width2 && height == height2)
-        rbScreen2 = rbScreen;
-      else
-        rbScreen2 = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                               INT2NUM(width2), INT2NUM(height2));
     }
   }
-  if (NIL_P(rbScreen2))
-    rbScreen2 = rbScreen;
-  rb_iv_set(self, "screen2", rbScreen2);
-  int screenWidth  = NUM2INT(rb_funcall(rbScreen2, rb_intern("width"), 0))
-    * windowScale;
-  int screenHeight = NUM2INT(rb_funcall(rbScreen2, rb_intern("height"), 0))
-    * windowScale;
-  SDL_Surface* screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, options);
+  
+  volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
+                                       INT2NUM(width), INT2NUM(height));
+  rb_iv_set(self, "screen",  rbScreen);
+                                       
+  SDL_Surface* screen =
+    SDL_SetVideoMode(screenWidth * windowScale, screenHeight * windowScale, 32, options);
   if (!screen) {
     DisposeScreen(screen);
     rb_raise_sdl_error();

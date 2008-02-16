@@ -104,5 +104,5 @@ class TestGame < Test::Unit::TestCase
     end
     assert_nil Game.screen
   end
-  
+
 end

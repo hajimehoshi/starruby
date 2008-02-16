@@ -163,10 +163,8 @@ static VALUE Game_screen(VALUE);
 static VALUE
 Game_run(int argc, VALUE* argv, VALUE self)
 {
-  if (running) {
+  if (running)
     rb_raise(rb_eStarRubyError, "already run");
-    return Qnil;
-  }
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
@@ -189,10 +187,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
     fullscreen = RTEST(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
     windowScale = NUM2INT(val);
-    if (windowScale < 1 || 2 < windowScale) {
+    if (windowScale < 1 || 2 < windowScale)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
-      return Qnil;
-    }
   }
 
   Uint32 options = SDL_SWSURFACE | SDL_DOUBLEBUF;
@@ -203,10 +199,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
   if (fullscreen) {
     options |= SDL_FULLSCREEN;
     SDL_Rect** modes = SDL_ListModes(NULL, options);
-    if (!modes) {
+    if (!modes)
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
-      return Qnil;
-    }
     if (modes != (SDL_Rect**)-1) {
       for (int i = 0; modes[i]; i++) {
         if (width * windowScale <= modes[i]->w &&
@@ -217,10 +211,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
           break;
         }
       }
-      if (width2 == 0 || height2 == 0) {
+      if (width2 == 0 || height2 == 0)
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
-        return Qnil;
-      }
       if (width == width2 && height == height2)
         rbScreen2 = rbScreen;
       else

@@ -23,13 +23,14 @@ GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
     case 0:
       if (raiseNotFoundError)
         rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
-      return Qnil;
+      break;
     case 1:
       return RARRAY_PTR(rbPathes)[0];
     default:
       rb_raise(rb_path2class("ArgumentError"), "ambiguous path: %s", path);
-      return Qnil;
+      break;
     }
+    return Qnil;
   } else {
     return rbPath;
   }

@@ -163,10 +163,8 @@ Font_initialize(int argc, VALUE* argv, VALUE self)
   Data_Get_Struct(self, Font, font);
   font->size = size;
   font->sdlFont = TTF_OpenFontIndex(path, size, ttcIndex);
-  if (!font->sdlFont) {
+  if (!font->sdlFont)
     rb_raise_sdl_ttf_error();
-    return Qnil;
-  }
   int style = TTF_STYLE_NORMAL |
     (bold ? TTF_STYLE_BOLD : 0) | (italic ? TTF_STYLE_ITALIC : 0);
   TTF_SetFontStyle(font->sdlFont, style);
@@ -197,10 +195,8 @@ Font_get_size(VALUE self, VALUE rbText)
   Data_Get_Struct(self, Font, font);
   char* text = StringValuePtr(rbText);
   int width, height;
-  if (TTF_SizeUTF8(font->sdlFont, text, &width, &height)) {
+  if (TTF_SizeUTF8(font->sdlFont, text, &width, &height))
     rb_raise_sdl_ttf_error();
-    return Qnil;
-  }
   volatile VALUE rbSize = rb_assoc_new(INT2NUM(width), INT2NUM(height));
   OBJ_FREEZE(rbSize);
   return rbSize;

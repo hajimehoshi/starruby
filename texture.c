@@ -74,7 +74,14 @@ CheckDisposed(Texture* texture)
 }
 
 inline static void
-CheckInRect(Texture* texture, int x, int y, int width, int height)
+CheckPixel(Texture* texture, int x, int y)
+{
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
+}
+
+inline static void
+CheckRect(Texture* texture, int x, int y, int width, int height)
 {
   if (width < 0)
     rb_raise(rb_eArgError, "invalid width: %d", width);
@@ -94,30 +101,25 @@ Texture_load(VALUE self, VALUE rbPath)
   FILE* fp = fopen(path, "rb");
   png_byte header[8];
   fread(&header, 1, 8, fp);
-  if (png_sig_cmp(header, 0, 8)) {
+  if (png_sig_cmp(header, 0, 8))
     rb_raise(rb_eStarRubyError, "invalid PNG file: %s", path);
-    return Qnil;
-  }
   png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                                               NULL, NULL, NULL);
   if (!pngPtr) {
     fclose(fp);
     rb_raise(rb_eStarRubyError, "PNG error: %s", path);
-    return Qnil;
   }
   png_infop infoPtr = png_create_info_struct(pngPtr);
   if (!infoPtr) {
     png_destroy_read_struct(&pngPtr, NULL, NULL);
     fclose(fp);
     rb_raise(rb_eStarRubyError, "PNG error: %s", path);
-    return Qnil;
   }
   png_infop endInfo = png_create_info_struct(pngPtr);
   if (!endInfo) {
     png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
     fclose(fp);
     rb_raise(rb_eStarRubyError, "PNG error: %s", path);
-    return Qnil;
   }
 
   png_init_io(pngPtr, fp);
@@ -132,7 +134,6 @@ Texture_load(VALUE self, VALUE rbPath)
     fclose(fp);
     rb_raise(rb_eStarRubyError,
              "not supported interlacing PNG image: %s", path);
-    return Qnil;
   }
   if (colorType == PNG_COLOR_TYPE_PALETTE)
     png_set_palette_to_rgb(pngPtr);
@@ -197,14 +198,10 @@ Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   Data_Get_Struct(self, Texture, texture);
   int width  = NUM2INT(rbWidth);
   int height = NUM2INT(rbHeight);
-  if (width <= 0) {
+  if (width <= 0)
     rb_raise(rb_eArgError, "width less than or equal to 0");
-    return Qnil;
-  }
-  if (height <= 0) {
+  if (height <= 0)
     rb_raise(rb_eArgError, "height less than or equal to 0");
-    return Qnil;
-  }
   texture->width  = width;
   texture->height = height;
   texture->pixels = ALLOC_N(Pixel, texture->width * texture->height);
@@ -464,7 +461,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  CheckInRect(texture, rectX, rectY, rectWidth, rectHeight);
+  CheckRect(texture, rectX, rectY, rectWidth, rectHeight);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
@@ -478,15 +475,12 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
 static VALUE
 Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 {
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
-    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
-    return Qnil;
-  }
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  CheckPixel(texture, x, y);
   Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(rb_cColor, rb_intern("new"), 4,
                     INT2NUM(color.red),
@@ -531,10 +525,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   CheckDisposed(dstTexture);
-  if (srcTexture == dstTexture) {
+  if (srcTexture == dstTexture)
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
-    return Qnil;
-  }
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
   if (options.cameraHeight == 0)
@@ -672,11 +664,9 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  int x = NUM2INT(rbX), y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
-    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
-    return Qnil;
-  }
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  CheckPixel(texture, x, y);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixel = &(texture->pixels[x + y * texture->width]);
@@ -696,7 +686,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  CheckInRect(texture, rectX, rectY, rectWidth, rectHeight);
+  CheckRect(texture, rectX, rectY, rectWidth, rectHeight);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
@@ -719,10 +709,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     return Qnil;
   bool antiAlias = RTEST(rbAntiAlias);
   Check_Type(rbText, T_STRING);
-  if (!RSTRING_LEN(rbText)) {
+  if (!RSTRING_LEN(rbText))
     rb_raise(rb_eArgError, "empty text");
-    return Qnil;
-  }
   char* text = StringValuePtr(rbText);
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
@@ -742,10 +730,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   else
     textSurfaceRaw = TTF_RenderUTF8_Solid(font->sdlFont, text,
                                           (SDL_Color) {255, 255, 255, 255});
-  if (!textSurfaceRaw) {
+  if (!textSurfaceRaw)
     rb_raise_sdl_ttf_error();
-    return Qnil;
-  }
   SDL_Surface* textSurface = SDL_ConvertSurface(textSurfaceRaw, &(SDL_PixelFormat) {
       .palette = NULL, .BitsPerPixel = 32, .BytesPerPixel = 4,
         .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
@@ -754,10 +740,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
         }, SDL_SWSURFACE);
   SDL_FreeSurface(textSurfaceRaw);
   textSurfaceRaw = NULL;
-  if (!textSurface) {
+  if (!textSurface)
     rb_raise_sdl_error();
-    return Qnil;
-  }
   SDL_LockSurface(textSurface);
   Pixel* src = (Pixel*)(textSurface->pixels);
   Pixel* dst = textTexture->pixels;
@@ -862,22 +846,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
     saturation = NUM2INT(val);
 
-  if (!(0 <= srcX && srcX < srcTextureWidth)) {
+  if (!(0 <= srcX && srcX < srcTextureWidth))
     rb_raise(rb_eArgError, "invalid src_x: %d", srcX);
-    return Qnil;
-  }
-  if (!(0 <= srcY && srcY < srcTextureHeight)) {
+  if (!(0 <= srcY && srcY < srcTextureHeight))
     rb_raise(rb_eArgError, "invalid src_y: %d", srcY);
-    return Qnil;
-  }
-  if (!(0 <= srcWidth && srcWidth <= srcTextureWidth - srcX)) {
+  if (!(0 <= srcWidth && srcWidth <= srcTextureWidth - srcX))
     rb_raise(rb_eArgError, "invalid src_width: %d", srcWidth);
-    return Qnil;
-  }
-  if (!(0 <= srcHeight && srcHeight <= srcTextureHeight - srcY)) {
+  if (!(0 <= srcHeight && srcHeight <= srcTextureHeight - srcY))
     rb_raise(rb_eArgError, "invalid src_height: %d", srcHeight);
-    return Qnil;
-  }
 
   if (srcTexture != dstTexture &&
       scaleX == 1 && scaleY == 1 && angle == 0 &&
@@ -1134,10 +1110,8 @@ Texture_save(int argc, VALUE* argv, VALUE self)
     rbAlpha = Qtrue;
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
-  if (!fp) {
+  if (!fp)
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
-    return Qnil;
-  }
   png_structp pngPtr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
                                                NULL, NULL, NULL);
   png_infop infoPtr = png_create_info_struct(pngPtr);
@@ -1173,11 +1147,9 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  int x = NUM2INT(rbX), y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
-    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
-    return Qnil;
-  }
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  CheckPixel(texture, x, y);
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   texture->pixels[x + y * texture->width].color = *color;
@@ -1207,11 +1179,9 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   int formatLength = RSTRING_LEN(rbFormat);
   int textureSize = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
-  if (textureSize * formatLength != RSTRING_LEN(rbData)) {
+  if (textureSize * formatLength != RSTRING_LEN(rbData))
     rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
              textureSize * formatLength, RSTRING_LEN(rbData));
-    return Qnil;
-  }
   uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < textureSize; i++, pixels++) {

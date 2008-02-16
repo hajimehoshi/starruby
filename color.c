@@ -18,11 +18,9 @@ Color_initialize(int argc, VALUE* argv, VALUE self)
   int blue  = NUM2INT(rbBlue);
   int alpha = !NIL_P(rbAlpha) ? NUM2INT(rbAlpha) : 255;
   if (red < 0 || 256 <= red || green < 0 || 256 <= green ||
-      blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha) {
+      blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha)
     rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
              red, green, blue, alpha);
-    return Qnil;
-  }
   Color* color;
   Data_Get_Struct(self, Color, color);
   color->red   = red;

@@ -319,6 +319,10 @@ InitializeInput(void)
   symbol_mouse         = ID2SYM(rb_intern("mouse"));
   symbol_right         = ID2SYM(rb_intern("right"));
   symbol_up            = ID2SYM(rb_intern("up"));
+
+  volatile VALUE rbMouseLocation = rb_assoc_new(INT2NUM(0), INT2NUM(0));
+  OBJ_FREEZE(rbMouseLocation);
+  rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 }
 
 void

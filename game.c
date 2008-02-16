@@ -44,7 +44,7 @@ DoLoop(SDL_Surface* screen)
   terminated = false;
   realFps = 0;
   
-  volatile VALUE rbScreen  = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
   
@@ -115,7 +115,7 @@ DoLoop(SDL_Surface* screen)
             dst->color.red   = DIV255(src->color.red   * src->color.alpha);
             dst->color.green = DIV255(src->color.green * src->color.alpha);
             dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
-            *(dst + width2x) = *(dst + width2x + 1) = *(dst + 1) = *dst;
+            dst[width2x] = dst[width2x + 1] = dst[1] = *dst;
           }
         }
       }
@@ -185,9 +185,9 @@ Game_run(int argc, VALUE* argv, VALUE self)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
   
-  Uint32 options = SDL_SWSURFACE | SDL_DOUBLEBUF;
+  Uint32 options = SDL_DOUBLEBUF;
   if (fullscreen) {
-    options |= SDL_FULLSCREEN;
+    options |= SDL_HWSURFACE | SDL_FULLSCREEN;
     windowScale = 1;    
     SDL_Rect** modes = SDL_ListModes(NULL, options);
     if (!modes)
@@ -196,7 +196,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
       screenWidth = 0;
       screenHeight = 0;
       for (int i = 0; modes[i]; i++) {
-        if (width <= modes[i]->w && height <= modes[i]->h) {
+        int bpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, 32, options);
+        if (width <= modes[i]->w && height <= modes[i]->h && bpp == 32) {
           screenWidth  = modes[i]->w;
           screenHeight = modes[i]->h;
         } else {
@@ -206,6 +207,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
       if (screenWidth == 0 || screenHeight == 0)
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     }
+  } else {
+    options |= SDL_SWSURFACE;
   }
   
   volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,

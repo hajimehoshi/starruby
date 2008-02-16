@@ -140,6 +140,7 @@ Input_keys(int argc, VALUE* argv, VALUE self)
 static VALUE
 Input_update(VALUE self)
 {
+  SDL_PumpEvents();
   SDL_JoystickUpdate();
 
   Uint8* sdlKeyState = SDL_GetKeyState(NULL);
@@ -171,7 +172,7 @@ Input_update(VALUE self)
     else
       gamepad->upState = 0;
     for (int j = 0; j < gamepad->buttonCount; j++)
-      if (SDL_JoystickGetButton(gamepad->sdlJoystick, j))
+      if (SDL_JoystickGetButton(gamepad->sdlJoystick, j) == SDL_PRESSED)
         gamepad->buttonStates[j]++;
       else
         gamepad->buttonStates[j] = 0;

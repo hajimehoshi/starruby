@@ -48,17 +48,17 @@ sprites = Array.new(200) {Sprite.new}
 
 Game.title = "Sprites (Click to speed up!)"
 
-Game.run(320, 240) do
+fps_text_texture = Texture.new(320, 64)
+Game.run(320, 240, :window_scale => 2) do
   Game.terminate if Input.keys(:keyboard).include?(:escape)
   if Input.keys(:mouse).include?(:left)
-    Game.fps = 10000
+    Game.fps = 100000
   else
     Game.fps = 30
   end
   sprites.each do |sprite|
     sprite.update
   end
-  
   Game.screen.clear
   sprites.each do |sprite|
     Game.screen.render_texture(sprite.texture, sprite.x, sprite.y)

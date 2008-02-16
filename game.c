@@ -93,34 +93,29 @@ DoLoop(SDL_Surface* screen)
     }
     
     int length = texture2->width * texture2->height;
-    Pixel* p = texture2->pixels;
-    Pixel src[length];
-    for (int i = 0; i < length; i++, p++) {
-      src[i].color.red   = DIV255(p->color.red   * p->color.alpha);
-      src[i].color.green = DIV255(p->color.green * p->color.alpha);
-      src[i].color.blue  = DIV255(p->color.blue  * p->color.alpha);
-      src[i].color.alpha = 255;
-    }
-    
+    Pixel* src = texture2->pixels;
+
     SDL_LockSurface(screen);
-    Uint32* dst = screen->pixels;
+    Pixel* dst = (Pixel*)screen->pixels;
     switch (windowScale) {
     case 1:
-      MEMCPY(dst, src, Pixel, length);
+      for (int i = 0; i < length; i++, src++, dst++) {
+        dst->color.red   = DIV255(src->color.red   * src->color.alpha);
+        dst->color.green = DIV255(src->color.green * src->color.alpha);
+        dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+      }
       break;
     case 2:
       {
-        Pixel* srcP = src;
         int width   = texture2->width;
         int width2x = width * 2;
         int height  = texture2->height;
         for (int j = 0; j < height; j++) {
-          for (int i = 0; i < width; i++) {
-            *dst = *(dst + width2x) = srcP->value;
-            dst++;
-            *dst = *(dst + width2x) = srcP->value;
-            dst++;
-            srcP++;
+          for (int i = 0; i < width; i++, src++, dst += 2) {
+            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
+            dst->color.green = DIV255(src->color.green * src->color.alpha);
+            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+            *(dst + width2x) = *(dst + width2x + 1) = *(dst + 1) = *dst;
           }
           dst += width2x;
         }

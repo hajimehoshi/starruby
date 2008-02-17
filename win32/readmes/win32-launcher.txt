@@ -1,0 +1,32 @@
+%title%
+(Binary for 32bit Windows / Ruby 1.8.*)
+
+
+* About Star Ruby
+
+Star Ruby is a ruby extensional library for creating games.
+You can develop SNES-like 2D games with Star Ruby.
+
+
+* Licenses
+
+Star Ruby:
+  MIT License
+
+Ruby:
+  Ruby License
+  http://www.ruby-lang.org/
+
+SDL, SDL_mixer, SDL_ttf:
+  GNU Lesser General Public License
+  http://www.libsdl.org/
+
+
+* Web Site
+
+http://www.starruby.info/
+
+
+* The Author
+
+Hajime Hoshi (hajimehoshi@gmail.com)

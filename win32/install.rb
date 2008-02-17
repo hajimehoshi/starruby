@@ -8,8 +8,8 @@ option = {:noop => false, :verbose => true}
 dlldir      = Config::CONFIG["bindir"]
 sitearchdir = Config::CONFIG["sitearchdir"]
 
-FileUtils.mkpath(dlldir)
-FileUtils.mkpath(sitearchdir)
+FileUtils.mkdir_p(dlldir)
+FileUtils.mkdir_p(sitearchdir)
 
 Dir.glob("dll/*.dll") do |path|
   if path =~ /zlib/

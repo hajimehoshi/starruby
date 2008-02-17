@@ -29,7 +29,7 @@ Ruby:
   Ruby License
   http://www.ruby-lang.org/
 
-SDL, SDL_image, SDL_mixer, SDL_ttf:
+SDL, SDL_mixer, SDL_ttf:
   GNU Lesser General Public License
   http://www.libsdl.org/
 

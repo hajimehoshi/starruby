@@ -1,9 +1,6 @@
 require "gtk2"
 
-button = Gtk::Button.new("Hello, World")
-button.signal_connect("clicked") do
-  puts "Hello, World"
-end
+title = "Star Ruby Launcher"
 
 window = Gtk::Window.new
 window.signal_connect("delete_event") do
@@ -11,8 +8,25 @@ window.signal_connect("delete_event") do
   false
 end
 window.border_width = 10
-window.title = "Star Ruby Launcher"
+window.title = title
+
+button = Gtk::Button.new("Play the Game")
+clicked = button.signal_connect("clicked") do |w|
+  begin
+    # button.signal_handler_block(clicked)
+    # w.sensitive = false
+    state = button.state
+    button.state = Gtk::StateType::INSENSITIVE
+    load("game.rb")
+  ensure
+    # button.signal_handler_unblock(clicked)
+    # w.sensitive = true
+    # button.state = state
+    button.state = Gtk::StateType::ACTIVE
+  end
+end
 window.add(button)
+
 window.show_all
 
 Gtk.main

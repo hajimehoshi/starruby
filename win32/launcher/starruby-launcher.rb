@@ -84,10 +84,7 @@ module StarRubyLauncher
     include StarRuby
     
     def initialize
-      if 0 < ARGV.size
-        @config = {:script_path => ARGV[0]}
-        save_config
-      elsif File.exist?(CONFIG_FILE_PATH)
+      if File.exist?(CONFIG_FILE_PATH)
         @config = YAML.load_file(CONFIG_FILE_PATH)
       else
         @config = {:script_path => ""}
@@ -95,13 +92,17 @@ module StarRubyLauncher
       end
       @buttons = {}
       Game.title = TITLE
-      Game.cursor_visible = true
     end
     
     def main
+      if ARGV[0]
+        load(ARGV[0])
+        exit
+      end
+      following_proc = nil
       loop do
-        @following_proc = nil
-        Game.run(320, 240) do
+        following_proc = nil
+        Game.run(320, 240, :cursor => true) do
           label = "Script File:  #{@config[:script_path]}"
           @buttons[:load] ||= Button.new(label, 16, 56, 288, 24) do |b|
             dialog = SWin::CommonDialog
@@ -116,7 +117,7 @@ module StarRubyLauncher
             b.label = "Script File:  #{@config[:script_path]}"
           end
           @buttons[:play] ||= Button.new("Play", 16, 96, 288, 24) do
-            @following_proc = proc do
+            following_proc = proc do
               begin
                 title = Game.title
                 Game.title = ""
@@ -143,7 +144,8 @@ module StarRubyLauncher
             end
             Game.terminate
           end
-          @buttons[:play].enabled = (@config[:script_path] and not @config[:script_path].empty?)
+          path = @config[:script_path]
+          @buttons[:play].enabled = (path and not path.empty?)
           @buttons[:exit] ||= Button.new("Exit", 16, 200, 288, 24) do
             Game.terminate
           end
@@ -165,9 +167,8 @@ module StarRubyLauncher
           @buttons.each do |key, button|
             button.render(s)
           end
-          x, y = Input.mouse_location
         end
-        @following_proc ? @following_proc.call : break
+        following_proc ? following_proc.call : break
       end
     ensure
       save_config

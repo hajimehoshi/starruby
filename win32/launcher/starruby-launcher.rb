@@ -126,7 +126,12 @@ module StarRubyLauncher
                   $LOAD_PATH << Dir.pwd + "/lib/1.8"
                   $LOAD_PATH << "."
                   Dir.chdir(File.dirname(@config[:script_path])) do
-                    load(@config[:script_path])
+                    begin
+                      load(@config[:script_path])
+                    ensure
+                      Audio.stop_bgm
+                      Audio.stop_all_ses
+                    end
                   end
                 ensure
                   $LOAD_PATH.clear

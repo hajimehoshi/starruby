@@ -3,6 +3,11 @@
 require "starruby"
 include StarRuby
 
+if Input.gamepad_count == 0
+  $stderr.puts "There is no gamepad"
+  exit
+end
+
 $stdout.puts "The count of Gamepad: #{Input.gamepad_count}"
 $stdout.puts "Press any gamepad key"
 $stdout.puts "Exit if you press the button 1 and the button 2"

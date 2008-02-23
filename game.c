@@ -1,5 +1,6 @@
 #include "starruby.h"
 
+volatile static VALUE symbol_cursor;
 volatile static VALUE symbol_fullscreen;
 volatile static VALUE symbol_window_scale;
 
@@ -10,26 +11,11 @@ static int screenWidth = 0;
 static int screenHeight = 0;
 static bool terminated = false;
 static int windowScale = 1;
-static bool cursorVisible = false;
 
 int
 GetWindowScale(void)
 {
   return windowScale;
-}
-
-static VALUE
-Game_cursor_visible(VALUE self)
-{
-  return cursorVisible ? Qtrue : Qfalse;
-}
-
-static VALUE
-Game_cursor_visible_eq(VALUE self, VALUE rbVisible)
-{
-  cursorVisible = RTEST(rbVisible);
-  SDL_ShowCursor(cursorVisible ? SDL_ENABLE : SDL_DISABLE);
-  return rbVisible;
 }
 
 static VALUE
@@ -176,7 +162,6 @@ Game_run(int argc, VALUE* argv, VALUE self)
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
-  SDL_ShowCursor(cursorVisible ? SDL_ENABLE : SDL_DISABLE);
   volatile VALUE rbTitle = rb_iv_get(self, "title");
   SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
   volatile VALUE rbBlock, rbWidth, rbHeight, rbOptions;
@@ -188,11 +173,14 @@ Game_run(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  windowScale = 1;
+  bool cursor = false;
   bool fullscreen = false;
+  windowScale = 1;
 
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_cursor)))
+    cursor = RTEST(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen)))
     fullscreen = RTEST(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
@@ -200,6 +188,7 @@ Game_run(int argc, VALUE* argv, VALUE self)
     if (windowScale < 1 || 2 < windowScale)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
+  SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
   
   Uint32 options = SDL_DOUBLEBUF;
   if (fullscreen) {
@@ -281,10 +270,6 @@ void
 InitializeGame(void)
 {
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
-  rb_define_module_function(rb_mGame, "cursor_visible?",
-                            Game_cursor_visible,    0);
-  rb_define_module_function(rb_mGame, "cursor_visible=",
-                            Game_cursor_visible_eq, 1);
   rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);
   rb_define_module_function(rb_mGame, "fps=",      Game_fps_eq,    1);
   rb_define_module_function(rb_mGame, "real_fps",  Game_real_fps,  0);
@@ -295,10 +280,9 @@ InitializeGame(void)
   rb_define_module_function(rb_mGame, "title",     Game_title,     0);
   rb_define_module_function(rb_mGame, "title=",    Game_title_eq,  1);
 
+  symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
   rb_iv_set(rb_mGame, "title", rb_str_new2(""));
-
-  Game_cursor_visible_eq(rb_mGame, Qfalse);
 }

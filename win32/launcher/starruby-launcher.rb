@@ -130,9 +130,7 @@ module StarRubyLauncher
                   end
                 ensure
                   $LOAD_PATH.clear
-                  load_path.each do |path|
-                    $LOAD_PATH << path
-                  end
+                  $LOAD_PATH.push(*load_path)
                 end
               ensure
                 Game.title = title

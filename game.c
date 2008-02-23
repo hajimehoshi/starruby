@@ -4,7 +4,6 @@ volatile static VALUE symbol_fullscreen;
 volatile static VALUE symbol_window_scale;
 
 static int fps = 30;
-static bool fullscreen = false;
 static double realFps = 0;
 static bool running = false;
 static int screenWidth = 0;
@@ -188,6 +187,9 @@ Game_run(int argc, VALUE* argv, VALUE self)
   screenHeight = height;
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+
+  windowScale = 1;
+  bool fullscreen = false;
 
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);

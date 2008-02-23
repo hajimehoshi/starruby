@@ -104,5 +104,24 @@ class TestGame < Test::Unit::TestCase
     end
     assert_nil Game.screen
   end
+  
+  def test_cursor_visible
+    assert_equal false, Game.cursor_visible?
+    Game.cursor_visible = true
+    assert_equal true,  Game.cursor_visible?
+    Game.cursor_visible = false
+    assert_equal false, Game.cursor_visible?
+    Game.run(320, 240) do
+      Game.cursor_visible = true
+      assert_equal true,  Game.cursor_visible?
+      Game.cursor_visible = false
+      assert_equal false, Game.cursor_visible?
+      Game.terminate
+    end
+    Game.cursor_visible = true
+    assert_equal true,  Game.cursor_visible?
+    Game.cursor_visible = false
+    assert_equal false, Game.cursor_visible?
+  end
 
 end

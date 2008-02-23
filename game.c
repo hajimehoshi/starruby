@@ -11,11 +11,26 @@ static int screenWidth = 0;
 static int screenHeight = 0;
 static bool terminated = false;
 static int windowScale = 1;
+static bool cursorVisible = false;
 
 int
 GetWindowScale(void)
 {
   return windowScale;
+}
+
+static VALUE
+Game_cursor_visible(VALUE self)
+{
+  return cursorVisible ? Qtrue : Qfalse;
+}
+
+static VALUE
+Game_cursor_visible_eq(VALUE self, VALUE rbVisible)
+{
+  cursorVisible = RTEST(rbVisible);
+  SDL_ShowCursor(cursorVisible ? SDL_ENABLE : SDL_DISABLE);
+  return rbVisible;
 }
 
 static VALUE
@@ -162,10 +177,9 @@ Game_run(int argc, VALUE* argv, VALUE self)
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
+  SDL_ShowCursor(cursorVisible ? SDL_ENABLE : SDL_DISABLE);
   volatile VALUE rbTitle = rb_iv_get(self, "title");
   SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
-  SDL_ShowCursor(SDL_DISABLE);
-
   volatile VALUE rbBlock, rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
   int width   = NUM2INT(rbWidth);
@@ -265,6 +279,10 @@ void
 InitializeGame(void)
 {
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
+  rb_define_module_function(rb_mGame, "cursor_visible?",
+                            Game_cursor_visible,    0);
+  rb_define_module_function(rb_mGame, "cursor_visible=",
+                            Game_cursor_visible_eq, 1);
   rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);
   rb_define_module_function(rb_mGame, "fps=",      Game_fps_eq,    1);
   rb_define_module_function(rb_mGame, "real_fps",  Game_real_fps,  0);
@@ -279,4 +297,6 @@ InitializeGame(void)
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
   rb_iv_set(rb_mGame, "title", rb_str_new2(""));
+
+  Game_cursor_visible_eq(rb_mGame, Qfalse);
 }

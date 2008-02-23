@@ -101,12 +101,14 @@ Game.run(320, 240) do
   end.sort do |a, b|
     a[2] <=> b[2] # scale
   end.each do |x, y, scale|
-    x = (x - star_texture.width  * scale / 2).to_i
-    y = (y - star_texture.height * scale).to_i
+    x -= star_texture.width
+    y -= star_texture.height
     if x.kind_of?(Fixnum) and y.kind_of?(Fixnum)
       s.render_texture(star_texture, x, y,
                        :scale_x => scale,
                        :scale_y => scale,
+                       :center_x => star_texture.width / 2,
+                       :center_y => star_texture.height,
                        :angle => 2 * Math::PI - options[:camera_roll])
     end
   end

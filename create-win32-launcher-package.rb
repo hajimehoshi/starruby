@@ -14,11 +14,13 @@ def main
   version = title[/\d+\.\d+\.\d+/]
   main_dir = "starruby-#{version}-win32-launcher"
   mkdir_p(main_dir, :verbose => true)
+  # readme
   open("win32/readmes/win32-launcher.txt", "r") do |fp|
     open(File.join(main_dir, "readme.txt"), "w") do |fp2|
       fp2.write(fp.read.sub("%title%", title))
     end
   end
+  # dlls
   Dir["win32/dll/*.dll"].each do |path|
     cp(path, main_dir, :verbose => true)
   end

@@ -2,9 +2,6 @@ require "swin"
 require "starruby"
 require "yaml"
 
-$LOAD_PATH << "."
-$LOAD_PATH << "./lib/1.8"
-
 module StarRubyLauncher
   
   TITLE = "Star Ruby Launcher"
@@ -87,7 +84,10 @@ module StarRubyLauncher
     include StarRuby
     
     def initialize
-      if File.exist?(CONFIG_FILE_PATH)
+      if 0 < ARGV.size
+        @config = {:script_path => ARGV[0]}
+        save_config
+      elsif File.exist?(CONFIG_FILE_PATH)
         @config = YAML.load_file(CONFIG_FILE_PATH)
       else
         @config = {:script_path => ""}
@@ -117,12 +117,26 @@ module StarRubyLauncher
           end
           @buttons[:play] ||= Button.new("Play", 16, 96, 288, 24) do
             @following_proc = proc do
-              title = Game.title
-              Game.title = ""
-              Dir.chdir(File.dirname(@config[:script_path])) do
-                load(@config[:script_path])
+              begin
+                title = Game.title
+                Game.title = ""
+                begin
+                  load_path = $LOAD_PATH.dup
+                  $LOAD_PATH.clear
+                  $LOAD_PATH << Dir.pwd + "/lib/1.8"
+                  $LOAD_PATH << "."
+                  Dir.chdir(File.dirname(@config[:script_path])) do
+                    load(@config[:script_path])
+                  end
+                ensure
+                  $LOAD_PATH.clear
+                  load_path.each do |path|
+                    $LOAD_PATH << path
+                  end
+                end
+              ensure
+                Game.title = title
               end
-              Game.title = title
             end
             Game.terminate
           end

@@ -96,7 +96,10 @@ module StarRubyLauncher
     
     def main
       if ARGV[0]
-        load(ARGV[0])
+        path = File.expand_path(ARGV[0])
+        Dir.chdir(File.dirname(ARGV[0])) do
+          load(path)
+        end
         exit
       end
       following_proc = nil
@@ -126,9 +129,10 @@ module StarRubyLauncher
                   $LOAD_PATH.clear
                   $LOAD_PATH << Dir.pwd + "/lib/1.8"
                   $LOAD_PATH << "."
+                  path = File.expand_path(@config[:script_path])
                   Dir.chdir(File.dirname(@config[:script_path])) do
                     begin
-                      load(@config[:script_path])
+                      load(path)
                     ensure
                       Audio.stop_bgm
                       Audio.stop_all_ses
@@ -151,7 +155,7 @@ module StarRubyLauncher
           end
 
           @buttons.each {|key, button| button.update}
-          
+
           s = Game.screen
           s.fill_rect(0, 0, 320, 40,   Color.new(0x99, 0x33, 0x33))
           s.fill_rect(0, 40, 320, 200, Color.new(0xff, 0xff, 0xff))

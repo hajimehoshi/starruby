@@ -91,6 +91,7 @@ Game.run(320, 240) do
     :loop => true,
   }
   s.render_in_perspective(field_texture, options)
+  # stars
   [[-20, -20, 0], [-20, 20, 0], [20, -20, 0], [20, 20, 0],
    [0, 0, 20]].map do |x, y, height|
     x += field_texture.width / 2

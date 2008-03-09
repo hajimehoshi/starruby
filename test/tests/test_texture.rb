@@ -260,32 +260,30 @@ class TestTexture < Test::Unit::TestCase
     assert_equal Color.new(53, 58, 97, 92), texture.get_pixel(1, 2);
     assert_equal Color.new(65, 35, 89, 79), texture.get_pixel(2, 0);
 
-    begin
-      texture.set_pixel(-1, 2, Color.new(0, 0, 0))
-      flunk
-    rescue ArgumentError => e
-      assert_equal "index out of range: (-1, 2)", e.message
+    texture.clear
+    texture.set_pixel(-1, 2, Color.new(1, 2, 3))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+      end
     end
-
-    begin
-      texture.set_pixel(2, -1, Color.new(0, 0, 0))
-      flunk
-    rescue ArgumentError => e
-      assert_equal "index out of range: (2, -1)", e.message
+    texture.set_pixel(2, -1, Color.new(1, 2, 3))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+      end
     end
-
-    begin
-      texture.set_pixel(3, 2, Color.new(0, 0, 0))
-      flunk
-    rescue ArgumentError => e
-      assert_equal "index out of range: (3, 2)", e.message
+    texture.set_pixel(3, 2, Color.new(1, 2, 3))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+      end
     end
-    
-    begin
-      texture.set_pixel(2, 3, Color.new(0, 0, 0))
-      flunk
-    rescue ArgumentError => e
-      assert_equal "index out of range: (2, 3)", e.message
+    texture.set_pixel(2, 3, Color.new(1, 2, 3))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+      end
     end
   end
   
@@ -757,20 +755,32 @@ class TestTexture < Test::Unit::TestCase
       end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_pixel(-1, 0, Color.new(255, 255, 255))
+    texture2.render_pixel(-1, 0, Color.new(255, 255, 255))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_pixel(0, -1, Color.new(255, 255, 255))
+    texture2.render_pixel(0, -1, Color.new(255, 255, 255))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_pixel(texture2.width, 0, Color.new(255, 255, 255))
+    texture2.render_pixel(texture2.width, 0, Color.new(255, 255, 255))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_pixel(0, texture2.height, Color.new(255, 255, 255))
+    texture2.render_pixel(0, texture2.height, Color.new(255, 255, 255))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
   end
 

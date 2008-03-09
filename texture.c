@@ -666,7 +666,8 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   CheckDisposed(texture);
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
-  CheckPixel(texture, x, y);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    return Qnil;
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixel = &(texture->pixels[x + y * texture->width]);
@@ -1149,7 +1150,8 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   CheckDisposed(texture);
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
-  CheckPixel(texture, x, y);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    return Qnil;
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   texture->pixels[x + y * texture->width].color = *color;

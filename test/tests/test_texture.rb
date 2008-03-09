@@ -392,7 +392,7 @@ class TestTexture < Test::Unit::TestCase
   def test_fill_rect
     texture = Texture.load("images/ruby")
     orig_texture = texture.clone
-    texture.fill_rect 10, 11, 12, 13, Color.new(12, 34, 56, 78)
+    texture.fill_rect(10, 11, 12, 13, Color.new(12, 34, 56, 78))
     texture.height.times do |y|
       texture.width.times do |x|
         if 10 <= x and 11 <= y and x < 22 and y < 24
@@ -402,24 +402,63 @@ class TestTexture < Test::Unit::TestCase
         end
       end
     end
-    texture = Texture.new(900, 100)
-    assert_raise ArgumentError do
-      texture.fill_rect(-16, 16, 16, 16, Color.new(0, 0, 0, 0))
+    texture = orig_texture.dup
+    texture.fill_rect(-16, 16, 32, 16, Color.new(12, 34, 56, 78))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if x < 16 and 16 <= y and y < 32
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
     end
-    assert_raise ArgumentError do
-      texture.fill_rect(16, -16, 16, 16, Color.new(0, 0, 0, 0))
+    texture = orig_texture.dup
+    texture.fill_rect(16, -16, 16, 32, Color.new(12, 34, 56, 78))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if 16 <= x and x < 32 and y < 16
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
     end
-    assert_raise ArgumentError do
-      texture.fill_rect(16, 16, texture.width + 16, 16, Color.new(0, 0, 0, 0))
+    texture = orig_texture.dup
+    texture.fill_rect(16, 16, texture.width + 16, 16, Color.new(12, 34, 56, 78))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if 16 <= x and 16 <= y and y < 32
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
     end
-    assert_raise ArgumentError do
-      texture.fill_rect(16, 16, 16, texture.height + 16, Color.new(0, 0, 0, 0))
+    texture = orig_texture.dup
+    texture.fill_rect(16, 16, 16, texture.height + 16, Color.new(12, 34, 56, 78))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        if 16 <= x and x < 32 and 16 <= y
+          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+        else
+          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        end
+      end
     end
-    assert_raise ArgumentError do
-      texture.fill_rect(16, 16, 16, -1, Color.new(0, 0, 0, 0))
+    texture = orig_texture.clone
+    texture.fill_rect(16, 16, 16, -1, Color.new(0, 0, 0, 0))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+      end
     end
-    assert_raise ArgumentError do
-      texture.fill_rect(16, 16, -1, 16, Color.new(0, 0, 0, 0))
+    texture = orig_texture.clone
+    texture.fill_rect(16, 16, -1, 16, Color.new(0, 0, 0, 0))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+      end
     end
     texture = orig_texture.clone
     texture.fill_rect(1, 0, texture.width - 1, texture.height, Color.new(12, 34, 56, 78))
@@ -441,6 +480,13 @@ class TestTexture < Test::Unit::TestCase
         else
           assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
         end
+      end
+    end
+    texture = orig_texture.clone
+    texture.fill_rect(texture.width + 160, texture.height + 160, 16, 16, Color.new(0, 0, 0, 0))
+    texture.height.times do |y|
+      texture.width.times do |x|
+        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
       end
     end
   end
@@ -839,28 +885,111 @@ class TestTexture < Test::Unit::TestCase
       end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_rect(-1, 0, 5, 5, Color.new(255, 255, 255))
+    texture2.render_rect(-1, 0, 5, 6, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if i < 4 and j < 6
+          if 0 < p1.alpha
+            assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
+            assert_in_delta (34 * 78 + p1.green * (255 - 78)).quo(255), p2.green, 2
+            assert_in_delta (56 * 78 + p1.blue  * (255 - 78)).quo(255), p2.blue,  2
+            assert_equal [p1.alpha, 78].max, p2.alpha
+          else
+            assert_equal Color.new(12, 34, 56, 78), p2
+          end
+        else
+          assert_equal p1, p2
+        end
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_rect(0, -1, 5, 5, Color.new(255, 255, 255))
+    texture2.render_rect(0, -1, 5, 6, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if i < 5 and j < 5
+          if 0 < p1.alpha
+            assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
+            assert_in_delta (34 * 78 + p1.green * (255 - 78)).quo(255), p2.green, 2
+            assert_in_delta (56 * 78 + p1.blue  * (255 - 78)).quo(255), p2.blue,  2
+            assert_equal [p1.alpha, 78].max, p2.alpha
+          else
+            assert_equal Color.new(12, 34, 56, 78), p2
+          end
+        else
+          assert_equal p1, p2
+        end
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_rect(0, 0, texture2.width + 1, 0, Color.new(255, 255, 255))
+    texture2.render_rect(5, 6, texture2.width + 1, 7, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if 5 <= i and 6 <= j and j < 13
+          if 0 < p1.alpha
+            assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
+            assert_in_delta (34 * 78 + p1.green * (255 - 78)).quo(255), p2.green, 2
+            assert_in_delta (56 * 78 + p1.blue  * (255 - 78)).quo(255), p2.blue,  2
+            assert_equal [p1.alpha, 78].max, p2.alpha
+          else
+            assert_equal Color.new(12, 34, 56, 78), p2
+          end
+        else
+          assert_equal p1, p2
+        end
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_rect(0, 0, 0, texture2.height + 1, Color.new(255, 255, 255))
+    texture2.render_rect(5, 6, 7, texture2.height + 1, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        if 5 <= i and i < 12 and 6 <= j
+          if 0 < p1.alpha
+            assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
+            assert_in_delta (34 * 78 + p1.green * (255 - 78)).quo(255), p2.green, 2
+            assert_in_delta (56 * 78 + p1.blue  * (255 - 78)).quo(255), p2.blue,  2
+            assert_equal [p1.alpha, 78].max, p2.alpha
+          else
+            assert_equal Color.new(12, 34, 56, 78), p2
+          end
+        else
+          assert_equal p1, p2
+        end
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_rect(0, 0, -1, 1, Color.new(255, 255, 255))
+    texture2.render_rect(0, 0, -1, 1, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        assert_equal p1, p2
+      end
     end
     texture2 = texture.dup
-    assert_raise ArgumentError do
-      texture2.render_rect(0, 0, 1, -1, Color.new(255, 255, 255))
+    texture2.render_rect(0, 0, 1, -1, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        assert_equal p1, p2
+      end
+    end
+    texture2 = texture.dup
+    texture2.render_rect(texture.width + 5, texture.height + 6, 7, 8, Color.new(12, 34, 56, 78))
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = texture.get_pixel(i, j)
+        p2 = texture2.get_pixel(i, j)
+        assert_equal p1, p2
+      end
     end
   end
 

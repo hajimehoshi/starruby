@@ -73,26 +73,6 @@ CheckDisposed(Texture* texture)
              "can't modify disposed StarRuby::Texture");
 }
 
-inline static void
-CheckPixel(Texture* texture, int x, int y)
-{
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
-    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
-}
-
-inline static void
-CheckRect(Texture* texture, int x, int y, int width, int height)
-{
-  if (width < 0)
-    rb_raise(rb_eArgError, "invalid width: %d", width);
-  if (height < 0)
-    rb_raise(rb_eArgError, "invalid height: %d", height);
-  if (x < 0 || texture->width  < x + width ||
-      y < 0 || texture->height < y + height)
-    rb_raise(rb_eArgError, "rect out of range: (%d, %d, %d, %d)",
-             x, y, width, height);
-}
-
 static VALUE
 Texture_load(VALUE self, VALUE rbPath)
 {
@@ -461,7 +441,22 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  CheckRect(texture, rectX, rectY, rectWidth, rectHeight);
+  if (rectX < 0) {
+    rectWidth -= -rectX;
+    rectX = 0;
+  }
+  if (rectY < 0) {
+    rectHeight -= -rectY;
+    rectY = 0;
+  }
+  if (texture->width <= rectX || texture->height <= rectY)
+    return Qnil;
+  if (texture->width <= rectX + rectWidth)
+    rectWidth = texture->width - rectX;
+  if (texture->height <= rectY + rectHeight)
+    rectHeight = texture->height - rectY;
+  if (rectWidth <= 0 || rectHeight <= 0)
+    return Qnil;
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
@@ -480,7 +475,8 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   CheckDisposed(texture);
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
-  CheckPixel(texture, x, y);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
   Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(rb_cColor, rb_intern("new"), 4,
                     INT2NUM(color.red),
@@ -687,7 +683,22 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  CheckRect(texture, rectX, rectY, rectWidth, rectHeight);
+  if (rectX < 0) {
+    rectWidth -= -rectX;
+    rectX = 0;
+  }
+  if (rectY < 0) {
+    rectHeight -= -rectY;
+    rectY = 0;
+  }
+  if (texture->width <= rectX || texture->height <= rectY)
+    return Qnil;
+  if (texture->width <= rectX + rectWidth)
+    rectWidth = texture->width - rectX;
+  if (texture->height <= rectY + rectHeight)
+    rectHeight = texture->height - rectY;
+  if (rectWidth <= 0 || rectHeight <= 0)
+    return Qnil;
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);

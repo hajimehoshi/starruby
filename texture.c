@@ -415,8 +415,8 @@ Texture_dump(int argc, VALUE* argv, VALUE self)
   char* format = StringValuePtr(rbFormat);
   int x = 0;
   int y = 0;
-  int width  = texture->width;
-  int height = texture->height;;
+  int width;
+  int height;
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_x)))
@@ -425,8 +425,12 @@ Texture_dump(int argc, VALUE* argv, VALUE self)
     y = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_width)))
     width = NUM2INT(val);
+  else
+    width = texture->width - x;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_height)))
     height = NUM2INT(val);
+  else
+    height = texture->height - y;
   if (!ModifyRectInTexture(texture, &x, &y, &width, &height))
     return rb_str_new(0, 0);
   int formatLength = RSTRING_LEN(rbFormat);
@@ -805,8 +809,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   int srcX = 0;
   int srcY = 0;
-  int srcWidth = 0;
-  int srcHeight = 0;
+  int srcWidth;
+  int srcHeight;
   double scaleX = 1;
   double scaleY = 1;
   double angle = 0;

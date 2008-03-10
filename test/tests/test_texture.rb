@@ -1788,6 +1788,22 @@ class TestTexture < Test::Unit::TestCase
         c += 1
       end
     end
+    str = texture.dump("rrrragb", :x => -11, :y => -12)
+    assert_equal texture.width * texture.height * 7, str.length
+    c = 0
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p = texture.get_pixel(i, j)
+        assert_equal str[7 * c].ord,     p.red
+        assert_equal str[7 * c + 1].ord, p.red
+        assert_equal str[7 * c + 2].ord, p.red
+        assert_equal str[7 * c + 3].ord, p.red
+        assert_equal str[7 * c + 4].ord, p.alpha
+        assert_equal str[7 * c + 5].ord, p.green
+        assert_equal str[7 * c + 6].ord, p.blue
+        c += 1
+      end
+    end
   end
 
   def test_dump_disposed

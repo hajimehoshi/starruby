@@ -47,6 +47,8 @@ def main
   lib_dir = File.join(main_dir, "lib")
   mkdir(lib_dir, :verbose => true) unless FileTest.directory?(lib_dir)
   cp_r(RbConfig::CONFIG["rubylibdir"], lib_dir, :verbose => true)
+  # game.rb
+  cp("win32/launcher/game.rb", main_dir)
 end
 
 def show_usage

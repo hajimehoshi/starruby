@@ -16,6 +16,7 @@ volatile static VALUE symbol_camera_yaw;
 volatile static VALUE symbol_center_x;
 volatile static VALUE symbol_center_y;
 volatile static VALUE symbol_distance;
+volatile static VALUE symbol_height;
 volatile static VALUE symbol_intersection_x;
 volatile static VALUE symbol_intersection_y;
 volatile static VALUE symbol_loop;
@@ -30,6 +31,9 @@ volatile static VALUE symbol_sub;
 volatile static VALUE symbol_tone_blue;
 volatile static VALUE symbol_tone_green;
 volatile static VALUE symbol_tone_red;
+volatile static VALUE symbol_width;
+volatile static VALUE symbol_x;
+volatile static VALUE symbol_y;
 
 typedef enum {
   ALPHA,
@@ -71,6 +75,28 @@ CheckDisposed(Texture* texture)
   if (!texture->pixels)
     rb_raise(rb_eRuntimeError,
              "can't modify disposed StarRuby::Texture");
+}
+
+inline static bool
+ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
+{
+  if (*x < 0) {
+    *width -= -(*x);
+    *x = 0;
+  }
+  if (*y < 0) {
+    *height -= -(*y);
+    *y = 0;
+  }
+  if (texture->width <= *x || texture->height <= *y)
+    return false;
+  if (texture->width <= *x + *width)
+    *width = texture->width - *x;
+  if (texture->height <= *y + *height)
+    *height = texture->height - *y;
+  if (*width <= 0 || *height <= 0)
+    return false;
+  return true;
 }
 
 static VALUE
@@ -377,27 +403,45 @@ Texture_disposed(VALUE self)
 }
 
 static VALUE
-Texture_dump(VALUE self, VALUE rbFormat)
+Texture_dump(int argc, VALUE* argv, VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  VALUE rbFormat, rbOptions;
+  rb_scan_args(argc, argv, "11", &rbFormat, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
   char* format = StringValuePtr(rbFormat);
-  int textureSize = texture->width * texture->height;
+  int x = 0;
+  int y = 0;
+  int width  = texture->width;
+  int height = texture->height;;
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_x)))
+    x = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_y)))
+    y = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_width)))
+    width = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_height)))
+    height = NUM2INT(val);
+  if (!ModifyRectInTexture(texture, &x, &y, &width, &height))
+    return rb_str_new(0, 0);
   int formatLength = RSTRING_LEN(rbFormat);
-  volatile VALUE rbResult = rb_str_new(NULL, textureSize * formatLength);
+  volatile VALUE rbResult = rb_str_new(NULL, width * height * formatLength);
   uint8_t* strPtr = (uint8_t*)RSTRING_PTR(rbResult);
-  Pixel* pixels = texture->pixels;
-  for (int i = 0; i < textureSize; i++, pixels++) {
-    for (int j = 0; j < formatLength; j++, strPtr++) {
-      switch (format[j]) {
-      case 'r': *strPtr = pixels->color.red;   break;
-      case 'g': *strPtr = pixels->color.green; break;
-      case 'b': *strPtr = pixels->color.blue;  break;
-      case 'a': *strPtr = pixels->color.alpha; break;
-      }
-    }
-  }
+  Pixel* pixels = &(texture->pixels[x + y * texture->width]);
+  for (int j = 0; j < height; j++, pixels += texture->width - width)
+    for (int i = 0; i < width; i++, pixels++)
+      for (int k = 0; k < formatLength; k++, strPtr++)
+        switch (format[k]) {
+        case 'r': *strPtr = pixels->color.red;   break;
+        case 'g': *strPtr = pixels->color.green; break;
+        case 'b': *strPtr = pixels->color.blue;  break;
+        case 'a': *strPtr = pixels->color.alpha; break;
+        }
   return rbResult;
 }
 
@@ -429,21 +473,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (rectX < 0) {
-    rectWidth -= -rectX;
-    rectX = 0;
-  }
-  if (rectY < 0) {
-    rectHeight -= -rectY;
-    rectY = 0;
-  }
-  if (texture->width <= rectX || texture->height <= rectY)
-    return Qnil;
-  if (texture->width <= rectX + rectWidth)
-    rectWidth = texture->width - rectX;
-  if (texture->height <= rectY + rectHeight)
-    rectHeight = texture->height - rectY;
-  if (rectWidth <= 0 || rectHeight <= 0)
+  if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
     return Qnil;
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
@@ -671,21 +701,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (rectX < 0) {
-    rectWidth -= -rectX;
-    rectX = 0;
-  }
-  if (rectY < 0) {
-    rectHeight -= -rectY;
-    rectY = 0;
-  }
-  if (texture->width <= rectX || texture->height <= rectY)
-    return Qnil;
-  if (texture->width <= rectX + rectWidth)
-    rectWidth = texture->width - rectX;
-  if (texture->height <= rectY + rectHeight)
-    rectHeight = texture->height - rectY;
-  if (rectWidth <= 0 || rectHeight <= 0)
+  if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
     return Qnil;
   Color* color;
   Data_Get_Struct(rbColor, Color, color);
@@ -732,12 +748,13 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
                                           (SDL_Color) {255, 255, 255, 255});
   if (!textSurfaceRaw)
     rb_raise_sdl_ttf_error();
-  SDL_Surface* textSurface = SDL_ConvertSurface(textSurfaceRaw, &(SDL_PixelFormat) {
-      .palette = NULL, .BitsPerPixel = 32, .BytesPerPixel = 4,
-        .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
-        .Bmask = 0x000000ff, .Amask = 0xff000000,
-        .colorkey = 0, .alpha = 255,
-        }, SDL_SWSURFACE);
+  SDL_PixelFormat format = {
+    .palette = NULL, .BitsPerPixel = 32, .BytesPerPixel = 4,
+    .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
+    .Bmask = 0x000000ff, .Amask = 0xff000000,
+    .colorkey = 0, .alpha = 255,
+  };
+  SDL_Surface* textSurface = SDL_ConvertSurface(textSurfaceRaw, &format, SDL_SWSURFACE);
   SDL_FreeSurface(textSurfaceRaw);
   textSurfaceRaw = NULL;
   if (!textSurface)
@@ -1223,7 +1240,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
   rb_define_method(rb_cTexture, "dispose",        Texture_dispose,         0);
   rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,        0);
-  rb_define_method(rb_cTexture, "dump",           Texture_dump,            1);
+  rb_define_method(rb_cTexture, "dump",           Texture_dump,            -1);
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
@@ -1254,6 +1271,7 @@ InitializeTexture(void)
   symbol_center_x       = ID2SYM(rb_intern("center_x"));
   symbol_center_y       = ID2SYM(rb_intern("center_y"));
   symbol_distance       = ID2SYM(rb_intern("distance"));
+  symbol_height         = ID2SYM(rb_intern("height"));
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
@@ -1268,4 +1286,7 @@ InitializeTexture(void)
   symbol_tone_blue      = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green     = ID2SYM(rb_intern("tone_green"));
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));
+  symbol_width          = ID2SYM(rb_intern("width"));
+  symbol_x              = ID2SYM(rb_intern("x"));
+  symbol_y              = ID2SYM(rb_intern("y"));
 }

@@ -1738,8 +1738,25 @@ class TestTexture < Test::Unit::TestCase
         assert_equal str[7 * origin + 6].ord, p.blue
       end
     end
+    str = texture.dump("rrrragb",
+                       :x => 11, :y => 12, :width => 13, :height => 14)
+    assert_equal 13 * 14 * 7, str.length
+    c = 0
+    (12...(12 + 14)).each do |j|
+      (11...(11 + 13)).each do |i|
+        p = texture.get_pixel(i, j)
+        assert_equal str[7 * c].ord,     p.red
+        assert_equal str[7 * c + 1].ord, p.red
+        assert_equal str[7 * c + 2].ord, p.red
+        assert_equal str[7 * c + 3].ord, p.red
+        assert_equal str[7 * c + 4].ord, p.alpha
+        assert_equal str[7 * c + 5].ord, p.green
+        assert_equal str[7 * c + 6].ord, p.blue
+        c += 1
+      end
+    end
   end
-  
+
   def test_dump_disposed
     texture = Texture.load("images/ruby")
     texture.dispose

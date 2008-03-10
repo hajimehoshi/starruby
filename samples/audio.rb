@@ -29,17 +29,18 @@ Game.run(320, 240) do
   end
   s = Game.screen
   s.clear
-  s.render_texture(music_texture, 16, 16, {
-    :alpha => music_alpha,
-    :scale_x => 4,
-    :scale_y => 4,
-  })
+  s.render_texture(music_texture, 16, 16,
+                   :alpha => music_alpha,
+                   :scale_x => 4,
+                   :scale_y => 4)
   text = "Press 'm' to #{Audio.playing_bgm? ? 'stop':'play'} music"
   s.render_text(text, 96, 32, font, white)
-  s.render_texture(sound_texture, 16, 80, {
-    :alpha => sound_alpha,
-    :scale_x => 4,
-    :scale_y => 4,
-  })
+  s.render_texture(sound_texture, 16, 80,
+                   :alpha => sound_alpha,
+                   :scale_x => 4,
+                   :scale_y => 4)
   s.render_text("Press 's' to play sound", 96, 96, font, white)
+  if 0 < Audio.playing_se_count
+    s.render_text("Now #{Audio.playing_se_count} SEs are playing", 96, 112, font, white)
+  end
 end

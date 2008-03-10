@@ -828,11 +828,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
     srcWidth = NUM2INT(val);
   else
-    srcWidth = srcTextureWidth - srcX;
+    srcWidth = srcTexture->width - srcX;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
     srcHeight = NUM2INT(val);
   else
-    srcHeight = srcTextureHeight - srcY;
+    srcHeight = srcTexture->height - srcY;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
     scaleX = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
@@ -863,14 +863,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
     saturation = NUM2INT(val);
 
-  if (!(0 <= srcX && srcX < srcTextureWidth))
-    rb_raise(rb_eArgError, "invalid src_x: %d", srcX);
-  if (!(0 <= srcY && srcY < srcTextureHeight))
-    rb_raise(rb_eArgError, "invalid src_y: %d", srcY);
-  if (!(0 <= srcWidth && srcWidth <= srcTextureWidth - srcX))
-    rb_raise(rb_eArgError, "invalid src_width: %d", srcWidth);
-  if (!(0 <= srcHeight && srcHeight <= srcTextureHeight - srcY))
-    rb_raise(rb_eArgError, "invalid src_height: %d", srcHeight);
+  if (!ModifyRectInTexture(srcTexture, &srcX, &srcY, &srcWidth, &srcHeight))
+    return Qnil;
 
   if (srcTexture != dstTexture &&
       scaleX == 1 && scaleY == 1 && angle == 0 &&

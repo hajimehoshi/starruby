@@ -1322,75 +1322,108 @@ class TestTexture < Test::Unit::TestCase
   def test_render_texture_src_rect
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
-    texture2.render_texture(texture, 10, 11, {
-      :src_x => 12, :src_y => 13, :src_width => 14, :src_height => 15
-    })
+    texture2.render_texture(texture, 10, 11, :src_x => 12, :src_y => 13, :src_width => 14, :src_height => 15)
     texture2.height.times do |y|
       texture2.width.times do |x|
         if 10 <= x and 11 <= y and x < 24 and y < 26
           p1 = texture.get_pixel(x - 10 + 12, y - 11 + 13)
           p2 = texture2.get_pixel(x, y)
-          if p2.alpha != 0
-            assert_equal p1, p2
-          else
-            assert_equal Color.new(0, 0, 0, 0), p2
-          end
+          assert_equal p1, p2
         else
           assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
         end
       end
     end
-  end
-
-  def test_render_texture_src_rect_arg_error
-    texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, {
-        :src_x => -100, :src_y => -100,
-        :src_width => texture.width + 200,
-        :src_height => texture.height + 200
-      })
+    texture2.render_texture(texture, 0, 0,
+                            :src_x => -100, :src_y => -100,
+                            :src_width => texture.width + 200,
+                            :src_height => texture.height + 200)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :src_x => -10)
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_x => -10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :src_x => texture.width + 10)
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_x => texture.width + 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :src_y => -10)
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_y => -10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :src_y => texture.height + 10)
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_y => texture.height + 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :src_x => 10, :src_width => -10)
+    texture2.render_texture(texture, 0, 0, :src_x => 10, :src_width => -10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, {
-        :src_x => 10, :src_width => texture.width - 5
-      })
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_x => 10, :src_width => texture.width - 5)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        if i < texture.width - 10
+          assert_equal texture.get_pixel(i + 10, j), texture2.get_pixel(i, j)
+        else
+          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        end
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => -10)
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => -10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, {
-        :src_y => 10, :src_height => texture.height - 5
-      })
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => texture.height - 5)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        if j < texture.height - 10
+          assert_equal texture.get_pixel(i, j + 10), texture2.get_pixel(i, j)
+        else
+          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        end
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, {
-        :src_x => -10, :src_y => 0,
-        :src_width => 10, :src_height => 10
-      })
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0,
+                            :src_x => -10, :src_y => 0,
+                            :src_width => 10, :src_height => 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
     end
-    assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, {
-        :src_x => texture.width + 100, :src_y => texture.height + 100,
-        :src_width => 100, :src_height => 100
-      })
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0,
+                            :src_x => texture.width + 100, :src_y => texture.height + 100,
+                            :src_width => 100, :src_height => 100)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
     end
   end
   

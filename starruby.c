@@ -55,7 +55,7 @@ Init_starruby(void)
   InitializeSdlInput();
   
   rb_mStarRuby = rb_define_module("StarRuby");
-  volatile VALUE rbVersion = rb_str_new2("0.1.15");
+  volatile VALUE rbVersion = rb_str_new2("0.1.16");
   OBJ_FREEZE(rbVersion);
   rb_define_const(rb_mStarRuby, "VERSION", rbVersion);
   InitializeAudio();

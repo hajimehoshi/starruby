@@ -332,24 +332,12 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
       uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
       uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
       switch (ii) {
-      case 0:
-        r = v255;  g = cc255; b = aa255;
-        break;
-      case 1:
-        r = bb255; g = v255;  b = aa255;
-        break;
-      case 2:
-        r = aa255; g = v255;  b = cc255;
-        break;
-      case 3:
-        r = aa255; g = bb255; b = v255;
-        break;
-      case 4:
-        r = cc255; g = aa255; b = v255;
-        break;
-      case 5:
-        r = v255;  g = aa255; b = bb255;
-        break;
+      case 0: r = v255;  g = cc255; b = aa255; break;
+      case 1: r = bb255; g = v255;  b = aa255; break;
+      case 2: r = aa255; g = v255;  b = cc255; break;
+      case 3: r = aa255; g = bb255; b = v255;  break;
+      case 4: r = cc255; g = aa255; b = v255;  break;
+      case 5: r = v255;  g = aa255; b = bb255; break;
       }
       pixel->color.red   = r;
       pixel->color.green = g;

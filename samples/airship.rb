@@ -85,11 +85,12 @@ Game.run(320, 240) do
     :camera_yaw   => airship.yaw_int.to_radian,
     :camera_pitch => airship.pitch_int.to_radian,
     :camera_roll  => airship.roll_int.to_radian,
-    :distance => field_texture.height / 2,
+    :distance => field_texture.height,
     :intersection_x => s.width / 2 + airship.screen_x,
     :intersection_y => s.height / 2 + airship.screen_y,
     :loop => true,
   }
+  # ground
   s.render_in_perspective(field_texture, options)
   # stars
   [[-20, -20, 0], [-20, 20, 0], [20, -20, 0], [20, 20, 0],

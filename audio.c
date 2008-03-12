@@ -1,6 +1,8 @@
 #include "starruby.h"
 #include "st.h"
 
+#define MAX_CHANNEL_COUNT (8)
+
 static bool bgmLoop = false;
 static Uint32 bgmPosition = 0;
 static int bgmVolume = 255;
@@ -220,7 +222,7 @@ InitializeSdlAudio(void)
 {
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     rb_raise_sdl_mix_error();
-  Mix_AllocateChannels(8);
+  Mix_AllocateChannels(MAX_CHANNEL_COUNT);
   Mix_HookMusicFinished(SdlMusicFinished);
 }
 
@@ -237,6 +239,8 @@ InitializeAudio(void)
   rb_define_module_function(rb_mAudio, "playing_se_count", Audio_playing_se_count, 0);
   rb_define_module_function(rb_mAudio, "stop_all_ses",     Audio_stop_all_ses,     -1);
   rb_define_module_function(rb_mAudio, "stop_bgm",         Audio_stop_bgm,         -1);
+
+  rb_define_const(rb_mAudio, "MAX_SE_COUNT", INT2NUM(MAX_CHANNEL_COUNT));
 
   symbol_loop     = ID2SYM(rb_intern("loop"));
   symbol_panning  = ID2SYM(rb_intern("panning"));

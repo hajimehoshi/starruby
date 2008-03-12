@@ -3,7 +3,7 @@
 require "starruby"
 include StarRuby
 
-class AudioTest < Test::Unit::TestCase
+class TestAudio < Test::Unit::TestCase
 
   def test_audio_type
     assert_raise TypeError do
@@ -95,6 +95,10 @@ class AudioTest < Test::Unit::TestCase
     assert_raise ArgumentError do
       Audio.play_se("sounds/sample", :panning => 256)
     end
+  end
+
+  def test_max_se_count
+    assert_equal 8, Audio::MAX_SE_COUNT
   end
   
 end

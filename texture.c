@@ -878,13 +878,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
     int srcPadding = srcTextureWidth - width;
     int dstPadding = dstTextureWidth - width;
-    switch (blendType) {
-    case NONE:
-      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
-        for (int i = 0; i < width; i++, src++, dst++)
-          *dst = *src;
-      break;
-    case ALPHA:
+    if (blendType == ALPHA) {
       for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
         for (int i = 0; i < width; i++, src++, dst++) {
           if (dst->color.alpha == 0) {
@@ -902,9 +896,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           }
         }
       }
-      break;
-    default:
-      break;
+    } else {
+      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
+        for (int i = 0; i < width; i++, src++, dst++)
+          *dst = *src;
     }
     return Qnil;
   }

@@ -33,7 +33,7 @@ Benchmark.bm do |b|
     end
   end
   dst.clear
-  b.report "none" do
+  b.report "none  " do
     10000.times do |i|
       dst.clear if i & 3 == 0
       x = i % dst.width

@@ -4,12 +4,12 @@ if (exeext = Config::CONFIG["EXEEXT"]) and not exeext.empty?
 end
 
 INCFLAGS = "-I."
-CFLAGS = `wx-config --cppflags`.strip
-CFLAGS << " -fno-strict-aliasing -fPIC -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
+CFLAGS = `env wx-config --cppflags`.strip
+CFLAGS << " -fno-strict-aliasing -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
 
 DLDFLAGS = "-rdynamic -Wl,-export-dynamic -L. -L/usr/lib"
 
-LIBS = `wx-config --libs`.strip
+LIBS = `env wx-config --libs`.strip
 LIBS << " -lm -lc"
 SRCS = FileList["**/*.cpp"]
 OBJS = SRCS.ext("o")

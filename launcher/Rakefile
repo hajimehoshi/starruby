@@ -1,0 +1,25 @@
+TARGET = "starruby-launcher"
+if (exeext = Config::CONFIG["EXEEXT"]) and not exeext.empty?
+  TARGET << ".#{exeext}"
+end
+
+INCFLAGS = "-I."
+CFLAGS = `wx-config --cppflags`.strip
+CFLAGS << " -fno-strict-aliasing -fPIC -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
+
+DLDFLAGS = "-rdynamic -Wl,-export-dynamic -L. -L/usr/lib"
+
+LIBS = `wx-config --libs`.strip
+LIBS << " -lm -lc"
+SRCS = FileList["**/*.cpp"]
+OBJS = SRCS.ext("o")
+
+task :default => TARGET
+
+task TARGET => OBJS do |t|
+  sh "g++ -o #{t.name} #{t.prerequisites.join(' ')} #{DLDFLAGS} #{LIBS}"
+end
+
+rule ".o" => ".cpp" do |t|
+  sh "g++ -c #{t.source} #{INCFLAGS} #{CFLAGS}"
+end

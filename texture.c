@@ -20,6 +20,7 @@ volatile static VALUE symbol_height;
 volatile static VALUE symbol_intersection_x;
 volatile static VALUE symbol_intersection_y;
 volatile static VALUE symbol_loop;
+volatile static VALUE symbol_none;
 volatile static VALUE symbol_saturation;
 volatile static VALUE symbol_scale_x;
 volatile static VALUE symbol_scale_y;
@@ -36,6 +37,7 @@ volatile static VALUE symbol_x;
 volatile static VALUE symbol_y;
 
 typedef enum {
+  NONE,
   ALPHA,
   ADD,
   SUB,
@@ -829,7 +831,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     alpha = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
     Check_Type(val, T_SYMBOL);
-    if (val == symbol_alpha)
+    if (val == symbol_none)
+      blendType = NONE;
+    else if (val == symbol_alpha)
       blendType = ALPHA;
     else if (val == symbol_add)
       blendType = ADD;
@@ -851,7 +855,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (srcTexture != dstTexture &&
       scaleX == 1 && scaleY == 1 && angle == 0 &&
       saturation == 255 && toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
-      blendType == ALPHA) {
+      (blendType == ALPHA || blendType == NONE)) {
     int dstX = (int)NUM2DBL(rbX);
     int dstY = (int)NUM2DBL(rbY);
     if (dstX < 0) {
@@ -874,22 +878,33 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
     int srcPadding = srcTextureWidth - width;
     int dstPadding = dstTextureWidth - width;
-    for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-      for (int i = 0; i < width; i++, src++, dst++) {
-        if (dst->color.alpha == 0) {
-          dst->color.alpha = DIV255(src->color.alpha * alpha);
-          dst->color.red   = src->color.red;
-          dst->color.green = src->color.green;
-          dst->color.blue  = src->color.blue;
-        } else {
-          uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
-          if (dst->color.alpha < pixelAlpha)
-            dst->color.alpha = pixelAlpha;
-          dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
-          dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
-          dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+    switch (blendType) {
+    case NONE:
+      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
+        for (int i = 0; i < width; i++, src++, dst++)
+          *dst = *src;
+      break;
+    case ALPHA:
+      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
+        for (int i = 0; i < width; i++, src++, dst++) {
+          if (dst->color.alpha == 0) {
+            dst->color.alpha = DIV255(src->color.alpha * alpha);
+            dst->color.red   = src->color.red;
+            dst->color.green = src->color.green;
+            dst->color.blue  = src->color.blue;
+          } else {
+            uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
+            if (dst->color.alpha < pixelAlpha)
+              dst->color.alpha = pixelAlpha;
+            dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
+            dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
+            dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+          }
         }
       }
+      break;
+    default:
+      break;
     }
     return Qnil;
   }
@@ -1037,7 +1052,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           else
             srcColor.blue = ALPHA(0, srcColor.blue, -toneBlue);
         }
-        if (dst->color.alpha == 0) {
+        if (blendType == NONE) {
+          dst->color = srcColor;
+        } else if (dst->color.alpha == 0) {
           dst->color.alpha = DIV255(srcColor.alpha * alpha);
           switch (blendType) {
           case ALPHA:
@@ -1054,6 +1071,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.red   = MAX(0, -srcColor.red   + dst->color.red);
             dst->color.green = MAX(0, -srcColor.green + dst->color.green);
             dst->color.blue  = MAX(0, -srcColor.blue  + dst->color.blue);
+            break;
+          case NONE:
             break;
           }
         } else {
@@ -1075,6 +1094,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.red   = MAX(0, -DIV255(srcColor.red * pixelAlpha)   + dst->color.red);
             dst->color.green = MAX(0, -DIV255(srcColor.green * pixelAlpha) + dst->color.green);
             dst->color.blue  = MAX(0, -DIV255(srcColor.blue * pixelAlpha)  + dst->color.blue);
+            break;
+          case NONE:
             break;
           }
         }
@@ -1251,6 +1272,7 @@ InitializeTexture(void)
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
+  symbol_none           = ID2SYM(rb_intern("none"));
   symbol_saturation     = ID2SYM(rb_intern("saturation"));
   symbol_scale_x        = ID2SYM(rb_intern("scale_x"));
   symbol_scale_y        = ID2SYM(rb_intern("scale_y"));

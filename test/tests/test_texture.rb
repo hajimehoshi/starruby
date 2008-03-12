@@ -1476,19 +1476,35 @@ class TestTexture < Test::Unit::TestCase
   end
     
   def test_render_texture_blend_type
-    # alpha
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
+    # none
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :none)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        assert_equal texture.get_pixel(x, y), texture2.get_pixel(x, y)
+      end
+    end
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :none, :scale_y => 2)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        assert_equal texture.get_pixel(x, y / 2), texture2.get_pixel(x, y)
+      end
+    end
+    # alpha
+    texture2.fill Color.new(100, 110, 120, 130)
     texture2.render_texture(texture, 0, 0, :blend_type => :alpha)
     texture2.height.times do |y|
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        if p2.alpha != 0
-          assert_equal p1, p2
-        else
-          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
-        end
+        a = p1.alpha
+        assert_in_delta (p1.red   * a + 100 * (255 - a)).quo(255), p2.red,   2
+        assert_in_delta (p1.green * a + 110 * (255 - a)).quo(255), p2.green, 2
+        assert_in_delta (p1.blue  * a + 120 * (255 - a)).quo(255), p2.blue,  2
+        assert_in_delta [a, 130].max, p2.alpha, 2
       end
     end
     # add

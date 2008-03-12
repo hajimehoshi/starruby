@@ -403,49 +403,24 @@ Texture_disposed(VALUE self)
 }
 
 static VALUE
-Texture_dump(int argc, VALUE* argv, VALUE self)
+Texture_dump(VALUE self, VALUE rbFormat)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  VALUE rbFormat, rbOptions;
-  rb_scan_args(argc, argv, "11", &rbFormat, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
-  int x = 0;
-  int y = 0;
-  int width;
-  int height;
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_x)))
-    x = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_y)))
-    y = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_width)))
-    width = NUM2INT(val);
-  else
-    width = texture->width - x;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_height)))
-    height = NUM2INT(val);
-  else
-    height = texture->height - y;
-  if (!ModifyRectInTexture(texture, &x, &y, &width, &height))
-    return rb_str_new(0, 0);
   char* format = StringValuePtr(rbFormat);
   int formatLength = RSTRING_LEN(rbFormat);
-  volatile VALUE rbResult = rb_str_new(NULL, width * height * formatLength);
+  int pixelLength = texture->width * texture->height;
+  volatile VALUE rbResult = rb_str_new(NULL, pixelLength * formatLength);
   uint8_t* strPtr = (uint8_t*)RSTRING_PTR(rbResult);
-  Pixel* pixels = &(texture->pixels[x + y * texture->width]);
-  for (int j = 0; j < height; j++, pixels += texture->width - width) {
-    for (int i = 0; i < width; i++, pixels++) {
-      for (int k = 0; k < formatLength; k++, strPtr++) {
-        switch (format[k]) {
-        case 'r': *strPtr = pixels->color.red;   break;
-        case 'g': *strPtr = pixels->color.green; break;
-        case 'b': *strPtr = pixels->color.blue;  break;
-        case 'a': *strPtr = pixels->color.alpha; break;
-        }
+  Pixel* pixels = texture->pixels;
+  for (int i = 0; i < pixelLength; i++, pixels++) {
+    for (int j = 0; j < formatLength; j++, strPtr++) {
+      switch (format[j]) {
+      case 'r': *strPtr = pixels->color.red;   break;
+      case 'g': *strPtr = pixels->color.green; break;
+      case 'b': *strPtr = pixels->color.blue;  break;
+      case 'a': *strPtr = pixels->color.alpha; break;
       }
     }
   }
@@ -1188,55 +1163,28 @@ Texture_size(VALUE self)
 }
 
 static VALUE
-Texture_undump(int argc, VALUE* argv, VALUE self)
+Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 {
   rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  VALUE rbData;
-  VALUE rbFormat;
-  VALUE rbOptions;
-  rb_scan_args(argc, argv, "21", &rbData, &rbFormat, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
-  int x = 0;
-  int y = 0;
-  int width;
-  int height;
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_x)))
-    x = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_y)))
-    y = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_width)))
-    width = NUM2INT(val);
-  else
-    width = texture->width - x;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_height)))
-    height = NUM2INT(val);
-  else
-    height = texture->height - y;
-  if (!ModifyRectInTexture(texture, &x, &y, &width, &height))
-    return Qnil;
   char* format = StringValuePtr(rbFormat);
   int formatLength = RSTRING_LEN(rbFormat);
+  int pixelLength = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
-  if (width * height * formatLength != RSTRING_LEN(rbData))
+  if (pixelLength * formatLength != RSTRING_LEN(rbData))
     rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
-             width * height * formatLength, RSTRING_LEN(rbData));
+             pixelLength * formatLength, RSTRING_LEN(rbData));
   uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
-  Pixel* pixels = &(texture->pixels[x + y * texture->width]);
-  for (int j = 0; j < height; j++, pixels += texture->width - width) {
-    for (int i = 0; i < width; i++, pixels++) {
-      for (int k = 0; k < formatLength; k++, data++) {
-        switch (format[k]) {
-        case 'r': pixels->color.red   = *data; break;
-        case 'g': pixels->color.green = *data; break;
-        case 'b': pixels->color.blue  = *data; break;
-        case 'a': pixels->color.alpha = *data; break;
-        }
+  Pixel* pixels = texture->pixels;
+  for (int i = 0; i < pixelLength; i++, pixels++) {
+    for (int j = 0; j < formatLength; j++, data++) {
+      switch (format[j]) {
+      case 'r': pixels->color.red   = *data; break;
+      case 'g': pixels->color.green = *data; break;
+      case 'b': pixels->color.blue  = *data; break;
+      case 'a': pixels->color.alpha = *data; break;
       }
     }
   }
@@ -1268,7 +1216,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
   rb_define_method(rb_cTexture, "dispose",        Texture_dispose,         0);
   rb_define_method(rb_cTexture, "disposed?",      Texture_disposed,        0);
-  rb_define_method(rb_cTexture, "dump",           Texture_dump,            -1);
+  rb_define_method(rb_cTexture, "dump",           Texture_dump,            1);
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
@@ -1283,7 +1231,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);
   rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,       3);
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
-  rb_define_method(rb_cTexture, "undump",         Texture_undump,          -1);
+  rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 
   symbol_add            = ID2SYM(rb_intern("add"));

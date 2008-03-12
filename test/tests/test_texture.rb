@@ -1771,40 +1771,6 @@ class TestTexture < Test::Unit::TestCase
         assert_equal str[7 * origin + 6].ord, p.blue
       end
     end
-    str = texture.dump("rrrragb",
-                       :x => 11, :y => 12, :width => 13, :height => 14)
-    assert_equal 13 * 14 * 7, str.length
-    c = 0
-    (12...(12 + 14)).each do |j|
-      (11...(11 + 13)).each do |i|
-        p = texture.get_pixel(i, j)
-        assert_equal str[7 * c].ord,     p.red
-        assert_equal str[7 * c + 1].ord, p.red
-        assert_equal str[7 * c + 2].ord, p.red
-        assert_equal str[7 * c + 3].ord, p.red
-        assert_equal str[7 * c + 4].ord, p.alpha
-        assert_equal str[7 * c + 5].ord, p.green
-        assert_equal str[7 * c + 6].ord, p.blue
-        c += 1
-      end
-    end
-    str = texture.dump("rrrragb", :x => -11, :y => -12)
-    assert_equal texture.width * texture.height * 7, str.length
-    c = 0
-    texture.height.times do |j|
-      texture.width.times do |i|
-        p = texture.get_pixel(i, j)
-        assert_equal str[7 * c].ord,     p.red
-        assert_equal str[7 * c + 1].ord, p.red
-        assert_equal str[7 * c + 2].ord, p.red
-        assert_equal str[7 * c + 3].ord, p.red
-        assert_equal str[7 * c + 4].ord, p.alpha
-        assert_equal str[7 * c + 5].ord, p.green
-        assert_equal str[7 * c + 6].ord, p.blue
-        c += 1
-      end
-    end
-    assert_equal "", texture.dump("rrrragb", :x => 11, :y => 12, :width => -13, :height => -14)
   end
 
   def test_dump_disposed
@@ -1881,56 +1847,6 @@ class TestTexture < Test::Unit::TestCase
       flunk
     rescue ArgumentError => e
       assert_equal "invalid data size: #{data.size - 1} expected but was #{data.size}", e.message
-    end
-    texture = orig_texture.dup
-    texture.undump("\x12\x34\x56\x78" * 13 * 14, "rgba",
-                   :x => 11, :y => 12, :width => 13, :height => 14)
-    texture.height.times do |j|
-      texture.width.times do |i|
-        if 11 <= i and i < 11 + 13 and 12 <= j and j < 12 + 14
-          p = texture.get_pixel(i, j)
-          assert_equal 0x12, p.red
-          assert_equal 0x34, p.green
-          assert_equal 0x56, p.blue
-          assert_equal 0x78, p.alpha
-        else
-          assert_equal orig_texture.get_pixel(i, j), texture.get_pixel(i, j)
-        end
-      end
-    end
-    texture = orig_texture.dup
-    texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba", :x => -11, :y => -12)
-    texture.height.times do |j|
-      texture.width.times do |i|
-        p = texture.get_pixel(i, j)
-        assert_equal 0x12, p.red
-        assert_equal 0x34, p.green
-        assert_equal 0x56, p.blue
-        assert_equal 0x78, p.alpha
-      end
-    end
-    texture = orig_texture.dup
-    texture.undump("\x00\x01\x02\x03", "a",
-                   :x => -11, :y => -12, :width => 13, :height => 14)
-    texture.height.times do |j|
-      texture.width.times do |i|
-        p1 = orig_texture.get_pixel(i, j)
-        p2 = texture.get_pixel(i, j)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
-        if i == 0 and j == 0
-          assert_equal 0, p2.alpha
-        elsif i == 1 and j == 0
-          assert_equal 1, p2.alpha
-        elsif i == 0 and j == 1
-          assert_equal 2, p2.alpha
-        elsif i == 1 and j == 1
-          assert_equal 3, p2.alpha
-        else
-          assert_equal p1.alpha, p2.alpha
-        end
-      end
     end
   end
   

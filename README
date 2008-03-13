@@ -1,4 +1,4 @@
-Star Ruby 0.1.16 (2008-03-??
+Star Ruby 0.1.16 (2008-03-15)
 
 
 * About Star Ruby
@@ -13,7 +13,7 @@ You can develop SNES-like 2D games with Star Ruby.
   - libfreetype
   - libpng
   - libogg
-  - libruby
+  - libruby18
   - libvorbis
   - libvorbisfile
   - SDL

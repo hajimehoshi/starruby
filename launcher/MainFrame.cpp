@@ -2,8 +2,8 @@
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 
-EVT_MENU(wxID_OPEN, MainFrame::OnOpen)
 EVT_MENU(wxID_EXIT, MainFrame::OnExit)
+EVT_MENU(wxID_OPEN, MainFrame::OnOpen)
 
 END_EVENT_TABLE()
 

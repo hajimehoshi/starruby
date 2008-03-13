@@ -14,7 +14,7 @@ else
 end
 CFLAGS << " -fno-strict-aliasing -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
 
-DLDFLAGS = "-Wl,-export-dynamic -L. -L/usr/lib #{Config::CONFIG['LIBRUBY_DLDFLAGS']}"
+DLDFLAGS = "-Wl,-export-dynamic -L. -L/usr/lib #{Config::CONFIG['LIBRUBYARG']}"
 
 if Config::CONFIG['arch'] =~ /mingw/
   LIBS = `env wx-config --libs`.chomp.gsub("/usr/local", "C:/msys/1.0/local")

@@ -5,6 +5,7 @@ BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 
 EVT_MENU(wxID_EXIT, MainFrame::OnExit)
 EVT_MENU(wxID_OPEN, MainFrame::OnOpen)
+EVT_MENU(100,       MainFrame::OnPlay)
 
 END_EVENT_TABLE()
 
@@ -22,7 +23,7 @@ MainFrame::MainFrame()
 
   menu = new wxMenu();
   menuBar->Append(menu, wxT("&Game"));
-  menu->Append(wxID_ANY, wxT("&Play"), wxEmptyString, wxITEM_NORMAL);
+  menu->Append(100, wxT("&Play"), wxEmptyString, wxITEM_NORMAL);
   
   this->Layout();
 }
@@ -38,4 +39,6 @@ void MainFrame::OnOpen(wxCommandEvent& event)
 
 void MainFrame::OnPlay(wxCommandEvent& event)
 {
+  ruby_init();
+  rb_eval_string("puts 'hello'");
 }

@@ -14,7 +14,7 @@ MainFrame::MainFrame()
 {
   wxMenuBar* menuBar = new wxMenuBar();
   this->SetMenuBar(menuBar);
-  
+
   wxMenu* menu = new wxMenu();
   menuBar->Append(menu, wxT("&File"));
   menu->Append(wxID_OPEN, wxT("&Open"), wxEmptyString, wxITEM_NORMAL);

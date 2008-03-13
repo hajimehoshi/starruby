@@ -4,8 +4,7 @@
 class MainApp : public wxApp
 {
 public:
-  bool OnInit()
-  {
+  bool OnInit() {
     MainFrame* frame = new MainFrame();
     SetTopWindow(frame);
     frame->Show();

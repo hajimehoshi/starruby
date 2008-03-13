@@ -8,10 +8,10 @@ class MainFrame : public wxFrame
 public:
   MainFrame();
 protected:
-  void OnOpen(wxCommandEvent& event);
   void OnExit(wxCommandEvent& event);
+  void OnOpen(wxCommandEvent& event);
+  void OnPlay(wxCommandEvent& event);
 private:
-  wxMenuBar* MenuBar;
   DECLARE_EVENT_TABLE();
 };
 

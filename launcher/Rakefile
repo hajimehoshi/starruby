@@ -5,12 +5,12 @@ if (exeext = Config::CONFIG["EXEEXT"]) and not exeext.empty?
   TARGET << "#{exeext}"
 end
 
-INCFLAGS = "-I."
+INCFLAGS = "-I. -I#{Config::CONFIG['archdir']}"
 
 if Config::CONFIG['arch'] =~ /mingw/
-  CFLAGS = `env wx-config --cppflags`.chomp.gsub("/usr/local", "C:/msys/1.0/local")
+  CFLAGS = `env wx-config --cxxflags`.chomp.gsub("/usr/local", "C:/msys/1.0/local")
 else
-  CFLAGS = `wx-config --cppflags`.chomp
+  CFLAGS = `wx-config --cxxflags`.chomp
 end
 CFLAGS << " -fno-strict-aliasing -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
 
@@ -21,6 +21,7 @@ if Config::CONFIG['arch'] =~ /mingw/
 else
   LIBS = `wx-config --libs`.chomp
 end
+LIBS << " -lruby1.8-static"
 
 SRCS = FileList["**/*.cpp"]
 OBJS = SRCS.ext("o")

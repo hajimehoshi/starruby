@@ -1,4 +1,5 @@
 #include "MainFrame.hpp"
+#include <wx/notebook.h>
 #include <ruby.h>
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
@@ -24,7 +25,16 @@ MainFrame::MainFrame()
   menu = new wxMenu();
   menuBar->Append(menu, wxT("&Game"));
   menu->Append(100, wxT("&Play"), wxEmptyString, wxITEM_NORMAL);
-  
+
+  wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+  this->SetSizer(sizer);
+
+  wxNotebook* notebook = new wxNotebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0);
+  sizer->Add(notebook, 1, wxEXPAND, 0);
+  wxPanel* panel = new wxPanel(notebook, wxID_ANY);
+  notebook->AddPage(panel, wxT("New Script"));
+
+  this->SetSize(wxSize(640, 480));
   this->Layout();
 }
 

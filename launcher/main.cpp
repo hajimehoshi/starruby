@@ -4,12 +4,16 @@
 class MainApp : public wxApp
 {
 public:
-  bool OnInit() {
-    MainFrame* frame = new MainFrame();
-    SetTopWindow(frame);
-    frame->Show();
-    return true;
-  }
+  bool OnInit();
 };
 
 IMPLEMENT_APP(MainApp);
+
+bool MainApp::OnInit()
+{
+  MainFrame* frame = new MainFrame();
+  this->SetTopWindow(frame);
+  frame->Show(true);
+  frame->Enable(true);
+  return true;
+}

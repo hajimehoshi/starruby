@@ -10,11 +10,11 @@ INCFLAGS = "-I. -I#{Config::CONFIG['archdir']}"
 if Config::CONFIG['arch'] =~ /mingw/
   CFLAGS = `env wx-config --cxxflags`.chomp.gsub("/usr/local", "C:/msys/1.0/local")
 else
-  CFLAGS = `wx-config --cxxflags`.chomp
+  CFLAGS = `wx-config --cxxflags`.chomp + " -fPIC"
 end
 CFLAGS << " -fno-strict-aliasing -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
 
-DLDFLAGS = "-L. -L/usr/lib #{Config::CONFIG['LIBRUBYARG']}"
+DLDFLAGS = "-L. -L/usr/lib #{Config::CONFIG['LIBRUBYARG']} -lwxscintilla"
 
 if Config::CONFIG['arch'] =~ /mingw/
   LIBS = `env wx-config --libs`.chomp.gsub("/usr/local", "C:/msys/1.0/local")
@@ -22,10 +22,11 @@ else
   LIBS = `wx-config --libs`.chomp
 end
 
+
 SRCS = FileList["**/*.cpp"]
 OBJS = SRCS.ext("o")
 CLEAN.include(OBJS)
-CLOBBER.include(TARGET)
+CLEAN.include(TARGET)
 
 task :default => TARGET
 

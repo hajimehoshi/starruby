@@ -1,8 +1,5 @@
 #include "MainFrame.hpp"
-#include "ScriptEditorPanel.hpp"
-#include "RubyScriptEditor.hpp"
 
-#include <wx/notebook.h>
 #include <ruby.h>
 
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
@@ -22,8 +19,10 @@ MainFrame::MainFrame()
 
   wxMenu* menu = new wxMenu();
   menuBar->Append(menu, wxT("&File"));
-  menu->Append(wxID_NEW,  wxT("&New"), wxEmptyString, wxITEM_NORMAL);
-  menu->Append(wxID_OPEN, wxT("&Open"), wxEmptyString, wxITEM_NORMAL);
+  menu->Append(wxID_NEW,    wxT("&New"),        wxEmptyString, wxITEM_NORMAL);
+  menu->Append(wxID_OPEN,   wxT("&Open..."),    wxEmptyString, wxITEM_NORMAL);
+  menu->Append(wxID_SAVE,   wxT("&Save..."),    wxEmptyString, wxITEM_NORMAL);
+  menu->Append(wxID_SAVEAS, wxT("Save &As..."), wxEmptyString, wxITEM_NORMAL);
   menu->AppendSeparator();
   menu->Append(wxID_EXIT, wxT("E&xit"), wxEmptyString, wxITEM_NORMAL);
 
@@ -31,22 +30,24 @@ MainFrame::MainFrame()
   menuBar->Append(menu, wxT("&Game"));
   menu->Append(100, wxT("&Play"), wxEmptyString, wxITEM_NORMAL);
 
+  menu = new wxMenu();
+  menuBar->Append(menu, wxT("&Help"));
+  menu->Append(wxID_ANY, wxT("&About"), wxEmptyString, wxITEM_NORMAL);
+
   wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
   this->SetSizer(sizer);
 
-  /*wxNotebook* notebook = new wxNotebook(this, wxID_ANY);
-  sizer->Add(notebook, 1, wxEXPAND, 0);
-  ScriptEditorPanel* panel = new ScriptEditorPanel(notebook);
-  notebook->AddPage(panel, wxT("New Script"));*/
+  this->rubyScriptNotebook = new RubyScriptNotebook(this);
+  sizer->Add(this->rubyScriptNotebook, 1, wxEXPAND, 0);
 
-  //wxScintilla* s = new wxScintilla(this, wxID_ANY);
-  //sizer->Add(s, 1, wxEXPAND, 0);
-  RubyScriptEditor* editor = new RubyScriptEditor(this);
-  sizer->Add(editor, 1, wxEXPAND, 0);
-
+#if 0
   wxToolBar* toolBar = new wxToolBar(this, wxID_ANY);
   this->SetToolBar(toolBar);
   toolBar->Realize();
+#endif
+
+  wxStatusBar* statusBar = new wxStatusBar(this, wxID_ANY);
+  this->SetStatusBar(statusBar);
 
   this->SetSize(wxSize(640, 480));
   this->Layout();
@@ -55,10 +56,12 @@ MainFrame::MainFrame()
 void MainFrame::OnExit(wxCommandEvent& event)
 {
   this->Close(true);
+  wxExit();
 }
 
 void MainFrame::OnNew(wxCommandEvent& event)
 {
+  this->rubyScriptNotebook->AddNewPage();
 }
 
 void MainFrame::OnOpen(wxCommandEvent& event)
@@ -68,14 +71,20 @@ void MainFrame::OnOpen(wxCommandEvent& event)
                           wxEmptyString, wxEmptyString,
                           wxT("Ruby files (*.rb)|*.rb|All files (*.*)|*.*"),
                           wxOPEN);
-  if (fileDialog.ShowModal() == wxID_OK) {
-    wxExecute(wxT("notepad " + fileDialog.GetPath()));
-  }
-  
+  if (fileDialog.ShowModal() == wxID_OK)
+    this->rubyScriptNotebook->AddPage(fileDialog.GetPath());
 }
 
 void MainFrame::OnPlay(wxCommandEvent& event)
 {
   ruby_init();
   rb_eval_string("puts 'hello'");
+}
+
+void MainFrame::OnSave(wxCommandEvent& event)
+{
+}
+
+void MainFrame::OnSaveAs(wxCommandEvent& event)
+{
 }

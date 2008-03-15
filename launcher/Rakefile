@@ -14,7 +14,7 @@ else
 end
 CFLAGS << " -fno-strict-aliasing -Wall -mfpmath=sse -msse2 -funit-at-a-time -O3"
 
-DLDFLAGS = "-L. -L/usr/lib #{Config::CONFIG['LIBRUBYARG']} -lwxscintilla"
+DLDFLAGS = "-L. -L/usr/lib #{Config::CONFIG['LIBRUBYARG']}"
 
 if Config::CONFIG['arch'] =~ /mingw/
   LIBS = `env wx-config --libs`.chomp.gsub("/usr/local", "C:/msys/1.0/local")
@@ -26,7 +26,7 @@ end
 SRCS = FileList["**/*.cpp"]
 OBJS = SRCS.ext("o")
 CLEAN.include(OBJS)
-CLEAN.include(TARGET)
+CLOBBER.include(TARGET)
 
 task :default => TARGET
 

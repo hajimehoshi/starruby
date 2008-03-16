@@ -7,9 +7,13 @@ EVT_TEXT(TEXT_CTRL_ID, RubyScriptEditor::OnEdit)
 
 END_EVENT_TABLE()
 
-RubyScriptEditor::RubyScriptEditor(wxWindow* parent, const wxString& path)
+RubyScriptEditor::RubyScriptEditor(wxWindow* parent,
+                                   RubyScriptEditorObserver* observer,
+                                   const wxFileName& path)
      : wxPanel(parent, wxID_ANY)
 {
+  this->observer = observer;
+
   wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
   this->SetSizer(sizer);
   
@@ -27,10 +31,12 @@ RubyScriptEditor::RubyScriptEditor(wxWindow* parent, const wxString& path)
                                  wxT("ＭＳ ゴシック")));
   this->path = path;
   if (path != wxEmptyString)
-    this->textCtrl->LoadFile(path);
+    this->textCtrl->LoadFile(path.GetFullPath());
+  else
+    this->textCtrl->MarkDirty();
 }
 
-const wxString& RubyScriptEditor::GetPath()
+const wxFileName& RubyScriptEditor::GetPath()
 {
   return this->path;
 }
@@ -43,5 +49,22 @@ bool RubyScriptEditor::IsModified()
 void RubyScriptEditor::OnEdit(wxCommandEvent& event)
 {
   this->textCtrl->MarkDirty();
-  event.Skip();
+  this->observer->Notify();
+}
+
+bool RubyScriptEditor::Save()
+{
+  bool result = false;
+  if (!this->path.GetFullPath().IsEmpty()) {
+    if (result = this->textCtrl->SaveFile(this->path.GetFullPath()))
+      this->textCtrl->SetModified(false);
+  }
+  this->observer->Notify();
+  return result;
+}
+
+void RubyScriptEditor::SetPath(const wxFileName& path)
+{
+  this->path = path;
+  this->observer->Notify();
 }

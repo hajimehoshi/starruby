@@ -3,19 +3,22 @@
 
 #include <wx/wx.h>
 #include <wx/aui/auibook.h>
+#include <wx/filename.h>
+#include "RubyScriptEditor.hpp"
+#include "RubyScriptEditorObserver.hpp"
 
-class RubyScriptNotebook : public wxPanel
+class RubyScriptNotebook : public wxPanel, RubyScriptEditorObserver
 {
 public:
   RubyScriptNotebook(wxWindow* parent);
   void AddNewPage();
-  void AddPage(const wxString& path);
-protected:
-  void OnEdit(wxCommandEvent& event);
+  void AddPage(const wxFileName& path);
+  RubyScriptEditor* GetCurrentPage();
+  bool HasCurrentPage();
+  virtual void Notify();
 private:
   void Update();
   wxAuiNotebook* auiNotebook;
-  DECLARE_EVENT_TABLE();
 };
 
 #endif

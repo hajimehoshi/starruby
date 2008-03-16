@@ -1,11 +1,4 @@
 #include "RubyScriptNotebook.hpp"
-#include "RubyScriptEditor.hpp"
-
-BEGIN_EVENT_TABLE(RubyScriptNotebook, wxPanel)
-
-EVT_TEXT(wxID_ANY, RubyScriptNotebook::OnEdit)
-
-END_EVENT_TABLE()
 
 RubyScriptNotebook::RubyScriptNotebook(wxWindow* parent)
      : wxPanel(parent, wxID_ANY)
@@ -19,19 +12,30 @@ RubyScriptNotebook::RubyScriptNotebook(wxWindow* parent)
 
 void RubyScriptNotebook::AddNewPage()
 {
-  RubyScriptEditor* page = new RubyScriptEditor(this->auiNotebook);
+  RubyScriptEditor* page = new RubyScriptEditor(this->auiNotebook, this);
   this->auiNotebook->AddPage(page, wxEmptyString, true);
   this->Update();
 }
 
-void RubyScriptNotebook::AddPage(const wxString& path)
+void RubyScriptNotebook::AddPage(const wxFileName& path)
 {
-  RubyScriptEditor* page = new RubyScriptEditor(this->auiNotebook, path);
+  RubyScriptEditor* page = new RubyScriptEditor(this->auiNotebook, this, path);
   this->auiNotebook->AddPage(page, wxEmptyString, true);
   this->Update();
 }
 
-void RubyScriptNotebook::OnEdit(wxCommandEvent& event)
+RubyScriptEditor* RubyScriptNotebook::GetCurrentPage()
+{
+  int index = this->auiNotebook->GetSelection();
+  return (RubyScriptEditor*)this->auiNotebook->GetPage(index);
+}
+
+bool RubyScriptNotebook::HasCurrentPage()
+{
+  return 0 < this->auiNotebook->GetPageCount();
+}
+
+void RubyScriptNotebook::Notify()
 {
   this->Update();
 }
@@ -43,7 +47,7 @@ void RubyScriptNotebook::Update()
     RubyScriptEditor* editor = (RubyScriptEditor*)this->auiNotebook->GetPage(i);
     wxString title;
     if (editor->GetPath() != wxEmptyString)
-      title += wxFileNameFromPath(editor->GetPath());
+      title += editor->GetPath().GetFullName();
     else
       title += wxT("(No Title)");
     if (editor->IsModified())

@@ -1,6 +1,5 @@
 #include "MainFrame.hpp"
 
-
 BEGIN_EVENT_TABLE(MainFrame, wxFrame)
 
 EVT_MENU(wxID_EXIT,   MainFrame::OnExit)

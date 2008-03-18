@@ -4,6 +4,7 @@
 class RubyScriptEditorObserver
 {
 public:
+  virtual ~RubyScriptEditorObserver();
   virtual void Notify() = 0;
 };
 

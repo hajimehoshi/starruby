@@ -120,6 +120,44 @@ DoLoop(SDL_Surface* screen)
         }
       }
       break;
+    case 3:
+      {
+        int width   = texture->width;
+        int width3x = width * 3;
+        int width6x = width * 6;
+        int height  = texture->height;
+        for (int j = 0; j < height; j++, dst += width6x) {
+          for (int i = 0; i < width; i++, src++, dst += 3) {
+            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
+            dst->color.green = DIV255(src->color.green * src->color.alpha);
+            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+            dst[1] = dst[2] =
+              dst[width3x] = dst[width3x + 1] = dst[width3x + 2] =
+              dst[width6x] = dst[width6x + 1] = dst[width6x + 2] = *dst;
+          }
+        }
+      }
+      break;
+    default:
+      {
+        int width  = texture->width;
+        int widthN = width * windowScale;
+        int heightPadding = width * windowScale * (windowScale - 1);
+        int height  = texture->height;
+        for (int j = 0; j < height; j++, dst += heightPadding) {
+          for (int i = 0; i < width; i++, src++, dst += windowScale) {
+            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
+            dst->color.green = DIV255(src->color.green * src->color.alpha);
+            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+            for (int k = 1; k < windowScale; k++)
+              dst[k] = *dst;
+            for (int l = 1; l < windowScale; l++)
+              for (int k = 0; k < windowScale; k++)
+                dst[widthN * l + k] = *dst;
+          }
+        }
+      }
+      break;
     }
     SDL_UnlockSurface(screen);
     
@@ -185,7 +223,7 @@ Game_run(int argc, VALUE* argv, VALUE self)
     fullscreen = RTEST(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
     windowScale = NUM2INT(val);
-    if (windowScale < 1 || 2 < windowScale)
+    if (windowScale < 1)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);

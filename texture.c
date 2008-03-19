@@ -7,6 +7,7 @@ volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
 volatile static VALUE symbol_blend_type;
+volatile static VALUE symbol_blur;
 volatile static VALUE symbol_camera_height;
 volatile static VALUE symbol_camera_pitch;
 volatile static VALUE symbol_camera_roll;
@@ -69,6 +70,7 @@ typedef struct {
   int intersectionX;
   int intersectionY;
   bool isLoop;
+  bool isBlur;
 } PerspectiveOptions;
 
 inline static void
@@ -258,6 +260,8 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     options->intersectionY = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
     options->isLoop = RTEST(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blur)))
+    options->isBlur = RTEST(val);
 }
 
 static VALUE
@@ -568,6 +572,25 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
   PointF screenP;
+  Color srcAve = {0, 0, 0, 0};
+  if (options.isBlur) {
+    long red   = 0;
+    long green = 0;
+    long blue  = 0;
+    long alpha = 0;
+    int length = srcTexture->width * srcTexture->height;
+    Color* c = &(src->color);
+    for (int i = 0; i < length; i++, c++) {
+      red   += c->red;
+      green += c->green;
+      blue  += c->blue;
+      alpha += c->alpha;
+    }
+    srcAve.red   = red   / length;
+    srcAve.green = green / length;
+    srcAve.blue  = blue  / length;
+    srcAve.alpha = alpha / length;
+  }
   for (int j = 0; j < dstHeight; j++) {
     screenP.x = screenO.x + j * screenDY.x;
     screenP.y = screenO.y + j * screenDY.y;
@@ -593,7 +616,18 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
         if (options.isLoop ||
             (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
           Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
-          RENDER_PIXEL(dst->color, srcColor);
+          if (!options.isBlur || scale <= 1) {
+            RENDER_PIXEL(dst->color, srcColor);
+          } else {
+            int rate = (int)(255 * (1 / scale));
+            Color c;
+            c.red   = ALPHA(srcColor->red,   srcAve.red,   rate);
+            c.green = ALPHA(srcColor->green, srcAve.green, rate);
+            c.blue  = ALPHA(srcColor->blue,  srcAve.blue,  rate);
+            c.alpha = ALPHA(srcColor->alpha, srcAve.alpha, rate);
+            Color* cp = &c;
+            RENDER_PIXEL(dst->color, cp);
+          }
         }
       }
     }
@@ -1254,6 +1288,7 @@ InitializeTexture(void)
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
   symbol_blend_type     = ID2SYM(rb_intern("blend_type"));
+  symbol_blur           = ID2SYM(rb_intern("blur"));
   symbol_camera_height  = ID2SYM(rb_intern("camera_height"));
   symbol_camera_pitch   = ID2SYM(rb_intern("camera_pitch"));
   symbol_camera_roll    = ID2SYM(rb_intern("camera_roll"));

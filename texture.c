@@ -620,11 +620,12 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
             RENDER_PIXEL(dst->color, srcColor);
           } else {
             int rate = (int)(255 * (1 / scale));
-            Color c;
-            c.red   = ALPHA(srcColor->red,   srcAve.red,   rate);
-            c.green = ALPHA(srcColor->green, srcAve.green, rate);
-            c.blue  = ALPHA(srcColor->blue,  srcAve.blue,  rate);
-            c.alpha = ALPHA(srcColor->alpha, srcAve.alpha, rate);
+            Color c = {
+              .red   = ALPHA(srcColor->red,   srcAve.red,   rate),
+              .green = ALPHA(srcColor->green, srcAve.green, rate),
+              .blue  = ALPHA(srcColor->blue,  srcAve.blue,  rate),
+              .alpha = ALPHA(srcColor->alpha, srcAve.alpha, rate),
+            };
             Color* cp = &c;
             RENDER_PIXEL(dst->color, cp);
           }

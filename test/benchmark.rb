@@ -84,7 +84,7 @@ Benchmark.bm do |b|
     end
   end
   dst.clear
-  b.report "perse " do
+  b.report "perse2" do
     1000.times do |i|
       dst.clear if i & 3 == 0
       dst.render_in_perspective(src,
@@ -95,7 +95,7 @@ Benchmark.bm do |b|
                                 :intersection_x => dst.width / 2,
                                 :intersection_y => dst.height / 2,
                                 :loop => true,
-                                :blur => true)
+                                :blur => Color.new(0, 0, 0))
     end
   end
 end

@@ -6,6 +6,7 @@
 volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
+volatile static VALUE symbol_background;
 volatile static VALUE symbol_blend_type;
 volatile static VALUE symbol_blur;
 volatile static VALUE symbol_camera_height;
@@ -38,11 +39,17 @@ volatile static VALUE symbol_x;
 volatile static VALUE symbol_y;
 
 typedef enum {
-  NONE,
-  ALPHA,
-  ADD,
-  SUB,
+  BLEND_TYPE_NONE,
+  BLEND_TYPE_ALPHA,
+  BLEND_TYPE_ADD,
+  BLEND_TYPE_SUB,
 } BlendType;
+
+typedef enum {
+  BLUR_TYPE_NONE,
+  BLUR_TYPE_COLOR,
+  BLUR_TYPE_BACKGROUND,
+} BlurType;
 
 typedef struct {
   double a, b, c, d, tx, ty;
@@ -70,7 +77,8 @@ typedef struct {
   int intersectionX;
   int intersectionY;
   bool isLoop;
-  bool isBlur;
+  BlurType blurType;
+  Color blurColor;
 } PerspectiveOptions;
 
 inline static void
@@ -260,8 +268,27 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     options->intersectionY = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
     options->isLoop = RTEST(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blur)))
-    options->isBlur = RTEST(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blur))) {
+    switch (TYPE(val)) {
+    case T_DATA:
+      options->blurType = BLUR_TYPE_COLOR;
+      Color* color;
+      Data_Get_Struct(val, Color, color);
+      options->blurType  = BLUR_TYPE_COLOR;
+      options->blurColor = *color;
+      break;
+    case T_SYMBOL:
+      if (val == symbol_background)
+        options->blurType = BLUR_TYPE_BACKGROUND;
+      else
+        options->blurType = BLUR_TYPE_NONE;
+      break;
+    default:
+      rb_raise(rb_eTypeError, "wrong argument type %s (expected Color or Symbol)",
+               rb_obj_classname(val));
+      break;
+    }
+  }
 }
 
 static VALUE
@@ -572,25 +599,6 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
   PointF screenP;
-  Color srcAve = {0, 0, 0, 0};
-  if (options.isBlur) {
-    long red   = 0;
-    long green = 0;
-    long blue  = 0;
-    long alpha = 0;
-    int length = srcTexture->width * srcTexture->height;
-    Color* c = &(src->color);
-    for (int i = 0; i < length; i++, c++) {
-      red   += c->red;
-      green += c->green;
-      blue  += c->blue;
-      alpha += c->alpha;
-    }
-    srcAve.red   = red   / length;
-    srcAve.green = green / length;
-    srcAve.blue  = blue  / length;
-    srcAve.alpha = alpha / length;
-  }
   for (int j = 0; j < dstHeight; j++) {
     screenP.x = screenO.x + j * screenDY.x;
     screenP.y = screenO.y + j * screenDY.y;
@@ -616,18 +624,29 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
         if (options.isLoop ||
             (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
           Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
-          if (!options.isBlur || scale <= 1) {
+          if (options.blurType == BLUR_TYPE_NONE || scale <= 1) {
             RENDER_PIXEL(dst->color, srcColor);
           } else {
             int rate = (int)(255 * (1 / scale));
-            Color c = {
-              .red   = ALPHA(srcColor->red,   srcAve.red,   rate),
-              .green = ALPHA(srcColor->green, srcAve.green, rate),
-              .blue  = ALPHA(srcColor->blue,  srcAve.blue,  rate),
-              .alpha = ALPHA(srcColor->alpha, srcAve.alpha, rate),
-            };
-            Color* cp = &c;
-            RENDER_PIXEL(dst->color, cp);
+            if (options.blurType == BLUR_TYPE_BACKGROUND) {
+              Color c = {
+                .red   = srcColor->red,
+                .green = srcColor->green,
+                .blue  = srcColor->blue,
+                .alpha = DIV255(srcColor->alpha * rate),
+              };
+              Color* cp = &c;
+              RENDER_PIXEL(dst->color, cp);
+            } else {
+              Color c = {
+                .red   = ALPHA(srcColor->red,   options.blurColor.red,   rate),
+                .green = ALPHA(srcColor->green, options.blurColor.green, rate),
+                .blue  = ALPHA(srcColor->blue,  options.blurColor.blue,  rate),
+                .alpha = ALPHA(srcColor->alpha, options.blurColor.alpha, rate),
+              };
+              Color* cp = &c;
+              RENDER_PIXEL(dst->color, cp);
+            }
           }
         }
       }
@@ -832,7 +851,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int centerX = 0;
   int centerY = 0;
   int alpha = 255;
-  BlendType blendType = ALPHA;
+  BlendType blendType = BLEND_TYPE_ALPHA;
   int toneRed   = 0;
   int toneGreen = 0;
   int toneBlue  = 0;
@@ -867,13 +886,13 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
     Check_Type(val, T_SYMBOL);
     if (val == symbol_none)
-      blendType = NONE;
+      blendType = BLEND_TYPE_NONE;
     else if (val == symbol_alpha)
-      blendType = ALPHA;
+      blendType = BLEND_TYPE_ALPHA;
     else if (val == symbol_add)
-      blendType = ADD;
+      blendType = BLEND_TYPE_ADD;
     else if (val == symbol_sub)
-      blendType = SUB;
+      blendType = BLEND_TYPE_SUB;
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
     toneRed = NUM2INT(val);
@@ -890,7 +909,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (srcTexture != dstTexture &&
       scaleX == 1 && scaleY == 1 && angle == 0 &&
       saturation == 255 && toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
-      (blendType == ALPHA || blendType == NONE)) {
+      (blendType == BLEND_TYPE_ALPHA || blendType == BLEND_TYPE_NONE)) {
     int dstX = (int)NUM2DBL(rbX);
     int dstY = (int)NUM2DBL(rbY);
     if (dstX < 0) {
@@ -913,7 +932,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
     int srcPadding = srcTextureWidth - width;
     int dstPadding = dstTextureWidth - width;
-    if (blendType == ALPHA) {
+    if (blendType == BLEND_TYPE_ALPHA) {
       for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
         for (int i = 0; i < width; i++, src++, dst++) {
           if (dst->color.alpha == 0) {
@@ -1082,27 +1101,27 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           else
             srcColor.blue = ALPHA(0, srcColor.blue, -toneBlue);
         }
-        if (blendType == NONE) {
+        if (blendType == BLEND_TYPE_NONE) {
           dst->color = srcColor;
         } else if (dst->color.alpha == 0) {
           dst->color.alpha = DIV255(srcColor.alpha * alpha);
           switch (blendType) {
-          case ALPHA:
+          case BLEND_TYPE_ALPHA:
             dst->color.red   = srcColor.red;
             dst->color.green = srcColor.green;
             dst->color.blue  = srcColor.blue;
             break;
-          case ADD:
+          case BLEND_TYPE_ADD:
             dst->color.red   = MIN(255, dst->color.red   + srcColor.red);
             dst->color.green = MIN(255, dst->color.green + srcColor.green);
             dst->color.blue  = MIN(255, dst->color.blue  + srcColor.blue);
             break;
-          case SUB:
+          case BLEND_TYPE_SUB:
             dst->color.red   = MAX(0, -srcColor.red   + dst->color.red);
             dst->color.green = MAX(0, -srcColor.green + dst->color.green);
             dst->color.blue  = MAX(0, -srcColor.blue  + dst->color.blue);
             break;
-          case NONE:
+          case BLEND_TYPE_NONE:
             break;
           }
         } else {
@@ -1110,22 +1129,22 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           if (dst->color.alpha < pixelAlpha)
             dst->color.alpha = pixelAlpha;
           switch (blendType) {
-          case ALPHA:
+          case BLEND_TYPE_ALPHA:
             dst->color.red   = ALPHA(srcColor.red,   dst->color.red,   pixelAlpha);
             dst->color.green = ALPHA(srcColor.green, dst->color.green, pixelAlpha);
             dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  pixelAlpha);
             break;
-          case ADD:
+          case BLEND_TYPE_ADD:
             dst->color.red   = MIN(255, dst->color.red   + DIV255(srcColor.red * pixelAlpha));
             dst->color.green = MIN(255, dst->color.green + DIV255(srcColor.green * pixelAlpha));
             dst->color.blue  = MIN(255, dst->color.blue  + DIV255(srcColor.blue * pixelAlpha));
             break;
-          case SUB:
+          case BLEND_TYPE_SUB:
             dst->color.red   = MAX(0, -DIV255(srcColor.red * pixelAlpha)   + dst->color.red);
             dst->color.green = MAX(0, -DIV255(srcColor.green * pixelAlpha) + dst->color.green);
             dst->color.blue  = MAX(0, -DIV255(srcColor.blue * pixelAlpha)  + dst->color.blue);
             break;
-          case NONE:
+          case BLEND_TYPE_NONE:
             break;
           }
         }
@@ -1288,6 +1307,7 @@ InitializeTexture(void)
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
+  symbol_background     = ID2SYM(rb_intern("background"));
   symbol_blend_type     = ID2SYM(rb_intern("blend_type"));
   symbol_blur           = ID2SYM(rb_intern("blur"));
   symbol_camera_height  = ID2SYM(rb_intern("camera_height"));

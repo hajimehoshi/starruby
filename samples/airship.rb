@@ -89,7 +89,7 @@ Game.run(320, 240) do
     :intersection_x => s.width / 2 + airship.screen_x,
     :intersection_y => s.height / 2 + airship.screen_y,
     :loop => true,
-    :blur => true,
+    :blur => :background,
   }
   # ground
   s.render_in_perspective(field_texture, options)

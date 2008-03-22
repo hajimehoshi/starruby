@@ -866,11 +866,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
     srcWidth = NUM2INT(val);
   else
-    srcWidth = srcTexture->width - srcX;
+    srcWidth = srcTextureWidth - srcX;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
     srcHeight = NUM2INT(val);
   else
-    srcHeight = srcTexture->height - srcY;
+    srcHeight = srcTextureHeight - srcY;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
     scaleX = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))

@@ -45,6 +45,12 @@ FinalizeStarRuby(VALUE unused)
   SDL_Quit();
 }
 
+static VALUE
+Numeric_degree(VALUE self)
+{
+  return rb_float_new(NUM2DBL(self) * PI / 180.0);
+}
+
 void
 Init_starruby(void)
 {
@@ -67,6 +73,9 @@ Init_starruby(void)
   InitializeTexture();
 
   rb_set_end_proc(FinalizeStarRuby, Qnil);
+
+  rb_define_method(rb_cNumeric, "degree",  Numeric_degree, 0);
+  rb_define_method(rb_cNumeric, "degrees", Numeric_degree, 0);
   
 #ifdef DEBUG
   TestInput();

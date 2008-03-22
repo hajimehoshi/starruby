@@ -108,7 +108,6 @@ InitializeColor(void)
   rb_cColor = rb_define_class_under(rb_mStarRuby, "Color", rb_cObject);
   rb_define_alloc_func(rb_cColor, Color_alloc);
   rb_define_private_method(rb_cColor, "initialize", Color_initialize, -1);
-  rb_alias(rb_singleton_class(rb_cColor), rb_intern("[]"), rb_intern("new"));
   rb_define_method(rb_cColor, "alpha", Color_alpha, 0);
   rb_define_method(rb_cColor, "blue",  Color_blue,  0);
   rb_define_method(rb_cColor, "==",    Color_eq,    1);

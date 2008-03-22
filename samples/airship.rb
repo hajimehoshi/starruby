@@ -6,13 +6,13 @@ include StarRuby
 field_texture = Texture.load("images/ruby-logo-R")
 star_texture  = Texture.load("images/star")
 
-Airship = Struct.new(:x, :y, :yaw_int, :pitch_int, :roll_int, :height, :screen_x, :screen_y)
+Airship = Struct.new(:x, :y, :yaw, :pitch, :roll, :height, :screen_x, :screen_y)
 airship = Airship.new
 airship.x          = field_texture.width / 2
 airship.y          = field_texture.height
-airship.yaw_int    = 0
-airship.pitch_int  = 0
-airship.roll_int   = 0
+airship.yaw        = 0 # degree
+airship.pitch      = 0 # degree
+airship.roll       = 0 # degree
 airship.height     = 25
 airship.screen_x   = 0
 airship.screen_y   = 0
@@ -20,12 +20,6 @@ fearless = false
 
 font = Font.new("fonts/ORANGEKI", 12)
 yellow = Color.new(255, 255, 128)
-
-class Numeric
-  def to_radian
-    self * 2 * Math::PI / 128
-  end
-end
 
 Game.title = "Airship"
 Game.run(320, 240) do
@@ -35,35 +29,33 @@ Game.run(320, 240) do
   keys = Input.keys(:keyboard)
   Game.terminate if keys.include?(:escape)
   if keys.include?(:left)
-    airship.yaw_int = (airship.yaw_int + 127) % 128
-    
-    airship.roll_int = [airship.roll_int - (fearless ? 4 : 1), fearless ? -64 : -8].max
+    airship.yaw = (airship.yaw + 358) % 360
+    airship.roll = [airship.roll - (fearless ? 8 : 3), fearless ? -180 : -20].max
   elsif keys.include?(:right)
-    airship.yaw_int = (airship.yaw_int + 1) % 128
-    airship.roll_int = [airship.roll_int + (fearless ? 4 : 1), fearless ? 64 : 8].min
+    airship.yaw = (airship.yaw + 2) % 360
+    airship.roll = [airship.roll + (fearless ? 8 : 3), fearless ? 180 : 20].min
   else
-    if 0 < airship.roll_int
-      airship.roll_int -= (fearless ? 4 : 1)
-    elsif airship.roll_int < 0
-      airship.roll_int += (fearless ? 4 : 1)
+    if 0 < airship.roll
+      airship.roll = [airship.roll - (fearless ? 8 : 3), 0].max
+    elsif airship.roll < 0
+      airship.roll = [airship.roll + (fearless ? 8 : 3), 0].min
     end
   end
   if keys.include?(:space)
-    yaw_radian = airship.yaw_int.to_radian
-    airship.x = (airship.x + 10 * Math.sin(yaw_radian)).to_i
-    airship.y = (airship.y - 10 * Math.cos(yaw_radian)).to_i
+    airship.x = (airship.x + 10 * Math.sin(airship.yaw.degree)).to_i
+    airship.y = (airship.y - 10 * Math.cos(airship.yaw.degree)).to_i
   end
   if keys.include?(:down)
     airship.height = [airship.height + 2, 45].min
-    airship.pitch_int = [airship.pitch_int + (fearless ? 4 : 1), fearless ? 64 : 8].min
+    airship.pitch = [airship.pitch + (fearless ? 8 : 3), fearless ? 180 : 20].min
   elsif keys.include?(:up)
     airship.height = [airship.height - 2, 5].max
-    airship.pitch_int = [airship.pitch_int - (fearless ? 4 : 1), fearless ? -64 : -8].max
+    airship.pitch = [airship.pitch - (fearless ? 8 : 3), fearless ? -180 : -20].max
   else
-    if 0 < airship.pitch_int
-      airship.pitch_int -= (fearless ? 4 : 1)
-    elsif airship.pitch_int < 0
-      airship.pitch_int += (fearless ? 4 : 1)
+    if 0 < airship.pitch
+      airship.pitch = [airship.pitch - (fearless ? 8 : 3), 0].max
+    elsif airship.pitch < 0
+      airship.pitch = [airship.pitch + (fearless ? 8 : 3), 0].min
     end
   end
   if keys.include?(:a)
@@ -82,9 +74,9 @@ Game.run(320, 240) do
     :camera_x => airship.x,
     :camera_y => airship.y,
     :camera_height => airship.height,
-    :camera_yaw   => airship.yaw_int.to_radian,
-    :camera_pitch => airship.pitch_int.to_radian,
-    :camera_roll  => airship.roll_int.to_radian,
+    :camera_yaw   => airship.yaw.degree,
+    :camera_pitch => airship.pitch.degree,
+    :camera_roll  => airship.roll.degree,
     :distance => field_texture.height,
     :intersection_x => s.width / 2 + airship.screen_x,
     :intersection_y => s.height / 2 + airship.screen_y,

@@ -25,7 +25,7 @@ class TestColor < Test::Unit::TestCase
     assert_equal c2.hash, Color.new(5, 6, 7).hash
   end
 
-  def test_color
+  def test_color2
     c1 = Color[1, 2, 3, 4]
     c2 = Color[5, 6, 7]
 

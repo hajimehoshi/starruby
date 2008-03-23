@@ -53,6 +53,25 @@ Input_mouse_location(VALUE self)
   return rb_iv_get(rb_mInput, "mouse_location");
 }
 
+static VALUE
+Input_mouse_location_eq(VALUE self, VALUE rbValue)
+{
+  Check_Type(rbValue, T_ARRAY);
+  if (RARRAY_LEN(rbValue) != 2)
+    rb_raise(rb_eArgError, "array size should be 2, %ld given", RARRAY_LEN(rbValue));
+  int windowScale = GetWindowScale();
+  SDL_WarpMouse(NUM2INT(RARRAY_PTR(rbValue)[0]) * windowScale,
+                NUM2INT(RARRAY_PTR(rbValue)[1]) * windowScale);
+  int mouseLocationX, mouseLocationY;
+  SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
+  volatile VALUE rbMouseLocation =
+    rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
+                 INT2NUM(mouseLocationY / windowScale));
+  OBJ_FREEZE(rbMouseLocation);
+  rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);  
+  return rbValue;
+}
+
 static bool
 isPressed(int status, int duration, int delay, int interval)
 {
@@ -185,6 +204,7 @@ Input_update(VALUE self)
     rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
                  INT2NUM(mouseLocationY / windowScale));
   OBJ_FREEZE(rbMouseLocation);
+  rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 
   if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT))
     mouse->leftState++;
@@ -198,8 +218,6 @@ Input_update(VALUE self)
     mouse->rightState++;
   else
     mouse->rightState = 0;
-  
-  rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 
   return Qnil;
 }
@@ -304,6 +322,8 @@ InitializeInput(void)
                             Input_gamepad_count, 0);
   rb_define_module_function(rb_mInput, "mouse_location",
                             Input_mouse_location, 0);
+  rb_define_module_function(rb_mInput, "mouse_location=",
+                            Input_mouse_location_eq, 1);
   rb_define_module_function(rb_mInput, "keys",   Input_keys, -1);
   rb_define_module_function(rb_mInput, "update", Input_update, 0);
 

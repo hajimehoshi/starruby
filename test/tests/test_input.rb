@@ -30,6 +30,16 @@ class TestInput < Test::Unit::TestCase
     assert_equal 2, Input.mouse_location.size
     assert Input.mouse_location.frozen?
   end
+
+  def test_mouse_location_eq
+    Input.mouse_location = 1, 2
+    assert_raise ArgumentError do
+      Input.mouse_location = 1, 2, 3
+    end
+    assert_raise TypeError do
+      Input.mouse_location = false
+    end
+  end
   
   def test_gamepad_device_number
     assert_equal [], Input.keys(:gamepad, :device_number => -1)

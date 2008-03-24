@@ -131,11 +131,11 @@ module FallingBlocks
     def finish_flashing
       lines_size = @field.flashing_lines.size
       @score += (case lines_size
-      when 1; 100
-      when 2; 300
-      when 3; 900
-      when 4; 2700
-      end) * level
+                 when 1; 100
+                 when 2; 300
+                 when 3; 900
+                 when 4; 2700
+                 end) * level
       @lines += lines_size
       @field.flash
       go_next_piece

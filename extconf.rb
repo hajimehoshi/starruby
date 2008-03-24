@@ -42,7 +42,8 @@ $CFLAGS  += " " + `env libpng-config --cflags`.chomp
 $LDFLAGS += " " + `env sdl-config --libs`.chomp
 $LDFLAGS += " " + `env libpng-config --libs`.chomp
 
-$CFLAGS += " -finline-functions -Wall -std=c99 -mfpmath=sse -msse2 -funit-at-a-time"
+$CFLAGS += " -finline-functions -Wall -std=c99 -funit-at-a-time"
+$CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/
 
 have_library("SDL_mixer") or exit(false)
 have_library("SDL_ttf") or exit(false)

@@ -171,8 +171,15 @@ Font_new(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbFontCache, rbHashKey))) {
     return val;
   } else {
+    VALUE args[] = {
+      rbRealFilePath,
+      rbSize,
+      bold ? Qtrue : Qfalse,
+      italic ? Qtrue : Qfalse,
+      INT2NUM(ttcIndex),
+    };
     volatile VALUE rbNewFont =
-      rb_class_new_instance(3, (VALUE[]){rbPath, rbSize, rbOptions}, self);
+      rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
     rb_hash_aset(rbFontCache, rbHashKey, rbNewFont);
     return rbNewFont;
   }
@@ -187,34 +194,14 @@ Font_alloc(VALUE klass)
 }
 
 static VALUE
-Font_initialize(VALUE self, VALUE rbPath, VALUE rbSize, VALUE rbOptions)
+Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
+                VALUE rbBold, VALUE rbItalic, VALUE rbTtcIndex)
 {
-  volatile VALUE rbRealFilePath;
-  int preTtcIndex = -1;
-  SearchFont(rbPath, (VALUE*)&rbRealFilePath, &preTtcIndex);
-  if (NIL_P(rbRealFilePath)) {
-    char* path = StringValuePtr(rbPath);
-    rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
-    return Qnil;
-  }
-
-  bool bold = false;
-  bool italic = false;
-  int ttcIndex = 0;
-
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_bold)))
-    bold = RTEST(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_italic)))
-    italic = RTEST(val);
-  if (preTtcIndex != -1)
-    ttcIndex = preTtcIndex;
-  else if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_ttc_index)))
-    ttcIndex = NUM2INT(val);
-
-  char* path = StringValuePtr(rbRealFilePath);
-  int size = NUM2INT(rbSize);
+  char* path   = StringValuePtr(rbRealFilePath);
+  int size     = NUM2INT(rbSize);
+  bool bold    = RTEST(rbBold);
+  bool italic  = RTEST(rbItalic);
+  int ttcIndex = NUM2INT(rbTtcIndex);
 
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -379,7 +366,7 @@ InitializeFont(void)
   rb_define_singleton_method(rb_cFont, "exist?", Font_exist, 1);
   rb_define_singleton_method(rb_cFont, "new",    Font_new,   -1);
   rb_define_alloc_func(rb_cFont, Font_alloc);
-  rb_define_private_method(rb_cFont, "initialize", Font_initialize, 3);
+  rb_define_private_method(rb_cFont, "initialize", Font_initialize, 5);
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);
   rb_define_method(rb_cFont, "get_size",  Font_get_size, 1);
   rb_define_method(rb_cFont, "italic?",   Font_italic,   0);

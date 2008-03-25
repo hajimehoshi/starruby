@@ -94,7 +94,7 @@ class TestFont < Test::Unit::TestCase
   def test_equal
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
-      names = ["MS UI Gothic", "Arial"]
+      names = ["MS UI Gothic", "Arial", "Arial Black"]
     when /darwin/
       names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier, Regular"]
     end

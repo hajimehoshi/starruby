@@ -154,7 +154,7 @@ Font_new(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbHashKey = rb_str_dup(rbRealFilePath);  
   char temp[256];
   rb_str_cat2(rbHashKey, ";size=");
-  snprintf(temp, sizeof(temp) / sizeof(char), "%d", size);
+  snprintf(temp, sizeof(temp), "%d", size);
   rb_str_cat2(rbHashKey, temp);
   if (bold)
     rb_str_cat2(rbHashKey, ";bold=true");
@@ -165,7 +165,7 @@ Font_new(int argc, VALUE* argv, VALUE self)
   else
     rb_str_cat2(rbHashKey, ";italic=false");
   rb_str_cat2(rbHashKey, ";ttc_index=");
-  snprintf(temp, sizeof(temp) / sizeof(char), "%d", ttcIndex);
+  snprintf(temp, sizeof(temp), "%d", ttcIndex);
   rb_str_cat2(rbHashKey, temp);
 
   if (!NIL_P(val = rb_hash_aref(rbFontCache, rbHashKey))) {

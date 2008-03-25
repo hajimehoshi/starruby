@@ -91,6 +91,32 @@ class TestFont < Test::Unit::TestCase
     end
   end
 
+  def test_equal
+    case RUBY_PLATFORM
+    when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
+      names = ["MS UI Gothic", "Arial"]
+    when /darwin/
+      names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier, Regular"]
+    end
+    assert names.all?{|name| Font.exist?(name)}
+    assert Font.new(names[0], 12).equal?(Font.new(names[0], 12))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[1], 12))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[2], 12))
+    assert Font.new(names[1], 12).equal?(Font.new(names[1], 12))
+    assert ! Font.new(names[1], 12).equal?(Font.new(names[2], 12))
+    assert Font.new(names[2], 12).equal?(Font.new(names[2], 12))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[0], 11))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[0], 13))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[0], 12, :bold => true))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[0], 12, :italic => true))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[0], 12, :bold => true, :italic => true))
+    assert Font.new(names[0], 12, :bold => true).equal?(Font.new(names[0], 12, :bold => true))
+    assert Font.new(names[0], 12, :italic => true).equal?(Font.new(names[0], 12, :italic => true))
+    assert Font.new(names[0], 12, :bold => true, :italic => true).equal?(Font.new(names[0], 12, :bold => true, :italic => true))
+    assert ! Font.new(names[0], 12).equal?(Font.new(names[1], 14, :bold => true))
+    assert Font.new(names[1], 14, :bold => true).equal?(Font.new(names[1], 14, :bold => true))
+  end
+
   def test_new_type
     assert_raise TypeError do
       Font.new(nil, 12)

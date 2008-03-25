@@ -7,6 +7,8 @@
 static char windowsFontDirPath[256];
 #endif
 
+volatile static VALUE rbFontCache;
+
 volatile static VALUE symbol_bold;
 volatile static VALUE symbol_italic;
 volatile static VALUE symbol_ttc_index;
@@ -51,8 +53,9 @@ SearchFont(VALUE rbFilePathOrName,
     rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
     return;
   }
-  volatile VALUE rbFilePathOrName2 = rb_str_dup(rbFilePathOrName);
-  char* name = StringValuePtr(rbFilePathOrName2);
+  int nameLength = RSTRING_LEN(rbFilePathOrName) + 1;
+  char name[nameLength];
+  MEMCPY(name, StringValuePtr(rbFilePathOrName), char, nameLength);
   FcPattern* pattern;
   char* delimiter = strchr(name, ',');
   char* style = NULL;
@@ -117,6 +120,65 @@ Font_free(Font* font)
 }
 
 static VALUE
+Font_new(int argc, VALUE* argv, VALUE self)
+{
+  volatile VALUE rbPath, rbSize, rbOptions;
+  rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+
+  volatile VALUE rbRealFilePath;
+  int preTtcIndex = -1;
+  SearchFont(rbPath, (VALUE*)&rbRealFilePath, &preTtcIndex);
+  if (NIL_P(rbRealFilePath)) {
+    char* path = StringValuePtr(rbPath);
+    rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
+    return Qnil;
+  }
+
+  int size = NUM2INT(rbSize);
+  bool bold = false;
+  bool italic = false;
+  int ttcIndex = 0;
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_bold)))
+    bold = RTEST(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_italic)))
+    italic = RTEST(val);
+  if (preTtcIndex != -1)
+    ttcIndex = preTtcIndex;
+  else if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_ttc_index)))
+    ttcIndex = NUM2INT(val);
+
+  volatile VALUE rbHashKey = rb_str_dup(rbRealFilePath);  
+  char temp[256];
+  rb_str_cat2(rbHashKey, ";size=");
+  snprintf(temp, sizeof(temp) / sizeof(char), "%d", size);
+  rb_str_cat2(rbHashKey, temp);
+  if (bold)
+    rb_str_cat2(rbHashKey, ";bold=true");
+  else
+    rb_str_cat2(rbHashKey, ";bold=false");
+  if (italic)
+    rb_str_cat2(rbHashKey, ";italic=true");
+  else
+    rb_str_cat2(rbHashKey, ";italic=false");
+  rb_str_cat2(rbHashKey, ";ttc_index=");
+  snprintf(temp, sizeof(temp) / sizeof(char), "%d", ttcIndex);
+  rb_str_cat2(rbHashKey, temp);
+
+  if (!NIL_P(val = rb_hash_aref(rbFontCache, rbHashKey))) {
+    return val;
+  } else {
+    volatile VALUE rbNewFont =
+      rb_class_new_instance(3, (VALUE[]){rbPath, rbSize, rbOptions}, self);
+    rb_hash_aset(rbFontCache, rbHashKey, rbNewFont);
+    return rbNewFont;
+  }
+}
+
+static VALUE
 Font_alloc(VALUE klass)
 {
   Font* font = ALLOC(Font);
@@ -125,13 +187,8 @@ Font_alloc(VALUE klass)
 }
 
 static VALUE
-Font_initialize(int argc, VALUE* argv, VALUE self)
+Font_initialize(VALUE self, VALUE rbPath, VALUE rbSize, VALUE rbOptions)
 {
-  volatile VALUE rbPath, rbSize, rbOptions;
-  rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
-
   volatile VALUE rbRealFilePath;
   int preTtcIndex = -1;
   SearchFont(rbPath, (VALUE*)&rbRealFilePath, &preTtcIndex);
@@ -320,8 +377,9 @@ InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
   rb_define_singleton_method(rb_cFont, "exist?", Font_exist, 1);
+  rb_define_singleton_method(rb_cFont, "new",    Font_new,   -1);
   rb_define_alloc_func(rb_cFont, Font_alloc);
-  rb_define_private_method(rb_cFont, "initialize", Font_initialize, -1);
+  rb_define_private_method(rb_cFont, "initialize", Font_initialize, 3);
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);
   rb_define_method(rb_cFont, "get_size",  Font_get_size, 1);
   rb_define_method(rb_cFont, "italic?",   Font_italic,   0);
@@ -331,4 +389,6 @@ InitializeFont(void)
   symbol_bold      = ID2SYM(rb_intern("bold"));
   symbol_italic    = ID2SYM(rb_intern("italic"));
   symbol_ttc_index = ID2SYM(rb_intern("ttc_index"));
+
+  rbFontCache = rb_iv_set(rb_cFont, "font_cache", rb_hash_new());
 }

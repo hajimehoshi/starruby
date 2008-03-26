@@ -293,8 +293,13 @@ InitializeSdlFont(void)
   if (SUCCEEDED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0,
                              KEY_READ, &hKey))) {
     DWORD type;
-    char fontNameBuff[256];
-    char fileNameBuff[256];
+    DWORD fontNameBuffMaxLength;
+    DWORD fileNameBuffMaxLength;
+    RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                    &fontNameBuffMaxLength, &fileNameBuffMaxLength,
+                    NULL, NULL);
+    char fontNameBuff[fontNameBuffMaxLength];
+    char fileNameBuff[fileNameBuffMaxLength];
     DWORD fontNameBuffLength;
     DWORD fileNameBuffLength;
     rb_require("nkf");
@@ -308,8 +313,7 @@ InitializeSdlFont(void)
                                  NULL, &type,
                                  fileNameBuff, &fileNameBuffLength);
       // In Windows 2000 or older, fontNameBuffLength may hold an invalid value
-      fontNameBuffLength = MIN(strlen(fontNameBuff) + 1, sizeof(fontNameBuff));
-      fileNameBuffLength = MIN(strlen(fileNameBuff) + 1, sizeof(fileNameBuff));
+      fontNameBuffLength = strlen(fontNameBuff) + 1;
       if (result == ERROR_SUCCESS) {
         char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
         if (tolower(ext[0]) == 't' && tolower(ext[1]) == 't' &&

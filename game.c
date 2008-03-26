@@ -121,24 +121,6 @@ DoLoop(SDL_Surface* screen)
         }
       }
       break;
-    case 3:
-      {
-        int width   = texture->width;
-        int width3x = width * 3;
-        int width6x = width * 6;
-        int height  = texture->height;
-        for (int j = 0; j < height; j++, dst += width6x) {
-          for (int i = 0; i < width; i++, src++, dst += 3) {
-            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
-            dst->color.green = DIV255(src->color.green * src->color.alpha);
-            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
-            dst[1] = dst[2] =
-              dst[width3x] = dst[width3x + 1] = dst[width3x + 2] =
-              dst[width6x] = dst[width6x + 1] = dst[width6x + 2] = *dst;
-          }
-        }
-      }
-      break;
     default:
       {
         int width  = texture->width;

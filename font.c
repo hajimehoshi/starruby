@@ -307,6 +307,9 @@ InitializeSdlFont(void)
                                  fontNameBuff, &fontNameBuffLength,
                                  NULL, &type,
                                  fileNameBuff, &fileNameBuffLength);
+      // In Windows 2000 or older, fontNameBuffLength may hold an invalid value
+      fontNameBuffLength = MIN(strlen(fontNameBuff) + 1, sizeof(fontNameBuff));
+      fileNameBuffLength = MIN(strlen(fileNameBuff) + 1, sizeof(fileNameBuff));
       if (result == ERROR_SUCCESS) {
         char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
         if (tolower(ext[0]) == 't' && tolower(ext[1]) == 't' &&
@@ -314,7 +317,7 @@ InitializeSdlFont(void)
           char* fontName = fontNameBuff;
           char* fileName = fileNameBuff;
           // A TTF font name must end with ' (TrueType)'.
-          fontName[fontNameBuffLength - 11] = '\0'; 
+          fontName[fontNameBuffLength - 12] = '\0';
           for (int i = fileNameBuffLength - 1; 0 <= i; i--) {
             if (fileName[i] == '\\') {
               fileName += i + 1;

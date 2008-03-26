@@ -165,7 +165,7 @@ DoLoop(SDL_Surface* screen)
     for (int i = 0; i < length; i++, src++, dst++) {
       *dst = (uint16_t)((DIV255(src->color.red   * src->color.alpha) >> 3) << 11 |
                         (DIV255(src->color.green * src->color.alpha) >> 2) << 5 |
-                        DIV255(src->color.blue  * src->color.alpha) >> 3);
+                        (DIV255(src->color.blue  * src->color.alpha) >> 3));
     }
 #endif
     SDL_UnlockSurface(screen);

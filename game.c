@@ -83,6 +83,7 @@ DoLoop(SDL_Surface* screen)
     Pixel* src = texture->pixels;
 
     SDL_LockSurface(screen);
+#ifndef GP2X
     Pixel* dst = (Pixel*)screen->pixels;
     switch (windowScale) {
     case 1:
@@ -159,6 +160,14 @@ DoLoop(SDL_Surface* screen)
       }
       break;
     }
+#else
+    uint16_t* dst = (uint16_t*)screen->pixels;
+    for (int i = 0; i < length; i++, src++, dst++) {
+      *dst = (uint16_t)((DIV255(src->color.red   * src->color.alpha) >> 3) << 11 |
+                        (DIV255(src->color.green * src->color.alpha) >> 2) << 5 |
+                        DIV255(src->color.blue  * src->color.alpha) >> 3);
+    }
+#endif
     SDL_UnlockSurface(screen);
     
     if (SDL_Flip(screen))
@@ -204,8 +213,13 @@ Game_run(int argc, VALUE* argv, VALUE self)
   SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
   volatile VALUE rbBlock, rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
+#ifndef GP2X
   int width   = NUM2INT(rbWidth);
   int height  = NUM2INT(rbHeight);
+#else
+  int width   = 320;
+  int height  = 240;
+#endif
   screenWidth  = width;
   screenHeight = height;
   if (NIL_P(rbOptions))
@@ -214,7 +228,13 @@ Game_run(int argc, VALUE* argv, VALUE self)
   bool cursor = false;
   bool fullscreen = false;
   windowScale = 1;
+#ifndef GP2X
+  int bpp = 32;
+#else
+  int bpp = 16;
+#endif
 
+#ifndef GP2X
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_cursor)))
@@ -226,9 +246,13 @@ Game_run(int argc, VALUE* argv, VALUE self)
     if (windowScale < 1)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
+#endif
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
-  
-  Uint32 options = SDL_DOUBLEBUF;
+
+  Uint32 options = 0;
+#ifndef GP2X
+  options |= SDL_DOUBLEBUF;
+#endif
   if (fullscreen) {
     options |= SDL_HWSURFACE | SDL_FULLSCREEN;
     windowScale = 1;    
@@ -239,8 +263,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
       screenWidth = 0;
       screenHeight = 0;
       for (int i = 0; modes[i]; i++) {
-        int bpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, 32, options);
-        if (width <= modes[i]->w && height <= modes[i]->h && bpp == 32) {
+        int realBpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, bpp, options);
+        if (width <= modes[i]->w && height <= modes[i]->h && realBpp == bpp) {
           screenWidth  = modes[i]->w;
           screenHeight = modes[i]->h;
         } else {
@@ -257,9 +281,9 @@ Game_run(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                                        INT2NUM(width), INT2NUM(height));
   rb_iv_set(self, "screen",  rbScreen);
-                                       
+
   SDL_Surface* screen =
-    SDL_SetVideoMode(screenWidth * windowScale, screenHeight * windowScale, 32, options);
+    SDL_SetVideoMode(screenWidth * windowScale, screenHeight * windowScale, bpp, options);
   if (!screen) {
     DisposeScreen(screen);
     rb_raise_sdl_error();

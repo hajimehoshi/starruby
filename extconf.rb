@@ -5,6 +5,7 @@ include_base = ""
 sdl_base     = ""
 
 if arg_config("--gp2x", false)
+=begin
   case CONFIG["arch"]
   when /darwin/
     # http://wiki.gp2x.org/wiki/Setting_up_a_development_environment_%28Mac%29
@@ -28,6 +29,8 @@ if arg_config("--gp2x", false)
   else
     raise "not supported arch: #{CONFIG["arch"]}"
   end
+=end
+  $CFLAGS += " -DGP2X"
 end
 
 case CONFIG["arch"]

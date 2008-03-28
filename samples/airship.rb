@@ -23,11 +23,14 @@ yellow = Color.new(255, 255, 128)
 
 Game.title = "Airship"
 Game.run(320, 240) do
+  # Begin Inputing
   if Input.keys(:keyboard, :duration => 1).include?(:f)
     fearless = ! fearless
   end
   keys = Input.keys(:keyboard)
+  # Terminate if the ESC key is pressed
   Game.terminate if keys.include?(:escape)
+  # Go left or right
   if keys.include?(:left)
     airship.yaw = (airship.yaw + 358) % 360
     airship.roll = [airship.roll - (fearless ? 8 : 3), fearless ? -180 : -20].max
@@ -35,16 +38,20 @@ Game.run(320, 240) do
     airship.yaw = (airship.yaw + 2) % 360
     airship.roll = [airship.roll + (fearless ? 8 : 3), fearless ? 180 : 20].min
   else
+    # If not pressed the left or the right key,
+    # the airship will be set its original position gradually.
     if 0 < airship.roll
       airship.roll = [airship.roll - (fearless ? 8 : 3), 0].max
     elsif airship.roll < 0
       airship.roll = [airship.roll + (fearless ? 8 : 3), 0].min
     end
   end
+  # Go forward
   if keys.include?(:space)
     airship.x = (airship.x + 10 * Math.sin(airship.yaw.degree)).to_i
     airship.y = (airship.y - 10 * Math.cos(airship.yaw.degree)).to_i
   end
+  # Go up or down
   if keys.include?(:down)
     airship.height = [airship.height + 2, 45].min
     airship.pitch = [airship.pitch + (fearless ? 8 : 3), fearless ? 180 : 20].min
@@ -52,12 +59,15 @@ Game.run(320, 240) do
     airship.height = [airship.height - 2, 5].max
     airship.pitch = [airship.pitch - (fearless ? 8 : 3), fearless ? -180 : -20].max
   else
+    # If not pressed the up or the down key,
+    # the airship will be set its original position gradually.
     if 0 < airship.pitch
       airship.pitch = [airship.pitch - (fearless ? 8 : 3), 0].max
     elsif airship.pitch < 0
       airship.pitch = [airship.pitch + (fearless ? 8 : 3), 0].min
     end
   end
+  # Move the camera
   if keys.include?(:a)
     airship.screen_x -= 1
   elsif keys.include?(:s)
@@ -68,6 +78,8 @@ Game.run(320, 240) do
   elsif keys.include?(:z)
     airship.screen_y += 1
   end
+  # End Inputing
+  # Begin View
   s = Game.screen
   s.fill(Color.new(128, 128, 128))
   options = {
@@ -83,32 +95,42 @@ Game.run(320, 240) do
     :loop => true,
     :blur => :background,
   }
-  # ground
+  # Render the ground
   s.render_in_perspective(field_texture, options)
-  # stars
+  # Render stars
+  # The following array means stars' coords ([x, y, height]).
   [[-20, -20, 0], [-20, 20, 0], [20, -20, 0], [20, 20, 0],
    [0, 0, 20]].map do |x, y, height|
     x += field_texture.width / 2
     y += field_texture.height / 2
+    # The following methods returns an array ([x, y, scale])
     Texture.transform_in_perspective(x, y, height, options)
   end.select do |x, y, scale|
+    # If either x, y or scale holds nil value,
+    # the star will not be shown.
     x and y and scale and 0 < scale
   end.sort do |a, b|
-    a[2] <=> b[2] # scale
+    # Sort by each scale
+    a[2] <=> b[2]
   end.each do |x, y, scale|
-    x -= star_texture.width
+    # Adjust the rendering position
+    x -= star_texture.width / 2
     y -= star_texture.height
+    # If x or y value is not Fixnum, skip rendering.
     next unless x.kind_of?(Fixnum) and y.kind_of?(Fixnum)
     s.render_texture(star_texture, x, y,
                      :scale_x => scale,
                      :scale_y => scale,
+                     # A star's center is its lower center.
                      :center_x => star_texture.width / 2,
                      :center_y => star_texture.height,
                      :angle => 2 * Math::PI - options[:camera_roll])
   end
+  # Render texts
   s.render_text("[Arrow] Rotate Camera", 8, 8, font, yellow)
   s.render_text("[Space] Go Forward", 8, 8 + 16, font, yellow)
   s.render_text("[W][A][S][Z] Move Screen", 8, 8 + 32, font, yellow)
   str = "[F] Fearless? #{fearless ? '(Yes)' : '(No)'}"
   s.render_text(str, 8, 8 + 48, font, yellow)
+  # End Viewing
 end

@@ -298,8 +298,9 @@ InitializeSdlFont(void)
     RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                     &fontNameBuffMaxLength, &fileNameBuffMaxLength,
                     NULL, NULL);
-    char fontNameBuff[fontNameBuffMaxLength];
-    char fileNameBuff[fileNameBuffMaxLength];
+    // For multibyte characters
+    char fontNameBuff[fontNameBuffMaxLength * 2];
+    char fileNameBuff[fileNameBuffMaxLength * 2];
     DWORD fontNameBuffLength;
     DWORD fileNameBuffLength;
     rb_require("nkf");

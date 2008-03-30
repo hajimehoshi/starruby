@@ -543,6 +543,30 @@ Texture_height(VALUE self)
 static VALUE
 Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
 {
+  /*
+   * Space Coordinates
+   *
+   *     y
+   *     |
+   *     o-- x
+   *    /
+   *   z
+   *
+   * srcTexture (ground)
+   *   mapped on the x-z plane
+   *
+   *     o-- x
+   *    /
+   *   y
+   *
+   * dstTexture (screen)
+   *   o: screenO
+   *
+   *     o-- x
+   *     |
+   *     y
+   *
+   */
   rb_check_frozen(self);
   volatile VALUE rbTexture, rbOptions;
   rb_scan_args(argc, argv, "11", &rbTexture, &rbOptions);
@@ -585,16 +609,17 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     options.distance * sinPitch + options.cameraHeight,
     options.distance * (-cosPitch * cosYaw),
   };
-  PointF screenO;
-  screenO.x = intersection.x
+  PointF screenO = {
+    intersection.x
     - options.intersectionX * screenDX.x
-    - options.intersectionY * screenDY.x;
-  screenO.y = intersection.y
+    - options.intersectionY * screenDY.x,
+    intersection.y
     - options.intersectionX * screenDX.y
-    - options.intersectionY * screenDY.y;
-  screenO.z = intersection.z
+    - options.intersectionY * screenDY.y,
+    intersection.z
     - options.intersectionX * screenDX.z
-    - options.intersectionY * screenDY.z;
+    - options.intersectionY * screenDY.z
+  };
   int cameraHeight = options.cameraHeight;
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;

@@ -142,9 +142,8 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   } else if (0 < panning) {
     sdlLeftPanning = 255 - panning;
   }
-  if (!Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning)) {
+  if (!Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning))
     rb_raise_sdl_mix_error();
-  }
 
   return Qnil;
 }

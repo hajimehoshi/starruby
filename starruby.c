@@ -54,13 +54,16 @@ Numeric_degree(VALUE self)
 void
 Init_starruby(void)
 {
+  rb_mStarRuby = rb_define_module("StarRuby");
+  rb_define_class_under(rb_mStarRuby, "StarRubyError",
+			rb_eStandardError);
+
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
     rb_raise_sdl_error();
   InitializeSdlAudio();
   InitializeSdlFont();
   InitializeSdlInput();
-  
-  rb_mStarRuby = rb_define_module("StarRuby");
+
   volatile VALUE rbVersion = rb_str_new2("0.1.16");
   OBJ_FREEZE(rbVersion);
   rb_define_const(rb_mStarRuby, "VERSION", rbVersion);
@@ -69,14 +72,13 @@ Init_starruby(void)
   InitializeFont();
   InitializeGame();
   InitializeInput();
-  InitializeStarRubyError();
   InitializeTexture();
 
   rb_set_end_proc(FinalizeStarRuby, Qnil);
 
   rb_define_method(rb_cNumeric, "degree",  Numeric_degree, 0);
   rb_define_method(rb_cNumeric, "degrees", Numeric_degree, 0);
-  
+
 #ifdef DEBUG
   TestInput();
 #endif

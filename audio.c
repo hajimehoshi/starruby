@@ -219,6 +219,12 @@ SdlMusicFinished(void)
 void
 InitializeSdlAudio(void)
 {
+  int num;
+  int frequency;
+  Uint16 format;
+  int channels;
+  num = Mix_QuerySpec(&frequency, &format, &channels);
+  printf("%d\n", num);
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
     rb_raise_sdl_mix_error();
   Mix_AllocateChannels(MAX_CHANNEL_COUNT);

@@ -19,7 +19,7 @@ class TestFont < Test::Unit::TestCase
       assert_equal false, Font.exist?("msgothic.ttf")
       assert_equal false, Font.exist?("msgothic.ttc")
       assert_equal true,  Font.exist?("Arial")
-      assert_equal true,  Font.exist?("ＭＳ ゴシック")
+      assert_equal true, (Font.exist?("ＭＳ ゴシック") or Font.exist?("MS Gothic"))
       assert_equal false, Font.exist?("notfont")
       assert_equal false, Font.exist?("notfont.ttf")
       assert_equal false, Font.exist?("notfont.ttc")

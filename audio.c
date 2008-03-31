@@ -3,6 +3,7 @@
 
 #define MAX_CHANNEL_COUNT (8)
 
+static bool isEnabled = false;
 static bool bgmLoop = false;
 static Uint32 bgmPosition = 0;
 static int bgmVolume = 255;
@@ -36,7 +37,8 @@ Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
   bgmVolume = NUM2INT(rbVolume);
   if (bgmVolume < 0 || 256 <= bgmVolume)
     rb_raise(rb_eArgError, "invalid bgm volume: %d", bgmVolume);
-  Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
+  if (isEnabled)
+    Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
   return INT2NUM(bgmVolume);
 }
 
@@ -75,6 +77,8 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   }
 
   Audio_bgm_volume_eq(self, INT2NUM(volume));
+  if (!isEnabled)
+    return Qnil;
   if (time <= 50)
     Mix_PlayMusic(sdlBgm, 0);
   else
@@ -99,13 +103,15 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   Mix_Chunk* sdlSE = NULL;
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbChunkCache, rbCompletePath))) {
-    sdlSE = (Mix_Chunk*)NUM2ULONG(val);
-  } else {
-    char* path = StringValuePtr(rbCompletePath);
-    if (!(sdlSE = Mix_LoadWAV(path)))
-      rb_raise_sdl_mix_error();
-    rb_hash_aset(rbChunkCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
+  if (isEnabled) {
+    if (!NIL_P(val = rb_hash_aref(rbChunkCache, rbCompletePath))) {
+      sdlSE = (Mix_Chunk*)NUM2ULONG(val);
+    } else {
+      char* path = StringValuePtr(rbCompletePath);
+      if (!(sdlSE = Mix_LoadWAV(path)))
+	rb_raise_sdl_mix_error();
+      rb_hash_aset(rbChunkCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
+    }
   }
 
   int panning = 0;
@@ -118,13 +124,16 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
     if (panning <= -256 || 256 <= panning)
       rb_raise(rb_eArgError, "invalid panning: %d", panning);
   }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) 
     time = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
     volume = NUM2INT(val);
     if (volume < 0 || 256 <= volume)
       rb_raise(rb_eArgError, "invalid volume: %d", volume);
   }
+
+  if (!isEnabled)
+    return Qnil;
   
   int sdlChannel;
   if (time <= 50)
@@ -151,12 +160,14 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
 static VALUE
 Audio_playing_bgm(VALUE self)
 {
-  return Mix_PlayingMusic() ? Qtrue : Qfalse;
+  return (isEnabled && Mix_PlayingMusic()) ? Qtrue : Qfalse;
 }
 
 static VALUE
 Audio_playing_se_count(VALUE self)
 {
+  if (!isEnabled)
+    return INT2NUM(0);
   return INT2NUM(Mix_Playing(-1));
 }
 
@@ -174,6 +185,9 @@ Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
+
+  if (!isEnabled)
+    return Qnil;
   
   if (time <= 50)
     Mix_HaltChannel(-1);
@@ -197,6 +211,9 @@ Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
+
+  if (!isEnabled)
+    return Qnil;
   
   if (time <= 50)
     Mix_HaltMusic();
@@ -212,23 +229,22 @@ SdlMusicFinished(void)
 {
   if (sdlBgm && bgmLoop) {
     bgmPosition = 0;
-    Mix_PlayMusic(sdlBgm, 0);
+    if (isEnabled)
+      Mix_PlayMusic(sdlBgm, 0);
   }
 }
 
 void
 InitializeSdlAudio(void)
 {
-  int num;
-  int frequency;
-  Uint16 format;
-  int channels;
-  num = Mix_QuerySpec(&frequency, &format, &channels);
-  printf("%d\n", num);
-  if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1)
-    rb_raise_sdl_mix_error();
-  Mix_AllocateChannels(MAX_CHANNEL_COUNT);
-  Mix_HookMusicFinished(SdlMusicFinished);
+  if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1) {
+    rb_io_puts(1, (VALUE[]) {rb_str_new2(Mix_GetError())}, rb_stderr);
+    isEnabled = false;
+  } else {
+    Mix_AllocateChannels(MAX_CHANNEL_COUNT);
+    Mix_HookMusicFinished(SdlMusicFinished);
+    isEnabled = true;
+  }
 }
 
 void

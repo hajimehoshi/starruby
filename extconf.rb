@@ -9,26 +9,31 @@ if arg_config("--gp2x", false)
   case CONFIG["arch"]
   when /darwin/
     # http://wiki.gp2x.org/wiki/Setting_up_a_development_environment_%28Mac%29
-    sdl_base      = "/opt/local/gp2x/bin/arm-open2x-linux-"
+    sdl_base      = "/opt/local/gp2x/bin/arm-open2x-linux-" # todo
+    libpng_base   = "" # todo
     cross_compile = "/opt/local/devkitpro/devkitGP2X/bin/arm-linux-"
-    CONFIG["CC"]    = "#{cross_compile}gcc"
-    CONFIG["STRIP"] = "#{cross_compile}strip"
-
-    $CFLAGS  += " " + `#{sdl_base}sdl-config --cflags`.chomp
-    # $CFLAGS  += " " + `libpng-config --cflags`.chomp
-    $LDFLAGS += " " + `#{sdl_base}sdl-config --libs`.chomp
-    # $LDFLAGS += " " + `libpng-config --libs`.chomp
-    $CFLAGS += " -finline-functions -Wall -std=c99 -funit-at-a-time"
-
-    $libs += " -lSDL_mixer -lSDL_ttf"
-    have_header("png.h") or exit(false)
-    have_header("zlib.h") or exit(false)
-
-    create_makefile("starruby")
-    exit
+  when /linux/
+    sdl_base      = "/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/"
+    libpng_base   = "/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/"
+    cross_compile = "/opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-"
   else
     raise "not supported arch: #{CONFIG["arch"]}"
   end
+  CONFIG["CC"]    = "#{cross_compile}gcc"
+  CONFIG["STRIP"] = "#{cross_compile}strip"
+
+  $CFLAGS  += " " + `#{sdl_base}sdl-config --cflags`.chomp
+  $CFLAGS  += " " + `#{libpng_base}libpng-config --cflags`.chomp
+  $LDFLAGS += " " + `#{sdl_base}sdl-config --libs`.chomp
+  $LDFLAGS += " " + `#{libpng_base}libpng-config --ldflags`.chomp
+  $CFLAGS += " -finline-functions -Wall -std=c99-funit-at-a-time"
+
+  $libs += " -lSDL_mixer -lSDL_ttf"
+  have_header("png.h") or exit(false)
+  have_header("zlib.h") or exit(false)
+
+  create_makefile("starruby")
+  exit
 =end
   $CFLAGS += " -DGP2X"
 end

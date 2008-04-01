@@ -97,6 +97,8 @@ class TestFont < Test::Unit::TestCase
       names = ["MS UI Gothic", "Arial", "Arial Black"]
     when /darwin/
       names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier, Regular"]
+    when /linux/
+      names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier 10 Pitch, Regular"]
     end
     assert names.all?{|name| Font.exist?(name)}
     assert Font.new(names[0], 12).equal?(Font.new(names[0], 12))

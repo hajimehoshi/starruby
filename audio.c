@@ -79,14 +79,18 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   Audio_bgm_volume_eq(self, INT2NUM(volume));
   if (!isEnabled)
     return Qnil;
-  if (time <= 50)
-    Mix_PlayMusic(sdlBgm, 0);
-  else
-    Mix_FadeInMusic(sdlBgm, 0, time);
+  if (time <= 50) {
+    if (Mix_PlayMusic(sdlBgm, 0))
+      rb_raise_sdl_mixer_error();
+  } else {
+    if (Mix_FadeInMusic(sdlBgm, 0, time))
+      rb_raise_sdl_mixer_error();
+  }
   Mix_RewindMusic();
   if (bgmPosition) {
     bgmPosition = (bgmPosition / 2000 * 2000);
-    Mix_SetMusicPosition(bgmPosition / 1000);
+    if (Mix_SetMusicPosition(bgmPosition / 1000))
+      rb_raise_sdl_mixer_error();
   }
   
   return Qnil;
@@ -230,14 +234,15 @@ SdlMusicFinished(void)
   if (sdlBgm && bgmLoop) {
     bgmPosition = 0;
     if (isEnabled)
-      Mix_PlayMusic(sdlBgm, 0);
+      if (Mix_PlayMusic(sdlBgm, 0))
+	rb_raise_sdl_mix_error();
   }
 }
 
 void
 InitializeSdlAudio(void)
 {
-  if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024) == -1) {
+  if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024)) {
     rb_io_puts(1, (VALUE[]) {rb_str_new2(Mix_GetError())}, rb_stderr);
     isEnabled = false;
   } else {

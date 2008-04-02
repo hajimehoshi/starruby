@@ -81,16 +81,16 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     return Qnil;
   if (time <= 50) {
     if (Mix_PlayMusic(sdlBgm, 0))
-      rb_raise_sdl_mixer_error();
+      rb_raise_sdl_mix_error();
   } else {
     if (Mix_FadeInMusic(sdlBgm, 0, time))
-      rb_raise_sdl_mixer_error();
+      rb_raise_sdl_mix_error();
   }
   Mix_RewindMusic();
   if (bgmPosition) {
     bgmPosition = (bgmPosition / 2000 * 2000);
     if (Mix_SetMusicPosition(bgmPosition / 1000))
-      rb_raise_sdl_mixer_error();
+      rb_raise_sdl_mix_error();
   }
   
   return Qnil;

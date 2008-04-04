@@ -284,7 +284,7 @@ void
 UpdateAudio(void)
 {
   Uint32 now = SDL_GetTicks();
-  if (Mix_PlayingMusic())
+  if (isEnabled && Mix_PlayingMusic())
     bgmPosition += now - sdlPreviousTicks;
   else
     bgmPosition = 0;

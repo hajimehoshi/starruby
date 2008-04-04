@@ -47,8 +47,7 @@ DoLoop(SDL_Surface* screen)
   volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
-  
-  SDL_Event event;
+    
   Uint32 now;
   int nowX;
   Uint32 before = SDL_GetTicks();
@@ -57,7 +56,7 @@ DoLoop(SDL_Surface* screen)
   int counter = 0;
 
   while (true) {
-    if (SDL_PollEvent(&event) != 0 && event.type == SDL_QUIT)
+    if (SDL_QuitRequested())
       break;
     counter++;
     while (true) {

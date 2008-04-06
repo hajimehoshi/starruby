@@ -1137,14 +1137,22 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.blue  = srcColor.blue;
             break;
           case BLEND_TYPE_ADD:
-            dst->color.red   = MIN(255, dst->color.red   + srcColor.red);
-            dst->color.green = MIN(255, dst->color.green + srcColor.green);
-            dst->color.blue  = MIN(255, dst->color.blue  + srcColor.blue);
+            ;
+            int addR = dst->color.red   + srcColor.red;
+            int addG = dst->color.green + srcColor.green;
+            int addB = dst->color.blue  + srcColor.blue;
+            dst->color.red   = MIN(255, addR);
+            dst->color.green = MIN(255, addG);
+            dst->color.blue  = MIN(255, addB);
             break;
           case BLEND_TYPE_SUB:
-            dst->color.red   = MAX(0, -srcColor.red   + dst->color.red);
-            dst->color.green = MAX(0, -srcColor.green + dst->color.green);
-            dst->color.blue  = MAX(0, -srcColor.blue  + dst->color.blue);
+            ;
+            int subR = -srcColor.red   + dst->color.red;
+            int subG = -srcColor.green + dst->color.green;
+            int subB = -srcColor.blue  + dst->color.blue;
+            dst->color.red   = MAX(0, subR);
+            dst->color.green = MAX(0, subG);
+            dst->color.blue  = MAX(0, subB);
             break;
           case BLEND_TYPE_NONE:
             break;
@@ -1160,14 +1168,22 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  pixelAlpha);
             break;
           case BLEND_TYPE_ADD:
-            dst->color.red   = MIN(255, dst->color.red   + DIV255(srcColor.red * pixelAlpha));
-            dst->color.green = MIN(255, dst->color.green + DIV255(srcColor.green * pixelAlpha));
-            dst->color.blue  = MIN(255, dst->color.blue  + DIV255(srcColor.blue * pixelAlpha));
+            ;
+            int addR = dst->color.red   + DIV255(srcColor.red   * pixelAlpha);
+            int addG = dst->color.green + DIV255(srcColor.green * pixelAlpha);
+            int addB = dst->color.blue  + DIV255(srcColor.blue  * pixelAlpha);
+            dst->color.red   = MIN(255, addR);
+            dst->color.green = MIN(255, addG);
+            dst->color.blue  = MIN(255, addB);
             break;
           case BLEND_TYPE_SUB:
-            dst->color.red   = MAX(0, -DIV255(srcColor.red * pixelAlpha)   + dst->color.red);
-            dst->color.green = MAX(0, -DIV255(srcColor.green * pixelAlpha) + dst->color.green);
-            dst->color.blue  = MAX(0, -DIV255(srcColor.blue * pixelAlpha)  + dst->color.blue);
+            ;
+            int subR = -DIV255(srcColor.red   * pixelAlpha) + dst->color.red;
+            int subG = -DIV255(srcColor.green * pixelAlpha) + dst->color.green;
+            int subB = -DIV255(srcColor.blue  * pixelAlpha) + dst->color.blue;
+            dst->color.red   = MAX(0, subR);
+            dst->color.green = MAX(0, subG);
+            dst->color.blue  = MAX(0, subB);
             break;
           case BLEND_TYPE_NONE:
             break;

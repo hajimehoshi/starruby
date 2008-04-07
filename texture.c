@@ -854,8 +854,6 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
   rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
@@ -882,51 +880,56 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int toneBlue  = 0;
   uint8_t saturation = 255;
 
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
-    srcX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
-    srcY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
-    srcWidth = NUM2INT(val);
-  else
-    srcWidth = srcTextureWidth - srcX;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
-    srcHeight = NUM2INT(val);
-  else
-    srcHeight = srcTextureHeight - srcY;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
-    scaleX = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
-    scaleY = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
-    angle = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
-    centerX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
-    centerY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
-    alpha = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
-    Check_Type(val, T_SYMBOL);
-    if (val == symbol_none)
-      blendType = BLEND_TYPE_NONE;
-    else if (val == symbol_alpha)
-      blendType = BLEND_TYPE_ALPHA;
-    else if (val == symbol_add)
-      blendType = BLEND_TYPE_ADD;
-    else if (val == symbol_sub)
-      blendType = BLEND_TYPE_SUB;
+  if (NIL_P(rbOptions)) {
+    srcWidth  = srcTextureWidth;
+    srcHeight = srcTextureHeight;
+  } else {
+    volatile VALUE val;
+    Check_Type(rbOptions, T_HASH);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
+      srcX = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
+      srcY = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
+      srcWidth = NUM2INT(val);
+    else
+      srcWidth = srcTextureWidth - srcX;
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
+      srcHeight = NUM2INT(val);
+    else
+      srcHeight = srcTextureHeight - srcY;
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
+      scaleX = NUM2DBL(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
+      scaleY = NUM2DBL(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
+      angle = NUM2DBL(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
+      centerX = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
+      centerY = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
+      alpha = NUM2DBL(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
+      Check_Type(val, T_SYMBOL);
+      if (val == symbol_none)
+        blendType = BLEND_TYPE_NONE;
+      else if (val == symbol_alpha)
+        blendType = BLEND_TYPE_ALPHA;
+      else if (val == symbol_add)
+        blendType = BLEND_TYPE_ADD;
+      else if (val == symbol_sub)
+        blendType = BLEND_TYPE_SUB;
+    }
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
+      toneRed = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
+      toneGreen = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
+      toneBlue = NUM2INT(val);
+    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
+      saturation = NUM2INT(val);
   }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
-    toneRed = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
-    toneGreen = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
-    toneBlue = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
-    saturation = NUM2INT(val);
 
   if (!ModifyRectInTexture(srcTexture, &srcX, &srcY, &srcWidth, &srcHeight))
     return Qnil;
@@ -958,20 +961,37 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     int srcPadding = srcTextureWidth - width;
     int dstPadding = dstTextureWidth - width;
     if (blendType == BLEND_TYPE_ALPHA) {
-      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-        for (int i = 0; i < width; i++, src++, dst++) {
-          if (dst->color.alpha == 0) {
-            dst->color.alpha = DIV255(src->color.alpha * alpha);
-            dst->color.red   = src->color.red;
-            dst->color.green = src->color.green;
-            dst->color.blue  = src->color.blue;
-          } else {
-            uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
-            if (dst->color.alpha < pixelAlpha)
-              dst->color.alpha = pixelAlpha;
-            dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
-            dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
-            dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+      if (alpha == 255) {
+        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
+          for (int i = 0; i < width; i++, src++, dst++) {
+            if (dst->color.alpha == 0) {
+              *dst = *src;
+            } else {
+              uint8_t pixelAlpha = src->color.alpha;
+              if (dst->color.alpha < pixelAlpha)
+                dst->color.alpha = pixelAlpha;
+              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
+              dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
+              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+            }
+          }
+        }
+      } else if (0 < alpha) {
+        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
+          for (int i = 0; i < width; i++, src++, dst++) {
+            if (dst->color.alpha == 0) {
+              dst->color.alpha = DIV255(src->color.alpha * alpha);
+              dst->color.red   = src->color.red;
+              dst->color.green = src->color.green;
+              dst->color.blue  = src->color.blue;
+            } else {
+              uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
+              if (dst->color.alpha < pixelAlpha)
+                dst->color.alpha = pixelAlpha;
+              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
+              dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
+              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+            }
           }
         }
       }

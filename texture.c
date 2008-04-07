@@ -935,9 +935,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     return Qnil;
 
   if (srcTexture != dstTexture &&
-      scaleX == 1 && scaleY == 1 && angle == 0 &&
-      saturation == 255 && toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
-      (blendType == BLEND_TYPE_ALPHA || blendType == BLEND_TYPE_NONE)) {
+      (scaleX == 1 && scaleY == 1 && angle == 0 &&
+       saturation == 255 && toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
+       (blendType == BLEND_TYPE_ALPHA || blendType == BLEND_TYPE_NONE))) {
     int dstX = (int)NUM2DBL(rbX);
     int dstY = (int)NUM2DBL(rbY);
     if (dstX < 0) {
@@ -960,10 +960,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
     int srcPadding = srcTextureWidth - width;
     int dstPadding = dstTextureWidth - width;
-    if (blendType == BLEND_TYPE_ALPHA) {
-      if (alpha == 255) {
-        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-          for (int i = 0; i < width; i++, src++, dst++) {
+    switch (blendType) {
+    case BLEND_TYPE_ALPHA:
+      if (alpha == 255)
+        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
+          for (int i = 0; i < width; i++, src++, dst++)
             if (dst->color.alpha == 0) {
               *dst = *src;
             } else {
@@ -974,11 +975,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
               dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
             }
-          }
-        }
-      } else if (0 < alpha) {
-        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-          for (int i = 0; i < width; i++, src++, dst++) {
+      else if (0 < alpha)
+        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
+          for (int i = 0; i < width; i++, src++, dst++)
             if (dst->color.alpha == 0) {
               dst->color.alpha = DIV255(src->color.alpha * alpha);
               dst->color.red   = src->color.red;
@@ -992,13 +991,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
               dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
             }
-          }
-        }
-      }
-    } else {
+      break;
+    case BLEND_TYPE_NONE:
       for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
         for (int i = 0; i < width; i++, src++, dst++)
           *dst = *src;
+      break;
+    default:
+      break;
     }
     return Qnil;
   }

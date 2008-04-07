@@ -14,6 +14,11 @@ dst.undump(Array.new(dst.width * dst.height){rand(256).chr}.join, "a")
 
 Benchmark.bm do |b|
   dst.clear
+  b.report "loop  " do
+    10000.times do |i|
+      dst.clear if i & 3 == 0
+    end
+  end
   b.report "normal" do
     10000.times do |i|
       dst.clear if i & 3 == 0

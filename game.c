@@ -12,6 +12,8 @@ static int screenHeight = 0;
 static bool terminated = false;
 static int windowScale = 1;
 
+static SDL_Surface* sdlScreen = NULL;
+
 int
 GetWindowScale(void)
 {
@@ -38,7 +40,7 @@ Game_real_fps(VALUE self)
 }
 
 static VALUE
-DoLoop(SDL_Surface* screen)
+DoLoop()
 {
   running = true;
   terminated = false;
@@ -73,17 +75,18 @@ DoLoop(SDL_Surface* screen)
       counter = 0;
       before2 = now;
     }
+
     UpdateAudio();
     rb_funcall(rb_mInput, rb_intern("update"), 0);
-    
+
     rb_yield(Qnil);
 
     int length = texture->width * texture->height;
     Pixel* src = texture->pixels;
 
-    SDL_LockSurface(screen);
+    SDL_LockSurface(sdlScreen);
 #ifndef GP2X
-    Pixel* dst = (Pixel*)screen->pixels;
+    Pixel* dst = (Pixel*)sdlScreen->pixels;
     switch (windowScale) {
     case 1:
       if (texture->width == screenWidth && texture->height == screenHeight) {
@@ -142,16 +145,16 @@ DoLoop(SDL_Surface* screen)
       break;
     }
 #else
-    uint16_t* dst = (uint16_t*)screen->pixels;
+    uint16_t* dst = (uint16_t*)sdlScreen->pixels;
     for (int i = 0; i < length; i++, src++, dst++) {
       *dst = (uint16_t)((DIV255(src->color.red   * src->color.alpha) >> 3) << 11 |
                         (DIV255(src->color.green * src->color.alpha) >> 2) << 5 |
                         (DIV255(src->color.blue  * src->color.alpha) >> 3));
     }
 #endif
-    SDL_UnlockSurface(screen);
-    
-    if (SDL_Flip(screen))
+    SDL_UnlockSurface(sdlScreen);
+
+    if (SDL_Flip(sdlScreen))
       rb_raise_sdl_error();
     
     if (terminated)
@@ -172,9 +175,10 @@ DisposeScreen(SDL_Surface* screen)
 }
 
 static VALUE
-DoLoopEnsure(SDL_Surface* screen)
+DoLoopEnsure()
 {
-  DisposeScreen(screen);
+  DisposeScreen(sdlScreen);
+  sdlScreen = NULL;
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
   running = false;
   terminated = false;
@@ -261,15 +265,15 @@ Game_run(int argc, VALUE* argv, VALUE self)
   
   volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
                                        INT2NUM(width), INT2NUM(height));
-  rb_iv_set(self, "screen",  rbScreen);
+  rb_iv_set(self, "screen", rbScreen);
 
-  SDL_Surface* screen =
-    SDL_SetVideoMode(screenWidth * windowScale, screenHeight * windowScale, bpp, options);
-  if (!screen) {
-    DisposeScreen(screen);
+  sdlScreen = SDL_SetVideoMode(screenWidth * windowScale,
+                               screenHeight * windowScale, bpp, options);
+  if (!sdlScreen) {
+    DisposeScreen(sdlScreen);
     rb_raise_sdl_error();
   }
-  rb_ensure(DoLoop, (VALUE)screen, DoLoopEnsure, (VALUE)screen);
+  rb_ensure(DoLoop, Qnil, DoLoopEnsure, Qnil);
   return Qnil;
 }
 

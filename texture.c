@@ -1237,6 +1237,9 @@ Texture_save(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
   if (argc == 1)
     rbAlpha = Qtrue;
+  else
+    rb_warn("the 2nd argument is deprecated");
+  bool isAlpha = RTEST(rbAlpha);
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
   if (!fp)
@@ -1256,7 +1259,7 @@ Texture_save(int argc, VALUE* argv, VALUE self)
       row[i * 4]     = c->red;
       row[i * 4 + 1] = c->green;
       row[i * 4 + 2] = c->blue;
-      if (RTEST(rbAlpha))
+      if (isAlpha)
         row[i * 4 + 3] = c->alpha;
       else
         row[i * 4 + 3] = 0xff;

@@ -103,7 +103,7 @@ SearchFont(VALUE rbFilePathOrName,
 }
 
 static VALUE
-Font_exist(VALUE self, VALUE rbFilePath)
+Font_s_exist(VALUE self, VALUE rbFilePath)
 {
   volatile VALUE rbRealFilePath = Qnil;
   SearchFont(rbFilePath, (VALUE*)&rbRealFilePath, NULL);
@@ -120,7 +120,7 @@ Font_free(Font* font)
 }
 
 static VALUE
-Font_new(int argc, VALUE* argv, VALUE self)
+Font_s_new(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbSize, rbOptions;
   rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
@@ -371,8 +371,8 @@ void
 InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
-  rb_define_singleton_method(rb_cFont, "exist?", Font_exist, 1);
-  rb_define_singleton_method(rb_cFont, "new",    Font_new,   -1);
+  rb_define_singleton_method(rb_cFont, "exist?", Font_s_exist, 1);
+  rb_define_singleton_method(rb_cFont, "new",    Font_s_new,   -1);
   rb_define_alloc_func(rb_cFont, Font_alloc);
   rb_define_private_method(rb_cFont, "initialize", Font_initialize, 5);
   rb_define_method(rb_cFont, "bold?",     Font_bold,     0);

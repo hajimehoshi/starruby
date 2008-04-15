@@ -112,7 +112,7 @@ ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
 }
 
 static VALUE
-Texture_load(VALUE self, VALUE rbPath)
+Texture_s_load(VALUE self, VALUE rbPath)
 {
   volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
@@ -292,7 +292,7 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
 }
 
 static VALUE
-Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
+Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbX, rbY, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
@@ -1343,13 +1343,13 @@ void
 InitializeTexture(void)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
-  rb_define_singleton_method(rb_cTexture, "load",     Texture_load,     1);
+  rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, 1);
+  rb_define_singleton_method(rb_cTexture, "transform_in_perspective",
+                             Texture_s_transform_in_perspective, -1);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
-  rb_define_singleton_method(rb_cTexture, "transform_in_perspective",
-                             Texture_transform_in_perspective, -1);
   rb_define_method(rb_cTexture, "change_hue",     Texture_change_hue,      1);
   rb_define_method(rb_cTexture, "change_hue!",    Texture_change_hue_bang, 1);
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);

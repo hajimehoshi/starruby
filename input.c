@@ -75,6 +75,12 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
 static bool
 isPressed(int status, int duration, int delay, int interval)
 {
+  /*
+   * on:  ------------         -           -            ...
+   * off:             --------- ----------- ----------- ...
+   *      <-duration-><-delay-><-interval-><-interval-> ...
+   *
+   */
   if (status <= 0 || duration == 0)
     return false;
   if (duration < 0)

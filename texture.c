@@ -3,6 +3,9 @@
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
+volatile static ID id_default;
+volatile static ID id_size;
+
 volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
@@ -880,7 +883,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int toneBlue  = 0;
   uint8_t saturation = 255;
 
-  if (NIL_P(rbOptions)) {
+  if (NIL_P(rbOptions) ||
+      (rb_funcall(rbOptions, id_size, 0) == INT2NUM(0) &&
+       NIL_P(rb_funcall(rbOptions, id_default, 0)))) {
     srcWidth  = srcTextureWidth;
     srcHeight = srcTextureHeight;
   } else {
@@ -968,12 +973,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             if (dst->color.alpha == 0) {
               *dst = *src;
             } else {
-              uint8_t pixelAlpha = src->color.alpha;
-              if (dst->color.alpha < pixelAlpha)
-                dst->color.alpha = pixelAlpha;
-              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
-              dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
-              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+              uint8_t beta = src->color.alpha;
+              if (dst->color.alpha < beta)
+                dst->color.alpha = beta;
+              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
+              dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
+              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
             }
           }
         }
@@ -986,12 +991,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.green = src->color.green;
               dst->color.blue  = src->color.blue;
             } else {
-              uint8_t pixelAlpha = DIV255(src->color.alpha * alpha);
-              if (dst->color.alpha < pixelAlpha)
-                dst->color.alpha = pixelAlpha;
-              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   pixelAlpha);
-              dst->color.green = ALPHA(src->color.green, dst->color.green, pixelAlpha);
-              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  pixelAlpha);
+              uint8_t beta = DIV255(src->color.alpha * alpha);
+              if (dst->color.alpha < beta)
+                dst->color.alpha = beta;
+              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
+              dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
+              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
             }
           }
         }
@@ -1183,29 +1188,29 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             break;
           }
         } else {
-          uint8_t pixelAlpha = DIV255(srcColor.alpha * alpha);
-          if (dst->color.alpha < pixelAlpha)
-            dst->color.alpha = pixelAlpha;
+          uint8_t beta = DIV255(srcColor.alpha * alpha);
+          if (dst->color.alpha < beta)
+            dst->color.alpha = beta;
           switch (blendType) {
           case BLEND_TYPE_ALPHA:
-            dst->color.red   = ALPHA(srcColor.red,   dst->color.red,   pixelAlpha);
-            dst->color.green = ALPHA(srcColor.green, dst->color.green, pixelAlpha);
-            dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  pixelAlpha);
+            dst->color.red   = ALPHA(srcColor.red,   dst->color.red,   beta);
+            dst->color.green = ALPHA(srcColor.green, dst->color.green, beta);
+            dst->color.blue  = ALPHA(srcColor.blue,  dst->color.blue,  beta);
             break;
           case BLEND_TYPE_ADD:
             ;
-            int addR = dst->color.red   + DIV255(srcColor.red   * pixelAlpha);
-            int addG = dst->color.green + DIV255(srcColor.green * pixelAlpha);
-            int addB = dst->color.blue  + DIV255(srcColor.blue  * pixelAlpha);
+            int addR = dst->color.red   + DIV255(srcColor.red   * beta);
+            int addG = dst->color.green + DIV255(srcColor.green * beta);
+            int addB = dst->color.blue  + DIV255(srcColor.blue  * beta);
             dst->color.red   = MIN(255, addR);
             dst->color.green = MIN(255, addG);
             dst->color.blue  = MIN(255, addB);
             break;
           case BLEND_TYPE_SUB:
             ;
-            int subR = -DIV255(srcColor.red   * pixelAlpha) + dst->color.red;
-            int subG = -DIV255(srcColor.green * pixelAlpha) + dst->color.green;
-            int subB = -DIV255(srcColor.blue  * pixelAlpha) + dst->color.blue;
+            int subR = -DIV255(srcColor.red   * beta) + dst->color.red;
+            int subG = -DIV255(srcColor.green * beta) + dst->color.green;
+            int subB = -DIV255(srcColor.blue  * beta) + dst->color.blue;
             dst->color.red   = MAX(0, subR);
             dst->color.green = MAX(0, subG);
             dst->color.blue  = MAX(0, subB);
@@ -1372,6 +1377,9 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
+
+  id_default = rb_intern("default");
+  id_size    = rb_intern("size");
 
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));

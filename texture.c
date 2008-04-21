@@ -1,5 +1,6 @@
 #include "starruby.h"
 #include <png.h>
+#include "st.h"
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
@@ -84,6 +85,24 @@ typedef struct {
   BlurType blurType;
   Color blurColor;
 } PerspectiveOptions;
+
+typedef struct {
+  double angle;
+  double scaleX;
+  double scaleY;
+  int centerX;
+  int centerY;
+  int srcHeight;
+  int srcWidth;
+  int srcX;
+  int srcY;
+  int toneRed;
+  int toneGreen;
+  int toneBlue;
+  BlendType blendType;
+  uint8_t alpha;
+  uint8_t saturation;
+} RenderingTextureOptions;
 
 inline static void
 CheckDisposed(Texture* texture)
@@ -848,6 +867,52 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
+static int
+AssignRenderingTextureOptions(st_data_t key, st_data_t val,
+                              RenderingTextureOptions* options)
+{
+  if (key == symbol_src_x) {
+    options->srcX = NUM2INT(val);
+  } else if (key == symbol_src_y) {
+    options->srcY = NUM2INT(val);
+  } else if (key == symbol_src_width) {
+    options->srcWidth = NUM2INT(val);
+  } else if (key == symbol_src_height) {
+    options->srcHeight = NUM2INT(val);
+  } else if (key == symbol_scale_x) {
+    options->scaleX = NUM2DBL(val);
+  } else if (key == symbol_scale_y) {
+    options->scaleY = NUM2DBL(val);
+  } else if (key == symbol_angle) {
+    options->angle = NUM2DBL(val);
+  } else if (key == symbol_center_x) {
+    options->centerX = NUM2INT(val);
+  } else if (key == symbol_center_y) {
+    options->centerY = NUM2INT(val);
+  } else if (key == symbol_alpha) {
+    options->alpha = NUM2DBL(val);
+  } else if (key == symbol_blend_type) {
+    Check_Type(val, T_SYMBOL);
+    if (val == symbol_none)
+      options->blendType = BLEND_TYPE_NONE;
+    else if (val == symbol_alpha)
+      options->blendType = BLEND_TYPE_ALPHA;
+    else if (val == symbol_add)
+      options->blendType = BLEND_TYPE_ADD;
+    else if (val == symbol_sub)
+      options->blendType = BLEND_TYPE_SUB;
+  } else if (key == symbol_tone_red) {
+    options->toneRed = NUM2INT(val);
+  } else if (key == symbol_tone_green) {
+    options->toneGreen = NUM2INT(val);
+  } else if (key == symbol_tone_blue) {
+    options->toneBlue = NUM2INT(val);
+  } else if (key == symbol_saturation) {
+    options->saturation = NUM2INT(val);
+  }
+  return ST_CONTINUE;
+}
+
 static VALUE
 Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
@@ -868,81 +933,107 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth  = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  int srcX = 0;
-  int srcY = 0;
-  int srcWidth  = srcTextureWidth;
-  int srcHeight = srcTextureHeight;
-  double scaleX = 1;
-  double scaleY = 1;
-  double angle = 0;
-  int centerX = 0;
-  int centerY = 0;
-  int alpha = 255;
-  BlendType blendType = BLEND_TYPE_ALPHA;
-  int toneRed   = 0;
-  int toneGreen = 0;
-  int toneBlue  = 0;
-  uint8_t saturation = 255;
+  RenderingTextureOptions options;
+  options.srcX       = 0;
+  options.srcY       = 0;
+  options.srcWidth   = srcTextureWidth;
+  options.srcHeight  = srcTextureHeight;
+  options.scaleX     = 1;
+  options.scaleY     = 1;
+  options.angle      = 0;
+  options.centerX    = 0;
+  options.centerY    = 0;
+  options.alpha      = 255;
+  options.blendType  = BLEND_TYPE_ALPHA;
+  options.toneRed    = 0;
+  options.toneGreen  = 0;
+  options.toneBlue   = 0;
+  options.saturation = 255;
 
-  if (!NIL_P(rbOptions))
+  if (!NIL_P(rbOptions)) {
     Check_Type(rbOptions, T_HASH);
-
-  if (!NIL_P(rbOptions) &&
-      (0 < NUM2INT(rb_funcall(rbOptions, id_size, 0)) ||
-       !NIL_P(rb_funcall(rbOptions, id_default, 0)) ||
-       !NIL_P(rb_funcall(rbOptions, id_default_proc, 0)))) {
     volatile VALUE val;
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
-      srcX = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
-      srcY = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
-      srcWidth = NUM2INT(val);
-    else
-      srcWidth = srcTextureWidth - srcX;
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
-      srcHeight = NUM2INT(val);
-    else
-      srcHeight = srcTextureHeight - srcY;
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
-      scaleX = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
-      scaleY = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
-      angle = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
-      centerX = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
-      centerY = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
-      alpha = NUM2DBL(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
-      Check_Type(val, T_SYMBOL);
-      if (val == symbol_none)
-        blendType = BLEND_TYPE_NONE;
-      else if (val == symbol_alpha)
-        blendType = BLEND_TYPE_ALPHA;
-      else if (val == symbol_add)
-        blendType = BLEND_TYPE_ADD;
-      else if (val == symbol_sub)
-        blendType = BLEND_TYPE_SUB;
+    if (NIL_P(rb_funcall(rbOptions, id_default, 0)) &&
+        NIL_P(rb_funcall(rbOptions, id_default_proc, 0))) {
+      if (0 < INT2NUM(rb_funcall(rbOptions, id_size, 0))) {
+        st_table* table = RHASH(rbOptions)->tbl;
+        st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);
+        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
+          options.srcWidth = srcTextureWidth - options.srcX;
+        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
+          options.srcHeight = srcTextureHeight - options.srcY;
+      }
+    } else {
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
+        options.srcX = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
+        options.srcY = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
+        options.srcWidth = NUM2INT(val);
+      else
+        options.srcWidth = srcTextureWidth - options.srcX;
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
+        options.srcHeight = NUM2INT(val);
+      else
+        options.srcHeight = srcTextureHeight - options.srcY;
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
+        options.scaleX = NUM2DBL(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
+        options.scaleY = NUM2DBL(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
+        options.angle = NUM2DBL(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
+        options.centerX = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
+        options.centerY = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
+        options.alpha = NUM2DBL(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
+        Check_Type(val, T_SYMBOL);
+        if (val == symbol_none)
+          options.blendType = BLEND_TYPE_NONE;
+        else if (val == symbol_alpha)
+          options.blendType = BLEND_TYPE_ALPHA;
+        else if (val == symbol_add)
+          options.blendType = BLEND_TYPE_ADD;
+        else if (val == symbol_sub)
+          options.blendType = BLEND_TYPE_SUB;
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
+        options.toneRed = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
+        options.toneGreen = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
+        options.toneBlue = NUM2INT(val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
+        options.saturation = NUM2INT(val);
     }
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
-      toneRed = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
-      toneGreen = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
-      toneBlue = NUM2INT(val);
-    if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
-      saturation = NUM2INT(val);
   }
 
-  if (!ModifyRectInTexture(srcTexture, &srcX, &srcY, &srcWidth, &srcHeight))
+  if (!ModifyRectInTexture(srcTexture,
+                           &(options.srcX), &(options.srcY),
+                           &(options.srcWidth), &(options.srcHeight)))
     return Qnil;
+
+  uint8_t alpha       = options.alpha;
+  double angle        = options.angle;
+  BlendType blendType = options.blendType;
+  int centerX         = options.centerX;
+  int centerY         = options.centerY;
+  uint8_t saturation  = options.saturation;
+  double scaleX       = options.scaleX;
+  double scaleY       = options.scaleY;
+  int srcHeight       = options.srcHeight;
+  int srcWidth        = options.srcWidth;
+  int srcX            = options.srcX;
+  int srcY            = options.srcY;
+  int toneRed         = options.toneRed;
+  int toneGreen       = options.toneGreen;
+  int toneBlue        = options.toneBlue;
 
   if (srcTexture != dstTexture &&
       (scaleX == 1 && scaleY == 1 && angle == 0 &&
-       saturation == 255 && toneRed == 0 && toneGreen == 0 && toneBlue == 0 &&
+       toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255 && 
        (blendType == BLEND_TYPE_ALPHA || blendType == BLEND_TYPE_NONE))) {
     int dstX = (int)NUM2DBL(rbX);
     int dstY = (int)NUM2DBL(rbY);

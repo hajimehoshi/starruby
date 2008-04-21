@@ -1063,7 +1063,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (alpha == 255) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           for (int i = 0; i < width; i++, src++, dst++) {
-            if (dst->color.alpha == 0 || src->color.alpha == 255) {
+            if (src->color.alpha == 255 || dst->color.alpha == 0) {
               *dst = *src;
             } else if (0 < src->color.alpha) {
               uint8_t beta = src->color.alpha;

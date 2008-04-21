@@ -4,6 +4,7 @@
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 volatile static ID id_default;
+volatile static ID id_default_proc;
 volatile static ID id_size;
 
 volatile static VALUE symbol_add;
@@ -869,8 +870,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   int srcX = 0;
   int srcY = 0;
-  int srcWidth;
-  int srcHeight;
+  int srcWidth  = srcTextureWidth;
+  int srcHeight = srcTextureHeight;
   double scaleX = 1;
   double scaleY = 1;
   double angle = 0;
@@ -883,14 +884,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int toneBlue  = 0;
   uint8_t saturation = 255;
 
-  if (NIL_P(rbOptions) ||
-      (rb_funcall(rbOptions, id_size, 0) == INT2NUM(0) &&
-       NIL_P(rb_funcall(rbOptions, id_default, 0)))) {
-    srcWidth  = srcTextureWidth;
-    srcHeight = srcTextureHeight;
-  } else {
-    volatile VALUE val;
+  if (!NIL_P(rbOptions))
     Check_Type(rbOptions, T_HASH);
+
+  if (!NIL_P(rbOptions) &&
+      (0 < NUM2INT(rb_funcall(rbOptions, id_size, 0)) ||
+       !NIL_P(rb_funcall(rbOptions, id_default, 0)) ||
+       !NIL_P(rb_funcall(rbOptions, id_default_proc, 0)))) {
+    volatile VALUE val;
     if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
       srcX = NUM2INT(val);
     if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
@@ -1378,8 +1379,9 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 
-  id_default = rb_intern("default");
-  id_size    = rb_intern("size");
+  id_default      = rb_intern("default");
+  id_default_proc = rb_intern("default_proc");
+  id_size         = rb_intern("size");
 
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));

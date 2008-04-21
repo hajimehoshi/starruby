@@ -1,3 +1,5 @@
+# ref: http://dgames.jp/dan/?permalink&date=20080417
+
 require "starruby"
 require "benchmark.rb"
 include StarRuby

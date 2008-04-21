@@ -1063,9 +1063,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (alpha == 255) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           for (int i = 0; i < width; i++, src++, dst++) {
-            if (dst->color.alpha == 0) {
+            if (dst->color.alpha == 0 || src->color.alpha == 255) {
               *dst = *src;
-            } else {
+            } else if (0 < src->color.alpha) {
               uint8_t beta = src->color.alpha;
               if (dst->color.alpha < beta)
                 dst->color.alpha = beta;
@@ -1083,7 +1083,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.red   = src->color.red;
               dst->color.green = src->color.green;
               dst->color.blue  = src->color.blue;
-            } else {
+            } else if (0 < src->color.alpha) {
               uint8_t beta = DIV255(src->color.alpha * alpha);
               if (dst->color.alpha < beta)
                 dst->color.alpha = beta;

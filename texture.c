@@ -956,6 +956,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     if (NIL_P(rb_funcall(rbOptions, id_default, 0)) &&
         NIL_P(rb_funcall(rbOptions, id_default_proc, 0))) {
       if (0 < INT2NUM(rb_funcall(rbOptions, id_size, 0))) {
+        // Only for Ruby 1.8
         st_table* table = RHASH(rbOptions)->tbl;
         st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
         if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))

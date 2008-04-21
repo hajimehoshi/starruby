@@ -868,8 +868,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
 }
 
 static int
-AssignRenderingTextureOptions(st_data_t key, st_data_t val,
-                              RenderingTextureOptions* options)
+AssignRenderingTextureOptions_st(st_data_t key, st_data_t val,
+                                 RenderingTextureOptions* options)
 {
   if (key == symbol_src_x) {
     options->srcX = NUM2INT(val);
@@ -957,7 +957,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         NIL_P(rb_funcall(rbOptions, id_default_proc, 0))) {
       if (0 < INT2NUM(rb_funcall(rbOptions, id_size, 0))) {
         st_table* table = RHASH(rbOptions)->tbl;
-        st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);
+        st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
         if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
           options.srcWidth = srcTextureWidth - options.srcX;
         if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))

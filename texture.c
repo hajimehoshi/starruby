@@ -1063,12 +1063,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (alpha == 255) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           for (int i = 0; i < width; i++, src++, dst++) {
+            uint8_t dstAlpha = dst->color.alpha;
             uint8_t beta = src->color.alpha;
-            // beta == 255 || dst->color.alpha == 0
-            if (~beta == 0 || dst->color.alpha == 0) {
+            if ((beta == 255) | (dstAlpha == 0)) {
               *dst = *src;
             } else if (0 < beta) {
-              if (dst->color.alpha < beta)
+              if (dstAlpha < beta)
                 dst->color.alpha = beta;
               dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
               dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
@@ -1079,14 +1079,16 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       } else if (0 < alpha) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           for (int i = 0; i < width; i++, src++, dst++) {
-            uint8_t beta = DIV255(src->color.alpha * alpha);
-            if (dst->color.alpha == 0) {
+            uint8_t srcAlpha = src->color.alpha;
+            uint8_t dstAlpha = dst->color.alpha;
+            uint8_t beta = DIV255(srcAlpha * alpha);
+            if (dstAlpha == 0) {
               dst->color.alpha = beta;
               dst->color.red   = src->color.red;
               dst->color.green = src->color.green;
               dst->color.blue  = src->color.blue;
-            } else if (0 < src->color.alpha) {
-              if (dst->color.alpha < beta)
+            } else if (0 < beta) {
+              if (dstAlpha < beta)
                 dst->color.alpha = beta;
               dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
               dst->color.green = ALPHA(src->color.green, dst->color.green, beta);

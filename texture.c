@@ -6,18 +6,10 @@
 
 #define LOOP(process, length)                       \
   do {                                              \
-    for (int n = length % 16; n; n--) {             \
+    for (int n = length % 8; n; n--) {              \
       process;                                      \
     }                                               \
-    for (int n = length / 16; n; n--) {             \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
+    for (int n = length / 8; n; n--) {              \
       process;                                      \
       process;                                      \
       process;                                      \
@@ -1084,7 +1076,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               uint8_t dstAlpha = dst->color.alpha;
               if ((beta == 255) | (dstAlpha == 0)) {
                 *dst = *src;
-              } else if (0 < beta) {
+              } else if (beta) {
                 if (dstAlpha < beta)
                   dst->color.alpha = beta;
                 dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
@@ -1106,7 +1098,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
                 dst->color.red   = src->color.red;
                 dst->color.green = src->color.green;
                 dst->color.blue  = src->color.blue;
-              } else if (0 < beta) {
+              } else if (beta) {
                 if (dstAlpha < beta)
                   dst->color.alpha = beta;
                 dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);

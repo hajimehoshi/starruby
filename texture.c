@@ -672,54 +672,53 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     screenP.x = screenO.x + j * screenDY.x;
     screenP.y = screenO.y + j * screenDY.y;
     screenP.z = screenO.z + j * screenDY.z;
-    for (int i = 0; i < dstWidth; i++, dst++,
-           screenP.x += screenDX.x,
-           screenP.y += screenDX.y,
-           screenP.z += screenDX.z) {
-      if (cameraHeight != screenP.y &&
-          ((0 < cameraHeight && screenP.y < cameraHeight) ||
-           (cameraHeight < 0 && cameraHeight < screenP.y))) {
-        double scale = cameraHeight / (cameraHeight - screenP.y);
-        int srcX = (int)((screenP.x) * scale + options.cameraX);
-        int srcZ = (int)((screenP.z) * scale + options.cameraY);
-        if (options.isLoop) {
-          srcX %= srcWidth;
-          if (srcX < 0)
-            srcX += srcWidth;
-          srcZ %= srcHeight;
-          if (srcZ < 0)
-            srcZ += srcHeight;
-        }
-        if (options.isLoop ||
-            (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
-          Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
-          if (options.blurType == BLUR_TYPE_NONE || scale <= 1) {
-            RENDER_PIXEL(dst->color, srcColor);
-          } else {
-            int rate = (int)(255 * (1 / scale));
-            if (options.blurType == BLUR_TYPE_BACKGROUND) {
-              Color c = {
-                .red   = srcColor->red,
-                .green = srcColor->green,
-                .blue  = srcColor->blue,
-                .alpha = DIV255(srcColor->alpha * rate),
-              };
-              Color* cp = &c;
-              RENDER_PIXEL(dst->color, cp);
+    LOOP({
+        if (cameraHeight != screenP.y &&
+            ((0 < cameraHeight && screenP.y < cameraHeight) ||
+             (cameraHeight < 0 && cameraHeight < screenP.y))) {
+          double scale = cameraHeight / (cameraHeight - screenP.y);
+          int srcX = (int)((screenP.x) * scale + options.cameraX);
+          int srcZ = (int)((screenP.z) * scale + options.cameraY);
+          if (options.isLoop) {
+            srcX %= srcWidth;
+            if (srcX < 0)
+              srcX += srcWidth;
+            srcZ %= srcHeight;
+            if (srcZ < 0)
+              srcZ += srcHeight;
+          }
+          if (options.isLoop ||
+              (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
+            Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
+            if (options.blurType == BLUR_TYPE_NONE || scale <= 1) {
+              RENDER_PIXEL(dst->color, srcColor);
             } else {
-              Color c = {
-                .red   = ALPHA(srcColor->red,   options.blurColor.red,   rate),
-                .green = ALPHA(srcColor->green, options.blurColor.green, rate),
-                .blue  = ALPHA(srcColor->blue,  options.blurColor.blue,  rate),
-                .alpha = ALPHA(srcColor->alpha, options.blurColor.alpha, rate),
-              };
-              Color* cp = &c;
-              RENDER_PIXEL(dst->color, cp);
+              int rate = (int)(255 * (1 / scale));
+              if (options.blurType == BLUR_TYPE_BACKGROUND) {
+                Color c;
+                c.red = srcColor->red;
+                c.green = srcColor->green;
+                c.blue  = srcColor->blue;
+                c.alpha = DIV255(srcColor->alpha * rate);
+                Color* cp = &c;
+                RENDER_PIXEL(dst->color, cp);
+              } else {
+                Color c;
+                c.red   = ALPHA(srcColor->red,   options.blurColor.red,   rate);
+                c.green = ALPHA(srcColor->green, options.blurColor.green, rate);
+                c.blue  = ALPHA(srcColor->blue,  options.blurColor.blue,  rate);
+                c.alpha = ALPHA(srcColor->alpha, options.blurColor.alpha, rate);
+                Color* cp = &c;
+                RENDER_PIXEL(dst->color, cp);
+              }
             }
           }
         }
-      }
-    }
+        dst++;
+        screenP.x += screenDX.x;
+        screenP.y += screenDX.y;
+        screenP.z += screenDX.z;
+      }, dstWidth);
   }
   return Qnil;
 }

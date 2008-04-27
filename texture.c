@@ -952,7 +952,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   CheckDisposed(dstTexture);
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
-  rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
+  if (3 <= argc && argc <= 4) {
+    rbTexture = argv[0];
+    rbX       = argv[1];
+    rbY       = argv[2];
+    rbOptions = (argc == 4) ? argv[3] : Qnil;
+  } else {
+    rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
+  }
 
   Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);

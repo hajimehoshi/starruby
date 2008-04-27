@@ -4,6 +4,31 @@
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
+#define LOOP(process, length)                       \
+  do {                                              \
+    for (int n = length % 16; n; n--) {             \
+      process;                                      \
+    }                                               \
+    for (int n = length / 16; n; n--) {             \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+      process;                                      \
+    }                                               \
+  } while (false)
+
 volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
@@ -1055,46 +1080,53 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     case BLEND_TYPE_ALPHA:
       if (alpha == 255) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-          for (int i = 0; i < width; i++, src++, dst++) {
-            uint8_t beta = src->color.alpha;
-            uint8_t dstAlpha = dst->color.alpha;
-            if ((dstAlpha == 0) || (beta == 255)) {
-              *dst = *src;
-            } else if (0 < beta) {
-              if (dstAlpha < beta)
-                dst->color.alpha = beta;
-              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
-              dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
-              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
-            }
-          }
+          LOOP({
+              uint8_t beta = src->color.alpha;
+              uint8_t dstAlpha = dst->color.alpha;
+              if ((beta == 255) | (dstAlpha == 0)) {
+                *dst = *src;
+              } else if (0 < beta) {
+                if (dstAlpha < beta)
+                  dst->color.alpha = beta;
+                dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
+                dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
+                dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
+              }
+              src++;
+              dst++;
+            }, width);
         }
       } else if (0 < alpha) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-          for (int i = 0; i < width; i++, src++, dst++) {
-            uint8_t srcAlpha = src->color.alpha;
-            uint8_t dstAlpha = dst->color.alpha;
-            uint8_t beta = DIV255(srcAlpha * alpha);
-            if (dstAlpha == 0) {
-              dst->color.alpha = beta;
-              dst->color.red   = src->color.red;
-              dst->color.green = src->color.green;
-              dst->color.blue  = src->color.blue;
-            } else if (0 < beta) {
-              if (dstAlpha < beta)
+          LOOP({
+              uint8_t srcAlpha = src->color.alpha;
+              uint8_t dstAlpha = dst->color.alpha;
+              uint8_t beta = DIV255(srcAlpha * alpha);
+              if (dstAlpha == 0) {
                 dst->color.alpha = beta;
-              dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
-              dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
-              dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
-            }
-          }
+                dst->color.red   = src->color.red;
+                dst->color.green = src->color.green;
+                dst->color.blue  = src->color.blue;
+              } else if (0 < beta) {
+                if (dstAlpha < beta)
+                  dst->color.alpha = beta;
+                dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
+                dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
+                dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
+              }
+              src++;
+              dst++;
+            }, width);
         }
       }
       break;
     case BLEND_TYPE_NONE:
       for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
-        for (int i = 0; i < width; i++, src++, dst++)
-          *dst = *src;
+        LOOP({
+            *dst = *src;
+            src++;
+            dst++;
+          }, width);
       break;
     default:
       break;

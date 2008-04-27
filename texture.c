@@ -967,7 +967,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   options.srcWidth  = srcTextureWidth;
   options.srcHeight = srcTextureHeight;
 
-  if (TYPE(rbOptions) == T_HASH) {
+  if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
     if (NIL_P(RHASH(rbOptions)->ifnone)) {
       // Only for Ruby 1.8
       st_table* table = RHASH(rbOptions)->tbl;

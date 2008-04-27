@@ -1045,8 +1045,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       (scaleX == 1 && scaleY == 1 && angle == 0 &&
        toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255 && 
        (blendType == BLEND_TYPE_ALPHA || blendType == BLEND_TYPE_NONE))) {
-    int dstX = (int)NUM2DBL(rbX);
-    int dstY = (int)NUM2DBL(rbY);
+    int dstX = NUM2INT(rbX);
+    int dstY = NUM2INT(rbY);
     if (dstX < 0) {
       srcX -= dstX;
       srcWidth += dstX;
@@ -1161,8 +1161,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     mat.tx += centerX;
     mat.ty += centerY;
   }
-  mat.tx += NUM2DBL(rbX);
-  mat.ty += NUM2DBL(rbY);
+  mat.tx += NUM2INT(rbX);
+  mat.ty += NUM2INT(rbY);
   double det = mat.a * mat.d - mat.b * mat.c;
   if (det == 0)
     return Qnil;

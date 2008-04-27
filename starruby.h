@@ -67,6 +67,7 @@ STARRUBY_EXTERN VALUE rb_cTone;
 #define MAX(x, y) ((x >= y) ? x : y)
 #define MIN(x, y) ((x <= y) ? x : y)
 #define DIV255(x) ((x + 255) >> 8)
+
 VALUE GetCompletePath(VALUE, bool);
 
 void Init_starruby(void);

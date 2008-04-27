@@ -91,9 +91,10 @@ DoLoop()
     case 1:
       if (texture->width == screenWidth && texture->height == screenHeight) {
         for (int i = 0; i < length; i++, src++, dst++) {
-          dst->color.red   = DIV255(src->color.red   * src->color.alpha);
-          dst->color.green = DIV255(src->color.green * src->color.alpha);
-          dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+          uint8_t alpha = src->color.alpha;
+          dst->color.red   = DIV255(src->color.red   * alpha);
+          dst->color.green = DIV255(src->color.green * alpha);
+          dst->color.blue  = DIV255(src->color.blue  * alpha);
         }
       } else {
         dst += (screenWidth - texture->width) / 2
@@ -101,9 +102,10 @@ DoLoop()
         int padding = screenWidth - texture->width;
         for (int j = 0; j < texture->height; j++, dst += padding) {
           for (int i = 0; i < texture->width; i++, src++, dst++) {
-            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
-            dst->color.green = DIV255(src->color.green * src->color.alpha);
-            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+            uint8_t alpha = src->color.alpha;
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
           }
         }
       }
@@ -115,9 +117,10 @@ DoLoop()
         int height  = texture->height;
         for (int j = 0; j < height; j++, dst += width2x) {
           for (int i = 0; i < width; i++, src++, dst += 2) {
-            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
-            dst->color.green = DIV255(src->color.green * src->color.alpha);
-            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+            uint8_t alpha = src->color.alpha;
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
             dst[width2x] = dst[width2x + 1] = dst[1] = *dst;
           }
         }
@@ -131,9 +134,10 @@ DoLoop()
         int height  = texture->height;
         for (int j = 0; j < height; j++, dst += heightPadding) {
           for (int i = 0; i < width; i++, src++, dst += windowScale) {
-            dst->color.red   = DIV255(src->color.red   * src->color.alpha);
-            dst->color.green = DIV255(src->color.green * src->color.alpha);
-            dst->color.blue  = DIV255(src->color.blue  * src->color.alpha);
+            uint8_t alpha = src->color.alpha;
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
             for (int k = 1; k < windowScale; k++)
               dst[k] = *dst;
             for (int l = 1; l < windowScale; l++)
@@ -147,9 +151,10 @@ DoLoop()
 #else
     uint16_t* dst = (uint16_t*)sdlScreen->pixels;
     for (int i = 0; i < length; i++, src++, dst++) {
-      *dst = (uint16_t)((DIV255(src->color.red   * src->color.alpha) >> 3) << 11 |
-                        (DIV255(src->color.green * src->color.alpha) >> 2) << 5 |
-                        (DIV255(src->color.blue  * src->color.alpha) >> 3));
+      uint8_t alpha = src->color.alpha;
+      *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
+                        (DIV255(src->color.green * alpha) >> 2) << 5 |
+                        (DIV255(src->color.blue  * alpha) >> 3));
     }
 #endif
     SDL_UnlockSurface(sdlScreen);

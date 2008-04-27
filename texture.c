@@ -6,7 +6,7 @@
 
 #define LOOP(process, length)                       \
   do {                                              \
-    for (int n = length % 8; n; n--) {              \
+    for (int n = length & 7; n; n--) {              \
       process;                                      \
     }                                               \
     for (int n = length / 8; n; n--) {              \

@@ -879,6 +879,24 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
+static RenderingTextureOptions defaultOptions = {
+  .srcX       = 0,
+  .srcY       = 0,
+  .srcWidth   = -1,
+  .srcHeight  = -1,
+  .scaleX     = 1,
+  .scaleY     = 1,
+  .angle      = 0,
+  .centerX    = 0,
+  .centerY    = 0,
+  .alpha      = 255,
+  .blendType  = BLEND_TYPE_ALPHA,
+  .toneRed    = 0,
+  .toneGreen  = 0,
+  .toneBlue   = 0,
+  .saturation = 255,
+};
+
 static int
 AssignRenderingTextureOptions_st(st_data_t key, st_data_t val,
                                  RenderingTextureOptions* options)
@@ -945,22 +963,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth  = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  RenderingTextureOptions options;
-  options.srcX       = 0;
-  options.srcY       = 0;
-  options.srcWidth   = srcTextureWidth;
-  options.srcHeight  = srcTextureHeight;
-  options.scaleX     = 1;
-  options.scaleY     = 1;
-  options.angle      = 0;
-  options.centerX    = 0;
-  options.centerY    = 0;
-  options.alpha      = 255;
-  options.blendType  = BLEND_TYPE_ALPHA;
-  options.toneRed    = 0;
-  options.toneGreen  = 0;
-  options.toneBlue   = 0;
-  options.saturation = 255;
+  RenderingTextureOptions options = defaultOptions;
+  options.srcWidth  = srcTextureWidth;
+  options.srcHeight = srcTextureHeight;
 
   if (!NIL_P(rbOptions)) {
     Check_Type(rbOptions, T_HASH);

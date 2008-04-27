@@ -968,62 +968,66 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   options.srcHeight = srcTextureHeight;
 
   if (!NIL_P(rbOptions)) {
-    Check_Type(rbOptions, T_HASH);
-    volatile VALUE val;
-    if (NIL_P(RHASH(rbOptions)->ifnone)) {
-      // Only for Ruby 1.8
-      st_table* table = RHASH(rbOptions)->tbl;
-      if (0 < table->num_entries) {
-        st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
-        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
+    if (TYPE(rbOptions) == T_HASH) {
+      if (NIL_P(RHASH(rbOptions)->ifnone)) {
+        // Only for Ruby 1.8
+        st_table* table = RHASH(rbOptions)->tbl;
+        if (0 < table->num_entries) {
+          volatile VALUE val;
+          st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
+          if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
+            options.srcWidth = srcTextureWidth - options.srcX;
+          if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
+            options.srcHeight = srcTextureHeight - options.srcY;
+        }
+      } else {
+        volatile VALUE val;
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
+          options.srcX = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
+          options.srcY = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
+          options.srcWidth = NUM2INT(val);
+        else
           options.srcWidth = srcTextureWidth - options.srcX;
-        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
+          options.srcHeight = NUM2INT(val);
+        else
           options.srcHeight = srcTextureHeight - options.srcY;
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
+          options.scaleX = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
+          options.scaleY = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
+          options.angle = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
+          options.centerX = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
+          options.centerY = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
+          options.alpha = NUM2DBL(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
+          Check_Type(val, T_SYMBOL);
+          if (val == symbol_none)
+            options.blendType = BLEND_TYPE_NONE;
+          else if (val == symbol_alpha)
+            options.blendType = BLEND_TYPE_ALPHA;
+          else if (val == symbol_add)
+            options.blendType = BLEND_TYPE_ADD;
+          else if (val == symbol_sub)
+            options.blendType = BLEND_TYPE_SUB;
+        }
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
+          options.toneRed = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
+          options.toneGreen = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
+          options.toneBlue = NUM2INT(val);
+        if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
+          options.saturation = NUM2INT(val);
       }
     } else {
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
-        options.srcX = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
-        options.srcY = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
-        options.srcWidth = NUM2INT(val);
-      else
-        options.srcWidth = srcTextureWidth - options.srcX;
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
-        options.srcHeight = NUM2INT(val);
-      else
-        options.srcHeight = srcTextureHeight - options.srcY;
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
-        options.scaleX = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
-        options.scaleY = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
-        options.angle = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
-        options.centerX = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
-        options.centerY = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
-        options.alpha = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
-        Check_Type(val, T_SYMBOL);
-        if (val == symbol_none)
-          options.blendType = BLEND_TYPE_NONE;
-        else if (val == symbol_alpha)
-          options.blendType = BLEND_TYPE_ALPHA;
-        else if (val == symbol_add)
-          options.blendType = BLEND_TYPE_ADD;
-        else if (val == symbol_sub)
-          options.blendType = BLEND_TYPE_SUB;
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
-        options.toneRed = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
-        options.toneGreen = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
-        options.toneBlue = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
-        options.saturation = NUM2INT(val);
+      Check_Type(rbOptions, T_HASH);      
     }
   }
 

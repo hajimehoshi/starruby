@@ -228,6 +228,12 @@ Input_update(VALUE self)
   return Qnil;
 }
 
+void
+UpdateInput(void)
+{
+  Input_update(rb_mInput);
+}
+
 #define ADD_KEY(currentKey, _name, _sdlKey)     \
   do {                                          \
     KeyboardKey* key = ALLOC(KeyboardKey);      \

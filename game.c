@@ -77,7 +77,7 @@ DoLoop()
     }
 
     UpdateAudio();
-    rb_funcall(rb_mInput, rb_intern("update"), 0);
+    UpdateInput();
 
     rb_yield(Qnil);
 

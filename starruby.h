@@ -83,6 +83,7 @@ void FinalizeAudio(void);
 void FinalizeInput(void);
 
 void UpdateAudio(void);
+void UpdateInput(void);
 
 void InitializeSdlAudio(void);
 void InitializeSdlFont(void);

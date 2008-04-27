@@ -4,10 +4,6 @@
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
-volatile static ID id_default;
-volatile static ID id_default_proc;
-volatile static ID id_size;
-
 volatile static VALUE symbol_add;
 volatile static VALUE symbol_alpha;
 volatile static VALUE symbol_angle;
@@ -953,17 +949,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(rbOptions)) {
     Check_Type(rbOptions, T_HASH);
     volatile VALUE val;
-    if (NIL_P(rb_funcall(rbOptions, id_default, 0)) &&
-        NIL_P(rb_funcall(rbOptions, id_default_proc, 0))) {
-      if (0 < INT2NUM(rb_funcall(rbOptions, id_size, 0))) {
-        // Only for Ruby 1.8
-        st_table* table = RHASH(rbOptions)->tbl;
-        st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
-        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
-          options.srcWidth = srcTextureWidth - options.srcX;
-        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
-          options.srcHeight = srcTextureHeight - options.srcY;
-      }
+    if (NIL_P(RHASH(rbOptions)->ifnone)) {
+      // Only for Ruby 1.8
+      st_table* table = RHASH(rbOptions)->tbl;
+      st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
+      if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
+        options.srcWidth = srcTextureWidth - options.srcX;
+      if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
+        options.srcHeight = srcTextureHeight - options.srcY;
     } else {
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
         options.srcX = NUM2INT(val);
@@ -1063,9 +1056,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (alpha == 255) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           for (int i = 0; i < width; i++, src++, dst++) {
-            uint8_t dstAlpha = dst->color.alpha;
             uint8_t beta = src->color.alpha;
-            if ((beta == 255) | (dstAlpha == 0)) {
+            uint8_t dstAlpha = dst->color.alpha;
+            if ((dstAlpha == 0) || (beta == 255)) {
               *dst = *src;
             } else if (0 < beta) {
               if (dstAlpha < beta)
@@ -1473,10 +1466,6 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
-
-  id_default      = rb_intern("default");
-  id_default_proc = rb_intern("default_proc");
-  id_size         = rb_intern("size");
 
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));

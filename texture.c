@@ -879,7 +879,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-static RenderingTextureOptions defaultOptions = {
+const static RenderingTextureOptions defaultOptions = {
   .srcX       = 0,
   .srcY       = 0,
   .srcWidth   = -1,

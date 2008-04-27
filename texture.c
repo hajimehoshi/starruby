@@ -968,11 +968,13 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     if (NIL_P(RHASH(rbOptions)->ifnone)) {
       // Only for Ruby 1.8
       st_table* table = RHASH(rbOptions)->tbl;
-      st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
-      if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
-        options.srcWidth = srcTextureWidth - options.srcX;
-      if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
-        options.srcHeight = srcTextureHeight - options.srcY;
+      if (0 < table->num_entries) {
+        st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
+        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
+          options.srcWidth = srcTextureWidth - options.srcX;
+        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
+          options.srcHeight = srcTextureHeight - options.srcY;
+      }
     } else {
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
         options.srcX = NUM2INT(val);

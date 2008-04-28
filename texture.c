@@ -1106,9 +1106,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       } else if (0 < alpha) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           LOOP({
-              uint8_t srcAlpha = src->color.alpha;
               uint8_t dstAlpha = dst->color.alpha;
-              uint8_t beta = DIV255(srcAlpha * alpha);
+              uint8_t beta = DIV255(src->color.alpha * alpha);
               if (dstAlpha == 0) {
                 dst->color.alpha = beta;
                 dst->color.red   = src->color.red;

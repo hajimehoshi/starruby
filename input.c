@@ -162,8 +162,19 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-static VALUE
-Input_update(VALUE self)
+#define ADD_KEY(currentKey, _name, _sdlKey)     \
+  do {                                          \
+    KeyboardKey* key = ALLOC(KeyboardKey);      \
+    key->rbSymbol = ID2SYM(rb_intern(_name));   \
+    key->sdlKey   = _sdlKey;                    \
+    key->state    = 0;                          \
+    key->next     = NULL;                       \
+    currentKey->next = key;                     \
+    currentKey = key;                           \
+  } while (false)
+
+void
+UpdateInput(void)
 {
   SDL_PumpEvents();
   SDL_JoystickUpdate();
@@ -224,26 +235,15 @@ Input_update(VALUE self)
     mouse->rightState++;
   else
     mouse->rightState = 0;
+}
 
+static VALUE
+Input_update(VALUE self)
+{
+  rb_warn("Input.update is deprecated");
+  UpdateInput();
   return Qnil;
 }
-
-void
-UpdateInput(void)
-{
-  Input_update(rb_mInput);
-}
-
-#define ADD_KEY(currentKey, _name, _sdlKey)     \
-  do {                                          \
-    KeyboardKey* key = ALLOC(KeyboardKey);      \
-    key->rbSymbol = ID2SYM(rb_intern(_name));   \
-    key->sdlKey   = _sdlKey;                    \
-    key->state    = 0;                          \
-    key->next     = NULL;                       \
-    currentKey->next = key;                     \
-    currentKey = key;                           \
-  } while (false)
 
 void
 InitializeSdlInput()

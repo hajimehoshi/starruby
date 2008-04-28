@@ -162,6 +162,14 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
+static VALUE
+Input_update(VALUE self)
+{
+  rb_warn("Input.update is deprecated");
+  UpdateInput();
+  return Qnil;
+}
+
 #define ADD_KEY(currentKey, _name, _sdlKey)     \
   do {                                          \
     KeyboardKey* key = ALLOC(KeyboardKey);      \
@@ -235,14 +243,6 @@ UpdateInput(void)
     mouse->rightState++;
   else
     mouse->rightState = 0;
-}
-
-static VALUE
-Input_update(VALUE self)
-{
-  rb_warn("Input.update is deprecated");
-  UpdateInput();
-  return Qnil;
 }
 
 void

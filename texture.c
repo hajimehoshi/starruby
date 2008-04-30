@@ -6,18 +6,17 @@
 
 #define LOOP(process, length)                       \
   do {                                              \
-    for (int n = length & 7; n; n--) {              \
-      process;                                      \
-    }                                               \
-    for (int n = length / 8; n; n--) {              \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
-      process;                                      \
+    int n = (length + 7) / 8;                       \
+    switch (length % 8) {                           \
+    case 0: do { process;                           \
+      case 7: process;                              \
+      case 6: process;                              \
+      case 5: process;                              \
+      case 4: process;                              \
+      case 3: process;                              \
+      case 2: process;                              \
+      case 1: process;                              \
+      } while (--n > 0);                            \
     }                                               \
   } while (false)
 

@@ -64,7 +64,7 @@ Init_starruby(void)
   InitializeSdlFont();
   InitializeSdlInput();
 
-  volatile VALUE rbVersion = rb_str_new2("0.1.17");
+  volatile VALUE rbVersion = rb_str_new2("0.1.18");
   OBJ_FREEZE(rbVersion);
   rb_define_const(rb_mStarRuby, "VERSION", rbVersion);
   InitializeAudio();

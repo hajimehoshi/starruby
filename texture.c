@@ -20,40 +20,40 @@
     }                                               \
   } while (false)
 
-volatile static VALUE symbol_add;
-volatile static VALUE symbol_alpha;
-volatile static VALUE symbol_angle;
-volatile static VALUE symbol_background;
-volatile static VALUE symbol_blend_type;
-volatile static VALUE symbol_blur;
-volatile static VALUE symbol_camera_height;
-volatile static VALUE symbol_camera_pitch;
-volatile static VALUE symbol_camera_roll;
-volatile static VALUE symbol_camera_x;
-volatile static VALUE symbol_camera_y;
-volatile static VALUE symbol_camera_yaw;
-volatile static VALUE symbol_center_x;
-volatile static VALUE symbol_center_y;
-volatile static VALUE symbol_distance;
-volatile static VALUE symbol_height;
-volatile static VALUE symbol_intersection_x;
-volatile static VALUE symbol_intersection_y;
-volatile static VALUE symbol_loop;
-volatile static VALUE symbol_none;
-volatile static VALUE symbol_saturation;
-volatile static VALUE symbol_scale_x;
-volatile static VALUE symbol_scale_y;
-volatile static VALUE symbol_src_height;
-volatile static VALUE symbol_src_width;
-volatile static VALUE symbol_src_x;
-volatile static VALUE symbol_src_y;
-volatile static VALUE symbol_sub;
-volatile static VALUE symbol_tone_blue;
-volatile static VALUE symbol_tone_green;
-volatile static VALUE symbol_tone_red;
-volatile static VALUE symbol_width;
-volatile static VALUE symbol_x;
-volatile static VALUE symbol_y;
+static volatile VALUE symbol_add;
+static volatile VALUE symbol_alpha;
+static volatile VALUE symbol_angle;
+static volatile VALUE symbol_background;
+static volatile VALUE symbol_blend_type;
+static volatile VALUE symbol_blur;
+static volatile VALUE symbol_camera_height;
+static volatile VALUE symbol_camera_pitch;
+static volatile VALUE symbol_camera_roll;
+static volatile VALUE symbol_camera_x;
+static volatile VALUE symbol_camera_y;
+static volatile VALUE symbol_camera_yaw;
+static volatile VALUE symbol_center_x;
+static volatile VALUE symbol_center_y;
+static volatile VALUE symbol_distance;
+static volatile VALUE symbol_height;
+static volatile VALUE symbol_intersection_x;
+static volatile VALUE symbol_intersection_y;
+static volatile VALUE symbol_loop;
+static volatile VALUE symbol_none;
+static volatile VALUE symbol_saturation;
+static volatile VALUE symbol_scale_x;
+static volatile VALUE symbol_scale_y;
+static volatile VALUE symbol_src_height;
+static volatile VALUE symbol_src_width;
+static volatile VALUE symbol_src_x;
+static volatile VALUE symbol_src_y;
+static volatile VALUE symbol_sub;
+static volatile VALUE symbol_tone_blue;
+static volatile VALUE symbol_tone_green;
+static volatile VALUE symbol_tone_red;
+static volatile VALUE symbol_width;
+static volatile VALUE symbol_x;
+static volatile VALUE symbol_y;
 
 typedef enum {
   BLEND_TYPE_NONE,
@@ -201,10 +201,10 @@ Texture_s_load(VALUE self, VALUE rbPath)
   Data_Get_Struct(rbTexture, Texture, texture);
 
   int channels = png_get_channels(pngPtr, infoPtr);
-  for (int j = 0; j < height; j++) {
+  for (unsigned int j = 0; j < height; j++) {
     png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);
-    for (int i = 0; i < width; i++) {
+    for (unsigned int i = 0; i < width; i++) {
       Color* c = &(texture->pixels[width * j + i].color);
       switch (channels) {
       case 2:
@@ -878,7 +878,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-const static RenderingTextureOptions defaultOptions = {
+static const RenderingTextureOptions defaultOptions = {
   .srcX       = 0,
   .srcY       = 0,
   .srcWidth   = -1,

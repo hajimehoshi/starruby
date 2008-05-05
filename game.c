@@ -1,8 +1,8 @@
 #include "starruby.h"
 
-volatile static VALUE symbol_cursor;
-volatile static VALUE symbol_fullscreen;
-volatile static VALUE symbol_window_scale;
+static volatile VALUE symbol_cursor;
+static volatile VALUE symbol_fullscreen;
+static volatile VALUE symbol_window_scale;
 
 static int fps = 30;
 static double realFps = 0;

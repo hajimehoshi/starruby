@@ -10,14 +10,14 @@ static int bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlPreviousTicks = 0;
 
-volatile static VALUE rbChunkCache;
-volatile static VALUE rbMusicCache;
+static volatile VALUE rbChunkCache;
+static volatile VALUE rbMusicCache;
 
-volatile static VALUE symbol_loop;
-volatile static VALUE symbol_panning;
-volatile static VALUE symbol_position;
-volatile static VALUE symbol_time;
-volatile static VALUE symbol_volume;
+static volatile VALUE symbol_loop;
+static volatile VALUE symbol_panning;
+static volatile VALUE symbol_position;
+static volatile VALUE symbol_time;
+static volatile VALUE symbol_volume;
 
 static VALUE
 Audio_bgm_position(VALUE self)

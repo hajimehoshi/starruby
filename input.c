@@ -28,18 +28,18 @@ typedef struct {
 } Mouse;
 static Mouse* mouse;
 
-volatile static VALUE symbol_delay;
-volatile static VALUE symbol_device_number;
-volatile static VALUE symbol_down;
-volatile static VALUE symbol_duration;
-volatile static VALUE symbol_gamepad;
-volatile static VALUE symbol_interval;
-volatile static VALUE symbol_keyboard;
-volatile static VALUE symbol_left;
-volatile static VALUE symbol_middle;
-volatile static VALUE symbol_mouse;
-volatile static VALUE symbol_right;
-volatile static VALUE symbol_up;
+static volatile VALUE symbol_delay;
+static volatile VALUE symbol_device_number;
+static volatile VALUE symbol_down;
+static volatile VALUE symbol_duration;
+static volatile VALUE symbol_gamepad;
+static volatile VALUE symbol_interval;
+static volatile VALUE symbol_keyboard;
+static volatile VALUE symbol_left;
+static volatile VALUE symbol_middle;
+static volatile VALUE symbol_mouse;
+static volatile VALUE symbol_right;
+static volatile VALUE symbol_up;
 
 static VALUE
 Input_gamepad_count(VALUE self)

@@ -7,11 +7,11 @@
 static char windowsFontDirPath[256];
 #endif
 
-volatile static VALUE rbFontCache;
+static volatile VALUE rbFontCache;
 
-volatile static VALUE symbol_bold;
-volatile static VALUE symbol_italic;
-volatile static VALUE symbol_ttc_index;
+static volatile VALUE symbol_bold;
+static volatile VALUE symbol_italic;
+static volatile VALUE symbol_ttc_index;
 
 typedef struct FontFileInfo {
   VALUE rbFontNameSymbol;

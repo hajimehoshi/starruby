@@ -1068,6 +1068,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (srcTextureWidth <= srcX || srcWidth < 0)
         return Qnil;
       dstX = 0;
+    } else if (dstTextureWidth <= dstX) {
+      return Qnil;
     }
     if (dstY < 0) {
       srcY -= dstY;
@@ -1075,6 +1077,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (srcTextureHeight <= srcY || srcHeight < 0)
         return Qnil;
       dstY = 0;
+    } else if (dstTextureHeight <= dstY) {
+      return Qnil;
     }
     int width  = MIN(srcWidth,  dstTextureWidth - dstX);
     int height = MIN(srcHeight, dstTextureHeight - dstY);

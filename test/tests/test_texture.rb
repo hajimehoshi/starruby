@@ -1425,6 +1425,42 @@ class TestTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
       end
     end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, texture2.width, 0,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, texture2.height,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, -texture2.width, 0,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, -texture2.height,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
   end
   
   def test_render_texture_alpha

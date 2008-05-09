@@ -20,46 +20,50 @@
     }                                               \
   } while (false)
 
-static volatile VALUE symbol_add;
-static volatile VALUE symbol_alpha;
-static volatile VALUE symbol_angle;
-static volatile VALUE symbol_background;
-static volatile VALUE symbol_blend_type;
-static volatile VALUE symbol_blur;
-static volatile VALUE symbol_camera_height;
-static volatile VALUE symbol_camera_pitch;
-static volatile VALUE symbol_camera_roll;
-static volatile VALUE symbol_camera_x;
-static volatile VALUE symbol_camera_y;
-static volatile VALUE symbol_camera_yaw;
-static volatile VALUE symbol_center_x;
-static volatile VALUE symbol_center_y;
-static volatile VALUE symbol_distance;
-static volatile VALUE symbol_height;
-static volatile VALUE symbol_intersection_x;
-static volatile VALUE symbol_intersection_y;
-static volatile VALUE symbol_loop;
-static volatile VALUE symbol_none;
-static volatile VALUE symbol_saturation;
-static volatile VALUE symbol_scale_x;
-static volatile VALUE symbol_scale_y;
-static volatile VALUE symbol_src_height;
-static volatile VALUE symbol_src_width;
-static volatile VALUE symbol_src_x;
-static volatile VALUE symbol_src_y;
-static volatile VALUE symbol_sub;
-static volatile VALUE symbol_tone_blue;
-static volatile VALUE symbol_tone_green;
-static volatile VALUE symbol_tone_red;
-static volatile VALUE symbol_width;
-static volatile VALUE symbol_x;
-static volatile VALUE symbol_y;
+volatile static VALUE symbol_add;
+volatile static VALUE symbol_add_alpha;
+volatile static VALUE symbol_alpha;
+volatile static VALUE symbol_angle;
+volatile static VALUE symbol_background;
+volatile static VALUE symbol_blend_type;
+volatile static VALUE symbol_blur;
+volatile static VALUE symbol_camera_height;
+volatile static VALUE symbol_camera_pitch;
+volatile static VALUE symbol_camera_roll;
+volatile static VALUE symbol_camera_x;
+volatile static VALUE symbol_camera_y;
+volatile static VALUE symbol_camera_yaw;
+volatile static VALUE symbol_center_x;
+volatile static VALUE symbol_center_y;
+volatile static VALUE symbol_distance;
+volatile static VALUE symbol_height;
+volatile static VALUE symbol_intersection_x;
+volatile static VALUE symbol_intersection_y;
+volatile static VALUE symbol_loop;
+volatile static VALUE symbol_none;
+volatile static VALUE symbol_saturation;
+volatile static VALUE symbol_scale_x;
+volatile static VALUE symbol_scale_y;
+volatile static VALUE symbol_src_height;
+volatile static VALUE symbol_src_width;
+volatile static VALUE symbol_src_x;
+volatile static VALUE symbol_src_y;
+volatile static VALUE symbol_sub;
+volatile static VALUE symbol_sub_alpha;
+volatile static VALUE symbol_tone_blue;
+volatile static VALUE symbol_tone_green;
+volatile static VALUE symbol_tone_red;
+volatile static VALUE symbol_width;
+volatile static VALUE symbol_x;
+volatile static VALUE symbol_y;
 
 typedef enum {
   BLEND_TYPE_NONE,
   BLEND_TYPE_ALPHA,
   BLEND_TYPE_ADD,
   BLEND_TYPE_SUB,
+  BLEND_TYPE_ADD_ALPHA,
+  BLEND_TYPE_SUB_ALPHA,
 } BlendType;
 
 typedef enum {
@@ -930,6 +934,10 @@ AssignRenderingTextureOptions_st(st_data_t key, st_data_t val,
       options->blendType = BLEND_TYPE_ADD;
     else if (val == symbol_sub)
       options->blendType = BLEND_TYPE_SUB;
+    else if (val == symbol_add_alpha)
+      options->blendType = BLEND_TYPE_ADD_ALPHA;
+    else if (val == symbol_sub_alpha)
+      options->blendType = BLEND_TYPE_SUB_ALPHA;
   } else if (key == symbol_tone_red) {
     options->toneRed = NUM2INT(val);
   } else if (key == symbol_tone_green) {
@@ -1021,6 +1029,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           options.blendType = BLEND_TYPE_ADD;
         else if (val == symbol_sub)
           options.blendType = BLEND_TYPE_SUB;
+        else if (val == symbol_add_alpha)
+          options.blendType = BLEND_TYPE_ADD_ALPHA;
+        else if (val == symbol_sub_alpha)
+          options.blendType = BLEND_TYPE_SUB_ALPHA;
       }
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
         options.toneRed = NUM2INT(val);
@@ -1298,21 +1310,24 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             .alpha = srcAlpha,
           };
         } else if (dst->color.alpha == 0) {
-          dst->color.alpha = DIV255(srcAlpha * alpha);
+          uint8_t beta = DIV255(srcColor.alpha * alpha);
           switch (blendType) {
           case BLEND_TYPE_ALPHA:
+          case BLEND_TYPE_ADD_ALPHA:
             dst->color.red   = srcRed;
             dst->color.green = srcGreen;
             dst->color.blue  = srcBlue;
+            dst->color.alpha = beta;
             break;
           case BLEND_TYPE_ADD:
             ;
-            int addR = dst->color.red   + srcRed;
-            int addG = dst->color.green + srcGreen;
-            int addB = dst->color.blue  + srcBlue;
+            int addR = srcRed   + dst->color.red;
+            int addG = srcGreen + dst->color.green;
+            int addB = srcBlue  + dst->color.blue;
             dst->color.red   = MIN(255, addR);
             dst->color.green = MIN(255, addG);
             dst->color.blue  = MIN(255, addB);
+            dst->color.alpha = beta;
             break;
           case BLEND_TYPE_SUB:
             ;
@@ -1322,31 +1337,41 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.red   = MAX(0, subR);
             dst->color.green = MAX(0, subG);
             dst->color.blue  = MAX(0, subB);
+            dst->color.alpha = beta;
+            break;
+          case BLEND_TYPE_SUB_ALPHA:
+            dst->color.red   = srcColor.red;
+            dst->color.green = srcColor.green;
+            dst->color.blue  = srcColor.blue;
+            dst->color.alpha = 0;
             break;
           case BLEND_TYPE_NONE:
+            // can't come here
             break;
           }
         } else {
           uint8_t beta = DIV255(srcAlpha * alpha);
-          if (dst->color.alpha < beta)
-            dst->color.alpha = beta;
           switch (blendType) {
           case BLEND_TYPE_ALPHA:
+            if (dst->color.alpha < beta)
+              dst->color.alpha = beta;
             dst->color.red   = ALPHA(srcRed,   dst->color.red,   beta);
             dst->color.green = ALPHA(srcGreen, dst->color.green, beta);
             dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
             break;
           case BLEND_TYPE_ADD:
-            ;
-            int addR = dst->color.red   + DIV255(srcRed   * beta);
-            int addG = dst->color.green + DIV255(srcGreen * beta);
-            int addB = dst->color.blue  + DIV255(srcBlue  * beta);
+            if (dst->color.alpha < beta)
+              dst->color.alpha = beta;
+            int addR = DIV255(srcRed   * beta) + dst->color.red;
+            int addG = DIV255(srcGreen * beta) + dst->color.green;
+            int addB = DIV255(srcBlue  * beta) + dst->color.blue;
             dst->color.red   = MIN(255, addR);
             dst->color.green = MIN(255, addG);
             dst->color.blue  = MIN(255, addB);
             break;
           case BLEND_TYPE_SUB:
-            ;
+            if (dst->color.alpha < beta)
+              dst->color.alpha = beta;
             int subR = -DIV255(srcRed   * beta) + dst->color.red;
             int subG = -DIV255(srcGreen * beta) + dst->color.green;
             int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
@@ -1354,7 +1379,24 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.green = MAX(0, subG);
             dst->color.blue  = MAX(0, subB);
             break;
+          case BLEND_TYPE_ADD_ALPHA:
+            ;
+            int addA = beta + dst->color.alpha;
+            dst->color.red   = srcColor.red;
+            dst->color.green = srcColor.green;
+            dst->color.blue  = srcColor.blue;
+            dst->color.alpha = MIN(255, addA);
+            break;
+          case BLEND_TYPE_SUB_ALPHA:
+            ;
+            int subA = -beta + dst->color.alpha;
+            dst->color.red   = srcColor.red;
+            dst->color.green = srcColor.green;
+            dst->color.blue  = srcColor.blue;
+            dst->color.alpha = MAX(0, subA);
+            break;
           case BLEND_TYPE_NONE:
+            // can't come here
             break;
           }
         }
@@ -1518,6 +1560,7 @@ InitializeTexture(void)
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 
   symbol_add            = ID2SYM(rb_intern("add"));
+  symbol_add_alpha      = ID2SYM(rb_intern("add_alpha"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
   symbol_background     = ID2SYM(rb_intern("background"));
@@ -1545,6 +1588,7 @@ InitializeTexture(void)
   symbol_src_x          = ID2SYM(rb_intern("src_x"));
   symbol_src_y          = ID2SYM(rb_intern("src_y"));
   symbol_sub            = ID2SYM(rb_intern("sub"));
+  symbol_sub_alpha      = ID2SYM(rb_intern("sub_alpha"));
   symbol_tone_blue      = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green     = ID2SYM(rb_intern("tone_green"));
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));

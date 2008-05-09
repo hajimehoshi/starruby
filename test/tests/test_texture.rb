@@ -1557,6 +1557,19 @@ class TestTexture < Test::Unit::TestCase
         assert_in_delta [a, 130].max, p2.alpha, 2
       end
     end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :blend_type => :add, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        a = p1.alpha * 128.quo(255)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_in_delta a, p2.alpha, 2
+      end
+    end
     # sub
     texture2.fill Color.new(100, 110, 120, 130)
     texture2.render_texture(texture, 0, 0, :blend_type => :sub, :alpha => 128)
@@ -1569,6 +1582,118 @@ class TestTexture < Test::Unit::TestCase
         assert_in_delta [-p1.green * a.quo(255) + 110, 0].max, p2.green, 2
         assert_in_delta [-p1.blue  * a.quo(255) + 120, 0].max, p2.blue,  2
         assert_in_delta [a, 130].max, p2.alpha, 2
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :blend_type => :sub, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal 0, p2.red
+        assert_equal 0, p2.green
+        assert_equal 0, p2.blue
+        assert_in_delta p1.alpha * 128.quo(255), p2.alpha, 2
+      end
+    end
+    # add_alpha
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_in_delta [p1.alpha + 130, 255].min, p2.alpha, 2
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    # sub_alpha
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_in_delta [-p1.alpha + 130, 0].max, p2.alpha, 2
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_equal 0,        p2.alpha
+      end
+    end
+    # add_alpha (alpha)
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_in_delta [p1.alpha * 128.quo(255) + 130, 255].min, p2.alpha, 2
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_in_delta p1.alpha * 128.quo(255), p2.alpha, 2
+      end
+    end
+    # sub_alpha (alpha)
+    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_in_delta [-p1.alpha * 128.quo(255) + 130, 0].max, p2.alpha, 2
+      end
+    end
+    texture2.clear
+    texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha, :alpha => 128)
+    texture2.height.times do |y|
+      texture2.width.times do |x|
+        p1 = texture.get_pixel(x, y)
+        p2 = texture2.get_pixel(x, y)
+        assert_equal p1.red,   p2.red
+        assert_equal p1.green, p2.green
+        assert_equal p1.blue,  p2.blue
+        assert_equal 0,        p2.alpha
       end
     end
   end

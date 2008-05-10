@@ -1077,7 +1077,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     if (dstX < 0) {
       srcX -= dstX;
       srcWidth += dstX;
-      if (srcTextureWidth <= srcX || srcWidth < 0)
+      if (srcTextureWidth <= srcX || srcWidth <= 0)
         return Qnil;
       dstX = 0;
     } else if (dstTextureWidth <= dstX) {
@@ -1086,7 +1086,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     if (dstY < 0) {
       srcY -= dstY;
       srcHeight += dstY;
-      if (srcTextureHeight <= srcY || srcHeight < 0)
+      if (srcTextureHeight <= srcY || srcHeight <= 0)
         return Qnil;
       dstY = 0;
     } else if (dstTextureHeight <= dstY) {
@@ -1313,7 +1313,6 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           uint8_t beta = DIV255(srcColor.alpha * alpha);
           switch (blendType) {
           case BLEND_TYPE_ALPHA:
-          case BLEND_TYPE_ADD_ALPHA:
             dst->color.red   = srcRed;
             dst->color.green = srcGreen;
             dst->color.blue  = srcBlue;
@@ -1339,11 +1338,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.blue  = MAX(0, subB);
             dst->color.alpha = beta;
             break;
+          case BLEND_TYPE_ADD_ALPHA:
+            dst->color.alpha = beta;
+            break;
           case BLEND_TYPE_SUB_ALPHA:
-            dst->color.red   = srcColor.red;
-            dst->color.green = srcColor.green;
-            dst->color.blue  = srcColor.blue;
-            dst->color.alpha = 0;
+            // do nothing
             break;
           case BLEND_TYPE_NONE:
             // can't come here
@@ -1382,17 +1381,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           case BLEND_TYPE_ADD_ALPHA:
             ;
             int addA = beta + dst->color.alpha;
-            dst->color.red   = srcColor.red;
-            dst->color.green = srcColor.green;
-            dst->color.blue  = srcColor.blue;
             dst->color.alpha = MIN(255, addA);
             break;
           case BLEND_TYPE_SUB_ALPHA:
             ;
             int subA = -beta + dst->color.alpha;
-            dst->color.red   = srcColor.red;
-            dst->color.green = srcColor.green;
-            dst->color.blue  = srcColor.blue;
             dst->color.alpha = MAX(0, subA);
             break;
           case BLEND_TYPE_NONE:

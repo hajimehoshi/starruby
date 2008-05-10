@@ -1461,6 +1461,51 @@ class TestTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
       end
     end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, -texture2.width, -texture2.height,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, -texture2.width, texture2.height,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, texture2.width, -texture2.height,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, texture2.width, texture2.height,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, -10000, -10000,
+                            :src_x => 10, :src_y => 10,
+                            :src_width => texture.width - 10, :src_height => texture.height - 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+      end
+    end
   end
   
   def test_render_texture_alpha
@@ -1603,9 +1648,9 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
+        assert_equal 100, p2.red
+        assert_equal 110, p2.green
+        assert_equal 120, p2.blue
         assert_in_delta [p1.alpha + 130, 255].min, p2.alpha, 2
       end
     end
@@ -1615,9 +1660,9 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
+        assert_equal 0, p2.red
+        assert_equal 0, p2.green
+        assert_equal 0, p2.blue
         assert_equal p1.alpha, p2.alpha
       end
     end
@@ -1628,9 +1673,9 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
+        assert_equal 100, p2.red
+        assert_equal 110, p2.green
+        assert_equal 120, p2.blue
         assert_in_delta [-p1.alpha + 130, 0].max, p2.alpha, 2
       end
     end
@@ -1640,10 +1685,10 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
-        assert_equal 0,        p2.alpha
+        assert_equal 0, p2.red
+        assert_equal 0, p2.green
+        assert_equal 0, p2.blue
+        assert_equal 0, p2.alpha
       end
     end
     # add_alpha (alpha)
@@ -1653,9 +1698,9 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
+        assert_equal 100, p2.red
+        assert_equal 110, p2.green
+        assert_equal 120, p2.blue
         assert_in_delta [p1.alpha * 128.quo(255) + 130, 255].min, p2.alpha, 2
       end
     end
@@ -1665,9 +1710,9 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
+        assert_equal 0, p2.red
+        assert_equal 0, p2.green
+        assert_equal 0, p2.blue
         assert_in_delta p1.alpha * 128.quo(255), p2.alpha, 2
       end
     end
@@ -1678,9 +1723,9 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
+        assert_equal 100, p2.red
+        assert_equal 110, p2.green
+        assert_equal 120, p2.blue
         assert_in_delta [-p1.alpha * 128.quo(255) + 130, 0].max, p2.alpha, 2
       end
     end
@@ -1690,10 +1735,10 @@ class TestTexture < Test::Unit::TestCase
       texture2.width.times do |x|
         p1 = texture.get_pixel(x, y)
         p2 = texture2.get_pixel(x, y)
-        assert_equal p1.red,   p2.red
-        assert_equal p1.green, p2.green
-        assert_equal p1.blue,  p2.blue
-        assert_equal 0,        p2.alpha
+        assert_equal 0, p2.red
+        assert_equal 0, p2.green
+        assert_equal 0, p2.blue
+        assert_equal 0, p2.alpha
       end
     end
   end

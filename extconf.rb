@@ -51,7 +51,7 @@ $LDFLAGS += " " + `env sdl-config --libs`.chomp
 $LDFLAGS += " " + `env libpng-config --libs`.chomp
 
 $CFLAGS += " -finline-functions -Wall -W -Wno-unused-parameter -pedantic -std=c99 -funit-at-a-time"
-$CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/
+$CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/
 
 have_library("SDL_mixer") or exit(false)
 have_library("SDL_ttf") or exit(false)

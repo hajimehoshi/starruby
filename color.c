@@ -1,4 +1,15 @@
+#include "st.h"
 #include "starruby.h"
+
+static uint32_t
+CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
+{
+  // The max value of FIXNUM is 0x3fffffff in 32bit machines.
+  return ((alpha >> 6) << 24) |
+    ((red ^ ((alpha >> 4) & 0x3)) << 16) |
+    ((green ^ ((alpha >> 2) & 0x3)) << 8) |
+    (blue ^ (alpha & 0x3));
+}
 
 static VALUE
 Color_alloc(VALUE klass)
@@ -16,7 +27,7 @@ Color_initialize(int argc, VALUE* argv, VALUE self)
   int red   = NUM2INT(rbRed);
   int green = NUM2INT(rbGreen);
   int blue  = NUM2INT(rbBlue);
-  int alpha = !NIL_P(rbAlpha) ? NUM2INT(rbAlpha) : 255;
+  int alpha = NIL_P(rbAlpha) ? 255 : NUM2INT(rbAlpha);
   if (red < 0 || 256 <= red || green < 0 || 256 <= green ||
       blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha)
     rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
@@ -51,13 +62,10 @@ Color_eq(VALUE self, VALUE rbOther)
 {
   if (!rb_obj_is_kind_of(rbOther, rb_cColor))
     return Qfalse;
-
   Color* color1;
   Data_Get_Struct(self, Color, color1);
-
   Color* color2;
   Data_Get_Struct(rbOther, Color, color2);
-
   return (color1->red   == color2->red &&
           color1->green == color2->green &&
           color1->blue  == color2->blue &&
@@ -77,8 +85,7 @@ Color_hash(VALUE self)
 {
   Color* color;
   Data_Get_Struct(self, Color, color);
-  return INT2NUM((color->red << 2) ^ color->green ^
-                 (color->blue << 2 ) ^ color->alpha);
+  return INT2NUM(CalcColorHash(color->red, color->green, color->blue, color->alpha));
 }
 
 static VALUE

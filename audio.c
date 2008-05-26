@@ -51,7 +51,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbMusicCache, rbCompletePath))) {
     sdlBgm = (Mix_Music*)NUM2LONG(val);
@@ -105,7 +105,7 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
-  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
   Mix_Chunk* sdlSE = NULL;
   volatile VALUE val;
   if (isEnabled) {
@@ -229,7 +229,7 @@ Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   return Qnil;
 }
 
-void
+static void
 SdlMusicFinished(void)
 {
   if (sdlBgm && bgmLoop) {
@@ -241,7 +241,7 @@ SdlMusicFinished(void)
 }
 
 void
-InitializeSdlAudio(void)
+strb_InitializeSdlAudio(void)
 {
   if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024)) {
     rb_io_puts(1, (VALUE[]) {rb_str_new2(Mix_GetError())}, rb_stderr);
@@ -254,7 +254,7 @@ InitializeSdlAudio(void)
 }
 
 void
-InitializeAudio(void)
+strb_InitializeAudio(void)
 {
   rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
   rb_define_module_function(rb_mAudio, "bgm_position",
@@ -291,7 +291,7 @@ InitializeAudio(void)
 }
 
 void
-UpdateAudio(void)
+strb_UpdateAudio(void)
 {
   Uint32 now = SDL_GetTicks();
   if (isEnabled && Mix_PlayingMusic())
@@ -320,7 +320,7 @@ FreeMusicCacheItem(VALUE rbKey, VALUE rbValue)
 }
 
 void
-FinalizeAudio(void)
+strb_FinalizeAudio(void)
 {
   rb_hash_foreach(rbChunkCache, FreeChunkCacheItem, 0);
   rb_hash_foreach(rbMusicCache, FreeMusicCacheItem, 0);

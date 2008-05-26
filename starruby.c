@@ -3,7 +3,7 @@
 #include "starruby_private.h"
 
 VALUE
-GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
+strb_GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 {
   char* path = StringValuePtr(rbPath);
   if (!RTEST(rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbPath))) {
@@ -41,8 +41,8 @@ static void
 FinalizeStarRuby(VALUE unused)
 {
   TTF_Quit();
-  FinalizeAudio();
-  FinalizeInput();
+  strb_FinalizeAudio();
+  strb_FinalizeInput();
   SDL_Quit();
 }
 
@@ -61,19 +61,19 @@ Init_starruby(void)
 
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
     rb_raise_sdl_error();
-  InitializeSdlAudio();
-  InitializeSdlFont();
-  InitializeSdlInput();
+  strb_InitializeSdlAudio();
+  strb_InitializeSdlFont();
+  strb_InitializeSdlInput();
 
   volatile VALUE rbVersion = rb_str_new2("0.1.18");
   OBJ_FREEZE(rbVersion);
   rb_define_const(rb_mStarRuby, "VERSION", rbVersion);
-  InitializeAudio();
-  InitializeColor();
-  InitializeFont();
-  InitializeGame();
-  InitializeInput();
-  InitializeTexture();
+  strb_InitializeAudio();
+  strb_InitializeColor();
+  strb_InitializeFont();
+  strb_InitializeGame();
+  strb_InitializeInput();
+  strb_InitializeTexture();
 
   rb_set_end_proc(FinalizeStarRuby, Qnil);
 
@@ -81,6 +81,6 @@ Init_starruby(void)
   rb_define_method(rb_cNumeric, "degrees", Numeric_degree, 0);
 
 #ifdef DEBUG
-  TestInput();
+  strb_TestInput();
 #endif
 }

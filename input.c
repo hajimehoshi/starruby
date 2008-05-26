@@ -60,7 +60,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
   Check_Type(rbValue, T_ARRAY);
   if (RARRAY_LEN(rbValue) != 2)
     rb_raise(rb_eArgError, "array size should be 2, %ld given", RARRAY_LEN(rbValue));
-  int windowScale = GetWindowScale();
+  int windowScale = strb_GetWindowScale();
   SDL_WarpMouse(NUM2INT(RARRAY_PTR(rbValue)[0]) * windowScale,
                 NUM2INT(RARRAY_PTR(rbValue)[1]) * windowScale);
   int mouseLocationX, mouseLocationY;
@@ -167,7 +167,7 @@ static VALUE
 Input_update(VALUE self)
 {
   rb_warn("Input.update is deprecated");
-  UpdateInput();
+  strb_UpdateInput();
   return Qnil;
 }
 
@@ -183,7 +183,7 @@ Input_update(VALUE self)
   } while (false)
 
 void
-UpdateInput(void)
+strb_UpdateInput(void)
 {
   SDL_PumpEvents();
   SDL_JoystickUpdate();
@@ -223,7 +223,7 @@ UpdateInput(void)
         gamepad->buttonStates[j] = 0;
   }
 
-  int windowScale = GetWindowScale();
+  int windowScale = strb_GetWindowScale();
   int mouseLocationX, mouseLocationY;
   Uint8 sdlMouseButtons = SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
   volatile VALUE rbMouseLocation =
@@ -247,7 +247,7 @@ UpdateInput(void)
 }
 
 void
-InitializeSdlInput()
+strb_InitializeSdlInput()
 {
   keyboardKeys = ALLOC(KeyboardKey);
   keyboardKeys->rbSymbol = Qundef;
@@ -328,7 +328,7 @@ InitializeSdlInput()
 }
 
 void
-InitializeInput(void)
+strb_InitializeInput(void)
 {
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
   rb_define_module_function(rb_mInput, "gamepad_count",
@@ -359,7 +359,7 @@ InitializeInput(void)
 }
 
 void
-FinalizeInput(void)
+strb_FinalizeInput(void)
 {
   free(mouse);
   mouse = NULL;
@@ -399,7 +399,7 @@ searchKey(const char* name)
 }
 
 void
-TestInput(void)
+strb_TestInput(void)
 {
   printf("Begin Test: Input\n");
 

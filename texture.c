@@ -154,7 +154,7 @@ ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
 static VALUE
 Texture_s_load(VALUE self, VALUE rbPath)
 {
-  volatile VALUE rbCompletePath = GetCompletePath(rbPath, true);
+  volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   FILE* fp = fopen(path, "rb");
   png_byte header[8];
@@ -1520,7 +1520,7 @@ Texture_width(VALUE self)
 }
 
 void
-InitializeTexture(void)
+strb_InitializeTexture(void)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, 1);

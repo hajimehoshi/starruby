@@ -9,31 +9,37 @@
 #define MIN(x, y) ((x <= y) ? x : y)
 #define DIV255(x) ((x + 255) >> 8)
 
-VALUE GetCompletePath(VALUE, bool);
+#define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
+#define rb_raise_sdl_mix_error()\
+  rb_raise(rb_eStarRubyError, "%s", Mix_GetError())
+#define rb_raise_sdl_ttf_error()\
+  rb_raise(rb_eStarRubyError, "%s", TTF_GetError())
 
-void InitializeAudio(void);
-void InitializeColor(void);
-void InitializeGame(void);
-void InitializeFont(void);
-void InitializeInput(void);
-void InitializeStarRubyError(void);
-void InitializeTexture(void);
+VALUE strb_GetCompletePath(VALUE, bool);
 
-void UpdateAudio(void);
-void UpdateInput(void);
+void strb_InitializeAudio(void);
+void strb_InitializeColor(void);
+void strb_InitializeGame(void);
+void strb_InitializeFont(void);
+void strb_InitializeInput(void);
+void strb_InitializeStarRubyError(void);
+void strb_InitializeTexture(void);
 
-void FinalizeAudio(void);
-void FinalizeInput(void);
+void strb_UpdateAudio(void);
+void strb_UpdateInput(void);
 
-void InitializeSdlAudio(void);
-void InitializeSdlFont(void);
-void InitializeSdlInput(void);
+void strb_FinalizeAudio(void);
+void strb_FinalizeInput(void);
 
-int GetWindowScale(void);
+void strb_InitializeSdlAudio(void);
+void strb_InitializeSdlFont(void);
+void strb_InitializeSdlInput(void);
+
+int strb_GetWindowScale(void);
 
 #ifdef DEBUG
 #include <assert.h>
-void TestInput(void);
+void strb_TestInput(void);
 #endif
 
 #endif

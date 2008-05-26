@@ -54,12 +54,6 @@ STARRUBY_EXTERN VALUE rb_eStarRubyError;
 STARRUBY_EXTERN VALUE rb_cTexture;
 STARRUBY_EXTERN VALUE rb_cTone;
 
-#define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
-#define rb_raise_sdl_mix_error()\
-  rb_raise(rb_eStarRubyError, "%s", Mix_GetError())
-#define rb_raise_sdl_ttf_error()\
-  rb_raise(rb_eStarRubyError, "%s", TTF_GetError())
-
 void Init_starruby(void);
 
 #endif

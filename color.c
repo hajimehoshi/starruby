@@ -1,5 +1,6 @@
 #include "st.h"
 #include "starruby.h"
+#include "starruby_private.h"
 
 static uint32_t
 CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
@@ -110,7 +111,7 @@ Color_to_s(VALUE self)
 }
 
 void
-InitializeColor(void)
+strb_InitializeColor(void)
 {
   rb_cColor = rb_define_class_under(rb_mStarRuby, "Color", rb_cObject);
   rb_define_alloc_func(rb_cColor, Color_alloc);

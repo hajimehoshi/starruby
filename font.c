@@ -29,7 +29,7 @@ SearchFont(VALUE rbFilePathOrName,
   *rbRealFilePath = Qnil;
   if (ttcIndex != NULL)
     *ttcIndex = -1;
-  *rbRealFilePath = GetCompletePath(rbFilePathOrName, false);
+  *rbRealFilePath = strb_GetCompletePath(rbFilePathOrName, false);
   if (!NIL_P(*rbRealFilePath))
     return;
   volatile VALUE rbFontNameSymbol =
@@ -275,7 +275,7 @@ Font_size(VALUE self)
   } while (false)
 
 void
-InitializeSdlFont(void)
+strb_InitializeSdlFont(void)
 {
   if (TTF_Init())
     rb_raise_sdl_ttf_error();
@@ -369,7 +369,7 @@ InitializeSdlFont(void)
 }
 
 void
-InitializeFont(void)
+strb_InitializeFont(void)
 {
   rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
   rb_define_singleton_method(rb_cFont, "exist?", Font_s_exist, 1);

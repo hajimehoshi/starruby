@@ -16,7 +16,7 @@ static int windowScale = 1;
 static SDL_Surface* sdlScreen = NULL;
 
 int
-GetWindowScale(void)
+strb_GetWindowScale(void)
 {
   return windowScale;
 }
@@ -78,8 +78,8 @@ DoLoop()
       before2 = now;
     }
 
-    UpdateAudio();
-    UpdateInput();
+    strb_UpdateAudio();
+    strb_UpdateInput();
 
     rb_yield(Qnil);
 
@@ -321,7 +321,7 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 }
 
 void
-InitializeGame(void)
+strb_InitializeGame(void)
 {
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);

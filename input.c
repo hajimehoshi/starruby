@@ -74,7 +74,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
 }
 
 static bool
-isPressed(int status, int duration, int delay, int interval)
+IsPressed(int status, int duration, int delay, int interval)
 {
   /*
    * on:  ------------         -           -              ...
@@ -127,31 +127,31 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   if (rbDevice == symbol_keyboard) {
     KeyboardKey* key = keyboardKeys;
     while (key) {
-      if (isPressed(key->state, duration, delay, interval))
+      if (IsPressed(key->state, duration, delay, interval))
         rb_ary_push(rbResult, key->rbSymbol);
       key = key->next;
     }
   } else if (rbDevice == symbol_gamepad) {
     if (0 <= deviceNumber && deviceNumber < gamepadCount) {
       Gamepad* gamepad = &(gamepads[deviceNumber]);
-      if (isPressed(gamepad->downState, duration, delay, interval))
+      if (IsPressed(gamepad->downState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_down);
-      if (isPressed(gamepad->leftState, duration, delay, interval))
+      if (IsPressed(gamepad->leftState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_left);
-      if (isPressed(gamepad->rightState, duration, delay, interval))
+      if (IsPressed(gamepad->rightState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_right);
-      if (isPressed(gamepad->upState, duration, delay, interval))
+      if (IsPressed(gamepad->upState, duration, delay, interval))
         rb_ary_push(rbResult, symbol_up);
       for (int i = 0; i < gamepad->buttonCount; i++)
-        if (isPressed(gamepad->buttonStates[i], duration, delay, interval))
+        if (IsPressed(gamepad->buttonStates[i], duration, delay, interval))
           rb_ary_push(rbResult, INT2NUM(i + 1));
     }
   } else if (rbDevice == symbol_mouse) {
-    if (isPressed(mouse->leftState, duration, delay, interval))
+    if (IsPressed(mouse->leftState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_left);
-    if (isPressed(mouse->middleState, duration, delay, interval))
+    if (IsPressed(mouse->middleState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_middle);
-    if (isPressed(mouse->rightState, duration, delay, interval))
+    if (IsPressed(mouse->rightState, duration, delay, interval))
       rb_ary_push(rbResult, symbol_right);
   } else {
     volatile VALUE rbDeviceInspect =
@@ -439,170 +439,170 @@ strb_TestInput(void)
   for (KeyboardKey* key = keyboardKeys; key; key = key->next)
     assert(0 == key->state);
 
-  assert(false == isPressed(0, -1, -1, 0));
-  assert(true  == isPressed(1, -1, -1, 0));
-  assert(true  == isPressed(2, -1, -1, 0));
-  assert(true  == isPressed(3, -1, -1, 0));
-  assert(true  == isPressed(4, -1, -1, 0));
-  assert(true  == isPressed(5, -1, -1, 0));
-  assert(true  == isPressed(100, -1, -1, 0));
+  assert(false == IsPressed(0, -1, -1, 0));
+  assert(true  == IsPressed(1, -1, -1, 0));
+  assert(true  == IsPressed(2, -1, -1, 0));
+  assert(true  == IsPressed(3, -1, -1, 0));
+  assert(true  == IsPressed(4, -1, -1, 0));
+  assert(true  == IsPressed(5, -1, -1, 0));
+  assert(true  == IsPressed(100, -1, -1, 0));
 
-  assert(false == isPressed(0, 0, -1, 0));
-  assert(false == isPressed(1, 0, -1, 0));
-  assert(false == isPressed(2, 0, -1, 0));
-  assert(false == isPressed(3, 0, -1, 0));
-  assert(false == isPressed(4, 0, -1, 0));
-  assert(false == isPressed(5, 0, -1, 0));
-  assert(false == isPressed(100, 0, -1, 0));
+  assert(false == IsPressed(0, 0, -1, 0));
+  assert(false == IsPressed(1, 0, -1, 0));
+  assert(false == IsPressed(2, 0, -1, 0));
+  assert(false == IsPressed(3, 0, -1, 0));
+  assert(false == IsPressed(4, 0, -1, 0));
+  assert(false == IsPressed(5, 0, -1, 0));
+  assert(false == IsPressed(100, 0, -1, 0));
 
-  assert(false == isPressed(0, 1, -1, 0));
-  assert(true  == isPressed(1, 1, -1, 0));
-  assert(false == isPressed(2, 1, -1, 0));
-  assert(false == isPressed(3, 1, -1, 0));
-  assert(false == isPressed(4, 1, -1, 0));
-  assert(false == isPressed(5, 1, -1, 0));
-  assert(false == isPressed(100, 1, -1, 0));
+  assert(false == IsPressed(0, 1, -1, 0));
+  assert(true  == IsPressed(1, 1, -1, 0));
+  assert(false == IsPressed(2, 1, -1, 0));
+  assert(false == IsPressed(3, 1, -1, 0));
+  assert(false == IsPressed(4, 1, -1, 0));
+  assert(false == IsPressed(5, 1, -1, 0));
+  assert(false == IsPressed(100, 1, -1, 0));
 
-  assert(false == isPressed(0, 3, -1, 0));
-  assert(true  == isPressed(1, 3, -1, 0));
-  assert(true  == isPressed(2, 3, -1, 0));
-  assert(true  == isPressed(3, 3, -1, 0));
-  assert(false == isPressed(4, 3, -1, 0));
-  assert(false == isPressed(5, 3, -1, 0));
-  assert(false == isPressed(100, 3, -1, 0));
+  assert(false == IsPressed(0, 3, -1, 0));
+  assert(true  == IsPressed(1, 3, -1, 0));
+  assert(true  == IsPressed(2, 3, -1, 0));
+  assert(true  == IsPressed(3, 3, -1, 0));
+  assert(false == IsPressed(4, 3, -1, 0));
+  assert(false == IsPressed(5, 3, -1, 0));
+  assert(false == IsPressed(100, 3, -1, 0));
 
   // with delay
-  assert(false == isPressed(0, -1, 3, 0));
-  assert(true  == isPressed(1, -1, 3, 0));
-  assert(true  == isPressed(2, -1, 3, 0));
-  assert(true  == isPressed(3, -1, 3, 0));
-  assert(true  == isPressed(4, -1, 3, 0));
-  assert(true  == isPressed(5, -1, 3, 0));
-  assert(true  == isPressed(100, -1, 3, 0));
+  assert(false == IsPressed(0, -1, 3, 0));
+  assert(true  == IsPressed(1, -1, 3, 0));
+  assert(true  == IsPressed(2, -1, 3, 0));
+  assert(true  == IsPressed(3, -1, 3, 0));
+  assert(true  == IsPressed(4, -1, 3, 0));
+  assert(true  == IsPressed(5, -1, 3, 0));
+  assert(true  == IsPressed(100, -1, 3, 0));
 
-  assert(false == isPressed(0, 0, 3, 0));
-  assert(false == isPressed(1, 0, 3, 0));
-  assert(false == isPressed(2, 0, 3, 0));
-  assert(false == isPressed(3, 0, 3, 0));
-  assert(false == isPressed(4, 0, 3, 0));
-  assert(false == isPressed(5, 0, 3, 0));
-  assert(false == isPressed(100, 0, 3, 0));
+  assert(false == IsPressed(0, 0, 3, 0));
+  assert(false == IsPressed(1, 0, 3, 0));
+  assert(false == IsPressed(2, 0, 3, 0));
+  assert(false == IsPressed(3, 0, 3, 0));
+  assert(false == IsPressed(4, 0, 3, 0));
+  assert(false == IsPressed(5, 0, 3, 0));
+  assert(false == IsPressed(100, 0, 3, 0));
 
-  assert(false == isPressed(0, 1, 3, 0));
-  assert(true  == isPressed(1, 1, 3, 0));
-  assert(false == isPressed(2, 1, 3, 0));
-  assert(false == isPressed(3, 1, 3, 0));
-  assert(false == isPressed(4, 1, 3, 0));
-  assert(true  == isPressed(5, 1, 3, 0));
-  assert(true  == isPressed(6, 1, 3, 0));
-  assert(true  == isPressed(7, 1, 3, 0));
-  assert(true  == isPressed(8, 1, 3, 0));
-  assert(true  == isPressed(100, 1, 3, 0));
+  assert(false == IsPressed(0, 1, 3, 0));
+  assert(true  == IsPressed(1, 1, 3, 0));
+  assert(false == IsPressed(2, 1, 3, 0));
+  assert(false == IsPressed(3, 1, 3, 0));
+  assert(false == IsPressed(4, 1, 3, 0));
+  assert(true  == IsPressed(5, 1, 3, 0));
+  assert(true  == IsPressed(6, 1, 3, 0));
+  assert(true  == IsPressed(7, 1, 3, 0));
+  assert(true  == IsPressed(8, 1, 3, 0));
+  assert(true  == IsPressed(100, 1, 3, 0));
 
-  assert(false == isPressed(0, 3, 3, 0));
-  assert(true  == isPressed(1, 3, 3, 0));
-  assert(true  == isPressed(2, 3, 3, 0));
-  assert(true  == isPressed(3, 3, 3, 0));
-  assert(false == isPressed(4, 3, 3, 0));
-  assert(false == isPressed(5, 3, 3, 0));
-  assert(false == isPressed(6, 3, 3, 0));
-  assert(true  == isPressed(7, 3, 3, 0));
-  assert(true  == isPressed(8, 3, 3, 0));
-  assert(true  == isPressed(100, 3, 3, 0));
+  assert(false == IsPressed(0, 3, 3, 0));
+  assert(true  == IsPressed(1, 3, 3, 0));
+  assert(true  == IsPressed(2, 3, 3, 0));
+  assert(true  == IsPressed(3, 3, 3, 0));
+  assert(false == IsPressed(4, 3, 3, 0));
+  assert(false == IsPressed(5, 3, 3, 0));
+  assert(false == IsPressed(6, 3, 3, 0));
+  assert(true  == IsPressed(7, 3, 3, 0));
+  assert(true  == IsPressed(8, 3, 3, 0));
+  assert(true  == IsPressed(100, 3, 3, 0));
 
   // with delay and interval
-  assert(false == isPressed(0, -1, 3, 1));
-  assert(true  == isPressed(1, -1, 3, 1));
-  assert(true  == isPressed(2, -1, 3, 1));
-  assert(true  == isPressed(3, -1, 3, 1));
-  assert(true  == isPressed(4, -1, 3, 1));
-  assert(true  == isPressed(5, -1, 3, 1));
-  assert(true  == isPressed(100, -1, 3, 1));
+  assert(false == IsPressed(0, -1, 3, 1));
+  assert(true  == IsPressed(1, -1, 3, 1));
+  assert(true  == IsPressed(2, -1, 3, 1));
+  assert(true  == IsPressed(3, -1, 3, 1));
+  assert(true  == IsPressed(4, -1, 3, 1));
+  assert(true  == IsPressed(5, -1, 3, 1));
+  assert(true  == IsPressed(100, -1, 3, 1));
 
-  assert(false == isPressed(0, 0, 3, 1));
-  assert(false == isPressed(1, 0, 3, 1));
-  assert(false == isPressed(2, 0, 3, 1));
-  assert(false == isPressed(3, 0, 3, 1));
-  assert(false == isPressed(4, 0, 3, 1));
-  assert(false == isPressed(5, 0, 3, 1));
-  assert(false == isPressed(100, 0, 3, 1));
+  assert(false == IsPressed(0, 0, 3, 1));
+  assert(false == IsPressed(1, 0, 3, 1));
+  assert(false == IsPressed(2, 0, 3, 1));
+  assert(false == IsPressed(3, 0, 3, 1));
+  assert(false == IsPressed(4, 0, 3, 1));
+  assert(false == IsPressed(5, 0, 3, 1));
+  assert(false == IsPressed(100, 0, 3, 1));
 
-  assert(false == isPressed(0, 1, 3, 1));
-  assert(true  == isPressed(1, 1, 3, 1));
-  assert(false == isPressed(2, 1, 3, 1));
-  assert(false == isPressed(3, 1, 3, 1));
-  assert(false == isPressed(4, 1, 3, 1));
-  assert(true  == isPressed(5, 1, 3, 1));
-  assert(false == isPressed(6, 1, 3, 1));
-  assert(true  == isPressed(7, 1, 3, 1));
-  assert(false == isPressed(8, 1, 3, 1));
-  assert(true  == isPressed(9, 1, 3, 1));
-  assert(false == isPressed(10, 1, 3, 1));
-  assert(true  == isPressed(11, 1, 3, 1));
-  assert(false == isPressed(12, 1, 3, 1));
-  assert(false == isPressed(100, 1, 3, 1));
+  assert(false == IsPressed(0, 1, 3, 1));
+  assert(true  == IsPressed(1, 1, 3, 1));
+  assert(false == IsPressed(2, 1, 3, 1));
+  assert(false == IsPressed(3, 1, 3, 1));
+  assert(false == IsPressed(4, 1, 3, 1));
+  assert(true  == IsPressed(5, 1, 3, 1));
+  assert(false == IsPressed(6, 1, 3, 1));
+  assert(true  == IsPressed(7, 1, 3, 1));
+  assert(false == IsPressed(8, 1, 3, 1));
+  assert(true  == IsPressed(9, 1, 3, 1));
+  assert(false == IsPressed(10, 1, 3, 1));
+  assert(true  == IsPressed(11, 1, 3, 1));
+  assert(false == IsPressed(12, 1, 3, 1));
+  assert(false == IsPressed(100, 1, 3, 1));
 
-  assert(false == isPressed(0, 3, 3, 1));
-  assert(true  == isPressed(1, 3, 3, 1));
-  assert(true  == isPressed(2, 3, 3, 1));
-  assert(true  == isPressed(3, 3, 3, 1));
-  assert(false == isPressed(4, 3, 3, 1));
-  assert(false == isPressed(5, 3, 3, 1));
-  assert(false == isPressed(6, 3, 3, 1));
-  assert(true  == isPressed(7, 3, 3, 1));
-  assert(false == isPressed(8, 3, 3, 1));
-  assert(true  == isPressed(9, 3, 3, 1));
-  assert(false == isPressed(10, 3, 3, 1));
-  assert(true  == isPressed(11, 3, 3, 1));
-  assert(false == isPressed(12, 3, 3, 1));
-  assert(false == isPressed(100, 3, 3, 1));
+  assert(false == IsPressed(0, 3, 3, 1));
+  assert(true  == IsPressed(1, 3, 3, 1));
+  assert(true  == IsPressed(2, 3, 3, 1));
+  assert(true  == IsPressed(3, 3, 3, 1));
+  assert(false == IsPressed(4, 3, 3, 1));
+  assert(false == IsPressed(5, 3, 3, 1));
+  assert(false == IsPressed(6, 3, 3, 1));
+  assert(true  == IsPressed(7, 3, 3, 1));
+  assert(false == IsPressed(8, 3, 3, 1));
+  assert(true  == IsPressed(9, 3, 3, 1));
+  assert(false == IsPressed(10, 3, 3, 1));
+  assert(true  == IsPressed(11, 3, 3, 1));
+  assert(false == IsPressed(12, 3, 3, 1));
+  assert(false == IsPressed(100, 3, 3, 1));
 
   // with delay and interval 2
-  assert(false == isPressed(0, -1, 3, 2));
-  assert(true  == isPressed(1, -1, 3, 2));
-  assert(true  == isPressed(2, -1, 3, 2));
-  assert(true  == isPressed(3, -1, 3, 2));
-  assert(true  == isPressed(4, -1, 3, 2));
-  assert(true  == isPressed(5, -1, 3, 2));
-  assert(true  == isPressed(100, -1, 3, 2));
+  assert(false == IsPressed(0, -1, 3, 2));
+  assert(true  == IsPressed(1, -1, 3, 2));
+  assert(true  == IsPressed(2, -1, 3, 2));
+  assert(true  == IsPressed(3, -1, 3, 2));
+  assert(true  == IsPressed(4, -1, 3, 2));
+  assert(true  == IsPressed(5, -1, 3, 2));
+  assert(true  == IsPressed(100, -1, 3, 2));
 
-  assert(false == isPressed(0, 0, 3, 2));
-  assert(false == isPressed(1, 0, 3, 2));
-  assert(false == isPressed(2, 0, 3, 2));
-  assert(false == isPressed(3, 0, 3, 2));
-  assert(false == isPressed(4, 0, 3, 2));
-  assert(false == isPressed(5, 0, 3, 2));
-  assert(false == isPressed(100, 0, 3, 2));
+  assert(false == IsPressed(0, 0, 3, 2));
+  assert(false == IsPressed(1, 0, 3, 2));
+  assert(false == IsPressed(2, 0, 3, 2));
+  assert(false == IsPressed(3, 0, 3, 2));
+  assert(false == IsPressed(4, 0, 3, 2));
+  assert(false == IsPressed(5, 0, 3, 2));
+  assert(false == IsPressed(100, 0, 3, 2));
 
-  assert(false == isPressed(0, 1, 3, 2));
-  assert(true  == isPressed(1, 1, 3, 2));
-  assert(false == isPressed(2, 1, 3, 2));
-  assert(false == isPressed(3, 1, 3, 2));
-  assert(false == isPressed(4, 1, 3, 2));
-  assert(true  == isPressed(5, 1, 3, 2));
-  assert(false == isPressed(6, 1, 3, 2));
-  assert(false == isPressed(7, 1, 3, 2));
-  assert(true  == isPressed(8, 1, 3, 2));
-  assert(false == isPressed(9, 1, 3, 2));
-  assert(false == isPressed(10, 1, 3, 2));
-  assert(true  == isPressed(11, 1, 3, 2));
-  assert(false == isPressed(12, 1, 3, 2));
-  assert(false == isPressed(100, 1, 3, 2));
+  assert(false == IsPressed(0, 1, 3, 2));
+  assert(true  == IsPressed(1, 1, 3, 2));
+  assert(false == IsPressed(2, 1, 3, 2));
+  assert(false == IsPressed(3, 1, 3, 2));
+  assert(false == IsPressed(4, 1, 3, 2));
+  assert(true  == IsPressed(5, 1, 3, 2));
+  assert(false == IsPressed(6, 1, 3, 2));
+  assert(false == IsPressed(7, 1, 3, 2));
+  assert(true  == IsPressed(8, 1, 3, 2));
+  assert(false == IsPressed(9, 1, 3, 2));
+  assert(false == IsPressed(10, 1, 3, 2));
+  assert(true  == IsPressed(11, 1, 3, 2));
+  assert(false == IsPressed(12, 1, 3, 2));
+  assert(false == IsPressed(100, 1, 3, 2));
 
-  assert(false == isPressed(0, 3, 3, 2));
-  assert(true  == isPressed(1, 3, 3, 2));
-  assert(true  == isPressed(2, 3, 3, 2));
-  assert(true  == isPressed(3, 3, 3, 2));
-  assert(false == isPressed(4, 3, 3, 2));
-  assert(false == isPressed(5, 3, 3, 2));
-  assert(false == isPressed(6, 3, 3, 2));
-  assert(true  == isPressed(7, 3, 3, 2));
-  assert(false == isPressed(8, 3, 3, 2));
-  assert(false == isPressed(9, 3, 3, 2));
-  assert(true  == isPressed(10, 3, 3, 2));
-  assert(false == isPressed(11, 3, 3, 2));
-  assert(false == isPressed(12, 3, 3, 2));
-  assert(true  == isPressed(100, 3, 3, 2));
+  assert(false == IsPressed(0, 3, 3, 2));
+  assert(true  == IsPressed(1, 3, 3, 2));
+  assert(true  == IsPressed(2, 3, 3, 2));
+  assert(true  == IsPressed(3, 3, 3, 2));
+  assert(false == IsPressed(4, 3, 3, 2));
+  assert(false == IsPressed(5, 3, 3, 2));
+  assert(false == IsPressed(6, 3, 3, 2));
+  assert(true  == IsPressed(7, 3, 3, 2));
+  assert(false == IsPressed(8, 3, 3, 2));
+  assert(false == IsPressed(9, 3, 3, 2));
+  assert(true  == IsPressed(10, 3, 3, 2));
+  assert(false == IsPressed(11, 3, 3, 2));
+  assert(false == IsPressed(12, 3, 3, 2));
+  assert(true  == IsPressed(100, 3, 3, 2));
 
   printf("End Test: Input\n");
 }

@@ -1,5 +1,6 @@
 #define DEFINE_STARRUBY_EXTERN
 #include "starruby.h"
+#include "starruby_private.h"
 
 VALUE
 GetCompletePath(VALUE rbPath, bool raiseNotFoundError)

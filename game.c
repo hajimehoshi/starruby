@@ -1,4 +1,5 @@
 #include "starruby.h"
+#include "starruby_private.h"
 
 static volatile VALUE symbol_cursor;
 static volatile VALUE symbol_fullscreen;

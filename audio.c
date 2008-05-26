@@ -1,4 +1,5 @@
 #include "starruby.h"
+#include "starruby_private.h"
 #include "st.h"
 
 #define MAX_CHANNEL_COUNT (8)

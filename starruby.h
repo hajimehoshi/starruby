@@ -44,10 +44,6 @@ typedef struct {
   TTF_Font* sdlFont;
 } Font;
 
-#ifndef PI
-#define PI (3.1415926535897932384626433832795)
-#endif
-
 STARRUBY_EXTERN VALUE rb_mAudio;
 STARRUBY_EXTERN VALUE rb_cColor;
 STARRUBY_EXTERN VALUE rb_cFont;
@@ -64,37 +60,6 @@ STARRUBY_EXTERN VALUE rb_cTone;
 #define rb_raise_sdl_ttf_error()\
   rb_raise(rb_eStarRubyError, "%s", TTF_GetError())
 
-#define MAX(x, y) ((x >= y) ? x : y)
-#define MIN(x, y) ((x <= y) ? x : y)
-#define DIV255(x) ((x + 255) >> 8)
-
-VALUE GetCompletePath(VALUE, bool);
-
 void Init_starruby(void);
-
-void InitializeAudio(void);
-void InitializeColor(void);
-void InitializeGame(void);
-void InitializeFont(void);
-void InitializeInput(void);
-void InitializeStarRubyError(void);
-void InitializeTexture(void);
-
-void FinalizeAudio(void);
-void FinalizeInput(void);
-
-void UpdateAudio(void);
-void UpdateInput(void);
-
-void InitializeSdlAudio(void);
-void InitializeSdlFont(void);
-void InitializeSdlInput(void);
-
-int GetWindowScale(void);
-
-#ifdef DEBUG
-#include <assert.h>
-void TestInput(void);
-#endif
 
 #endif

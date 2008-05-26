@@ -1,4 +1,5 @@
 #include "starruby.h"
+#include "starruby_private.h"
 #include <png.h>
 #include "st.h"
 

@@ -1,4 +1,5 @@
 #include "starruby.h"
+#include "starruby_private.h"
 
 #ifdef HAVE_FONTCONFIG_FONTCONFIG_H
 #include <fontconfig/fontconfig.h>

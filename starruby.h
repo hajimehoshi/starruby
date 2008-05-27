@@ -9,6 +9,7 @@
 #define STARRUBY_EXTERN extern
 #endif
 
+// TODO: Change names
 STARRUBY_EXTERN VALUE rb_mAudio;
 STARRUBY_EXTERN VALUE rb_cColor;
 STARRUBY_EXTERN VALUE rb_cFont;

@@ -48,10 +48,18 @@ typedef struct {
 #define DIV255(x) ((x + 255) >> 8)
 
 #define rb_raise_sdl_error() rb_raise(strb_GetStarRubyError(), "%s", SDL_GetError())
-#define rb_raise_sdl_mix_error()\
+#define rb_raise_sdl_mix_error() \
   rb_raise(strb_GetStarRubyError(), "%s", Mix_GetError())
-#define rb_raise_sdl_ttf_error()\
+#define rb_raise_sdl_ttf_error() \
   rb_raise(strb_GetStarRubyError(), "%s", TTF_GetError())
+
+#define strb_GetColorFromRubyValue(colorP, rbColor) \
+  do {                                              \
+    Check_Type(rbColor, T_DATA);                    \
+    Pixel p;                                        \
+    p.value = (uint32_t)DATA_PTR(rbColor);          \
+    *colorP = p.color;                              \
+  } while (false)
 
 VALUE strb_GetStarRubyError(void);
 

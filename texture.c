@@ -5,21 +5,21 @@
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
-#define LOOP(process, length)                       \
-  do {                                              \
-    int n = (length + 7) / 8;                       \
-    switch (length % 8) {                           \
-    case 0: do { process;                           \
-      case 7: process;                              \
-      case 6: process;                              \
-      case 5: process;                              \
-      case 4: process;                              \
-      case 3: process;                              \
-      case 2: process;                              \
-      case 1: process;                              \
-      } while (--n > 0);                            \
-    }                                               \
-  } while (false)
+#define LOOP(process, length) \
+  do {                        \
+    int n = (length + 7) / 8; \
+    switch (length % 8) {     \
+    case 0: do { process;     \
+      case 7: process;        \
+      case 6: process;        \
+      case 5: process;        \
+      case 4: process;        \
+      case 3: process;        \
+      case 2: process;        \
+      case 1: process;        \
+      } while (--n > 0);      \
+    }                         \
+  } while (false)             \
 
 static volatile VALUE rb_cColor;
 static volatile VALUE rb_cTexture;
@@ -315,10 +315,10 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     switch (TYPE(val)) {
     case T_DATA:
       options->blurType = BLUR_TYPE_COLOR;
-      Color* color;
-      Data_Get_Struct(val, Color, color);
+      Color color;
+      strb_GetColorFromRubyValue(&color, val);
       options->blurType  = BLUR_TYPE_COLOR;
-      options->blurColor = *color;
+      options->blurColor = color;
       break;
     case T_SYMBOL:
       if (val == symbol_background)
@@ -510,12 +510,12 @@ Texture_fill(VALUE self, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   int length = texture->width * texture->height;
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < length; i++, pixels++)
-    pixels->color = *color;
+    pixels->color = color;
   return Qnil;
 }
 
@@ -533,13 +533,13 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectHeight = NUM2INT(rbHeight);
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
     return Qnil;
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
     for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
-      pixels->color = *color;
+      pixels->color = color;
   return Qnil;
 }
 
@@ -572,17 +572,17 @@ Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
-#define RENDER_PIXEL(_dst, _srcP)                                       \
-  do {                                                                  \
-    if (_dst.alpha == 0) {                                              \
-      _dst = *_srcP;                                                    \
-    } else {                                                            \
-      if (_dst.alpha < _srcP->alpha)                                    \
-        _dst.alpha = _srcP->alpha;                                      \
-      _dst.red   = ALPHA(_srcP->red,   _dst.red,   _srcP->alpha);       \
-      _dst.green = ALPHA(_srcP->green, _dst.green, _srcP->alpha);       \
-      _dst.blue  = ALPHA(_srcP->blue,  _dst.blue,  _srcP->alpha);       \
-    }                                                                   \
+#define RENDER_PIXEL(_dst, _src)                              \
+  do {                                                        \
+    if (_dst.alpha == 0) {                                    \
+      _dst = _src;                                            \
+    } else {                                                  \
+      if (_dst.alpha < _src.alpha)                            \
+        _dst.alpha = _src.alpha;                              \
+      _dst.red   = ALPHA(_src.red,   _dst.red,   _src.alpha); \
+      _dst.green = ALPHA(_src.green, _dst.green, _src.alpha); \
+      _dst.blue  = ALPHA(_src.blue,  _dst.blue,  _src.alpha); \
+    }                                                         \
   } while (false)
 
 static VALUE
@@ -692,7 +692,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
               (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
             Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
             if (options.blurType == BLUR_TYPE_NONE || scale <= 1) {
-              RENDER_PIXEL(dst->color, srcColor);
+              RENDER_PIXEL(dst->color, (*srcColor));
             } else {
               int rate = (int)(255 * (1 / scale));
               if (options.blurType == BLUR_TYPE_BACKGROUND) {
@@ -701,16 +701,14 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
                 c.green = srcColor->green;
                 c.blue  = srcColor->blue;
                 c.alpha = DIV255(srcColor->alpha * rate);
-                Color* cp = &c;
-                RENDER_PIXEL(dst->color, cp);
+                RENDER_PIXEL(dst->color, c);
               } else {
                 Color c;
                 c.red   = ALPHA(srcColor->red,   options.blurColor.red,   rate);
                 c.green = ALPHA(srcColor->green, options.blurColor.green, rate);
                 c.blue  = ALPHA(srcColor->blue,  options.blurColor.blue,  rate);
                 c.alpha = ALPHA(srcColor->alpha, options.blurColor.alpha, rate);
-                Color* cp = &c;
-                RENDER_PIXEL(dst->color, cp);
+                RENDER_PIXEL(dst->color, c);
               }
             }
           }
@@ -736,8 +734,8 @@ Texture_render_line(VALUE self,
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   int x = x1;
   int y = y1;
   int dx = abs(x2 - x1);
@@ -789,8 +787,8 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     return Qnil;
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixel = &(texture->pixels[x + y * texture->width]);
   RENDER_PIXEL(pixel->color, color);
   return Qnil;
@@ -810,8 +808,8 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectHeight = NUM2INT(rbHeight);
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
     return Qnil;
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
@@ -841,8 +839,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbTextTexture = rb_class_new_instance(2, RARRAY_PTR(rbSize), rb_cTexture);
   Texture* textTexture;
   Data_Get_Struct(rbTextTexture, Texture, textTexture);
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
 
   SDL_Surface* textSurfaceRaw;
   if (antiAlias)
@@ -871,11 +869,11 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   int size = textTexture->width * textTexture->height;
   for (int i = 0; i < size; i++, src++, dst++) {
     if (src->value) {
-      dst->color = *color;
-      if (color->alpha == 255)
+      dst->color = color;
+      if (color.alpha == 255)
         dst->color.alpha = src->color.red;
       else
-        dst->color.alpha = DIV255(src->color.red * color->alpha);
+        dst->color.alpha = DIV255(src->color.red * color.alpha);
     }
   }
   SDL_UnlockSurface(textSurface);
@@ -1467,9 +1465,9 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     return Qnil;
-  Color* color;
-  Data_Get_Struct(rbColor, Color, color);
-  texture->pixels[x + y * texture->width].color = *color;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
+  texture->pixels[x + y * texture->width].color = color;
   return rbColor;
 }
 

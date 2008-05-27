@@ -17,8 +17,8 @@ CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
 static VALUE
 Color_alloc(VALUE klass)
 {
-  Color* color = ALLOC(Color);
-  return Data_Wrap_Struct(klass, 0, -1, color);
+  Pixel pixel;
+  return Data_Wrap_Struct(klass, 0, 0, (void*)pixel.value);
 }
 
 static VALUE
@@ -35,29 +35,33 @@ Color_initialize(int argc, VALUE* argv, VALUE self)
       blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha)
     rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
              red, green, blue, alpha);
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  color->red   = red;
-  color->green = green;
-  color->blue  = blue;
-  color->alpha = alpha;
+  Pixel pixel = {
+    .color = {
+      .red   = red,
+      .green = green,
+      .blue  = blue,
+      .alpha = alpha,
+    }
+  };
+  // Only for Ruby 1.8?
+  RDATA(self)->data = (void*)pixel.value;
   return Qnil;
 }
 
 static VALUE
 Color_alpha(VALUE self)
 {
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  return INT2NUM(color->alpha);
+  Color color;
+  strb_GetColorFromRubyValue(&color, self);
+  return INT2NUM(color.alpha);
 }
 
 static VALUE
 Color_blue(VALUE self)
 {
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  return INT2NUM(color->blue);
+  Color color;
+  strb_GetColorFromRubyValue(&color, self);
+  return INT2NUM(color.blue);
 }
 
 static VALUE
@@ -65,50 +69,48 @@ Color_eq(VALUE self, VALUE rbOther)
 {
   if (!rb_obj_is_kind_of(rbOther, rb_cColor))
     return Qfalse;
-  Color* color1;
-  Data_Get_Struct(self, Color, color1);
-  Color* color2;
-  Data_Get_Struct(rbOther, Color, color2);
-  return (color1->red   == color2->red &&
-          color1->green == color2->green &&
-          color1->blue  == color2->blue &&
-          color1->alpha == color2->alpha) ? Qtrue : Qfalse;
+  Color color1, color2;
+  strb_GetColorFromRubyValue(&color1, self);
+  strb_GetColorFromRubyValue(&color2, rbOther);
+  return (color1.red   == color2.red &&
+          color1.green == color2.green &&
+          color1.blue  == color2.blue &&
+          color1.alpha == color2.alpha) ? Qtrue : Qfalse;
 }
 
 static VALUE
 Color_green(VALUE self)
 {
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  return INT2NUM(color->green);
+  Color color;
+  strb_GetColorFromRubyValue(&color, self);
+  return INT2NUM(color.green);
 }
 
 static VALUE
 Color_hash(VALUE self)
 {
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  return INT2NUM(CalcColorHash(color->red, color->green, color->blue, color->alpha));
+  Color color;
+  strb_GetColorFromRubyValue(&color, self);
+  return INT2NUM(CalcColorHash(color.red, color.green, color.blue, color.alpha));
 }
 
 static VALUE
 Color_red(VALUE self)
 {
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  return INT2NUM(color->red);
+  Color color;
+  strb_GetColorFromRubyValue(&color, self);
+  return INT2NUM(color.red);
 }
 
 static VALUE
 Color_to_s(VALUE self)
 {
-  Color* color;
-  Data_Get_Struct(self, Color, color);
-  
+  Color color;
+  strb_GetColorFromRubyValue(&color, self);
   char str[256];
   snprintf(str, sizeof(str),
            "#<StarRuby::Color alpha=%d, red=%d, green=%d, blue=%d>",
-           color->alpha, color->red, color->green, color->blue);
+           color.alpha, color.red, color.green, color.blue);
   return rb_str_new2(str);
 }
 

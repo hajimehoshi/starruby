@@ -200,7 +200,7 @@ static VALUE
 Game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running)
-    rb_raise(rb_eStarRubyError, "already run");
+    rb_raise(strb_GetStarRubyError(), "already run");
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
@@ -304,7 +304,7 @@ static VALUE
 Game_terminate(VALUE self)
 {
   if (!running)
-    rb_raise(rb_eStarRubyError, "A game has not run yet");
+    rb_raise(strb_GetStarRubyError(), "A game has not run yet");
   terminated = true;
   return Qnil;
 }

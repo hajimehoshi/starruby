@@ -1,6 +1,7 @@
-#define DEFINE_STARRUBY_EXTERN
 #include "starruby.h"
 #include "starruby_private.h"
+
+static volatile VALUE rb_eStarRubyError;
 
 VALUE
 strb_GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
@@ -50,6 +51,12 @@ static VALUE
 Numeric_degree(VALUE self)
 {
   return rb_float_new(NUM2DBL(self) * PI / 180.0);
+}
+
+VALUE
+strb_GetStarRubyError(void)
+{
+  return rb_eStarRubyError;
 }
 
 void

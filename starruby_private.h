@@ -20,18 +20,9 @@
 #endif
 #include "starruby.h"
 
-#ifdef DEFINE_STARRUBY_EXTERN
-#define STARRUBY_EXTERN
-#else
-#define STARRUBY_EXTERN extern
-#endif
-
 #ifndef PI
 #define PI (3.1415926535897932384626433832795)
 #endif
-
-// TODO: Change names
-STARRUBY_EXTERN VALUE rb_eStarRubyError;
 
 typedef struct {
   uint8_t blue, green, red, alpha;
@@ -56,11 +47,13 @@ typedef struct {
 #define MIN(x, y) ((x <= y) ? x : y)
 #define DIV255(x) ((x + 255) >> 8)
 
-#define rb_raise_sdl_error() rb_raise(rb_eStarRubyError, "%s", SDL_GetError())
+#define rb_raise_sdl_error() rb_raise(strb_GetStarRubyError(), "%s", SDL_GetError())
 #define rb_raise_sdl_mix_error()\
-  rb_raise(rb_eStarRubyError, "%s", Mix_GetError())
+  rb_raise(strb_GetStarRubyError(), "%s", Mix_GetError())
 #define rb_raise_sdl_ttf_error()\
-  rb_raise(rb_eStarRubyError, "%s", TTF_GetError())
+  rb_raise(strb_GetStarRubyError(), "%s", TTF_GetError())
+
+VALUE strb_GetStarRubyError(void);
 
 VALUE strb_GetCompletePath(VALUE, bool);
 

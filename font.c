@@ -51,7 +51,7 @@ SearchFont(VALUE rbFilePathOrName,
 #ifdef HAVE_FONTCONFIG_FONTCONFIG_H
   if (!FcInit()) {
     FcFini();
-    rb_raise(rb_eStarRubyError, "can't initialize fontconfig library");
+    rb_raise(strb_GetStarRubyError(), "can't initialize fontconfig library");
     return;
   }
   int nameLength = RSTRING_LEN(rbFilePathOrName) + 1;

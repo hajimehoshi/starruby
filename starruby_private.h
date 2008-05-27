@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <ruby.h>
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
@@ -22,6 +21,25 @@
 #ifndef PI
 #define PI (3.1415926535897932384626433832795)
 #endif
+
+typedef struct {
+  uint8_t blue, green, red, alpha;
+} Color;
+
+typedef union {
+  Color color;
+  uint32_t value;
+} Pixel;
+
+typedef struct {
+  uint16_t width, height;
+  Pixel* pixels;
+} Texture;
+
+typedef struct {
+  int size;
+  TTF_Font* sdlFont;
+} Font;
 
 #define MAX(x, y) ((x >= y) ? x : y)
 #define MIN(x, y) ((x <= y) ? x : y)

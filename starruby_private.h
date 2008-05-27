@@ -17,6 +17,7 @@
 #define SHGFP_TYPE_CURRENT (0)
 #endif
 #endif
+#include "starruby.h"
 
 #ifndef PI
 #define PI (3.1415926535897932384626433832795)

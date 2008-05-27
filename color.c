@@ -17,8 +17,7 @@ CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
 static VALUE
 Color_alloc(VALUE klass)
 {
-  Pixel pixel;
-  return Data_Wrap_Struct(klass, 0, 0, (void*)pixel.value);
+  return Data_Wrap_Struct(klass, 0, 0, (void*)0);
 }
 
 static VALUE

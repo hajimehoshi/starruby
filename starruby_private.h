@@ -31,15 +31,7 @@
 #endif
 
 // TODO: Change names
-STARRUBY_EXTERN VALUE rb_mAudio;
-STARRUBY_EXTERN VALUE rb_cColor;
-STARRUBY_EXTERN VALUE rb_cFont;
-STARRUBY_EXTERN VALUE rb_mGame;
-STARRUBY_EXTERN VALUE rb_mInput;
-STARRUBY_EXTERN VALUE rb_mStarRuby;
 STARRUBY_EXTERN VALUE rb_eStarRubyError;
-STARRUBY_EXTERN VALUE rb_cTexture;
-STARRUBY_EXTERN VALUE rb_cTone;
 
 typedef struct {
   uint8_t blue, green, red, alpha;
@@ -72,13 +64,13 @@ typedef struct {
 
 VALUE strb_GetCompletePath(VALUE, bool);
 
-void strb_InitializeAudio(void);
-void strb_InitializeColor(void);
-void strb_InitializeGame(void);
-void strb_InitializeFont(void);
-void strb_InitializeInput(void);
-void strb_InitializeStarRubyError(void);
-void strb_InitializeTexture(void);
+VALUE strb_InitializeAudio(VALUE rb_mStarRuby);
+VALUE strb_InitializeColor(VALUE rb_mStarRuby);
+VALUE strb_InitializeGame(VALUE rb_mStarRuby);
+VALUE strb_InitializeFont(VALUE rb_mStarRuby);
+VALUE strb_InitializeInput(VALUE rb_mStarRuby);
+VALUE strb_InitializeStarRubyError(VALUE rb_mStarRuby);
+VALUE strb_InitializeTexture(VALUE rb_mStarRuby, VALUE rb_cColor);
 
 void strb_UpdateAudio(void);
 void strb_UpdateInput(void);

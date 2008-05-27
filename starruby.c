@@ -55,7 +55,7 @@ Numeric_degree(VALUE self)
 void
 Init_starruby(void)
 {
-  rb_mStarRuby = rb_define_module("StarRuby");
+  VALUE rb_mStarRuby = rb_define_module("StarRuby");
   rb_eStarRubyError = rb_define_class_under(rb_mStarRuby, "StarRubyError",
                                             rb_eStandardError);
 
@@ -68,12 +68,13 @@ Init_starruby(void)
   volatile VALUE rbVersion = rb_str_new2("0.1.18");
   OBJ_FREEZE(rbVersion);
   rb_define_const(rb_mStarRuby, "VERSION", rbVersion);
-  strb_InitializeAudio();
-  strb_InitializeColor();
-  strb_InitializeFont();
-  strb_InitializeGame();
-  strb_InitializeInput();
-  strb_InitializeTexture();
+  strb_InitializeAudio(rb_mStarRuby);
+  VALUE rb_cColor = strb_InitializeColor(rb_mStarRuby);
+  strb_InitializeFont(rb_mStarRuby);
+  strb_InitializeGame(rb_mStarRuby);
+  strb_InitializeInput(rb_mStarRuby);
+
+  strb_InitializeTexture(rb_mStarRuby, rb_cColor);
 
   rb_set_end_proc(FinalizeStarRuby, Qnil);
 

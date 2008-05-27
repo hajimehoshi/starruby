@@ -1,6 +1,9 @@
 #include "starruby.h"
 #include "starruby_private.h"
 
+static volatile VALUE rb_mGame;
+static volatile VALUE rb_mStarRuby;
+
 static volatile VALUE symbol_cursor;
 static volatile VALUE symbol_fullscreen;
 static volatile VALUE symbol_window_scale;
@@ -41,7 +44,7 @@ Game_real_fps(VALUE self)
 }
 
 static VALUE
-DoLoop()
+DoLoop(void)
 {
   running = true;
   terminated = false;
@@ -269,9 +272,10 @@ Game_run(int argc, VALUE* argv, VALUE self)
   } else {
     options |= SDL_SWSURFACE;
   }
-  
-  volatile VALUE rbScreen = rb_funcall(rb_cTexture, rb_intern("new"), 2,
-                                       INT2NUM(width), INT2NUM(height));
+
+  volatile VALUE rb_cTexture = rb_const_get(rb_mStarRuby, rb_intern("Texture"));
+  volatile VALUE rbScreen =
+    rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)}, rb_cTexture);
   rb_iv_set(self, "screen", rbScreen);
 
   sdlScreen = SDL_SetVideoMode(screenWidth * windowScale,
@@ -320,9 +324,11 @@ Game_title_eq(VALUE self, VALUE rbTitle)
   return rb_iv_set(self, "title", rbTitle);
 }
 
-void
-strb_InitializeGame(void)
+VALUE
+strb_InitializeGame(VALUE _rb_mStarRuby)
 {
+  rb_mStarRuby = _rb_mStarRuby;
+
   rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
   rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);
   rb_define_module_function(rb_mGame, "fps=",      Game_fps_eq,    1);
@@ -339,4 +345,6 @@ strb_InitializeGame(void)
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
   rb_iv_set(rb_mGame, "title", rb_str_new2(""));
+
+  return rb_mGame;
 }

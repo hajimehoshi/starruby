@@ -253,10 +253,10 @@ strb_InitializeSdlAudio(void)
   }
 }
 
-void
-strb_InitializeAudio(void)
+VALUE
+strb_InitializeAudio(VALUE rb_mStarRuby)
 {
-  rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
+  VALUE rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
   rb_define_module_function(rb_mAudio, "bgm_position",
                             Audio_bgm_position,     0);
   rb_define_module_function(rb_mAudio, "bgm_volume",
@@ -288,6 +288,8 @@ strb_InitializeAudio(void)
 
   rbMusicCache = rb_iv_set(rb_mAudio, "music_cache", rb_hash_new());
   rbChunkCache = rb_iv_set(rb_mAudio, "chunk_cache", rb_hash_new());
+
+  return rb_mAudio;
 }
 
 void

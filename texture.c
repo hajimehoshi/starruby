@@ -21,6 +21,9 @@
     }                                               \
   } while (false)
 
+static volatile VALUE rb_cColor;
+static volatile VALUE rb_cTexture;
+
 static volatile VALUE symbol_add;
 static volatile VALUE symbol_add_alpha;
 static volatile VALUE symbol_alpha;
@@ -200,8 +203,8 @@ Texture_s_load(VALUE self, VALUE rbPath)
   if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
     png_set_tRNS_to_alpha(pngPtr);
   png_read_update_info(pngPtr, infoPtr);
-  volatile VALUE rbTexture = rb_funcall(self, rb_intern("new"), 2,
-                                        INT2NUM(width), INT2NUM(height));
+  volatile VALUE rbTexture =
+    rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)}, self);
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
 
@@ -551,11 +554,13 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
   Color color = texture->pixels[x + y * texture->width].color;
-  return rb_funcall(rb_cColor, rb_intern("new"), 4,
-                    INT2NUM(color.red),
-                    INT2NUM(color.green),
-                    INT2NUM(color.blue),
-                    INT2NUM(color.alpha));
+  VALUE args[] = {
+    INT2NUM(color.red),
+    INT2NUM(color.green),
+    INT2NUM(color.blue),
+    INT2NUM(color.alpha),
+  };
+  return rb_class_new_instance(4, args, rb_cColor);
 }
 
 static VALUE
@@ -833,8 +838,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  volatile VALUE rbTextTexture = rb_funcall2(rb_cTexture, rb_intern("new"),
-                                             2, RARRAY_PTR(rbSize));
+  volatile VALUE rbTextTexture = rb_class_new_instance(2, RARRAY_PTR(rbSize), rb_cTexture);
   Texture* textTexture;
   Data_Get_Struct(rbTextTexture, Texture, textTexture);
   Color* color;
@@ -1519,9 +1523,11 @@ Texture_width(VALUE self)
   return INT2NUM(texture->width);
 }
 
-void
-strb_InitializeTexture(void)
+VALUE
+strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
 {
+  rb_cColor = _rb_cColor;
+
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, 1);
   rb_define_singleton_method(rb_cTexture, "transform_in_perspective",
@@ -1589,4 +1595,6 @@ strb_InitializeTexture(void)
   symbol_width          = ID2SYM(rb_intern("width"));
   symbol_x              = ID2SYM(rb_intern("x"));
   symbol_y              = ID2SYM(rb_intern("y"));
+
+  return rb_cTexture;
 }

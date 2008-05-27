@@ -29,6 +29,8 @@ typedef struct {
 } Mouse;
 static Mouse* mouse;
 
+static volatile VALUE rb_mInput;
+
 static volatile VALUE symbol_delay;
 static volatile VALUE symbol_device_number;
 static volatile VALUE symbol_down;
@@ -51,7 +53,7 @@ Input_gamepad_count(VALUE self)
 static VALUE
 Input_mouse_location(VALUE self)
 {
-  return rb_iv_get(rb_mInput, "mouse_location");
+  return rb_iv_get(self, "mouse_location");
 }
 
 static VALUE
@@ -69,7 +71,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
     rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
                  INT2NUM(mouseLocationY / windowScale));
   OBJ_FREEZE(rbMouseLocation);
-  rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);  
+  rb_iv_set(self, "mouse_location", rbMouseLocation);  
   return rbValue;
 }
 
@@ -327,8 +329,8 @@ strb_InitializeSdlInput()
   MEMZERO(mouse, Mouse, 1);
 }
 
-void
-strb_InitializeInput(void)
+VALUE
+strb_InitializeInput(VALUE rb_mStarRuby)
 {
   rb_mInput = rb_define_module_under(rb_mStarRuby, "Input");
   rb_define_module_function(rb_mInput, "gamepad_count",
@@ -356,6 +358,8 @@ strb_InitializeInput(void)
   volatile VALUE rbMouseLocation = rb_assoc_new(INT2NUM(0), INT2NUM(0));
   OBJ_FREEZE(rbMouseLocation);
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
+
+  return rb_mInput;
 }
 
 void

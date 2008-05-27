@@ -368,10 +368,10 @@ strb_InitializeSdlFont(void)
 #endif
 }
 
-void
-strb_InitializeFont(void)
+VALUE
+strb_InitializeFont(VALUE rb_mStarRuby)
 {
-  rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
+  VALUE rb_cFont = rb_define_class_under(rb_mStarRuby, "Font", rb_cObject);
   rb_define_singleton_method(rb_cFont, "exist?", Font_s_exist, 1);
   rb_define_singleton_method(rb_cFont, "new",    Font_s_new,   -1);
   rb_define_alloc_func(rb_cFont, Font_alloc);
@@ -387,4 +387,6 @@ strb_InitializeFont(void)
   symbol_ttc_index = ID2SYM(rb_intern("ttc_index"));
 
   rbFontCache = rb_iv_set(rb_cFont, "font_cache", rb_hash_new());
+
+  return rb_cFont;
 }

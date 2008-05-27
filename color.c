@@ -2,6 +2,8 @@
 #include "starruby.h"
 #include "starruby_private.h"
 
+static volatile VALUE rb_cColor;
+
 static uint32_t
 CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
 {
@@ -110,8 +112,8 @@ Color_to_s(VALUE self)
   return rb_str_new2(str);
 }
 
-void
-strb_InitializeColor(void)
+VALUE
+strb_InitializeColor(VALUE rb_mStarRuby)
 {
   rb_cColor = rb_define_class_under(rb_mStarRuby, "Color", rb_cObject);
   rb_define_alloc_func(rb_cColor, Color_alloc);
@@ -124,4 +126,5 @@ strb_InitializeColor(void)
   rb_define_method(rb_cColor, "hash",  Color_hash,  0);
   rb_define_method(rb_cColor, "red",   Color_red,   0);
   rb_define_method(rb_cColor, "to_s",  Color_to_s,  0);
+  return rb_cColor;
 }

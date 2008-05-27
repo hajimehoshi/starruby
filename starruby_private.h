@@ -9,6 +9,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
+#include <ruby.h>
 #ifdef WIN32
 #include <windows.h>
 #include <winreg.h>
@@ -19,9 +20,26 @@
 #endif
 #include "starruby.h"
 
+#ifdef DEFINE_STARRUBY_EXTERN
+#define STARRUBY_EXTERN
+#else
+#define STARRUBY_EXTERN extern
+#endif
+
 #ifndef PI
 #define PI (3.1415926535897932384626433832795)
 #endif
+
+// TODO: Change names
+STARRUBY_EXTERN VALUE rb_mAudio;
+STARRUBY_EXTERN VALUE rb_cColor;
+STARRUBY_EXTERN VALUE rb_cFont;
+STARRUBY_EXTERN VALUE rb_mGame;
+STARRUBY_EXTERN VALUE rb_mInput;
+STARRUBY_EXTERN VALUE rb_mStarRuby;
+STARRUBY_EXTERN VALUE rb_eStarRubyError;
+STARRUBY_EXTERN VALUE rb_cTexture;
+STARRUBY_EXTERN VALUE rb_cTone;
 
 typedef struct {
   uint8_t blue, green, red, alpha;

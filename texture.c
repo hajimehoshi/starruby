@@ -196,6 +196,8 @@ Texture_s_load(VALUE self, VALUE rbPath)
     rb_raise(strb_GetStarRubyError(),
              "not supported interlacing PNG image: %s", path);
   }
+  if (bitDepth == 16)
+    png_set_strip_16(pngPtr);
   if (colorType == PNG_COLOR_TYPE_PALETTE)
     png_set_palette_to_rgb(pngPtr);
   if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)

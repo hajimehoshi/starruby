@@ -118,6 +118,8 @@ class TestTexture < Test::Unit::TestCase
     assert_raise StarRubyError do
       texture32 = Texture.load("images/ruby32_interlace")
     end
+    # bit depth 16
+    texture32 = Texture.load("images/sample2")
   end
 
   def test_transform_in_perspective

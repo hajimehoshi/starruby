@@ -564,6 +564,13 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
 }
 
 static VALUE
+Texture_get_pixel_deprecated(VALUE self, VALUE rbX, VALUE rbY)
+{
+  rb_warn("Texture#get_pixel is deprecated; use Texture#[] instead");
+  return Texture_get_pixel(self, rbX, rbY);
+}
+
+static VALUE
 Texture_height(VALUE self)
 {
   Texture* texture;
@@ -1472,6 +1479,13 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 }
 
 static VALUE
+Texture_set_pixel_deprecated(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
+{
+  rb_warn("Texture#set_pixel is deprecated; use Texture#[]= instead");
+  return Texture_set_pixel(self, rbX, rbY, rbColor);
+}
+
+static VALUE
 Texture_size(VALUE self)
 {
   Texture* texture;
@@ -1534,6 +1548,8 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
+  rb_define_method(rb_cTexture, "[]",             Texture_get_pixel,       2);
+  rb_define_method(rb_cTexture, "[]=",            Texture_set_pixel,       3);
   rb_define_method(rb_cTexture, "change_hue",     Texture_change_hue,      1);
   rb_define_method(rb_cTexture, "change_hue!",    Texture_change_hue_bang, 1);
   rb_define_method(rb_cTexture, "clear",          Texture_clear,           0);
@@ -1542,7 +1558,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   rb_define_method(rb_cTexture, "dump",           Texture_dump,            1);
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
-  rb_define_method(rb_cTexture, "get_pixel",      Texture_get_pixel,       2);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
   rb_define_method(rb_cTexture, "render_in_perspective",
                    Texture_render_in_perspective, -1);
@@ -1552,10 +1567,12 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);
-  rb_define_method(rb_cTexture, "set_pixel",      Texture_set_pixel,       3);
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
+
+  rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel_deprecated, 2);
+  rb_define_method(rb_cTexture, "set_pixel", Texture_set_pixel_deprecated, 3);
 
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_add_alpha      = ID2SYM(rb_intern("add_alpha"));

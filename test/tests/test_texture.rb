@@ -103,18 +103,18 @@ class TestTexture < Test::Unit::TestCase
   
   def test_load_various_png
     texture8 = Texture.load("images/ruby8")
-    assert_equal 0, texture8.get_pixel(1, 1).alpha
-    assert_equal Color.new(252, 239, 239, 255), texture8.get_pixel(58, 2)
+    assert_equal 0, texture8[1, 1].alpha
+    assert_equal Color.new(252, 239, 239, 255), texture8[58, 2]
     texture8 = Texture.load("images/ruby8_without_alpha")
-    assert_equal 255, texture8.get_pixel(1, 1).alpha
-    assert_equal Color.new(252, 239, 239, 255), texture8.get_pixel(58, 2)
+    assert_equal 255, texture8[1, 1].alpha
+    assert_equal Color.new(252, 239, 239, 255), texture8[58, 2]
     texture8 = Texture.load("images/ruby8_16colors")
-    assert_equal 0, texture8.get_pixel(1, 1).alpha
-    assert_equal Color.new(251, 246, 243, 255), texture8.get_pixel(58, 2)
+    assert_equal 0, texture8[1, 1].alpha
+    assert_equal Color.new(251, 246, 243, 255), texture8[58, 2]
     texture16 = Texture.load("images/ruby16")
-    assert_equal Color.new(245, 245, 245, 186), texture16.get_pixel(58, 2)
+    assert_equal Color.new(245, 245, 245, 186), texture16[58, 2]
     texture32 = Texture.load("images/ruby32")
-    assert_equal Color.new(252, 242, 242, 186), texture32.get_pixel(58, 2)
+    assert_equal Color.new(252, 242, 242, 186), texture32[58, 2]
     assert_raise StarRubyError do
       texture32 = Texture.load("images/ruby32_interlace")
     end
@@ -191,7 +191,7 @@ class TestTexture < Test::Unit::TestCase
     assert texture.clone.frozen?
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
   end
@@ -204,7 +204,7 @@ class TestTexture < Test::Unit::TestCase
     assert !texture.dup.frozen?
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
   end
@@ -221,68 +221,68 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.new(3, 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+        assert_equal Color.new(0, 0, 0, 0), texture[x, y]
       end
     end
 
     begin
-      texture.get_pixel(-1, 2)
+      texture[-1, 2]
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (-1, 2)", e.message
     end
 
     begin
-      texture.get_pixel(2, -1)
+      texture[2, -1]
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (2, -1)", e.message
     end
 
     begin
-      texture.get_pixel(3, 2)
+      texture[3, 2]
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (3, 2)", e.message
     end
 
     begin
-      texture.get_pixel(2, 3)
+      texture[2, 3]
       flunk
     rescue ArgumentError => e
       assert_equal "index out of range: (2, 3)", e.message
     end
 
-    assert_equal Color.new(31, 41, 59, 26), texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
-    assert_equal Color.new(53, 58, 97, 92), texture.set_pixel(1, 2, Color.new(53, 58, 97, 92))
-    assert_equal Color.new(65, 35, 89, 79), texture.set_pixel(2, 0, Color.new(65, 35, 89, 79))
-    assert_equal Color.new(31, 41, 59, 26), texture.get_pixel(0, 1);
-    assert_equal Color.new(53, 58, 97, 92), texture.get_pixel(1, 2);
-    assert_equal Color.new(65, 35, 89, 79), texture.get_pixel(2, 0);
+    assert_equal Color.new(31, 41, 59, 26), texture[0, 1] = Color.new(31, 41, 59, 26)
+    assert_equal Color.new(53, 58, 97, 92), texture[1, 2] = Color.new(53, 58, 97, 92)
+    assert_equal Color.new(65, 35, 89, 79), texture[2, 0] = Color.new(65, 35, 89, 79)
+    assert_equal Color.new(31, 41, 59, 26), texture[0, 1];
+    assert_equal Color.new(53, 58, 97, 92), texture[1, 2];
+    assert_equal Color.new(65, 35, 89, 79), texture[2, 0];
 
     texture.clear
-    texture.set_pixel(-1, 2, Color.new(1, 2, 3))
+    texture[-1, 2] = Color.new(1, 2, 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+        assert_equal Color.new(0, 0, 0, 0), texture[x, y]
       end
     end
-    texture.set_pixel(2, -1, Color.new(1, 2, 3))
+    texture[2, -1] = Color.new(1, 2, 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+        assert_equal Color.new(0, 0, 0, 0), texture[x, y]
       end
     end
-    texture.set_pixel(3, 2, Color.new(1, 2, 3))
+    texture[3, 2] = Color.new(1, 2, 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+        assert_equal Color.new(0, 0, 0, 0), texture[x, y]
       end
     end
-    texture.set_pixel(2, 3, Color.new(1, 2, 3))
+    texture[2, 3] = Color.new(1, 2, 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x,y)
+        assert_equal Color.new(0, 0, 0, 0), texture[x, y]
       end
     end
   end
@@ -291,7 +291,7 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.new(3, 3)
     texture.dispose
     assert_raise RuntimeError do
-      texture.get_pixel(0, 1)
+      texture[0, 1]
     end
   end
   
@@ -299,7 +299,7 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.new(3, 3)
     texture.freeze
     assert_raise FrozenError do
-      texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
+      texture[0, 1] = Color.new(31, 41, 59, 26)
     end
   end
   
@@ -307,26 +307,26 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.new(3, 3)
     texture.dispose
     assert_raise RuntimeError do
-      texture.set_pixel(0, 1, Color.new(31, 41, 59, 26))
+      texture[0, 1] = Color.new(31, 41, 59, 26)
     end
   end
   
   def test_get_and_set_pixel_type
     texture = Texture.new(3, 3)
     assert_raise TypeError do
-      texture.get_pixel(nil, 0)
+      texture[nil, 0]
     end
     assert_raise TypeError do
-      texture.get_pixel(0, nil)
+      texture[0, nil]
     end
     assert_raise TypeError do
-      texture.set_pixel(nil, 0, Color.new(0, 0, 0))
+      texture[nil, 0] = Color.new(0, 0, 0)
     end
     assert_raise TypeError do
-      texture.set_pixel(0, nil, Color.new(0, 0, 0))
+      texture[0, nil] = Color.new(0, 0, 0)
     end
     assert_raise TypeError do
-      texture.set_pixel(0, 0, nil)
+      texture[0, 0] = nil
     end
   end
   
@@ -335,7 +335,7 @@ class TestTexture < Test::Unit::TestCase
     texture.clear
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(0, 0, 0, 0), texture.get_pixel(x, y)
+        assert_equal Color.new(0, 0, 0, 0), texture[x, y]
       end
     end
   end
@@ -361,7 +361,7 @@ class TestTexture < Test::Unit::TestCase
     texture.fill(Color.new(31, 41, 59, 26))
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal Color.new(31, 41, 59, 26), texture.get_pixel(x, y)
+        assert_equal Color.new(31, 41, 59, 26), texture[x, y]
       end
     end
   end
@@ -396,9 +396,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if 10 <= x and 11 <= y and x < 22 and y < 24
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -407,9 +407,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if x < 16 and 16 <= y and y < 32
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -418,9 +418,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if 16 <= x and x < 32 and y < 16
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -429,9 +429,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if 16 <= x and 16 <= y and y < 32
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -440,9 +440,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if 16 <= x and x < 32 and 16 <= y
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -450,14 +450,14 @@ class TestTexture < Test::Unit::TestCase
     texture.fill_rect(16, 16, 16, -1, Color.new(0, 0, 0, 0))
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        assert_equal orig_texture[x, y], texture[x, y]
       end
     end
     texture = orig_texture.clone
     texture.fill_rect(16, 16, -1, 16, Color.new(0, 0, 0, 0))
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        assert_equal orig_texture[x, y], texture[x, y]
       end
     end
     texture = orig_texture.clone
@@ -465,9 +465,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if 1 <= x
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -476,9 +476,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |y|
       texture.width.times do |x|
         if 1 <= y
-          assert_equal Color.new(12, 34, 56, 78), texture.get_pixel(x, y)
+          assert_equal Color.new(12, 34, 56, 78), texture[x, y]
         else
-          assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+          assert_equal orig_texture[x, y], texture[x, y]
         end
       end
     end
@@ -486,7 +486,7 @@ class TestTexture < Test::Unit::TestCase
     texture.fill_rect(texture.width + 160, texture.height + 160, 16, 16, Color.new(0, 0, 0, 0))
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        assert_equal orig_texture[x, y], texture[x, y]
       end
     end
   end
@@ -532,21 +532,21 @@ class TestTexture < Test::Unit::TestCase
     texture = orig_texture.change_hue(0)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        assert_equal orig_texture[x, y], texture[x, y]
       end
     end
     texture = orig_texture.clone
     texture.change_hue!(0)
     texture.height.times do |y|
       texture.width.times do |x|
-        assert_equal orig_texture.get_pixel(x, y), texture.get_pixel(x, y)
+        assert_equal orig_texture[x, y], texture[x, y]
       end
     end
     texture = orig_texture.change_hue(Math::PI * 2 / 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        p1 = orig_texture.get_pixel(x, y)
-        p2 = texture.get_pixel(x, y)
+        p1 = orig_texture[x, y]
+        p2 = texture[x, y]
         assert_in_delta p1.blue,  p2.red,   1
         assert_in_delta p1.red,   p2.green, 1
         assert_in_delta p1.green, p2.blue,  1
@@ -557,8 +557,8 @@ class TestTexture < Test::Unit::TestCase
     texture.change_hue!(Math::PI * 2 / 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        p1 = orig_texture.get_pixel(x, y)
-        p2 = texture.get_pixel(x, y)
+        p1 = orig_texture[x, y]
+        p2 = texture[x, y]
         assert_in_delta p1.blue,  p2.red,   1
         assert_in_delta p1.red,   p2.green, 1
         assert_in_delta p1.green, p2.blue,  1
@@ -568,8 +568,8 @@ class TestTexture < Test::Unit::TestCase
     texture = orig_texture.change_hue(Math::PI * 4 / 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        p1 = orig_texture.get_pixel(x, y)
-        p2 = texture.get_pixel(x, y)
+        p1 = orig_texture[x, y]
+        p2 = texture[x, y]
         assert_in_delta p1.green, p2.red,   1
         assert_in_delta p1.blue,  p2.green, 1
         assert_in_delta p1.red,   p2.blue,  1
@@ -580,8 +580,8 @@ class TestTexture < Test::Unit::TestCase
     texture.change_hue!(Math::PI * 4 / 3)
     texture.height.times do |y|
       texture.width.times do |x|
-        p1 = orig_texture.get_pixel(x, y)
-        p2 = texture.get_pixel(x, y)
+        p1 = orig_texture[x, y]
+        p2 = texture[x, y]
         assert_in_delta p1.green, p2.red,   1
         assert_in_delta p1.blue,  p2.green, 1
         assert_in_delta p1.red,   p2.blue,  1
@@ -670,8 +670,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_line(12, 34, 12, 56, Color.new(12, 34, 56, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if i == 12 and 34 <= j and j <= 56
           assert_equal Color.new(12, 34, 56, 255), p2
         else
@@ -683,8 +683,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_line(12, 56, 12, 34, Color.new(12, 34, 56, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if i == 12 and 34 <= j and j <= 56
           assert_equal Color.new(12, 34, 56, 255), p2
         else
@@ -696,8 +696,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_line(12, 34, 56, 34, Color.new(12, 34, 56, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if j == 34 and 12 <= i and i <= 56
           assert_equal Color.new(12, 34, 56, 255), p2
         else
@@ -709,8 +709,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_line(56, 34, 12, 34, Color.new(12, 34, 56, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if j == 34 and 12 <= i and i <= 56
           assert_equal Color.new(12, 34, 56, 255), p2
         else
@@ -722,8 +722,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_line(12, 34, 56, 34, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if j == 34 and 12 <= i and i <= 56
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -784,8 +784,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_pixel(12, 34, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if i == 12 and j == 34
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -804,28 +804,28 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_pixel(-1, 0, Color.new(255, 255, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
     texture2 = texture.dup
     texture2.render_pixel(0, -1, Color.new(255, 255, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
     texture2 = texture.dup
     texture2.render_pixel(texture2.width, 0, Color.new(255, 255, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
     texture2 = texture.dup
     texture2.render_pixel(0, texture2.height, Color.new(255, 255, 255))
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
   end
@@ -868,8 +868,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(12, 34, 5, 6, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if 12 <= i and i < 12 + 5 and 34 <= j and j < 34 + 6
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -888,8 +888,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(-1, 0, 5, 6, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if i < 4 and j < 6
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -908,8 +908,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(0, -1, 5, 6, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if i < 5 and j < 5
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -928,8 +928,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(5, 6, texture2.width + 1, 7, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if 5 <= i and 6 <= j and j < 13
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -948,8 +948,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(5, 6, 7, texture2.height + 1, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         if 5 <= i and i < 12 and 6 <= j
           if 0 < p1.alpha
             assert_in_delta (12 * 78 + p1.red   * (255 - 78)).quo(255), p2.red,   2
@@ -968,8 +968,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(0, 0, -1, 1, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         assert_equal p1, p2
       end
     end
@@ -977,8 +977,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(0, 0, 1, -1, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         assert_equal p1, p2
       end
     end
@@ -986,8 +986,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_rect(texture.width + 5, texture.height + 6, 7, 8, Color.new(12, 34, 56, 78))
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = texture.get_pixel(i, j)
-        p2 = texture2.get_pixel(i, j)
+        p1 = texture[i, j]
+        p2 = texture2[i, j]
         assert_equal p1, p2
       end
     end
@@ -1061,8 +1061,8 @@ class TestTexture < Test::Unit::TestCase
       texture2.render_text("Hello, World", 0, 72, font, Color.new(153, 102, 51, 128), true)
       texture2.height.times do |j|
         texture2.width.times do |i|
-          p1 = texture.get_pixel(i, j)
-          p2 = texture2.get_pixel(i, j)
+          p1 = texture[i, j]
+          p2 = texture2[i, j]
           assert_equal p1, p2
         end
       end
@@ -1140,8 +1140,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0)
     texture.height.times do |y|
       texture.width.times do |x|
-        c1 = texture.get_pixel(x, y)
-        c2 = texture2.get_pixel(x, y)
+        c1 = texture[x, y]
+        c2 = texture2[x, y]
         assert_equal c1, c2
       end
     end
@@ -1149,8 +1149,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0)
     texture.height.times do |y|
       texture.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         a = p1.alpha
         assert_in_delta (p1.red   * a + 128 * (255 - a)).quo(255), p2.red,   2
         assert_in_delta (p1.green * a + 128 * (255 - a)).quo(255), p2.green, 2
@@ -1210,12 +1210,12 @@ class TestTexture < Test::Unit::TestCase
   def test_render_texture_blending
     src_texture = Texture.new(256, 1)
     src_texture.width.times do |i|
-      src_texture.set_pixel(i, 0, Color.new(127, 128, 129, i))
+      src_texture[i, 0] = Color.new(127, 128, 129, i)
     end
     dst_texture = Texture.new(256, 1)
     dst_texture.render_texture(src_texture, 0, 0)
     src_texture.width.times do |i|
-      assert_equal Color.new(127, 128, 129, i), dst_texture.get_pixel(i, 0)
+      assert_equal Color.new(127, 128, 129, i), dst_texture[i, 0]
     end
   end
   
@@ -1226,10 +1226,10 @@ class TestTexture < Test::Unit::TestCase
     texture2.height.times do |y|
       texture2.width.times do |x|
         if x < 10 or y < 11
-          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+          assert_equal Color.new(0, 0, 0, 0), texture2[x, y]
         else
-          p1 = texture.get_pixel(x - 10, y - 11)
-          p2 = texture2.get_pixel(x, y)
+          p1 = texture[x - 10, y - 11]
+          p2 = texture2[x, y]
           if p2.alpha != 0
             assert_equal p1, p2
           else
@@ -1243,15 +1243,15 @@ class TestTexture < Test::Unit::TestCase
     texture2.height.times do |y|
       texture2.width.times do |x|
         if x < texture2.width - 12 and y < texture2.height - 13
-          p1 = texture.get_pixel(x + 12, y + 13)
-          p2 = texture2.get_pixel(x, y)
+          p1 = texture[x + 12, y + 13]
+          p2 = texture2[x, y]
           if p2.alpha != 0
             assert_equal p1, p2
           else
             assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
           end
         else
-          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+          assert_equal Color.new(0, 0, 0, 0), texture2[x, y]
         end
       end
     end
@@ -1263,8 +1263,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :scale_x => 2, :scale_y => 2)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x / 2, y / 2)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x / 2, y / 2]
+        p2 = texture2[x, y]
         if p2.alpha != 0
           assert_equal p1, p2
         else
@@ -1276,8 +1276,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :scale_x => 3, :scale_y => 4)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x / 3, y / 4)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x / 3, y / 4]
+        p2 = texture2[x, y]
         if p2.alpha != 0
           assert_equal p1, p2
         else
@@ -1291,8 +1291,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, w, h, :scale_x => -1, :scale_y => -1)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(w - x - 1, h - y - 1)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[w - x - 1, h - y - 1]
+        p2 = texture2[x, y]
         if p2.alpha != 0
           assert_equal p1, p2
         else
@@ -1305,15 +1305,15 @@ class TestTexture < Test::Unit::TestCase
     texture2.height.times do |y|
       texture2.width.times do |x|
         if x < w / 2
-          p1 = texture.get_pixel(w / 2 - x - 1, y)
-          p2 = texture2.get_pixel(x, y)
+          p1 = texture[w / 2 - x - 1, y]
+          p2 = texture2[x, y]
           if p2.alpha != 0
             assert_equal p1, p2
           else
             assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
           end
         else
-          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+          assert_equal Color.new(0, 0, 0, 0), texture2[x, y]
         end
       end
     end
@@ -1326,11 +1326,11 @@ class TestTexture < Test::Unit::TestCase
     texture2.height.times do |y|
       texture2.width.times do |x|
         if 10 <= x and 11 <= y and x < 24 and y < 26
-          p1 = texture.get_pixel(x - 10 + 12, y - 11 + 13)
-          p2 = texture2.get_pixel(x, y)
+          p1 = texture[x - 10 + 12, y - 11 + 13]
+          p2 = texture2[x, y]
           assert_equal p1, p2
         else
-          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(x, y)
+          assert_equal Color.new(0, 0, 0, 0), texture2[x, y]
         end
       end
     end
@@ -1341,41 +1341,41 @@ class TestTexture < Test::Unit::TestCase
                             :src_height => texture.height + 200)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
     texture2.render_texture(texture, 0, 0, :src_x => -10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
     texture2.render_texture(texture, 0, 0, :src_x => texture.width + 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
     texture2.render_texture(texture, 0, 0, :src_y => -10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal texture.get_pixel(i, j), texture2.get_pixel(i, j)
+        assert_equal texture[i, j], texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
     texture2.render_texture(texture, 0, 0, :src_y => texture.height + 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2.render_texture(texture, 0, 0, :src_x => 10, :src_width => -10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1383,9 +1383,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |j|
       texture.width.times do |i|
         if i < texture.width - 10
-          assert_equal texture.get_pixel(i + 10, j), texture2.get_pixel(i, j)
+          assert_equal texture[i + 10, j], texture2[i, j]
         else
-          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+          assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
         end
       end
     end
@@ -1393,7 +1393,7 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => -10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1401,9 +1401,9 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |j|
       texture.width.times do |i|
         if j < texture.height - 10
-          assert_equal texture.get_pixel(i, j + 10), texture2.get_pixel(i, j)
+          assert_equal texture[i, j + 10], texture2[i, j]
         else
-          assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+          assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
         end
       end
     end
@@ -1413,7 +1413,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => 10, :src_height => 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1422,7 +1422,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => 100, :src_height => 100)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1431,7 +1431,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1440,7 +1440,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1449,7 +1449,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1458,7 +1458,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1467,7 +1467,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1476,7 +1476,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1485,7 +1485,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1494,7 +1494,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
     texture2 = Texture.new(texture.width, texture.height)
@@ -1503,7 +1503,7 @@ class TestTexture < Test::Unit::TestCase
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
     texture.height.times do |j|
       texture.width.times do |i|
-        assert_equal Color.new(0, 0, 0, 0), texture2.get_pixel(i, j)
+        assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
   end
@@ -1516,8 +1516,8 @@ class TestTexture < Test::Unit::TestCase
       texture2.render_texture(texture, 0, 0, :alpha => alpha)
       texture2.height.times do |y|
         texture2.width.times do |x|
-          p1 = texture.get_pixel(x, y)
-          p2 = texture2.get_pixel(x, y)
+          p1 = texture[x, y]
+          p2 = texture2[x, y]
           a = p1.alpha * alpha.quo(255)
           assert_in_delta p1.red   * a / 255, p2.red,   2
           assert_in_delta p1.green * a / 255, p2.green, 2
@@ -1536,8 +1536,8 @@ class TestTexture < Test::Unit::TestCase
     alpha = 100
     texture2.render_texture(texture, 0, 0, :alpha => alpha)
     256.times do |i|
-      p1 = texture.get_pixel(i, 0)
-      p2 = texture2.get_pixel(i, 0)
+      p1 = texture[i, 0]
+      p2 = texture2[i, 0]
       assert_in_delta p1.red   * alpha.quo(255) * i.quo(255), p2.red,   2
       assert_in_delta p1.green * alpha.quo(255) * i.quo(255), p2.green, 2
       assert_in_delta p1.blue  * alpha.quo(255) * i.quo(255), p2.blue,  2
@@ -1547,8 +1547,8 @@ class TestTexture < Test::Unit::TestCase
     alpha = 100
     texture2.render_texture(texture, 0, 0, :alpha => alpha)
     256.times do |i|
-      p1 = texture.get_pixel(i, 0)
-      p2 = texture2.get_pixel(i, 0)
+      p1 = texture[i, 0]
+      p2 = texture2[i, 0]
       assert_equal p1.red,   p2.red
       assert_equal p1.green, p2.green
       assert_equal p1.blue,  p2.blue
@@ -1564,14 +1564,14 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :none)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        assert_equal texture.get_pixel(x, y), texture2.get_pixel(x, y)
+        assert_equal texture[x, y], texture2[x, y]
       end
     end
     texture2.fill Color.new(100, 110, 120, 130)
     texture2.render_texture(texture, 0, 0, :blend_type => :none, :scale_y => 2)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        assert_equal texture.get_pixel(x, y / 2), texture2.get_pixel(x, y)
+        assert_equal texture[x, y / 2], texture2[x, y]
       end
     end
     # alpha
@@ -1579,8 +1579,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :alpha)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         a = p1.alpha
         assert_in_delta (p1.red   * a + 100 * (255 - a)).quo(255), p2.red,   2
         assert_in_delta (p1.green * a + 110 * (255 - a)).quo(255), p2.green, 2
@@ -1593,8 +1593,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :add, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         a = p1.alpha * 128.quo(255)
         assert_in_delta [p1.red   * a.quo(255) + 100, 255].min, p2.red,   2
         assert_in_delta [p1.green * a.quo(255) + 110, 255].min, p2.green, 2
@@ -1606,8 +1606,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :add, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         a = p1.alpha * 128.quo(255)
         assert_equal p1.red,   p2.red
         assert_equal p1.green, p2.green
@@ -1620,8 +1620,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :sub, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         a = p1.alpha * 128.quo(255)
         assert_in_delta [-p1.red   * a.quo(255) + 100, 0].max, p2.red,   2
         assert_in_delta [-p1.green * a.quo(255) + 110, 0].max, p2.green, 2
@@ -1633,8 +1633,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :sub, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 0, p2.red
         assert_equal 0, p2.green
         assert_equal 0, p2.blue
@@ -1646,8 +1646,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 100, p2.red
         assert_equal 110, p2.green
         assert_equal 120, p2.blue
@@ -1658,8 +1658,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 0, p2.red
         assert_equal 0, p2.green
         assert_equal 0, p2.blue
@@ -1671,8 +1671,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 100, p2.red
         assert_equal 110, p2.green
         assert_equal 120, p2.blue
@@ -1683,8 +1683,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 0, p2.red
         assert_equal 0, p2.green
         assert_equal 0, p2.blue
@@ -1696,8 +1696,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 100, p2.red
         assert_equal 110, p2.green
         assert_equal 120, p2.blue
@@ -1708,8 +1708,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :add_alpha, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 0, p2.red
         assert_equal 0, p2.green
         assert_equal 0, p2.blue
@@ -1721,8 +1721,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 100, p2.red
         assert_equal 110, p2.green
         assert_equal 120, p2.blue
@@ -1733,8 +1733,8 @@ class TestTexture < Test::Unit::TestCase
     texture2.render_texture(texture, 0, 0, :blend_type => :sub_alpha, :alpha => 128)
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_equal 0, p2.red
         assert_equal 0, p2.green
         assert_equal 0, p2.blue
@@ -1751,8 +1751,8 @@ class TestTexture < Test::Unit::TestCase
     })
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         if p2.alpha != 0
           assert_equal p1, p2
         else
@@ -1766,8 +1766,8 @@ class TestTexture < Test::Unit::TestCase
     })
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         gray = (6969 * p1.red + 23434 * p1.green + 2365 * p1.blue) / 32768
         assert_in_delta (gray + p1.red) / 2,   p2.red,   1
         assert_in_delta (gray + p1.green) / 2, p2.green, 1
@@ -1781,8 +1781,8 @@ class TestTexture < Test::Unit::TestCase
     })
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert(p2.red == p2.green && p2.green == p2.blue)
         gray = (6969 * p1.red + 23434 * p1.green + 2365 * p1.blue) / 32768
         assert_in_delta gray, p2.red,   1
@@ -1797,8 +1797,8 @@ class TestTexture < Test::Unit::TestCase
     })
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_in_delta (255 + p1.red * 3) / 4,  p2.red,   1
         assert_in_delta (255 + p1.green) / 2,    p2.green, 1
         assert_in_delta (255 * 3 + p1.blue) / 4, p2.blue,  1
@@ -1811,8 +1811,8 @@ class TestTexture < Test::Unit::TestCase
     })
     texture2.height.times do |y|
       texture2.width.times do |x|
-        p1 = texture.get_pixel(x, y)
-        p2 = texture2.get_pixel(x, y)
+        p1 = texture[x, y]
+        p2 = texture2[x, y]
         assert_in_delta p1.red / 4,      p2.red,   1
         assert_in_delta p1.green / 2,    p2.green, 1
         assert_in_delta p1.blue * 3 / 4, p2.blue,  1
@@ -1829,13 +1829,13 @@ class TestTexture < Test::Unit::TestCase
     texture2.height.times do |y|
       texture2.width.times do |x|
         if x < 10 or y < 10
-          p1 = texture.get_pixel(x, y)
-          p2 = texture2.get_pixel(x, y)
+          p1 = texture[x, y]
+          p2 = texture2[x, y]
           assert_equal p1, p2
         else
-          src = texture.get_pixel(x - 10, y - 10)
-          dst = texture.get_pixel(x, y)
-          p2 = texture2.get_pixel(x, y)
+          src = texture[x - 10, y - 10]
+          dst = texture[x, y]
+          p2 = texture2[x, y]
           if 0 < p2.alpha
             a = src.alpha
             assert_in_delta (src.red   * a + dst.red   * (255 - a)).quo(255), p2.red,   2
@@ -1858,8 +1858,8 @@ class TestTexture < Test::Unit::TestCase
     assert_equal texture.size, texture2.size
     texture.height.times do |j|
       texture.width.times do |i|
-        c1 = texture.get_pixel(i, j)
-        c2 = texture2.get_pixel(i, j)
+        c1 = texture[i, j]
+        c2 = texture2[i, j]
         assert_equal c1.red,   c2.red
         assert_equal c1.green, c2.green
         assert_equal c1.blue,  c2.blue
@@ -1895,7 +1895,7 @@ class TestTexture < Test::Unit::TestCase
     assert_equal texture.width * texture.height * 3, str.length
     texture.height.times do |j|
       texture.width.times do |i|
-        p = texture.get_pixel(i, j)
+        p = texture[i, j]
         origin = i + j * texture.width
         assert_equal str[3 * origin].ord,     p.red
         assert_equal str[3 * origin + 1].ord, p.green
@@ -1906,7 +1906,7 @@ class TestTexture < Test::Unit::TestCase
     assert_equal texture.width * texture.height * 4, str.length
     texture.height.times do |j|
       texture.width.times do |i|
-        p = texture.get_pixel(i, j)
+        p = texture[i, j]
         origin = i + j * texture.width
         assert_equal str[4 * origin].ord,     p.red
         assert_equal str[4 * origin + 1].ord, p.green
@@ -1918,7 +1918,7 @@ class TestTexture < Test::Unit::TestCase
     assert_equal texture.width * texture.height * 4, str.length
     texture.height.times do |j|
       texture.width.times do |i|
-        p = texture.get_pixel(i, j)
+        p = texture[i, j]
         origin = i + j * texture.width
         assert_equal str[4 * origin].ord,     p.alpha
         assert_equal str[4 * origin + 1].ord, p.red
@@ -1930,7 +1930,7 @@ class TestTexture < Test::Unit::TestCase
     assert_equal texture.width * texture.height * 7, str.length
     texture.height.times do |j|
       texture.width.times do |i|
-        p = texture.get_pixel(i, j)
+        p = texture[i, j]
         origin = i + j * texture.width
         assert_equal str[7 * origin].ord,     p.red
         assert_equal str[7 * origin + 1].ord, p.red
@@ -1964,8 +1964,8 @@ class TestTexture < Test::Unit::TestCase
     texture.undump(orig_texture.dump("rgb"), "rgb")
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = orig_texture.get_pixel(i, j)
-        p2 = texture.get_pixel(i, j)
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
         assert_equal p1.red,   p2.red
         assert_equal p1.green, p2.green
         assert_equal p1.blue,  p2.blue
@@ -1975,8 +1975,8 @@ class TestTexture < Test::Unit::TestCase
     texture.undump(orig_texture.dump("rgba"), "rgba")
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = orig_texture.get_pixel(i, j)
-        p2 = texture.get_pixel(i, j)
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
         assert_equal p1.red,   p2.red
         assert_equal p1.green, p2.green
         assert_equal p1.blue,  p2.blue
@@ -1986,8 +1986,8 @@ class TestTexture < Test::Unit::TestCase
     texture.undump(orig_texture.dump("argb"), "rgba")
     texture.height.times do |j|
       texture.width.times do |i|
-        p1 = orig_texture.get_pixel(i, j)
-        p2 = texture.get_pixel(i, j)
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
         assert_equal p1.red,   p2.green
         assert_equal p1.green, p2.blue
         assert_equal p1.blue,  p2.alpha
@@ -1997,7 +1997,7 @@ class TestTexture < Test::Unit::TestCase
     texture.undump("\x12\x34\x56\x78" * texture.width * texture.height, "rgba")
     texture.height.times do |j|
       texture.width.times do |i|
-        p = texture.get_pixel(i, j)
+        p = texture[i, j]
         assert_equal 0x12, p.red
         assert_equal 0x34, p.green
         assert_equal 0x56, p.blue

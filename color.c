@@ -43,7 +43,7 @@ Color_initialize(int argc, VALUE* argv, VALUE self)
     }
   };
   // Only for Ruby 1.8?
-  RDATA(self)->data = (void*)pixel.value;
+  RDATA(self)->data = (void*)(VALUE)pixel.value;
   return Qnil;
 }
 

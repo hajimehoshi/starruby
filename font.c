@@ -311,7 +311,7 @@ strb_InitializeSdlFont(void)
       fontNameBuffLength = sizeof(fontNameBuff);
       fileNameBuffLength = sizeof(fileNameBuff);
       LONG result = RegEnumValue(hKey, dwIndex,
-                                 (LPDWORD)fontNameBuff, &fontNameBuffLength,
+                                 (LPTSTR)fontNameBuff, &fontNameBuffLength,
                                  NULL, &type,
                                  (LPBYTE)fileNameBuff, &fileNameBuffLength);
       // In Windows 2000 or older, fontNameBuffLength may hold an invalid value

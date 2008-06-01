@@ -556,13 +556,11 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
   Color color = texture->pixels[x + y * texture->width].color;
-  VALUE args[] = {
-    INT2NUM(color.red),
-    INT2NUM(color.green),
-    INT2NUM(color.blue),
-    INT2NUM(color.alpha),
-  };
-  return rb_class_new_instance(4, args, rb_cColor);
+  return rb_funcall(rb_cColor, rb_intern("new"), 4,
+                    INT2NUM(color.red),
+                    INT2NUM(color.green),
+                    INT2NUM(color.blue),
+                    INT2NUM(color.alpha));
 }
 
 static VALUE

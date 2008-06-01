@@ -95,26 +95,16 @@ DoLoop(void)
       sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
     switch (windowScale) {
     case 1:
-      if (texture->width == screenWidth && texture->height == screenHeight) {
-        for (int j = 0; j < texture->height; j++, dst += screenPadding) {
-          for (int i = 0; i < texture->width; i++, src++, dst++) {
-            uint8_t alpha = src->color.alpha;
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          }
-        }
-      } else {
-        dst += (screenWidth - texture->width) / 2
-          + (screenHeight - texture->height) / 2 * (screenWidth + screenPadding);
-        int padding = screenWidth - texture->width + screenPadding;
-        for (int j = 0; j < texture->height; j++, dst += padding) {
-          for (int i = 0; i < texture->width; i++, src++, dst++) {
-            uint8_t alpha = src->color.alpha;
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          }
+      // For fullscreen mode
+      dst += (screenWidth - texture->width) / 2
+        + (screenHeight - texture->height) / 2 * (screenWidth + screenPadding);
+      int padding = screenWidth - texture->width + screenPadding;
+      for (int j = 0; j < texture->height; j++, dst += padding) {
+        for (int i = 0; i < texture->width; i++, src++, dst++) {
+          uint8_t alpha = src->color.alpha;
+          dst->color.red   = DIV255(src->color.red   * alpha);
+          dst->color.green = DIV255(src->color.green * alpha);
+          dst->color.blue  = DIV255(src->color.blue  * alpha);
         }
       }
       break;

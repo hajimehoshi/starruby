@@ -94,8 +94,6 @@ DoLoop(void)
     Pixel* dst = (Pixel*)sdlScreen->pixels;
     int screenPadding =
       sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
-    //printf("%d, %d\n",
-    //       sdlScreen->pitch / sdlScreen->format->BytesPerPixel, sdlScreen->w);
     switch (windowScale) {
     case 1:
       if (texture->width == screenWidth && texture->height == screenHeight) {
@@ -118,8 +116,8 @@ DoLoop(void)
         }
       } else {
         dst += (screenWidth - texture->width) / 2
-          + (screenHeight - texture->height) / 2 * screenWidth;
-        int padding = screenWidth - texture->width;
+          + (screenHeight - texture->height) / 2 * (screenWidth + screenPadding);
+        int padding = screenWidth - texture->width + screenPadding;
         for (int j = 0; j < texture->height; j++, dst += padding) {
           for (int i = 0; i < texture->width; i++, src++, dst++) {
             uint8_t alpha = src->color.alpha;

@@ -69,4 +69,4 @@ else
   $CFLAGS += " -O3"
 end
 
-create_makefile("starruby")
+create_makefile("starruby", "./src")

@@ -47,8 +47,8 @@ end
 
 $CFLAGS  += " " + `env sdl-config --cflags`.chomp
 $CFLAGS  += " " + `env libpng-config --cflags`.chomp
-$LDFLAGS += " " + `env sdl-config --libs`.chomp
-$LDFLAGS += " " + `env libpng-config --libs`.chomp
+$libs += " " + `env sdl-config --libs`.chomp
+$libs += " " + `env libpng-config --libs`.chomp
 
 $CFLAGS += " -finline-functions -Wall -W -Wno-unused-parameter -pedantic -std=c99 -funit-at-a-time"
 $CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/
@@ -64,7 +64,7 @@ if CONFIG["arch"] =~ /linux|darwin/
 end
 
 if arg_config("--debug", false)
-  $CFLAGS += " -DDEBUG -O0 -g"
+  $CFLAGS += " -DDEBUG -O0 -g -pg"
 else
   $CFLAGS += " -O3"
 end

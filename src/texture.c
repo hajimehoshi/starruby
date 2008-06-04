@@ -25,7 +25,6 @@ static volatile VALUE rb_cColor;
 static volatile VALUE rb_cTexture;
 
 static volatile VALUE symbol_add;
-static volatile VALUE symbol_add_alpha;
 static volatile VALUE symbol_alpha;
 static volatile VALUE symbol_angle;
 static volatile VALUE symbol_background;
@@ -54,7 +53,6 @@ static volatile VALUE symbol_src_width;
 static volatile VALUE symbol_src_x;
 static volatile VALUE symbol_src_y;
 static volatile VALUE symbol_sub;
-static volatile VALUE symbol_sub_alpha;
 static volatile VALUE symbol_tone_blue;
 static volatile VALUE symbol_tone_green;
 static volatile VALUE symbol_tone_red;
@@ -1156,6 +1154,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           }, width);
       break;
     default:
+      // can't come here
       break;
     }
     return Qnil;
@@ -1561,7 +1560,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   rb_define_method(rb_cTexture, "set_pixel", Texture_set_pixel_deprecated, 3);
 
   symbol_add            = ID2SYM(rb_intern("add"));
-  symbol_add_alpha      = ID2SYM(rb_intern("add_alpha"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
   symbol_background     = ID2SYM(rb_intern("background"));
@@ -1590,7 +1588,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   symbol_src_x          = ID2SYM(rb_intern("src_x"));
   symbol_src_y          = ID2SYM(rb_intern("src_y"));
   symbol_sub            = ID2SYM(rb_intern("sub"));
-  symbol_sub_alpha      = ID2SYM(rb_intern("sub_alpha"));
   symbol_tone_blue      = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green     = ID2SYM(rb_intern("tone_green"));
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));

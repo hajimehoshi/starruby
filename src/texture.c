@@ -44,6 +44,7 @@ static volatile VALUE symbol_height;
 static volatile VALUE symbol_intersection_x;
 static volatile VALUE symbol_intersection_y;
 static volatile VALUE symbol_loop;
+static volatile VALUE symbol_mask;
 static volatile VALUE symbol_none;
 static volatile VALUE symbol_saturation;
 static volatile VALUE symbol_scale_x;
@@ -66,8 +67,7 @@ typedef enum {
   BLEND_TYPE_ALPHA,
   BLEND_TYPE_ADD,
   BLEND_TYPE_SUB,
-  BLEND_TYPE_ADD_ALPHA,
-  BLEND_TYPE_SUB_ALPHA,
+  BLEND_TYPE_MASK,
 } BlendType;
 
 typedef enum {
@@ -944,10 +944,8 @@ AssignRenderingTextureOptions_st(st_data_t key, st_data_t val,
       options->blendType = BLEND_TYPE_ADD;
     else if (val == symbol_sub)
       options->blendType = BLEND_TYPE_SUB;
-    else if (val == symbol_add_alpha)
-      options->blendType = BLEND_TYPE_ADD_ALPHA;
-    else if (val == symbol_sub_alpha)
-      options->blendType = BLEND_TYPE_SUB_ALPHA;
+    else if (val == symbol_mask)
+      options->blendType = BLEND_TYPE_MASK;
   } else if (key == symbol_tone_red) {
     options->toneRed = NUM2INT(val);
   } else if (key == symbol_tone_green) {
@@ -1039,10 +1037,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           options.blendType = BLEND_TYPE_ADD;
         else if (val == symbol_sub)
           options.blendType = BLEND_TYPE_SUB;
-        else if (val == symbol_add_alpha)
-          options.blendType = BLEND_TYPE_ADD_ALPHA;
-        else if (val == symbol_sub_alpha)
-          options.blendType = BLEND_TYPE_SUB_ALPHA;
+        else if (val == symbol_mask)
+          options.blendType = BLEND_TYPE_MASK;
       }
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
         options.toneRed = NUM2INT(val);
@@ -1281,127 +1277,121 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       int_fast32_t srcJ = srcJ16 >> 16;
       if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {
         Color srcColor = srcTexture->pixels[srcI + srcJ * srcTextureWidth].color;
-        uint8_t srcRed   = srcColor.red;
-        uint8_t srcGreen = srcColor.green;
-        uint8_t srcBlue  = srcColor.blue;
-        uint8_t srcAlpha = srcColor.alpha;
-        if (saturation < 255) {
-          // http://www.poynton.com/ColorFAQ.html
-          uint8_t y = (6969  * srcRed +
-                       23434 * srcGreen +
-                       2365  * srcBlue) / 32768;
-          srcRed   = ALPHA(srcRed,   y, saturation);
-          srcGreen = ALPHA(srcGreen, y, saturation);
-          srcBlue  = ALPHA(srcBlue,  y, saturation);
-        }
-        if (toneRed) {
-          if (0 < toneRed)
-            srcRed = ALPHA(255, srcRed, toneRed);
-          else
-            srcRed = ALPHA(0,   srcRed, -toneRed);
-        }
-        if (toneGreen) {
-          if (0 < toneGreen)
-            srcGreen = ALPHA(255, srcGreen, toneGreen);
-          else
-            srcGreen = ALPHA(0,   srcGreen, -toneGreen);
-        }
-        if (toneBlue) {
-          if (0 < toneBlue)
-            srcBlue = ALPHA(255, srcBlue, toneBlue);
-          else
-            srcBlue = ALPHA(0,   srcBlue, -toneBlue);
-        }
-        if (blendType == BLEND_TYPE_NONE) {
-          dst->color = (Color){
-            .red   = srcRed,
-            .green = srcGreen,
-            .blue  = srcBlue,
-            .alpha = srcAlpha,
-          };
-        } else if (dst->color.alpha == 0) {
-          uint8_t beta = DIV255(srcColor.alpha * alpha);
-          switch (blendType) {
-          case BLEND_TYPE_ALPHA:
-            dst->color.red   = srcRed;
-            dst->color.green = srcGreen;
-            dst->color.blue  = srcBlue;
-            dst->color.alpha = beta;
-            break;
-          case BLEND_TYPE_ADD:
-            ;
-            int addR = srcRed   + dst->color.red;
-            int addG = srcGreen + dst->color.green;
-            int addB = srcBlue  + dst->color.blue;
-            dst->color.red   = MIN(255, addR);
-            dst->color.green = MIN(255, addG);
-            dst->color.blue  = MIN(255, addB);
-            dst->color.alpha = beta;
-            break;
-          case BLEND_TYPE_SUB:
-            ;
-            int subR = -srcRed   + dst->color.red;
-            int subG = -srcGreen + dst->color.green;
-            int subB = -srcBlue  + dst->color.blue;
-            dst->color.red   = MAX(0, subR);
-            dst->color.green = MAX(0, subG);
-            dst->color.blue  = MAX(0, subB);
-            dst->color.alpha = beta;
-            break;
-          case BLEND_TYPE_ADD_ALPHA:
-            dst->color.alpha = beta;
-            break;
-          case BLEND_TYPE_SUB_ALPHA:
-            // do nothing
-            break;
-          case BLEND_TYPE_NONE:
-            // can't come here
-            break;
+        if (blendType != BLEND_TYPE_MASK) {
+          uint8_t srcRed   = srcColor.red;
+          uint8_t srcGreen = srcColor.green;
+          uint8_t srcBlue  = srcColor.blue;
+          uint8_t srcAlpha = srcColor.alpha;
+          if (saturation < 255) {
+            // http://www.poynton.com/ColorFAQ.html
+            uint8_t y = (6969  * srcRed +
+                         23434 * srcGreen +
+                         2365  * srcBlue) / 32768;
+            srcRed   = ALPHA(srcRed,   y, saturation);
+            srcGreen = ALPHA(srcGreen, y, saturation);
+            srcBlue  = ALPHA(srcBlue,  y, saturation);
+          }
+          if (toneRed) {
+            if (0 < toneRed)
+              srcRed = ALPHA(255, srcRed, toneRed);
+            else
+              srcRed = ALPHA(0,   srcRed, -toneRed);
+          }
+          if (toneGreen) {
+            if (0 < toneGreen)
+              srcGreen = ALPHA(255, srcGreen, toneGreen);
+            else
+              srcGreen = ALPHA(0,   srcGreen, -toneGreen);
+          }
+          if (toneBlue) {
+            if (0 < toneBlue)
+              srcBlue = ALPHA(255, srcBlue, toneBlue);
+            else
+              srcBlue = ALPHA(0,   srcBlue, -toneBlue);
+          }
+          if (blendType == BLEND_TYPE_NONE) {
+            dst->color = (Color){
+              .red   = srcRed,
+              .green = srcGreen,
+              .blue  = srcBlue,
+              .alpha = srcAlpha,
+            };
+          } else if (dst->color.alpha == 0) {
+            uint8_t beta = DIV255(srcColor.alpha * alpha);
+            switch (blendType) {
+            case BLEND_TYPE_ALPHA:
+              dst->color.red   = srcRed;
+              dst->color.green = srcGreen;
+              dst->color.blue  = srcBlue;
+              dst->color.alpha = beta;
+              break;
+            case BLEND_TYPE_ADD:
+              ;
+              int addR = srcRed   + dst->color.red;
+              int addG = srcGreen + dst->color.green;
+              int addB = srcBlue  + dst->color.blue;
+              dst->color.red   = MIN(255, addR);
+              dst->color.green = MIN(255, addG);
+              dst->color.blue  = MIN(255, addB);
+              dst->color.alpha = beta;
+              break;
+            case BLEND_TYPE_SUB:
+              ;
+              int subR = -srcRed   + dst->color.red;
+              int subG = -srcGreen + dst->color.green;
+              int subB = -srcBlue  + dst->color.blue;
+              dst->color.red   = MAX(0, subR);
+              dst->color.green = MAX(0, subG);
+              dst->color.blue  = MAX(0, subB);
+              dst->color.alpha = beta;
+              break;
+            case BLEND_TYPE_MASK:
+              // can't come here
+              break;
+            case BLEND_TYPE_NONE:
+              // can't come here
+              break;
+            }
+          } else {
+            uint8_t beta = DIV255(srcAlpha * alpha);
+            switch (blendType) {
+            case BLEND_TYPE_ALPHA:
+              if (dst->color.alpha < beta)
+                dst->color.alpha = beta;
+              dst->color.red   = ALPHA(srcRed,   dst->color.red,   beta);
+              dst->color.green = ALPHA(srcGreen, dst->color.green, beta);
+              dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
+              break;
+            case BLEND_TYPE_ADD:
+              if (dst->color.alpha < beta)
+                dst->color.alpha = beta;
+              int addR = DIV255(srcRed   * beta) + dst->color.red;
+              int addG = DIV255(srcGreen * beta) + dst->color.green;
+              int addB = DIV255(srcBlue  * beta) + dst->color.blue;
+              dst->color.red   = MIN(255, addR);
+              dst->color.green = MIN(255, addG);
+              dst->color.blue  = MIN(255, addB);
+              break;
+            case BLEND_TYPE_SUB:
+              if (dst->color.alpha < beta)
+                dst->color.alpha = beta;
+              int subR = -DIV255(srcRed   * beta) + dst->color.red;
+              int subG = -DIV255(srcGreen * beta) + dst->color.green;
+              int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
+              dst->color.red   = MAX(0, subR);
+              dst->color.green = MAX(0, subG);
+              dst->color.blue  = MAX(0, subB);
+              break;
+            case BLEND_TYPE_MASK:
+              // can't come here
+              break;
+            case BLEND_TYPE_NONE:
+              // can't come here
+              break;
+            }
           }
         } else {
-          uint8_t beta = DIV255(srcAlpha * alpha);
-          switch (blendType) {
-          case BLEND_TYPE_ALPHA:
-            if (dst->color.alpha < beta)
-              dst->color.alpha = beta;
-            dst->color.red   = ALPHA(srcRed,   dst->color.red,   beta);
-            dst->color.green = ALPHA(srcGreen, dst->color.green, beta);
-            dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
-            break;
-          case BLEND_TYPE_ADD:
-            if (dst->color.alpha < beta)
-              dst->color.alpha = beta;
-            int addR = DIV255(srcRed   * beta) + dst->color.red;
-            int addG = DIV255(srcGreen * beta) + dst->color.green;
-            int addB = DIV255(srcBlue  * beta) + dst->color.blue;
-            dst->color.red   = MIN(255, addR);
-            dst->color.green = MIN(255, addG);
-            dst->color.blue  = MIN(255, addB);
-            break;
-          case BLEND_TYPE_SUB:
-            if (dst->color.alpha < beta)
-              dst->color.alpha = beta;
-            int subR = -DIV255(srcRed   * beta) + dst->color.red;
-            int subG = -DIV255(srcGreen * beta) + dst->color.green;
-            int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
-            dst->color.red   = MAX(0, subR);
-            dst->color.green = MAX(0, subG);
-            dst->color.blue  = MAX(0, subB);
-            break;
-          case BLEND_TYPE_ADD_ALPHA:
-            ;
-            int addA = beta + dst->color.alpha;
-            dst->color.alpha = MIN(255, addA);
-            break;
-          case BLEND_TYPE_SUB_ALPHA:
-            ;
-            int subA = -beta + dst->color.alpha;
-            dst->color.alpha = MAX(0, subA);
-            break;
-          case BLEND_TYPE_NONE:
-            // can't come here
-            break;
-          }
+          dst->color.alpha = srcColor.red;
         }
       } else if ((srcI < srcX && srcDXX <= 0) || (srcX2 <= srcI && 0 <= srcDXX) ||
                  (srcJ < srcY && srcDXY <= 0) || (srcY2 <= srcJ && 0 <= srcDXY)) {
@@ -1594,6 +1584,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
+  symbol_mask           = ID2SYM(rb_intern("mask"));
   symbol_none           = ID2SYM(rb_intern("none"));
   symbol_saturation     = ID2SYM(rb_intern("saturation"));
   symbol_scale_x        = ID2SYM(rb_intern("scale_x"));

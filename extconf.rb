@@ -65,8 +65,6 @@ end
 
 if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0 -g -pg"
-else
-  $CFLAGS += " -O3"
 end
 
 create_makefile("starruby", "./src")

@@ -1354,17 +1354,16 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             }
           } else {
             uint8_t beta = DIV255(srcAlpha * alpha);
+            if (dst->color.alpha < beta)
+              dst->color.alpha = beta;
             switch (blendType) {
             case BLEND_TYPE_ALPHA:
-              if (dst->color.alpha < beta)
-                dst->color.alpha = beta;
               dst->color.red   = ALPHA(srcRed,   dst->color.red,   beta);
               dst->color.green = ALPHA(srcGreen, dst->color.green, beta);
               dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
               break;
             case BLEND_TYPE_ADD:
-              if (dst->color.alpha < beta)
-                dst->color.alpha = beta;
+              ;
               int addR = DIV255(srcRed   * beta) + dst->color.red;
               int addG = DIV255(srcGreen * beta) + dst->color.green;
               int addB = DIV255(srcBlue  * beta) + dst->color.blue;
@@ -1373,8 +1372,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.blue  = MIN(255, addB);
               break;
             case BLEND_TYPE_SUB:
-              if (dst->color.alpha < beta)
-                dst->color.alpha = beta;
+              ;
               int subR = -DIV255(srcRed   * beta) + dst->color.red;
               int subG = -DIV255(srcGreen * beta) + dst->color.green;
               int subB = -DIV255(srcBlue  * beta) + dst->color.blue;

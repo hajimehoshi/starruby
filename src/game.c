@@ -11,8 +11,10 @@ static volatile VALUE symbol_window_scale;
 static int fps = 30;
 static double realFps = 0;
 static bool running = false;
-static int screenWidth = 0;
-static int screenHeight = 0;
+static int realScreenWidth = 0;
+static int realScreenHeight = 0;
+//static int screenWidth = 0;
+//static int screenHeight = 0;
 static bool terminated = false;
 static int windowScale = 1;
 
@@ -96,46 +98,47 @@ DoLoop(void)
     Pixel* dst = (Pixel*)sdlScreen->pixels;
     int screenPadding =
       sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
+    int textureWidth  = texture->width;
+    int textureHeight = texture->height;
     switch (windowScale) {
     case 1:
-      // For fullscreen mode
-      dst += (screenWidth - texture->width) / 2
-        + (screenHeight - texture->height) / 2 * (screenWidth + screenPadding);
-      int padding = screenWidth - texture->width + screenPadding;
-      for (int j = 0; j < texture->height; j++, dst += padding) {
-        for (int i = 0; i < texture->width; i++, src++, dst++) {
-          uint8_t alpha = src->color.alpha;
-          dst->color.red   = DIV255(src->color.red   * alpha);
-          dst->color.green = DIV255(src->color.green * alpha);
-          dst->color.blue  = DIV255(src->color.blue  * alpha);
+      {
+        // For fullscreen
+        dst += (realScreenWidth - textureWidth) / 2
+          + (realScreenHeight - textureHeight) / 2 * (realScreenWidth + screenPadding);
+        int heightPadding = realScreenWidth - texture->width + screenPadding;
+        for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+          for (int i = 0; i < textureWidth; i++, src++, dst++) {
+            uint8_t alpha = src->color.alpha;
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
+          }
         }
       }
       break;
     case 2:
       {
-        int width   = texture->width;
-        int width2x = width * 2;
-        int height  = texture->height;
-        for (int j = 0; j < height; j++, dst += width2x + screenPadding * 2) {
-          for (int i = 0; i < width; i++, src++, dst += 2) {
+        int textureWidth2x = textureWidth * 2;
+        int heightPadding = textureWidth2x + screenPadding * 2;
+        for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+          for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
             uint8_t alpha = src->color.alpha;
             dst->color.red   = DIV255(src->color.red   * alpha);
             dst->color.green = DIV255(src->color.green * alpha);
             dst->color.blue  = DIV255(src->color.blue  * alpha);
-            dst[width2x + screenPadding] = dst[width2x + screenPadding + 1] = dst[1] = *dst;
+            dst[textureWidth2x + screenPadding] = dst[textureWidth2x + screenPadding + 1] = dst[1] = *dst;
           }
         }
       }
       break;
     default:
       {
-        int width  = texture->width;
-        int widthN = width * windowScale;
+        int textureWidthN = textureWidth * windowScale;
         int heightPadding =
-          width * windowScale * (windowScale - 1) + screenPadding * windowScale;
-        int height  = texture->height;
-        for (int j = 0; j < height; j++, dst += heightPadding) {
-          for (int i = 0; i < width; i++, src++, dst += windowScale) {
+          textureWidth * windowScale * (windowScale - 1) + screenPadding * windowScale;
+        for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+          for (int i = 0; i < textureWidth; i++, src++, dst += windowScale) {
             uint8_t alpha = src->color.alpha;
             dst->color.red   = DIV255(src->color.red   * alpha);
             dst->color.green = DIV255(src->color.green * alpha);
@@ -144,7 +147,7 @@ DoLoop(void)
               dst[k] = *dst;
             for (int l = 1; l < windowScale; l++)
               for (int k = 0; k < windowScale; k++)
-                dst[(widthN + screenPadding) * l + k] = *dst;
+                dst[(textureWidthN + screenPadding) * l + k] = *dst;
           }
         }
       }
@@ -212,8 +215,6 @@ Game_run(int argc, VALUE* argv, VALUE self)
   int width   = 320;
   int height  = 240;
 #endif
-  screenWidth  = width;
-  screenHeight = height;
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
@@ -239,6 +240,8 @@ Game_run(int argc, VALUE* argv, VALUE self)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
 #endif
+  realScreenWidth  = width * windowScale;
+  realScreenHeight = height * windowScale;
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
 
   Uint32 options = 0;
@@ -252,18 +255,18 @@ Game_run(int argc, VALUE* argv, VALUE self)
     if (!modes)
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     if (modes != (SDL_Rect**)-1) {
-      screenWidth = 0;
-      screenHeight = 0;
+      realScreenWidth = 0;
+      realScreenHeight = 0;
       for (int i = 0; modes[i]; i++) {
         int realBpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, bpp, options);
         if (width <= modes[i]->w && height <= modes[i]->h && realBpp == bpp) {
-          screenWidth  = modes[i]->w;
-          screenHeight = modes[i]->h;
+          realScreenWidth  = modes[i]->w;
+          realScreenHeight = modes[i]->h;
         } else {
           break;
         }
       }
-      if (screenWidth == 0 || screenHeight == 0)
+      if (realScreenWidth == 0 || realScreenHeight == 0)
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     }
   } else {
@@ -275,8 +278,7 @@ Game_run(int argc, VALUE* argv, VALUE self)
                           strb_GetTextureClass());
   rb_iv_set(self, "screen", rbScreen);
 
-  sdlScreen = SDL_SetVideoMode(screenWidth * windowScale,
-                               screenHeight * windowScale, bpp, options);
+  sdlScreen = SDL_SetVideoMode(realScreenWidth, realScreenHeight, bpp, options);
   if (!sdlScreen) {
     DisposeScreen(sdlScreen);
     rb_raise_sdl_error();

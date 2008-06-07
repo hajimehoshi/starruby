@@ -165,14 +165,6 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-static VALUE
-Input_update(VALUE self)
-{
-  rb_warn("Input.update is deprecated");
-  strb_UpdateInput();
-  return Qnil;
-}
-
 #define ADD_KEY(currentKey, _name, _sdlKey)     \
   do {                                          \
     KeyboardKey* key = ALLOC(KeyboardKey);      \
@@ -340,7 +332,6 @@ strb_InitializeInput(VALUE rb_mStarRuby)
   rb_define_module_function(rb_mInput, "mouse_location=",
                             Input_mouse_location_eq, 1);
   rb_define_module_function(rb_mInput, "keys",   Input_keys, -1);
-  rb_define_module_function(rb_mInput, "update", Input_update, 0);
 
   symbol_delay         = ID2SYM(rb_intern("delay"));
   symbol_device_number = ID2SYM(rb_intern("device_number"));

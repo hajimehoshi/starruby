@@ -71,7 +71,7 @@ DoLoop(void)
       nowX = (now - before) * (fps / 10) + errorX;
       if (100 <= nowX)
         break;
-      SDL_Delay(1);
+      SDL_Delay(0);
     }
     before = now;
     errorX = nowX % 100;

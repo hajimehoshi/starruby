@@ -339,16 +339,15 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
       break;
     }
   }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance))) {
-    rb_warn(":distance was deprecated; use :view_angle instead");
-  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
+    rb_warn(":distance is deprecated; use :view_angle instead");
 }
 
 static VALUE Texture_transform_in_perspective(int, VALUE*, VALUE);
 static VALUE
 Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
-  rb_warn("Texture.transform_in_perspective was deprecated;"
+  rb_warn("Texture.transform_in_perspective is deprecated;"
           " use Texture#transform_in_perspective instead");
   volatile VALUE texture =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(320), INT2NUM(240)}, self);
@@ -1493,8 +1492,14 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   screenY = screenY2 + options.intersectionY;
   long screenXLong = (long)screenX;
   long screenYLong = (long)screenY;
-  RARRAY_PTR(rbResult)[0] = FIXABLE(screenXLong) ? LONG2FIX(screenXLong) : Qnil; 
-  RARRAY_PTR(rbResult)[1] = FIXABLE(screenYLong) ? LONG2FIX(screenYLong) : Qnil;
+  if (FIXABLE(screenXLong) && INT_MIN <= screenXLong && screenXLong <= INT_MAX)
+    RARRAY_PTR(rbResult)[0] = LONG2FIX(screenXLong);
+  else
+    RARRAY_PTR(rbResult)[0] = Qnil;
+  if (FIXABLE(screenYLong) && INT_MIN <= screenYLong && screenYLong <= INT_MAX)
+    RARRAY_PTR(rbResult)[1] = LONG2FIX(screenYLong);
+  else
+    RARRAY_PTR(rbResult)[1] = Qnil;
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
   return rbResult;
 }

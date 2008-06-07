@@ -1988,10 +1988,19 @@ class TestTexture < Test::Unit::TestCase
       texture.transform_in_perspective(200, -400, 0, :view_angle => -0.1)
     end
     assert_raise ArgumentError do
-      texture.transform_in_perspective(200, -400, 0, :view_angle => 180.degree)
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 180.degrees)
     end
     assert_raise ArgumentError do
-      texture.transform_in_perspective(200, -400, 0, :view_angle => 180.degree + 0.1)
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 180.degrees + 0.1)
+    end
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 0.0 / 0.0)
+    end
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 1.0 / 0.0)
+    end
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => -1.0 / 0.0)
     end
   end
 

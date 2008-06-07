@@ -89,7 +89,6 @@ Game.run(320, 240) do
     :camera_yaw   => airship.yaw.degree,
     :camera_pitch => airship.pitch.degree,
     :camera_roll  => airship.roll.degree,
-    :view_angle => 0,
     :intersection_x => s.width / 2 + airship.screen_x,
     :intersection_y => s.height / 2 + airship.screen_y,
     :loop => true,

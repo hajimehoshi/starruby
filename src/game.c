@@ -72,13 +72,13 @@ DoLoop(void)
 
     if (((now = SDL_GetTicks()) - before) * fps < 1000) {
       while (true) {
-        now = SDL_GetTicks();
         if (1000 <= (now - before) * fps + error) {
           error = (now - before) * fps + error - 1000;
           before = now;
           break;
         }
         SDL_Delay(0);
+        now = SDL_GetTicks();
       }
 
       Pixel* src = texture->pixels;

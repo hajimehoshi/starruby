@@ -75,11 +75,11 @@ DoLoop(void)
         now = SDL_GetTicks();
         if (1000 <= (now - before) * fps + error) {
           error = (now - before) * fps + error - 1000;
+          before = now;
           break;
         }
         SDL_Delay(0);
       }
-      before = now;
 
       Pixel* src = texture->pixels;
       SDL_LockSurface(sdlScreen);

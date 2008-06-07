@@ -65,6 +65,7 @@ DoLoop(void)
     if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
       break;
 
+    int beforeFps = fps;
     while (true) {
       now = SDL_GetTicks();
       if (1000 <= (now - before) * fps + error) {
@@ -84,8 +85,10 @@ DoLoop(void)
 
     strb_UpdateAudio();
     strb_UpdateInput();
-
+    
     rb_yield(Qnil);
+    if (fps != beforeFps)
+      error = 0;
 
     Pixel* src = texture->pixels;
     SDL_LockSurface(sdlScreen);

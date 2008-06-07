@@ -103,7 +103,9 @@ Game.run(320, 240) do
     x += field_texture.width / 2
     y += field_texture.height / 2
     # The following methods returns an array ([x, y, scale])
-    Texture.transform_in_perspective(x, y, height, s.width, options)
+    s.transform_in_perspective(x, y, height, options)
+    # following code was deprecated at the version 0.1.19
+    # Texture.transform_in_perspective(x, y, height, options)
   end.select do |x, y, scale|
     # If either x, y or scale holds nil value,
     # the star will not be shown.

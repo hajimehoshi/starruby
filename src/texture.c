@@ -339,14 +339,18 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
   }
 }
 
+static VALUE Texture_transform_in_perspective(int, VALUE*, VALUE);
+
 static VALUE
 Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
-  volatile VALUE rbX, rbY, rbHeight, rbScreenWidth, rbOptions;
-  rb_scan_args(argc, argv, "41", &rbX, &rbY, &rbHeight, &rbScreenWidth, &rbOptions);
+  rb_warn("Texture.transform_in_perspective was deprecated;"
+          " use Texture#transform_in_perspective instead");
+  volatile VALUE rbX, rbY, rbHeight, rbOptions;
+  rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  int screenWidth = NUM2INT(rbScreenWidth);
+  int screenWidth = 240;
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
   double cosYaw   = cos(options.cameraYaw);
@@ -1491,6 +1495,59 @@ Texture_size(VALUE self)
 }
 
 static VALUE
+Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
+{
+  rb_check_frozen(self);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  CheckDisposed(texture);
+  volatile VALUE rbX, rbY, rbHeight, rbOptions;
+  rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+  int screenWidth = texture->width;
+  PerspectiveOptions options;
+  AssignPerspectiveOptions(&options, rbOptions);
+  double cosYaw   = cos(options.cameraYaw);
+  double sinYaw   = sin(options.cameraYaw);
+  double cosPitch = cos(options.cameraPitch);
+  double sinPitch = sin(options.cameraPitch);
+  double cosRoll  = cos(options.cameraRoll);
+  double sinRoll  = sin(options.cameraRoll);
+  double x = NUM2INT(rbX) - options.cameraX;
+  double y = NUM2DBL(rbHeight);
+  double z = NUM2INT(rbY) - options.cameraY;
+  double x2, y2, z2;
+  x2 = cosYaw * x  + sinYaw * z;
+  z2 = -sinYaw * x + cosYaw * z;
+  x = x2;
+  z = z2;
+  y2 = sinPitch * z + cosPitch * (y - options.cameraHeight)
+    + options.cameraHeight;
+  z2 = cosPitch * z - sinPitch * (y - options.cameraHeight);
+  y = y2;
+  z = z2;
+  volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
+  OBJ_FREEZE(rbResult);
+  if (z == 0)
+    return rbResult;
+  double distance = screenWidth / (2 * tan(options.viewAngle / 2));
+  double scale = -distance / z;
+  double screenX = x * scale;
+  double screenY = (options.cameraHeight - y) * scale;
+  double screenX2 = cosRoll  * screenX + sinRoll * screenY;
+  double screenY2 = -sinRoll * screenX + cosRoll * screenY;
+  screenX = screenX2 + options.intersectionX;
+  screenY = screenY2 + options.intersectionY;
+  long screenXLong = (long)screenX;
+  long screenYLong = (long)screenY;
+  RARRAY_PTR(rbResult)[0] = FIXABLE(screenXLong) ? LONG2FIX(screenXLong) : Qnil; 
+  RARRAY_PTR(rbResult)[1] = FIXABLE(screenYLong) ? LONG2FIX(screenYLong) : Qnil;
+  RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
+  return rbResult;
+}
+
+static VALUE
 Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 {
   rb_check_frozen(self);
@@ -1561,6 +1618,8 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
   rb_define_method(rb_cTexture, "save",           Texture_save,            -1);
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
+  rb_define_method(rb_cTexture, "transform_in_perspective",
+                   Texture_transform_in_perspective, -1);
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
 

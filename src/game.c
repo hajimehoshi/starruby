@@ -65,95 +65,14 @@ DoLoop(void)
     if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
       break;
 
-    strb_UpdateAudio();
-    strb_UpdateInput();
-
-    rb_yield(Qnil);
-
-    if (((now = SDL_GetTicks()) - before) * fps < 1000) {
-      while (true) {
-        if (1000 <= (now - before) * fps + error) {
-          error = (now - before) * fps + error - 1000;
-          before = now;
-          break;
-        }
-        SDL_Delay(0);
-        now = SDL_GetTicks();
-      }
-
-      Pixel* src = texture->pixels;
-      SDL_LockSurface(sdlScreen);
-#ifndef GP2X
-      Pixel* dst = (Pixel*)sdlScreen->pixels;
-      int screenPadding =
-        sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
-      switch (windowScale) {
-      case 1:
-        // For fullscreen mode
-        dst += (screenWidth - texture->width) / 2
-          + (screenHeight - texture->height) / 2 * (screenWidth + screenPadding);
-        int padding = screenWidth - texture->width + screenPadding;
-        for (int j = 0; j < texture->height; j++, dst += padding) {
-          for (int i = 0; i < texture->width; i++, src++, dst++) {
-            uint8_t alpha = src->color.alpha;
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          }
-        }
-        break;
-      case 2:
-        {
-          int width   = texture->width;
-          int width2x = width * 2;
-          int height  = texture->height;
-          for (int j = 0; j < height; j++, dst += width2x + screenPadding * 2) {
-            for (int i = 0; i < width; i++, src++, dst += 2) {
-              uint8_t alpha = src->color.alpha;
-              dst->color.red   = DIV255(src->color.red   * alpha);
-              dst->color.green = DIV255(src->color.green * alpha);
-              dst->color.blue  = DIV255(src->color.blue  * alpha);
-              dst[width2x + screenPadding] = dst[width2x + screenPadding + 1] = dst[1] = *dst;
-            }
-          }
-        }
-        break;
-      default:
-        {
-          int width  = texture->width;
-          int widthN = width * windowScale;
-          int heightPadding =
-            width * windowScale * (windowScale - 1) + screenPadding * windowScale;
-          int height  = texture->height;
-          for (int j = 0; j < height; j++, dst += heightPadding) {
-            for (int i = 0; i < width; i++, src++, dst += windowScale) {
-              uint8_t alpha = src->color.alpha;
-              dst->color.red   = DIV255(src->color.red   * alpha);
-              dst->color.green = DIV255(src->color.green * alpha);
-              dst->color.blue  = DIV255(src->color.blue  * alpha);
-              for (int k = 1; k < windowScale; k++)
-                dst[k] = *dst;
-              for (int l = 1; l < windowScale; l++)
-                for (int k = 0; k < windowScale; k++)
-                  dst[(widthN + screenPadding) * l + k] = *dst;
-            }
-          }
-        }
+    while (true) {
+      now = SDL_GetTicks();
+      if (1000 <= (now - before) * fps + error) {
+        error = (now - before) * fps + error - 1000;
+        before = now;
         break;
       }
-#else
-      uint16_t* dst = (uint16_t*)sdlScreen->pixels;
-      int length = texture->width * texture->height;
-      for (int i = 0; i < length; i++, src++, dst++) {
-        uint8_t alpha = src->color.alpha;
-        *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
-                          (DIV255(src->color.green * alpha) >> 2) << 5 |
-                          (DIV255(src->color.blue  * alpha) >> 3));
-      }
-#endif
-      SDL_UnlockSurface(sdlScreen);
-      if (SDL_Flip(sdlScreen))
-        rb_raise_sdl_error();
+      SDL_Delay(0);
     }
 
     counter++;    
@@ -162,6 +81,85 @@ DoLoop(void)
       counter = 0;
       before2 = SDL_GetTicks();
     }
+
+    strb_UpdateAudio();
+    strb_UpdateInput();
+
+    rb_yield(Qnil);
+
+    Pixel* src = texture->pixels;
+    SDL_LockSurface(sdlScreen);
+#ifndef GP2X
+    Pixel* dst = (Pixel*)sdlScreen->pixels;
+    int screenPadding =
+      sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
+    switch (windowScale) {
+    case 1:
+      // For fullscreen mode
+      dst += (screenWidth - texture->width) / 2
+        + (screenHeight - texture->height) / 2 * (screenWidth + screenPadding);
+      int padding = screenWidth - texture->width + screenPadding;
+      for (int j = 0; j < texture->height; j++, dst += padding) {
+        for (int i = 0; i < texture->width; i++, src++, dst++) {
+          uint8_t alpha = src->color.alpha;
+          dst->color.red   = DIV255(src->color.red   * alpha);
+          dst->color.green = DIV255(src->color.green * alpha);
+          dst->color.blue  = DIV255(src->color.blue  * alpha);
+        }
+      }
+      break;
+    case 2:
+      {
+        int width   = texture->width;
+        int width2x = width * 2;
+        int height  = texture->height;
+        for (int j = 0; j < height; j++, dst += width2x + screenPadding * 2) {
+          for (int i = 0; i < width; i++, src++, dst += 2) {
+            uint8_t alpha = src->color.alpha;
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
+            dst[width2x + screenPadding] = dst[width2x + screenPadding + 1] = dst[1] = *dst;
+          }
+        }
+      }
+      break;
+    default:
+      {
+        int width  = texture->width;
+        int widthN = width * windowScale;
+        int heightPadding =
+          width * windowScale * (windowScale - 1) + screenPadding * windowScale;
+        int height  = texture->height;
+        for (int j = 0; j < height; j++, dst += heightPadding) {
+          for (int i = 0; i < width; i++, src++, dst += windowScale) {
+            uint8_t alpha = src->color.alpha;
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
+            for (int k = 1; k < windowScale; k++)
+              dst[k] = *dst;
+            for (int l = 1; l < windowScale; l++)
+              for (int k = 0; k < windowScale; k++)
+                dst[(widthN + screenPadding) * l + k] = *dst;
+          }
+        }
+      }
+      break;
+    }
+#else
+    uint16_t* dst = (uint16_t*)sdlScreen->pixels;
+    int length = texture->width * texture->height;
+    for (int i = 0; i < length; i++, src++, dst++) {
+      uint8_t alpha = src->color.alpha;
+      *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
+                        (DIV255(src->color.green * alpha) >> 2) << 5 |
+                        (DIV255(src->color.blue  * alpha) >> 3));
+    }
+#endif
+    SDL_UnlockSurface(sdlScreen);
+    if (SDL_Flip(sdlScreen))
+      rb_raise_sdl_error();
 
     if (terminated)
       break;

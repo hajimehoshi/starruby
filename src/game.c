@@ -65,7 +65,6 @@ DoLoop(void)
     if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
       break;
 
-    int beforeFps = fps;
     while (true) {
       now = SDL_GetTicks();
       if (1000 <= (now - before) * fps + error) {
@@ -86,8 +85,9 @@ DoLoop(void)
     strb_UpdateAudio();
     strb_UpdateInput();
     
+    int lastFps = fps;
     rb_yield(Qnil);
-    if (fps != beforeFps)
+    if (fps != lastFps)
       error = 0;
 
     Pixel* src = texture->pixels;

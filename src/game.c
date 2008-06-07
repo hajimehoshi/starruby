@@ -194,7 +194,7 @@ static VALUE
 Game_run(int argc, VALUE* argv, VALUE self)
 {
   if (running)
-    rb_raise(strb_GetStarRubyError(), "already run");
+    rb_raise(strb_GetStarRubyErrorClass(), "already run");
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
@@ -267,9 +267,9 @@ Game_run(int argc, VALUE* argv, VALUE self)
     options |= SDL_SWSURFACE;
   }
 
-  volatile VALUE rb_cTexture = rb_const_get(rb_mStarRuby, rb_intern("Texture"));
   volatile VALUE rbScreen =
-    rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)}, rb_cTexture);
+    rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)},
+                          strb_GetTextureClass());
   rb_iv_set(self, "screen", rbScreen);
 
   sdlScreen = SDL_SetVideoMode(screenWidth * windowScale,
@@ -298,7 +298,7 @@ static VALUE
 Game_terminate(VALUE self)
 {
   if (!running)
-    rb_raise(strb_GetStarRubyError(), "A game has not run yet");
+    rb_raise(strb_GetStarRubyErrorClass(), "A game has not run yet");
   terminated = true;
   return Qnil;
 }

@@ -47,11 +47,12 @@ typedef struct {
 #define MIN(x, y) ((x <= y) ? x : y)
 #define DIV255(x) ((x + 255) >> 8)
 
-#define rb_raise_sdl_error() rb_raise(strb_GetStarRubyError(), "%s", SDL_GetError())
+#define rb_raise_sdl_error() \
+  rb_raise(strb_GetStarRubyErrorClass(), "%s", SDL_GetError())
 #define rb_raise_sdl_mix_error() \
-  rb_raise(strb_GetStarRubyError(), "%s", Mix_GetError())
+  rb_raise(strb_GetStarRubyErrorClass(), "%s", Mix_GetError())
 #define rb_raise_sdl_ttf_error() \
-  rb_raise(strb_GetStarRubyError(), "%s", TTF_GetError())
+  rb_raise(strb_GetStarRubyErrorClass(), "%s", TTF_GetError())
 
 #define strb_GetColorFromRubyValue(colorP, rbColor) \
   do {                                              \
@@ -62,7 +63,9 @@ typedef struct {
     *colorP = p.color;                              \
   } while (false)
 
-VALUE strb_GetStarRubyError(void);
+VALUE strb_GetColorClass(void);
+VALUE strb_GetStarRubyErrorClass(void);
+VALUE strb_GetTextureClass(void);
 
 VALUE strb_GetCompletePath(VALUE, bool);
 
@@ -72,7 +75,7 @@ VALUE strb_InitializeGame(VALUE rb_mStarRuby);
 VALUE strb_InitializeFont(VALUE rb_mStarRuby);
 VALUE strb_InitializeInput(VALUE rb_mStarRuby);
 VALUE strb_InitializeStarRubyError(VALUE rb_mStarRuby);
-VALUE strb_InitializeTexture(VALUE rb_mStarRuby, VALUE rb_cColor);
+VALUE strb_InitializeTexture(VALUE rb_mStarRuby);
 
 void strb_UpdateAudio(void);
 void strb_UpdateInput(void);

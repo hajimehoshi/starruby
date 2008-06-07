@@ -5,6 +5,12 @@
 static volatile VALUE rb_cColor;
 static volatile VALUE rbColorCache;
 
+VALUE
+strb_GetColorClass(void)
+{
+  return rb_cColor;
+}
+
 static uint32_t
 CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
 {

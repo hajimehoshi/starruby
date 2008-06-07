@@ -21,7 +21,6 @@
     }                         \
   } while (false)             \
 
-static volatile VALUE rb_cColor;
 static volatile VALUE rb_cTexture;
 
 static volatile VALUE symbol_add;
@@ -123,6 +122,12 @@ typedef struct {
   uint8_t saturation;
 } RenderingTextureOptions;
 
+VALUE
+strb_GetTextureClass(void)
+{
+  return rb_cTexture;
+}
+
 inline static void
 CheckDisposed(Texture* texture)
 {
@@ -162,24 +167,24 @@ Texture_s_load(VALUE self, VALUE rbPath)
   png_byte header[8];
   fread(&header, 1, 8, fp);
   if (png_sig_cmp(header, 0, 8))
-    rb_raise(strb_GetStarRubyError(), "invalid PNG file: %s", path);
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file: %s", path);
   png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                                               NULL, NULL, NULL);
   if (!pngPtr) {
     fclose(fp);
-    rb_raise(strb_GetStarRubyError(), "PNG error: %s", path);
+    rb_raise(strb_GetStarRubyErrorClass(), "PNG error: %s", path);
   }
   png_infop infoPtr = png_create_info_struct(pngPtr);
   if (!infoPtr) {
     png_destroy_read_struct(&pngPtr, NULL, NULL);
     fclose(fp);
-    rb_raise(strb_GetStarRubyError(), "PNG error: %s", path);
+    rb_raise(strb_GetStarRubyErrorClass(), "PNG error: %s", path);
   }
   png_infop endInfo = png_create_info_struct(pngPtr);
   if (!endInfo) {
     png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
     fclose(fp);
-    rb_raise(strb_GetStarRubyError(), "PNG error: %s", path);
+    rb_raise(strb_GetStarRubyErrorClass(), "PNG error: %s", path);
   }
 
   png_init_io(pngPtr, fp);
@@ -192,7 +197,7 @@ Texture_s_load(VALUE self, VALUE rbPath)
   if (interlaceType != PNG_INTERLACE_NONE) {
     png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
     fclose(fp);
-    rb_raise(strb_GetStarRubyError(),
+    rb_raise(strb_GetStarRubyErrorClass(),
              "not supported interlacing PNG image: %s", path);
   }
   if (bitDepth == 16)
@@ -527,7 +532,7 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
   Color color = texture->pixels[x + y * texture->width].color;
-  return rb_funcall(rb_cColor, rb_intern("new"), 4,
+  return rb_funcall(strb_GetColorClass(), rb_intern("new"), 4,
                     INT2NUM(color.red),
                     INT2NUM(color.green),
                     INT2NUM(color.blue),
@@ -1543,10 +1548,8 @@ Texture_width(VALUE self)
 }
 
 VALUE
-strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
+strb_InitializeTexture(VALUE rb_mStarRuby)
 {
-  rb_cColor = _rb_cColor;
-
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, 1);
   rb_define_singleton_method(rb_cTexture, "transform_in_perspective",

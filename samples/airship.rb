@@ -102,7 +102,7 @@ Game.run(320, 240) do
    [0, 0, 20]].map do |x, y, height|
     x += field_texture.width / 2
     y += field_texture.height / 2
-    # The following methods returns an array ([x, y, scale])
+    # The following statement returns an array ([x, y, scale])
     s.transform_in_perspective(x, y, height, options)
     # The following code was deprecated since the version 0.2
     # Texture.transform_in_perspective(x, y, height, options)

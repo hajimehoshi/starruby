@@ -10,9 +10,9 @@ Airship = Struct.new(:x, :y, :yaw, :pitch, :roll, :height, :screen_x, :screen_y)
 airship = Airship.new
 airship.x          = field_texture.width / 2
 airship.y          = field_texture.height
-airship.yaw        = 0 # degree
-airship.pitch      = 0 # degree
-airship.roll       = 0 # degree
+airship.yaw        = 0
+airship.pitch      = 0
+airship.roll       = 0
 airship.height     = 25
 airship.screen_x   = 0
 airship.screen_y   = 0
@@ -21,8 +21,10 @@ fearless = false
 font = Font.new("fonts/ORANGEKI", 12)
 yellow = Color.new(255, 255, 128)
 
+Game.fps = 15
 Game.title = "Airship"
 Game.run(320, 240) do
+  Game.title = Game.real_fps.to_s
   # Begin Inputing
   if Input.keys(:keyboard, :duration => 1).include?(:f)
     fearless = ! fearless

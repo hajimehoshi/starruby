@@ -89,7 +89,6 @@ Game.run(320, 240) do
     :camera_yaw   => airship.yaw.degree,
     :camera_pitch => airship.pitch.degree,
     :camera_roll  => airship.roll.degree,
-    :distance => field_texture.height,
     :intersection_x => s.width / 2 + airship.screen_x,
     :intersection_y => s.height / 2 + airship.screen_y,
     :loop => true,
@@ -104,7 +103,7 @@ Game.run(320, 240) do
     x += field_texture.width / 2
     y += field_texture.height / 2
     # The following methods returns an array ([x, y, scale])
-    Texture.transform_in_perspective(x, y, height, options)
+    Texture.transform_in_perspective(x, y, height, s.width, options)
   end.select do |x, y, scale|
     # If either x, y or scale holds nil value,
     # the star will not be shown.

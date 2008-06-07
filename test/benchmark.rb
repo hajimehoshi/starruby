@@ -82,7 +82,6 @@ Benchmark.bm do |b|
                                 :camera_x => src.width / 2,
                                 :camera_y => src.height,
                                 :camera_height => 100,
-                                :distance => 10,
                                 :intersection_x => dst.width / 2,
                                 :intersection_y => dst.height / 2,
                                 :loop => true)
@@ -96,7 +95,6 @@ Benchmark.bm do |b|
                                 :camera_x => src.width / 2,
                                 :camera_y => src.height,
                                 :camera_height => 100,
-                                :distance => 10,
                                 :intersection_x => dst.width / 2,
                                 :intersection_y => dst.height / 2,
                                 :loop => true,

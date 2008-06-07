@@ -124,17 +124,20 @@ class TestTexture < Test::Unit::TestCase
 
   def test_transform_in_perspective
     assert_raise TypeError do
-      Texture.transform_in_perspective(false, 0, 0)
+      Texture.transform_in_perspective(false, 0, 0, 0)
     end
     assert_raise TypeError do
-      Texture.transform_in_perspective(0, false, 0)
+      Texture.transform_in_perspective(0, false, 0, 0)
     end
     assert_raise TypeError do
-      Texture.transform_in_perspective(0, 0, false)
+      Texture.transform_in_perspective(0, 0, false, 0)
     end
     assert_raise TypeError do
       Texture.transform_in_perspective(0, 0, 0, false)
     end
+    assert_raise TypeError do
+      Texture.transform_in_perspective(0, 0, 0, 0, false)
+    end
     options = {
       :camera_x      => 0,
       :camera_y      => 0,
@@ -142,11 +145,13 @@ class TestTexture < Test::Unit::TestCase
       :camera_yaw    => 0,
       :camera_pitch  => 0,
       :camera_roll   => 0,
-      :distance      => 100,
+      :view_angle    => 90.degrees,
       :intersection_x   => 0,
       :intersection_y   => 0,
     }
-    assert_equal [0, 50, 0.5], Texture.transform_in_perspective(0, -200, 0, options)
+    result = Texture.transform_in_perspective(0, -200, 0, 200, options)
+    assert_equal [0, 50], result[0, 2]
+    assert_in_delta 0.5, result[2], 0.01
     options = {
       :camera_x      => 0,
       :camera_y      => 0,
@@ -154,11 +159,13 @@ class TestTexture < Test::Unit::TestCase
       :camera_yaw    => 0,
       :camera_pitch  => 0,
       :camera_roll   => 0,
-      :distance      => 100,
+      :view_angle    => 90.degrees,
       :intersection_x   => 12,
       :intersection_y   => 34,
     }
-    assert_equal [12, 84, 0.5], Texture.transform_in_perspective(0, -200, 0, options)
+    result = Texture.transform_in_perspective(0, -200, 0, 200, options)
+    assert_equal [12, 84], result[0, 2]
+    assert_in_delta 0.5, result[2], 0.01
     options = {
       :camera_x      => 0,
       :camera_y      => 0,
@@ -166,11 +173,13 @@ class TestTexture < Test::Unit::TestCase
       :camera_yaw    => 0,
       :camera_pitch  => 0,
       :camera_roll   => 0,
-      :distance      => 100,
+      :view_angle    => 90.degrees,
       :intersection_x   => 0,
       :intersection_y   => 0,
     }
-    assert_equal [100, 50, 0.5], Texture.transform_in_perspective(200, -200, 0, options)
+    result = Texture.transform_in_perspective(200, -200, 0, 200, options)
+    assert_equal [100, 50], result[0, 2]
+    assert_in_delta 0.5, result[2], 0.01
     options = {
       :camera_x      => 0,
       :camera_y      => 0,
@@ -178,11 +187,13 @@ class TestTexture < Test::Unit::TestCase
       :camera_yaw    => 0,
       :camera_pitch  => 0,
       :camera_roll   => 0,
-      :distance      => 100,
+      :view_angle    => 90.degrees,
       :intersection_x   => 0,
       :intersection_y   => 0,
     }
-    assert_equal [50, 25, 0.25], Texture.transform_in_perspective(200, -400, 0, options)
+    result = Texture.transform_in_perspective(200, -400, 0, 200, options)
+    assert_equal [50, 25], result[0, 2]
+    assert_in_delta 0.25, result[2], 0.01
   end
 
   def test_clone
@@ -630,7 +641,7 @@ class TestTexture < Test::Unit::TestCase
       texture2.render_in_perspective(nil)
     end
     [:camera_x, :camera_y, :camera_height, :camera_yaw, :camera_pitch, :camera_roll,
-     :distance, :intersection_x, :intersection_y, :blur].each do |key|
+     :view_angle, :intersection_x, :intersection_y, :blur].each do |key|
       assert_raise TypeError do
         texture2.render_in_perspective(texture, key => false)
       end

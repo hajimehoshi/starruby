@@ -56,6 +56,7 @@ static volatile VALUE symbol_sub;
 static volatile VALUE symbol_tone_blue;
 static volatile VALUE symbol_tone_green;
 static volatile VALUE symbol_tone_red;
+static volatile VALUE symbol_view_angle;
 static volatile VALUE symbol_width;
 static volatile VALUE symbol_x;
 static volatile VALUE symbol_y;
@@ -96,7 +97,7 @@ typedef struct {
   double cameraYaw;
   double cameraPitch;
   double cameraRoll;
-  double distance;
+  double viewAngle;
   int intersectionX;
   int intersectionY;
   bool isLoop;
@@ -291,6 +292,7 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   MEMZERO(options, PerspectiveOptions, 1);
+  options->viewAngle = PI / 4;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
     options->cameraX = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
@@ -303,8 +305,8 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     options->cameraPitch = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_roll)))
     options->cameraRoll = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
-    options->distance = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_view_angle)))
+    options->viewAngle = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))
     options->intersectionX = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y)))
@@ -332,15 +334,19 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
       break;
     }
   }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance))) {
+    rb_warn(":distance was deprecated; use :view_angle instead");
+  }
 }
 
 static VALUE
 Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
-  volatile VALUE rbX, rbY, rbHeight, rbOptions;
-  rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
+  volatile VALUE rbX, rbY, rbHeight, rbScreenWidth, rbOptions;
+  rb_scan_args(argc, argv, "41", &rbX, &rbY, &rbHeight, &rbScreenWidth, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  int screenWidth = NUM2INT(rbScreenWidth);
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
   double cosYaw   = cos(options.cameraYaw);
@@ -366,7 +372,8 @@ Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   OBJ_FREEZE(rbResult);
   if (z == 0)
     return rbResult;
-  double scale = -options.distance / z;
+  double distance = screenWidth / (2 * tan(options.viewAngle / 2));
+  double scale = -distance / z;
   double screenX = x * scale;
   double screenY = (options.cameraHeight - y) * scale;
   double screenX2 = cosRoll  * screenX + sinRoll * screenY;
@@ -654,10 +661,11 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     cosRoll * -cosPitch,
     -sinRoll * sinYaw - cosRoll * sinPitch * cosYaw,
   };
+  double distance = dstWidth / (2 * (tan(options.viewAngle / 2)));
   PointF intersection = {
-    options.distance * (cosPitch * sinYaw),
-    options.distance * sinPitch + options.cameraHeight,
-    options.distance * (-cosPitch * cosYaw),
+    distance * (cosPitch * sinYaw),
+    distance * sinPitch + options.cameraHeight,
+    distance * (-cosPitch * cosYaw),
   };
   PointF screenO = {
     intersection.x
@@ -1591,6 +1599,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   symbol_tone_blue      = ID2SYM(rb_intern("tone_blue"));
   symbol_tone_green     = ID2SYM(rb_intern("tone_green"));
   symbol_tone_red       = ID2SYM(rb_intern("tone_red"));
+  symbol_view_angle     = ID2SYM(rb_intern("view_angle"));
   symbol_width          = ID2SYM(rb_intern("width"));
   symbol_x              = ID2SYM(rb_intern("x"));
   symbol_y              = ID2SYM(rb_intern("y"));

@@ -1,7 +1,7 @@
 require "mkmf"
 
 lib_base     = ""
-include_base = ""
+ninclude_base = ""
 sdl_base     = ""
 
 if arg_config("--gp2x", false)

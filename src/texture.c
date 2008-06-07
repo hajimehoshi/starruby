@@ -1377,18 +1377,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-Texture_save(int argc, VALUE* argv, VALUE self)
+Texture_save(VALUE self, VALUE rbPath)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  volatile VALUE rbPath, rbAlpha;
-  rb_scan_args(argc, argv, "11", &rbPath, &rbAlpha);
-  if (argc == 1)
-    rbAlpha = Qtrue;
-  else
-    rb_warn("the 2nd argument is deprecated");
-  bool isAlpha = RTEST(rbAlpha);
   char* path = StringValuePtr(rbPath);
   FILE* fp = fopen(path, "wb");
   if (!fp)
@@ -1408,10 +1401,7 @@ Texture_save(int argc, VALUE* argv, VALUE self)
       row[i * 4]     = c->red;
       row[i * 4 + 1] = c->green;
       row[i * 4 + 2] = c->blue;
-      if (isAlpha)
-        row[i * 4 + 3] = c->alpha;
-      else
-        row[i * 4 + 3] = 0xff;
+      row[i * 4 + 3] = c->alpha;
     }
     png_write_row(pngPtr, row);
   }
@@ -1578,7 +1568,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby, VALUE _rb_cColor)
   rb_define_method(rb_cTexture, "render_rect",    Texture_render_rect,     5);
   rb_define_method(rb_cTexture, "render_text",    Texture_render_text,     -1);
   rb_define_method(rb_cTexture, "render_texture", Texture_render_texture,  -1);
-  rb_define_method(rb_cTexture, "save",           Texture_save,            -1);
+  rb_define_method(rb_cTexture, "save",           Texture_save,            1);
   rb_define_method(rb_cTexture, "size",           Texture_size,            0);
   rb_define_method(rb_cTexture, "transform_in_perspective",
                    Texture_transform_in_perspective, -1);

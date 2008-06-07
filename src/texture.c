@@ -307,7 +307,9 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     options->cameraRoll = NUM2DBL(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_view_angle))) {
     options->viewAngle = NUM2DBL(val);
-    if (!(0 < options->viewAngle && options->viewAngle < PI))
+    if (!isfinite(options->viewAngle))
+      rb_raise(rb_eArgError, "invalid :view_angle value");
+    if (options->viewAngle <= 0 || PI <= options->viewAngle)
       rb_raise(rb_eArgError, "invalid :view_angle value");
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))

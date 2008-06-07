@@ -1925,18 +1925,6 @@ class TestTexture < Test::Unit::TestCase
 
   def test_transform_in_perspective
     texture = Texture.new(200, 100)
-    assert_raise TypeError do
-      texture.transform_in_perspective(false, 0, 0)
-    end
-    assert_raise TypeError do
-      texture.transform_in_perspective(0, false, 0)
-    end
-    assert_raise TypeError do
-      texture.transform_in_perspective(0, 0, false)
-    end
-    assert_raise TypeError do
-      texture.transform_in_perspective(0, 0, 0, false)
-    end
     options = {
       :camera_x      => 0,
       :camera_y      => 0,
@@ -1993,6 +1981,71 @@ class TestTexture < Test::Unit::TestCase
     result = texture.transform_in_perspective(200, -400, 0, options)
     assert_equal [50, 25], result[0, 2]
     assert_in_delta 0.25, result[2], 0.01
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 0)
+    end
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => -0.1)
+    end
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 180.degree)
+    end
+    assert_raise ArgumentError do
+      texture.transform_in_perspective(200, -400, 0, :view_angle => 180.degree + 0.1)
+    end
+  end
+
+  def test_transform_in_perspective_frozen
+    texture = Texture.new(200, 100)
+    texture.freeze
+    options = {
+      :camera_x      => 0,
+      :camera_y      => 0,
+      :camera_height => 100,
+      :camera_yaw    => 0,
+      :camera_pitch  => 0,
+      :camera_roll   => 0,
+      :view_angle    => 90.degrees,
+      :intersection_x   => 0,
+      :intersection_y   => 0,
+    }
+    # no error thrown
+    texture.transform_in_perspective(0, -200, 0, options)
   end
   
+  def test_transform_in_perspective_disposed
+    texture = Texture.new(200, 100)
+    texture.dispose
+    options = {
+      :camera_x      => 0,
+      :camera_y      => 0,
+      :camera_height => 100,
+      :camera_yaw    => 0,
+      :camera_pitch  => 0,
+      :camera_roll   => 0,
+      :view_angle    => 90.degrees,
+      :intersection_x   => 0,
+      :intersection_y   => 0,
+    }
+    assert_raise RuntimeError do
+      texture.transform_in_perspective(0, -200, 0, options)
+    end
+  end
+  
+  def test_transform_in_perspective_type
+    texture = Texture.new(200, 100)
+    assert_raise TypeError do
+      texture.transform_in_perspective(false, 0, 0)
+    end
+    assert_raise TypeError do
+      texture.transform_in_perspective(0, false, 0)
+    end
+    assert_raise TypeError do
+      texture.transform_in_perspective(0, 0, false)
+    end
+    assert_raise TypeError do
+      texture.transform_in_perspective(0, 0, 0, false)
+    end
+  end
+
 end

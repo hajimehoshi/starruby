@@ -340,7 +340,6 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
 }
 
 static VALUE Texture_transform_in_perspective(int, VALUE*, VALUE);
-
 static VALUE
 Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
@@ -1456,7 +1455,6 @@ Texture_size(VALUE self)
 static VALUE
 Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
-  rb_check_frozen(self);
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);

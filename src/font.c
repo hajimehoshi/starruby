@@ -361,11 +361,13 @@ strb_InitializeSdlFont(void)
     }
     RegCloseKey(hKey);
   } else {
-    rb_raise(strb_GetStarRubyError(), "Win32API error: %d", (int)GetLastError());
+    rb_raise(strb_GetStarRubyErrorClass(),
+             "Win32API error: %d", (int)GetLastError());
   }
   if (FAILED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
                              SHGFP_TYPE_CURRENT, windowsFontDirPath)))
-    rb_raise(strb_GetStarRubyError(), "Win32API error: %d", (int)GetLastError());
+    rb_raise(strb_GetStarRubyErrorClass(),
+             "Win32API error: %d", (int)GetLastError());
 #endif
 }
 

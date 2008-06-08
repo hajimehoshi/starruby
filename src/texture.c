@@ -649,7 +649,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     - options.intersectionX * screenDX.z
     - options.intersectionY * screenDY.z
   };
-  int cameraHeight = options.cameraHeight;
+  int cameraHeight = (int)options.cameraHeight;
   Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
   PointF screenP;
@@ -681,7 +681,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
               int rate = (int)(255 * (1 / scale));
               if (options.blurType == BLUR_TYPE_BACKGROUND) {
                 Color c;
-                c.red = srcColor->red;
+                c.red   = srcColor->red;
                 c.green = srcColor->green;
                 c.blue  = srcColor->blue;
                 c.alpha = DIV255(srcColor->alpha * rate);

@@ -164,6 +164,7 @@ DoLoop(void)
     }
 #endif
     SDL_UnlockSurface(sdlScreen);
+
     if (SDL_Flip(sdlScreen))
       rb_raise_sdl_error();
 

@@ -8,14 +8,14 @@ star_texture  = Texture.load("images/star")
 
 Airship = Struct.new(:x, :y, :yaw, :pitch, :roll, :height, :screen_x, :screen_y)
 airship = Airship.new
-airship.x          = field_texture.width / 2
-airship.y          = field_texture.height
-airship.yaw        = 0
-airship.pitch      = 0
-airship.roll       = 0
-airship.height     = 25
-airship.screen_x   = 0
-airship.screen_y   = 0
+airship.x        = field_texture.width / 2
+airship.y        = field_texture.height
+airship.yaw      = 0
+airship.pitch    = 0
+airship.roll     = 0
+airship.height   = 25
+airship.screen_x = 0
+airship.screen_y = 0
 fearless = false
 
 font = Font.new("fonts/ORANGEKI", 12)

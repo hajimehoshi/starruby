@@ -105,4 +105,16 @@ class TestGame < Test::Unit::TestCase
     assert_nil Game.screen
   end
 
+  def test_ticks
+    ticks1 = Game.ticks
+    ticks2 = 0
+    Game.run(320, 240) do
+      ticks2 = Game.ticks
+      assert ticks1 <= ticks2
+      Game.terminate
+    end
+    ticks3 = Game.ticks
+    assert ticks2 <= ticks3
+  end
+
 end

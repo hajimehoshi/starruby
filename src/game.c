@@ -310,6 +310,12 @@ Game_terminate(VALUE self)
 }
 
 static VALUE
+Game_ticks(VALUE self)
+{
+  return INT2NUM(SDL_GetTicks());
+}
+
+static VALUE
 Game_title(VALUE self)
 {
   return rb_iv_get(self, "title");
@@ -337,6 +343,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_module_function(rb_mGame, "running?",  Game_running,   0);
   rb_define_module_function(rb_mGame, "screen",    Game_screen,    0);
   rb_define_module_function(rb_mGame, "terminate", Game_terminate, 0);
+  rb_define_module_function(rb_mGame, "ticks",     Game_ticks,     0);
   rb_define_module_function(rb_mGame, "title",     Game_title,     0);
   rb_define_module_function(rb_mGame, "title=",    Game_title_eq,  1);
 

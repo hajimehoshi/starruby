@@ -108,6 +108,8 @@ Color_blue(VALUE self)
 static VALUE
 Color_eq(VALUE self, VALUE rbOther)
 {
+  if (self == rbOther)
+    return Qtrue;
   if (!rb_obj_is_kind_of(rbOther, rb_cColor))
     return Qfalse;
   Color color1, color2;

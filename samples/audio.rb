@@ -11,6 +11,7 @@ sound_texture = Texture.load("images/sound")
 
 Game.title = "Audio"
 
+bgm_position = 0
 Game.run(320, 240) do
   music_alpha = Audio.playing_bgm? ? 255 : 128
   sound_alpha = 128
@@ -18,9 +19,11 @@ Game.run(320, 240) do
   Game.terminate if keys.include?(:escape)
   if keys.include?(:m)
     if Audio.playing_bgm?
+      bgm_position = Audio.bgm_position
       Audio.stop_bgm
     else
-      Audio.play_bgm("sounds/music")
+      Audio.play_bgm("sounds/music",
+                     :position => bgm_position)
     end
   end
   if keys.include?(:s)

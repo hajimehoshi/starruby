@@ -304,7 +304,7 @@ static VALUE
 Game_terminate(VALUE self)
 {
   if (!running)
-    rb_raise(strb_GetStarRubyErrorClass(), "A game has not run yet");
+    rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
   terminated = true;
   return Qnil;
 }

@@ -73,8 +73,8 @@ DoLoop(void)
         error = (now - before) * fps + error - 1000;
         before = now;
         break;
-      }
-      SDL_Delay(0);
+      }        
+      SDL_Delay(1);
     }
 
     counter++;    

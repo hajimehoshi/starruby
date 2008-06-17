@@ -3,7 +3,7 @@ require "falling_blocks/field"
 
 module FallingBlocks
   
-  class ApplicationModel
+  class Model
     
     attr_reader :state
     

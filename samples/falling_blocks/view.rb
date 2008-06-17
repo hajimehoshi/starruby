@@ -26,19 +26,22 @@ module FallingBlocks
     end
     
     private :render_piece
+
+    attr_reader :model
     
-    def initialize
+    def initialize(model)
+      @model = model
       @textures = {
-        :background => Texture.load("images/falling_blocks/background"),
-        :blocks => Texture.load("images/falling_blocks/blocks"),
-        :field_window => Texture.new(100, 200),
+        :background        => Texture.load("images/falling_blocks/background"),
+        :blocks            => Texture.load("images/falling_blocks/blocks"),
+        :field_window      => Texture.new(100, 200),
         :next_piece_window => Texture.new(50, 50),
-        :score_window => Texture.new(140, 20),
-        :level_window => Texture.new(140, 20),
-        :lines_window => Texture.new(140, 20),
-        :start_info => Texture.new(320, 240),
-        :pause_info => Texture.new(320, 240),
-        :gameover_info => Texture.new(320, 240),
+        :score_window      => Texture.new(140, 20),
+        :level_window      => Texture.new(140, 20),
+        :lines_window      => Texture.new(140, 20),
+        :start_info        => Texture.new(320, 240),
+        :pause_info        => Texture.new(320, 240),
+        :gameover_info     => Texture.new(320, 240),
       }
       @font = Font.new("fonts/falling_blocks/flappy_for_famicom", 8)
       
@@ -61,7 +64,7 @@ module FallingBlocks
       render_text(texture, str, (texture.width - width) / 2, (texture.height - height) / 2, true)
     end
     
-    def update(model, screen)
+    def update(screen)
       # clear windows
       @textures.keys.select{|k| k.to_s =~ /window$/}.each do |key|
         @textures[key].fill(Color.new(0, 0, 0, 192))

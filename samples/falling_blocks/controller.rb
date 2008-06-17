@@ -25,18 +25,24 @@ module FallingBlocks
   end
 
   class Controller
-    
-    def update(model)
-      send("update_#{model.state}", model)
+
+    attr_reader :model
+
+    def initialize(model)
+      @model = model
     end
     
-    def update_start(model)
+    def update
+      send("update_#{model.state}")
+    end
+    
+    def update_start
       if 0 < Input.triggers([:keyboard, :gamepad]).size
         model.start_playing
       end
     end
   
-    def update_playing(model)
+    def update_playing
       if Input.triggers(:keyboard).include?(:c) or
         Input.triggers(:gamepad).include?(3)
         model.pause
@@ -75,13 +81,13 @@ module FallingBlocks
       end
     end
     
-    def update_pause(model)
+    def update_pause
       if 0 < Input.triggers([:keyboard, :gamepad]).size
         model.resume
       end
     end
     
-    def update_gameover(model)
+    def update_gameover
       if 0 < Input.triggers([:keyboard, :gamepad]).size
         model.start
       end

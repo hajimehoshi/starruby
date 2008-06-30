@@ -13,8 +13,6 @@ static double realFps = 0;
 static bool running = false;
 static int realScreenWidth = 0;
 static int realScreenHeight = 0;
-//static int screenWidth = 0;
-//static int screenHeight = 0;
 static bool terminated = false;
 static int windowScale = 1;
 
@@ -70,7 +68,7 @@ DoLoop(void)
     while (true) {
       now = SDL_GetTicks();
       if (1000 <= (now - before) * fps + error) {
-        error = (now - before) * fps + error - 1000;
+        error = MIN((now - before) * fps + error - 1000, 1000);
         before = now;
         break;
       }        

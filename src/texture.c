@@ -512,7 +512,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
     return Qnil;
   Color color;
-  strb_GetColorFromRubyValue(&color, rbColor);
+  strb_GetColorFromRubyValue(&color, rbColor);  
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)

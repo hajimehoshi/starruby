@@ -1,7 +1,7 @@
 #include "starruby.h"
 #include "starruby_private.h"
 
-static volatile VALUE rb_mGame;
+static volatile VALUE rb_cGame;
 static volatile VALUE rb_mStarRuby;
 
 static volatile VALUE symbol_cursor;
@@ -25,6 +25,12 @@ strb_GetWindowScale(void)
 }
 
 static VALUE
+Game_s_current(VALUE self)
+{
+  return rb_iv_get(rb_cGame, "current");
+}
+
+static VALUE
 Game_s_fps(VALUE self)
 {
   return INT2NUM(fps);
@@ -35,6 +41,20 @@ Game_s_fps_eq(VALUE self, VALUE rbFps)
 {
   fps = NUM2INT(rbFps);
   return rbFps;
+}
+
+static VALUE
+Game_s_new(int argc, VALUE* argv, VALUE self)
+{
+  VALUE rbWidth, rbHeight, rbOptions;
+  rb_scan_args(argc, argv, "21",
+               &rbWidth, &rbHeight, &rbOptions);
+  VALUE args[] = {
+    rbWidth, rbHeight, rbOptions,
+  };
+  volatile VALUE rbGame = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
+  rb_iv_set(rb_cGame, "current", rbGame);
+  return rbGame;
 }
 
 static VALUE
@@ -50,7 +70,7 @@ DoLoop(void)
   terminated = false;
   realFps = 0;
   
-  volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen = rb_iv_get(rb_cGame, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
 
@@ -176,10 +196,10 @@ static VALUE
 DisposeScreen(SDL_Surface* screen)
 {
   screen = NULL;
-  volatile VALUE rbScreen = rb_iv_get(rb_mGame, "screen");
+  volatile VALUE rbScreen = rb_iv_get(rb_cGame, "screen");
   if (!NIL_P(rbScreen))
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
-  rb_iv_set(rb_mGame, "screen", Qnil);
+  rb_iv_set(rb_cGame, "screen", Qnil);
   return Qnil;
 }
 
@@ -194,7 +214,6 @@ DoLoopEnsure()
   return Qnil;
 }
 
-static VALUE Game_screen(VALUE);
 static VALUE
 Game_s_run(int argc, VALUE* argv, VALUE self)
 {
@@ -328,28 +347,59 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
   return rb_iv_set(self, "title", rbTitle);
 }
 
+static VALUE
+Game_alloc(VALUE klass)
+{
+  return Data_Wrap_Struct(klass, 0, 0, NULL);
+}
+
+static VALUE
+Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
+{
+  return Qnil;
+}
+
+static VALUE
+Game_dispose(VALUE self)
+{
+  rb_iv_set(rb_cGame, "current", Qnil);
+  return Qnil;
+}
+
+static VALUE
+Game_screen(VALUE self)
+{
+  return Qnil;
+}
+
 VALUE
 strb_InitializeGame(VALUE _rb_mStarRuby)
 {
   rb_mStarRuby = _rb_mStarRuby;
 
-  rb_mGame = rb_define_class_under(rb_mStarRuby, "Game", rb_cObject);
-  rb_define_singleton_method(rb_mGame, "fps",       Game_s_fps,       0);
-  rb_define_singleton_method(rb_mGame, "fps=",      Game_s_fps_eq,    1);
-  rb_define_singleton_method(rb_mGame, "real_fps",  Game_s_real_fps,  0);
-  rb_define_singleton_method(rb_mGame, "run",       Game_s_run,       -1);
-  rb_define_singleton_method(rb_mGame, "running?",  Game_s_running,   0);
-  rb_define_singleton_method(rb_mGame, "screen",    Game_s_screen,    0);
-  rb_define_singleton_method(rb_mGame, "terminate", Game_s_terminate, 0);
-  rb_define_singleton_method(rb_mGame, "ticks",     Game_s_ticks,     0);
-  rb_define_singleton_method(rb_mGame, "title",     Game_s_title,     0);
-  rb_define_singleton_method(rb_mGame, "title=",    Game_s_title_eq,  1);
+  rb_cGame = rb_define_class_under(rb_mStarRuby, "Game", rb_cObject);
+  rb_define_singleton_method(rb_cGame, "current",   Game_s_current,   0);
+  rb_define_singleton_method(rb_cGame, "fps",       Game_s_fps,       0);
+  rb_define_singleton_method(rb_cGame, "fps=",      Game_s_fps_eq,    1);
+  rb_define_singleton_method(rb_cGame, "new",       Game_s_new,       -1);
+  rb_define_singleton_method(rb_cGame, "real_fps",  Game_s_real_fps,  0);
+  rb_define_singleton_method(rb_cGame, "run",       Game_s_run,       -1);
+  rb_define_singleton_method(rb_cGame, "running?",  Game_s_running,   0);
+  rb_define_singleton_method(rb_cGame, "screen",    Game_s_screen,    0);
+  rb_define_singleton_method(rb_cGame, "terminate", Game_s_terminate, 0);
+  rb_define_singleton_method(rb_cGame, "ticks",     Game_s_ticks,     0);
+  rb_define_singleton_method(rb_cGame, "title",     Game_s_title,     0);
+  rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
+  rb_define_alloc_func(rb_cGame, Game_alloc);
+  rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
+  rb_define_method(rb_cGame, "dispose", Game_dispose, 0);
+  rb_define_method(rb_cGame, "screen",  Game_screen,  0);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
-  rb_iv_set(rb_mGame, "title", rb_str_new2(""));
+  rb_iv_set(rb_cGame, "title", rb_str_new2(""));
 
-  return rb_mGame;
+  return rb_cGame;
 }

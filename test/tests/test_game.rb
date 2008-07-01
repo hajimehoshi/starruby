@@ -117,4 +117,18 @@ class TestGame < Test::Unit::TestCase
     assert ticks2 <= ticks3
   end
 
+  def test_new
+    assert_nil Game.current
+    g = nil
+    begin
+      g = Game.new(320, 240)
+      assert_equal Game.current, g
+      #assert_not_nil g.screen
+      #assert_equal Game.screen, g.screen
+    ensure
+      g.dispose
+    end
+    assert_nil Game.current
+  end
+
 end

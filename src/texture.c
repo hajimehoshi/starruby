@@ -20,7 +20,7 @@
       case 1: process;        \
       } while (--n > 0);      \
     }                         \
-  } while (false)             \
+  } while (false)
 
 static volatile VALUE rb_cTexture;
 

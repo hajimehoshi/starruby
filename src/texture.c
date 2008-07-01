@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "starruby.h"
 #include "starruby_private.h"
 #include <png.h>
@@ -1133,7 +1134,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           }, width);
       break;
     default:
-      // can't come here
+      assert(false);
       break;
     }
     return Qnil;
@@ -1324,10 +1325,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.alpha = beta;
               break;
             case BLEND_TYPE_MASK:
-              // can't come here
+              assert(false);
               break;
             case BLEND_TYPE_NONE:
-              // can't come here
+              assert(false);
               break;
             }
           } else {
@@ -1359,10 +1360,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.blue  = MAX(0, subB);
               break;
             case BLEND_TYPE_MASK:
-              // can't come here
+              assert(false);
               break;
             case BLEND_TYPE_NONE:
-              // can't come here
+              assert(false);
               break;
             }
           }

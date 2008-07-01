@@ -25,20 +25,20 @@ strb_GetWindowScale(void)
 }
 
 static VALUE
-Game_fps(VALUE self)
+Game_s_fps(VALUE self)
 {
   return INT2NUM(fps);
 }
 
 static VALUE
-Game_fps_eq(VALUE self, VALUE rbFps)
+Game_s_fps_eq(VALUE self, VALUE rbFps)
 {
   fps = NUM2INT(rbFps);
   return rbFps;
 }
 
 static VALUE
-Game_real_fps(VALUE self)
+Game_s_real_fps(VALUE self)
 {
   return rb_float_new(realFps);
 }
@@ -196,7 +196,7 @@ DoLoopEnsure()
 
 static VALUE Game_screen(VALUE);
 static VALUE
-Game_run(int argc, VALUE* argv, VALUE self)
+Game_s_run(int argc, VALUE* argv, VALUE self)
 {
   if (running)
     rb_raise(strb_GetStarRubyErrorClass(), "already run");
@@ -287,19 +287,19 @@ Game_run(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-Game_running(VALUE self)
+Game_s_running(VALUE self)
 {
   return running ? Qtrue : Qfalse;
 }
 
 static VALUE
-Game_screen(VALUE self)
+Game_s_screen(VALUE self)
 {
   return rb_iv_get(self, "screen");
 }
 
 static VALUE
-Game_terminate(VALUE self)
+Game_s_terminate(VALUE self)
 {
   if (!running)
     rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
@@ -308,19 +308,19 @@ Game_terminate(VALUE self)
 }
 
 static VALUE
-Game_ticks(VALUE self)
+Game_s_ticks(VALUE self)
 {
   return INT2NUM(SDL_GetTicks());
 }
 
 static VALUE
-Game_title(VALUE self)
+Game_s_title(VALUE self)
 {
   return rb_iv_get(self, "title");
 }
 
 static VALUE
-Game_title_eq(VALUE self, VALUE rbTitle)
+Game_s_title_eq(VALUE self, VALUE rbTitle)
 {
   Check_Type(rbTitle, T_STRING);
   if (SDL_WasInit(SDL_INIT_VIDEO))
@@ -333,17 +333,17 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
 {
   rb_mStarRuby = _rb_mStarRuby;
 
-  rb_mGame = rb_define_module_under(rb_mStarRuby, "Game");
-  rb_define_module_function(rb_mGame, "fps",       Game_fps,       0);
-  rb_define_module_function(rb_mGame, "fps=",      Game_fps_eq,    1);
-  rb_define_module_function(rb_mGame, "real_fps",  Game_real_fps,  0);
-  rb_define_module_function(rb_mGame, "run",       Game_run,       -1);
-  rb_define_module_function(rb_mGame, "running?",  Game_running,   0);
-  rb_define_module_function(rb_mGame, "screen",    Game_screen,    0);
-  rb_define_module_function(rb_mGame, "terminate", Game_terminate, 0);
-  rb_define_module_function(rb_mGame, "ticks",     Game_ticks,     0);
-  rb_define_module_function(rb_mGame, "title",     Game_title,     0);
-  rb_define_module_function(rb_mGame, "title=",    Game_title_eq,  1);
+  rb_mGame = rb_define_class_under(rb_mStarRuby, "Game", rb_cObject);
+  rb_define_singleton_method(rb_mGame, "fps",       Game_s_fps,       0);
+  rb_define_singleton_method(rb_mGame, "fps=",      Game_s_fps_eq,    1);
+  rb_define_singleton_method(rb_mGame, "real_fps",  Game_s_real_fps,  0);
+  rb_define_singleton_method(rb_mGame, "run",       Game_s_run,       -1);
+  rb_define_singleton_method(rb_mGame, "running?",  Game_s_running,   0);
+  rb_define_singleton_method(rb_mGame, "screen",    Game_s_screen,    0);
+  rb_define_singleton_method(rb_mGame, "terminate", Game_s_terminate, 0);
+  rb_define_singleton_method(rb_mGame, "ticks",     Game_s_ticks,     0);
+  rb_define_singleton_method(rb_mGame, "title",     Game_s_title,     0);
+  rb_define_singleton_method(rb_mGame, "title=",    Game_s_title_eq,  1);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));

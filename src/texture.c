@@ -349,17 +349,6 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
     rb_warn(":distance is deprecated; use :view_angle instead");
 }
 
-static VALUE Texture_transform_in_perspective(int, VALUE*, VALUE);
-static VALUE
-Texture_s_transform_in_perspective(int argc, VALUE* argv, VALUE self)
-{
-  rb_warn("Texture.transform_in_perspective is deprecated;"
-          " use Texture#transform_in_perspective instead");
-  volatile VALUE texture =
-    rb_class_new_instance(2, (VALUE[]){INT2NUM(320), INT2NUM(240)}, self);
-  return Texture_transform_in_perspective(argc, argv, texture);
-}
-
 static VALUE Texture_change_hue_bang(VALUE, VALUE);
 static VALUE
 Texture_change_hue(VALUE self, VALUE rbAngle)
@@ -538,13 +527,6 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
                     INT2NUM(color.green),
                     INT2NUM(color.blue),
                     INT2NUM(color.alpha));
-}
-
-static VALUE
-Texture_get_pixel_deprecated(VALUE self, VALUE rbX, VALUE rbY)
-{
-  rb_warn("Texture#get_pixel is deprecated; use Texture#[] instead");
-  return Texture_get_pixel(self, rbX, rbY);
 }
 
 static VALUE
@@ -1434,13 +1416,6 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 }
 
 static VALUE
-Texture_set_pixel_deprecated(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
-{
-  rb_warn("Texture#set_pixel is deprecated; use Texture#[]= instead");
-  return Texture_set_pixel(self, rbX, rbY, rbColor);
-}
-
-static VALUE
 Texture_size(VALUE self)
 {
   Texture* texture;
@@ -1553,8 +1528,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
   rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, 1);
-  rb_define_singleton_method(rb_cTexture, "transform_in_perspective",
-                             Texture_s_transform_in_perspective, -1);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
@@ -1583,9 +1556,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
                    Texture_transform_in_perspective, -1);
   rb_define_method(rb_cTexture, "undump",         Texture_undump,          2);
   rb_define_method(rb_cTexture, "width",          Texture_width,           0);
-
-  rb_define_method(rb_cTexture, "get_pixel", Texture_get_pixel_deprecated, 2);
-  rb_define_method(rb_cTexture, "set_pixel", Texture_set_pixel_deprecated, 3);
 
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));

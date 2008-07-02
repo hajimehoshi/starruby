@@ -38,7 +38,6 @@ static volatile VALUE symbol_camera_y;
 static volatile VALUE symbol_camera_yaw;
 static volatile VALUE symbol_center_x;
 static volatile VALUE symbol_center_y;
-static volatile VALUE symbol_distance;
 static volatile VALUE symbol_height;
 static volatile VALUE symbol_intersection_x;
 static volatile VALUE symbol_intersection_y;
@@ -345,8 +344,6 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
       break;
     }
   }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_distance)))
-    rb_warn(":distance is deprecated; use :view_angle instead");
 }
 
 static VALUE Texture_change_hue_bang(VALUE, VALUE);
@@ -1571,7 +1568,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   symbol_camera_yaw     = ID2SYM(rb_intern("camera_yaw"));
   symbol_center_x       = ID2SYM(rb_intern("center_x"));
   symbol_center_y       = ID2SYM(rb_intern("center_y"));
-  symbol_distance       = ID2SYM(rb_intern("distance"));
   symbol_height         = ID2SYM(rb_intern("height"));
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));

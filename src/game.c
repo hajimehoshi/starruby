@@ -5,15 +5,14 @@ static volatile VALUE rb_cGame;
 static volatile VALUE rb_mStarRuby;
 
 static volatile VALUE symbol_cursor;
+static volatile VALUE symbol_fps;
 static volatile VALUE symbol_fullscreen;
+static volatile VALUE symbol_title;
 static volatile VALUE symbol_window_scale;
 
-static int fps = 30;
 static double realFps = 0;
-static bool running = false;
 static int realScreenWidth = 0;
 static int realScreenHeight = 0;
-static bool terminated = false;
 static int windowScale = 1;
 
 static SDL_Surface* sdlScreen = NULL;
@@ -24,36 +23,61 @@ strb_GetWindowScale(void)
   return windowScale;
 }
 
+static VALUE Game_dispose(VALUE);
+static VALUE Game_fps(VALUE);
+static VALUE Game_fps_eq(VALUE, VALUE);
+static VALUE Game_terminate(VALUE);
+static VALUE Game_terminated(VALUE);
+static VALUE Game_title(VALUE);
+static VALUE Game_title_eq(VALUE, VALUE);
+static VALUE Game_update(VALUE);
+static VALUE Game_wait(VALUE);
+
 static VALUE
 Game_s_current(VALUE self)
 {
-  return rb_iv_get(rb_cGame, "current");
+  return rb_iv_get(self, "current");
 }
 
 static VALUE
 Game_s_fps(VALUE self)
 {
-  return INT2NUM(fps);
+  rb_warn("Game.fps is deprecated; use Game#fps instead");
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (!NIL_P(rbCurrent))
+    return Game_fps(rbCurrent);
+  else
+    return rb_iv_get(self, "fps");
 }
 
 static VALUE
 Game_s_fps_eq(VALUE self, VALUE rbFps)
 {
-  fps = NUM2INT(rbFps);
-  return rbFps;
+  rb_warn("Game.fps= is deprecated;"
+          " use Game#fps or Game.run(..., :fps => ...) instead");
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (!NIL_P(rbCurrent))
+    return Game_fps_eq(rbCurrent, rbFps);
+  else
+    return rb_iv_set(self, "fps", rbFps);
 }
 
 static VALUE
 Game_s_new(int argc, VALUE* argv, VALUE self)
 {
+  if (!NIL_P(Game_s_current(self)))
+    rb_raise(strb_GetStarRubyErrorClass(), "already run");
+
   VALUE rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21",
                &rbWidth, &rbHeight, &rbOptions);
-  VALUE args[] = {
-    rbWidth, rbHeight, rbOptions,
-  };
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+  else
+    Check_Type(rbOptions, T_HASH);
+  VALUE args[] = {rbWidth, rbHeight, rbOptions};
   volatile VALUE rbGame = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
-  rb_iv_set(rb_cGame, "current", rbGame);
+  rb_iv_set(self, "current", rbGame);
   return rbGame;
 }
 
@@ -61,135 +85,6 @@ static VALUE
 Game_s_real_fps(VALUE self)
 {
   return rb_float_new(realFps);
-}
-
-static VALUE
-DoLoop(void)
-{
-  running = true;
-  terminated = false;
-  realFps = 0;
-  
-  volatile VALUE rbScreen = rb_iv_get(rb_cGame, "screen");
-  Texture* texture;
-  Data_Get_Struct(rbScreen, Texture, texture);
-
-  SDL_Event event;
-  Uint32 now;
-  Uint32 error = 0;
-  Uint32 before = SDL_GetTicks();
-  Uint32 before2 = before;
-  int counter = 0;
-
-  while (true) {
-    if (SDL_PollEvent(&event) && event.type == SDL_QUIT)
-      break;
-
-    while (true) {
-      now = SDL_GetTicks();
-      if (1000 <= (now - before) * fps + error) {
-        error = MIN((now - before) * fps + error - 1000, 1000);
-        before = now;
-        break;
-      }        
-      SDL_Delay(1);
-    }
-
-    counter++;    
-    if (1000 <= now - before2) {
-      realFps = (double)counter * 1000 / (now - before2);
-      counter = 0;
-      before2 = SDL_GetTicks();
-    }
-
-    strb_UpdateAudio();
-    strb_UpdateInput();
-    
-    int lastFps = fps;
-    rb_yield(Qnil);
-    if (fps != lastFps)
-      error = 0;
-
-    Pixel* src = texture->pixels;
-    SDL_LockSurface(sdlScreen);
-#ifndef GP2X
-    Pixel* dst = (Pixel*)sdlScreen->pixels;
-    int screenPadding =
-      sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
-    int textureWidth  = texture->width;
-    int textureHeight = texture->height;
-    switch (windowScale) {
-    case 1:
-      {
-        // For fullscreen
-        dst += (realScreenWidth - textureWidth) / 2
-          + (realScreenHeight - textureHeight) / 2 * (realScreenWidth + screenPadding);
-        int heightPadding = realScreenWidth - texture->width + screenPadding;
-        for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
-          for (int i = 0; i < textureWidth; i++, src++, dst++) {
-            uint8_t alpha = src->color.alpha;
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          }
-        }
-      }
-      break;
-    case 2:
-      {
-        int textureWidth2x = textureWidth * 2;
-        int heightPadding = textureWidth2x + screenPadding * 2;
-        for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
-          for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
-            uint8_t alpha = src->color.alpha;
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-            dst[textureWidth2x + screenPadding] = dst[textureWidth2x + screenPadding + 1] = dst[1] = *dst;
-          }
-        }
-      }
-      break;
-    default:
-      {
-        int textureWidthN = textureWidth * windowScale;
-        int heightPadding =
-          textureWidth * windowScale * (windowScale - 1) + screenPadding * windowScale;
-        for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
-          for (int i = 0; i < textureWidth; i++, src++, dst += windowScale) {
-            uint8_t alpha = src->color.alpha;
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-            for (int k = 1; k < windowScale; k++)
-              dst[k] = *dst;
-            for (int l = 1; l < windowScale; l++)
-              for (int k = 0; k < windowScale; k++)
-                dst[(textureWidthN + screenPadding) * l + k] = *dst;
-          }
-        }
-      }
-      break;
-    }
-#else
-    uint16_t* dst = (uint16_t*)sdlScreen->pixels;
-    int length = texture->width * texture->height;
-    for (int i = 0; i < length; i++, src++, dst++) {
-      uint8_t alpha = src->color.alpha;
-      *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
-                        (DIV255(src->color.green * alpha) >> 2) << 5 |
-                        (DIV255(src->color.blue  * alpha) >> 3));
-    }
-#endif
-    SDL_UnlockSurface(sdlScreen);
-
-    if (SDL_Flip(sdlScreen))
-      rb_raise_sdl_error();
-
-    if (terminated)
-      break;
-  }
-  return Qnil;
 }
 
 static VALUE
@@ -204,28 +99,105 @@ DisposeScreen(SDL_Surface* screen)
 }
 
 static VALUE
-DoLoopEnsure()
+RunGame(VALUE rbGame)
 {
-  DisposeScreen(sdlScreen);
-  sdlScreen = NULL;
-  SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
-  running = false;
-  terminated = false;
+  while (true) {
+    Game_wait(rbGame);
+    rb_yield(rbGame);
+    Game_update(rbGame);
+    if (Game_terminated(rbGame))
+      break;
+  }
+  return Qnil;
+}
+
+static VALUE
+RunGameEnsure(VALUE rbGame)
+{
+  Game_dispose(rbGame);
   return Qnil;
 }
 
 static VALUE
 Game_s_run(int argc, VALUE* argv, VALUE self)
 {
-  if (running)
-    rb_raise(strb_GetStarRubyErrorClass(), "already run");
+  volatile VALUE rbGame = Game_s_new(argc, argv, self);
+  rb_ensure(RunGame, rbGame, RunGameEnsure, rbGame);
+  return Qnil;
+}
+
+static VALUE
+Game_s_running(VALUE self)
+{
+  return !NIL_P(Game_s_current(self)) ? Qtrue : Qfalse;
+}
+
+static VALUE
+Game_s_screen(VALUE self)
+{
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (NIL_P(rbCurrent))
+    return Qnil;
+  return rb_iv_get(rbCurrent, "screen");
+}
+
+static VALUE
+Game_s_terminate(VALUE self)
+{
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (NIL_P(rbCurrent))
+    rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
+  Game_terminate(rbCurrent);
+  return Qnil;
+}
+
+static VALUE
+Game_s_ticks(VALUE self)
+{
+  return INT2NUM(SDL_GetTicks());
+}
+
+static VALUE
+Game_s_title(VALUE self)
+{
+  rb_warn("Game.title is deprecated; use Game#title instead");
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (!NIL_P(rbCurrent))
+    return Game_title(rbCurrent);
+  else
+    return rb_iv_get(self, "title");
+}
+
+static VALUE
+Game_s_title_eq(VALUE self, VALUE rbTitle)
+{
+  rb_warn("Game.title= is deprecated;"
+          " use Game#title= or Game.run(..., :title => ...) instead");
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (!NIL_P(rbCurrent)) {
+    return Game_title_eq(rbCurrent, rbTitle);
+  } else {
+    Check_Type(rbTitle, T_STRING);
+    if (SDL_WasInit(SDL_INIT_VIDEO))
+      SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
+    return rb_iv_set(self, "title", rbTitle);
+  }
+}
+
+static VALUE
+Game_alloc(VALUE klass)
+{
+  return Data_Wrap_Struct(klass, 0, 0, NULL);
+}
+
+static VALUE
+Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
+{
+  rb_iv_set(self, "terminated", Qfalse);
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
-  volatile VALUE rbTitle = rb_iv_get(self, "title");
-  SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
-  volatile VALUE rbBlock, rbWidth, rbHeight, rbOptions;
-  rb_scan_args(argc, argv, "21&", &rbWidth, &rbHeight, &rbOptions, &rbBlock);
+
 #ifndef GP2X
   int width   = NUM2INT(rbWidth);
   int height  = NUM2INT(rbHeight);
@@ -233,8 +205,30 @@ Game_s_run(int argc, VALUE* argv, VALUE self)
   int width   = 320;
   int height  = 240;
 #endif
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
+
+  volatile VALUE rbFps = rb_hash_aref(rbOptions, symbol_fps);
+  if (!NIL_P(rbFps)) {
+    Game_fps_eq(self, rbFps);
+  } else {
+    // for a backward compatibility
+    volatile VALUE rbFps2 = rb_iv_get(rb_cGame, "fps");
+    if (!NIL_P(rbFps2))
+      Game_fps_eq(self, rbFps2);
+    else
+      Game_fps_eq(self, INT2NUM(30));
+  }
+
+  volatile VALUE rbTitle = rb_hash_aref(rbOptions, symbol_title);
+  if (!NIL_P(rbTitle)) {
+    Game_title_eq(self, rbTitle);
+  } else {
+    // for a backward compatibility
+    volatile VALUE rbTitle2 = rb_iv_get(rb_cGame, "title");
+    if (!NIL_P(rbTitle2))
+      Game_title_eq(self, rbTitle2);
+    else
+      Game_title_eq(self, rb_str_new2(""));
+  }
 
   bool cursor = false;
   bool fullscreen = false;
@@ -301,45 +295,59 @@ Game_s_run(int argc, VALUE* argv, VALUE self)
     DisposeScreen(sdlScreen);
     rb_raise_sdl_error();
   }
-  rb_ensure(DoLoop, Qnil, DoLoopEnsure, Qnil);
+
   return Qnil;
 }
 
 static VALUE
-Game_s_running(VALUE self)
+Game_dispose(VALUE self)
 {
-  return running ? Qtrue : Qfalse;
+  DisposeScreen(sdlScreen);
+  sdlScreen = NULL;
+  SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+  rb_iv_set(rb_cGame, "current", Qnil);
+  return Qnil;
 }
 
 static VALUE
-Game_s_screen(VALUE self)
+Game_fps(VALUE self)
+{
+  return rb_iv_get(self, "fps");
+}
+
+static VALUE
+Game_fps_eq(VALUE self, VALUE rbFps)
+{
+  return rb_iv_set(self, "fps", rbFps);
+}
+
+static VALUE
+Game_screen(VALUE self)
 {
   return rb_iv_get(self, "screen");
 }
 
 static VALUE
-Game_s_terminate(VALUE self)
+Game_terminate(VALUE self)
 {
-  if (!running)
-    rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
-  terminated = true;
+  rb_iv_set(self, "terminated", Qtrue);
   return Qnil;
 }
 
 static VALUE
-Game_s_ticks(VALUE self)
+Game_terminated(VALUE self)
 {
-  return INT2NUM(SDL_GetTicks());
+  return rb_iv_get(self, "terminated");
 }
 
 static VALUE
-Game_s_title(VALUE self)
+Game_title(VALUE self)
 {
   return rb_iv_get(self, "title");
 }
 
 static VALUE
-Game_s_title_eq(VALUE self, VALUE rbTitle)
+Game_title_eq(VALUE self, VALUE rbTitle)
 {
   Check_Type(rbTitle, T_STRING);
   if (SDL_WasInit(SDL_INIT_VIDEO))
@@ -348,27 +356,140 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
 }
 
 static VALUE
-Game_alloc(VALUE klass)
+Game_update(VALUE self)
 {
-  return Data_Wrap_Struct(klass, 0, 0, NULL);
-}
+  if (Game_terminated(self))
+    return Qnil;
 
-static VALUE
-Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
-{
+  realFps = 0;
+  
+  SDL_Event event;
+  if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
+    rb_iv_set(self, "terminated", Qtrue);
+    return Qnil;
+  }
+
+  // wait
+
+  strb_UpdateAudio();
+  strb_UpdateInput();
+
+  //int lastFps = fps;
+  /*if (fps != lastFps)
+    error = 0;*/
+
+  volatile VALUE rbScreen = rb_iv_get(self, "screen");
+  Texture* texture;
+  Data_Get_Struct(rbScreen, Texture, texture);
+  Pixel* src = texture->pixels;
+  SDL_LockSurface(sdlScreen);
+#ifndef GP2X
+  Pixel* dst = (Pixel*)sdlScreen->pixels;
+  int screenPadding =
+    sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
+  int textureWidth  = texture->width;
+  int textureHeight = texture->height;
+  switch (windowScale) {
+  case 1:
+    {
+      // For fullscreen
+      dst += (realScreenWidth - textureWidth) / 2
+        + (realScreenHeight - textureHeight) / 2 * (realScreenWidth + screenPadding);
+      int heightPadding = realScreenWidth - texture->width + screenPadding;
+      for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+        for (int i = 0; i < textureWidth; i++, src++, dst++) {
+          uint8_t alpha = src->color.alpha;
+          dst->color.red   = DIV255(src->color.red   * alpha);
+          dst->color.green = DIV255(src->color.green * alpha);
+          dst->color.blue  = DIV255(src->color.blue  * alpha);
+        }
+      }
+    }
+    break;
+  case 2:
+    {
+      int textureWidth2x = textureWidth * 2;
+      int heightPadding = textureWidth2x + screenPadding * 2;
+      for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+        for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
+          uint8_t alpha = src->color.alpha;
+          dst->color.red   = DIV255(src->color.red   * alpha);
+          dst->color.green = DIV255(src->color.green * alpha);
+          dst->color.blue  = DIV255(src->color.blue  * alpha);
+          dst[textureWidth2x + screenPadding] = dst[textureWidth2x + screenPadding + 1] = dst[1] = *dst;
+        }
+      }
+    }
+    break;
+  default:
+    {
+      int textureWidthN = textureWidth * windowScale;
+      int heightPadding =
+        textureWidth * windowScale * (windowScale - 1) + screenPadding * windowScale;
+      for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+        for (int i = 0; i < textureWidth; i++, src++, dst += windowScale) {
+          uint8_t alpha = src->color.alpha;
+          dst->color.red   = DIV255(src->color.red   * alpha);
+          dst->color.green = DIV255(src->color.green * alpha);
+          dst->color.blue  = DIV255(src->color.blue  * alpha);
+          for (int k = 1; k < windowScale; k++)
+            dst[k] = *dst;
+          for (int l = 1; l < windowScale; l++)
+            for (int k = 0; k < windowScale; k++)
+              dst[(textureWidthN + screenPadding) * l + k] = *dst;
+        }
+      }
+    }
+    break;
+  }
+#else
+  uint16_t* dst = (uint16_t*)sdlScreen->pixels;
+  int length = texture->width * texture->height;
+  for (int i = 0; i < length; i++, src++, dst++) {
+    uint8_t alpha = src->color.alpha;
+    *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
+                      (DIV255(src->color.green * alpha) >> 2) << 5 |
+                      (DIV255(src->color.blue  * alpha) >> 3));
+  }
+#endif
+  SDL_UnlockSurface(sdlScreen);
+
+  if (SDL_Flip(sdlScreen))
+    rb_raise_sdl_error();
+
   return Qnil;
 }
 
 static VALUE
-Game_dispose(VALUE self)
+Game_wait(VALUE self)
 {
-  rb_iv_set(rb_cGame, "current", Qnil);
-  return Qnil;
-}
+  if (Game_terminated(self))
+    return Qnil;
 
-static VALUE
-Game_screen(VALUE self)
-{
+  Uint32 now;
+  Uint32 error = 0;
+  Uint32 before = SDL_GetTicks();
+  Uint32 before2 = before;
+  int counter = 0;
+
+  uint fps = INT2NUM(rb_iv_get(self, "fps"));
+  while (true) {
+    now = SDL_GetTicks();
+    if (1000 <= (now - before) * fps + error) {
+      error = MIN((now - before) * fps + error - 1000, 1000);
+      before = now;
+      break;
+    }        
+    SDL_Delay(1);
+  }
+
+  /*counter++;    
+  if (1000 <= now - before2) {
+    realFps = (double)counter * 1000 / (now - before2);
+    counter = 0;
+    before2 = SDL_GetTicks();
+    }*/
+
   return Qnil;
 }
 
@@ -392,14 +513,22 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
-  rb_define_method(rb_cGame, "dispose", Game_dispose, 0);
-  rb_define_method(rb_cGame, "screen",  Game_screen,  0);
+  rb_define_method(rb_cGame, "dispose",     Game_dispose,    0);
+  rb_define_method(rb_cGame, "screen",      Game_screen,     0);
+  rb_define_method(rb_cGame, "fps",         Game_fps,        0);
+  rb_define_method(rb_cGame, "fps=",        Game_fps_eq,     1);
+  rb_define_method(rb_cGame, "terminate",   Game_terminate,  0);
+  rb_define_method(rb_cGame, "terminated?", Game_terminated, 0);
+  rb_define_method(rb_cGame, "title",       Game_title,      0);
+  rb_define_method(rb_cGame, "title=",      Game_title_eq,   1);
+  rb_define_method(rb_cGame, "update",      Game_update,     0);
+  rb_define_method(rb_cGame, "wait",        Game_wait,       0);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
+  symbol_fps          = ID2SYM(rb_intern("fps"));
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
+  symbol_title        = ID2SYM(rb_intern("title"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
-
-  rb_iv_set(rb_cGame, "title", rb_str_new2(""));
 
   return rb_cGame;
 }

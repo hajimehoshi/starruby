@@ -7,37 +7,20 @@ class TestGame < Test::Unit::TestCase
 
   def test_game
     assert_equal false, Game.running?
-    assert_equal "foo", (Game.title = "foo")
-    assert_equal "foo", Game.title
-    assert_equal 30, Game.fps;
-    assert_equal 31, (Game.fps = 31)
-    assert_equal 31, Game.fps
-    Game.run(320, 240) do
+    called = false
+    Game.run(320, 240, :title => "foo") do |g|
+      called = true
       assert_equal true, Game.running?
-      assert_equal "bar", (Game.title = "bar")
-      assert_equal "bar", Game.title
-      assert_equal 32, (Game.fps = 32)
-      assert_equal 32, Game.fps
+      assert_equal "foo", g.title
+      assert_equal 30, g.fps
       assert_raise StarRubyError do
         Game.run(320, 240) {}
       end
       Game.terminate
       assert_equal true, Game.running?
     end
+    assert called
     assert_equal false, Game.running?
-    assert_equal "baz", (Game.title = "baz")
-    assert_equal "baz", Game.title
-    assert_equal 33, (Game.fps = 33)
-    assert_equal 33, Game.fps
-  end
-
-  def test_game_type
-    assert_raise TypeError do
-      Game.title = nil
-    end
-    assert_raise TypeError do
-      Game.fps = nil
-    end
   end
 
   def test_run
@@ -61,7 +44,7 @@ class TestGame < Test::Unit::TestCase
       Game.run(320, 240, :window_scale => false) {}
     end
   end
-  
+
   def test_running
     assert_equal false, Game.running?
     Game.run(320, 240) do
@@ -117,16 +100,51 @@ class TestGame < Test::Unit::TestCase
     assert ticks2 <= ticks3
   end
 
-  def test_new
-    assert_nil Game.current
+  def test_new_defaults
     g = nil
     begin
       g = Game.new(320, 240)
-      assert_equal Game.current, g
-      #assert_not_nil g.screen
-      #assert_equal Game.screen, g.screen
+      assert_equal "", g.title
+      assert_equal 30, g.fps
     ensure
-      g.dispose
+      g.dispose if g
+    end
+  end
+
+  def test_new_duplicate
+    g = nil
+    begin
+      g = Game.new(320, 240)
+      assert_raise StarRubyError do
+        Game.new(320, 240)
+      end
+    ensure
+      g.dispose if g
+    end
+  end
+
+  def test_new_with_options
+    assert_nil Game.current
+    g = nil
+    begin
+      g = Game.new(320, 240, :title => "foo", :fps => 31)
+      assert_equal Game.current, g
+      assert_not_nil g.screen
+      assert_equal Game.screen, g.screen
+      assert_equal "foo", g.title
+      g.title = "bar"
+      assert_equal "bar", g.title
+      assert_equal 31, g.fps
+      g.fps = 32
+      assert_equal 32, g.fps
+      assert_equal false, g.terminated?
+      g.update
+      g.update
+      g.update
+      g.terminate
+      assert_equal true, g.terminated?
+    ensure
+      g.dispose if g
     end
     assert_nil Game.current
   end

@@ -1,6 +1,15 @@
 #include "starruby.h"
 #include "starruby_private.h"
 
+typedef struct {
+  Uint32 error;
+  Uint32 before;
+  Uint32 before2;
+  int counter;
+} GameTimer;
+
+static GameTimer gameTimer;
+
 static volatile VALUE rb_cGame;
 static volatile VALUE rb_mStarRuby;
 
@@ -67,6 +76,11 @@ Game_s_new(int argc, VALUE* argv, VALUE self)
 {
   if (!NIL_P(Game_s_current(self)))
     rb_raise(strb_GetStarRubyErrorClass(), "already run");
+
+  gameTimer.error   = 0;
+  gameTimer.before  = SDL_GetTicks();
+  gameTimer.before2 = gameTimer.before;
+  gameTimer.counter = 0;
 
   VALUE rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21",
@@ -369,14 +383,8 @@ Game_update(VALUE self)
     return Qnil;
   }
 
-  // wait
-
   strb_UpdateAudio();
   strb_UpdateInput();
-
-  //int lastFps = fps;
-  /*if (fps != lastFps)
-    error = 0;*/
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   Texture* texture;
@@ -466,29 +474,24 @@ Game_wait(VALUE self)
   if (Game_terminated(self))
     return Qnil;
 
-  Uint32 now;
-  Uint32 error = 0;
-  Uint32 before = SDL_GetTicks();
-  Uint32 before2 = before;
-  int counter = 0;
-
+  Uint32 now = 0;
   uint fps = INT2NUM(rb_iv_get(self, "fps"));
   while (true) {
     now = SDL_GetTicks();
-    if (1000 <= (now - before) * fps + error) {
-      error = MIN((now - before) * fps + error - 1000, 1000);
-      before = now;
+    if (1000 <= (now - gameTimer.before) * fps + gameTimer.error) {
+      gameTimer.error = MIN((now - gameTimer.before) * fps + gameTimer.error - 1000, 1000);
+      gameTimer.before = now;
       break;
     }        
     SDL_Delay(1);
   }
 
-  /*counter++;    
-  if (1000 <= now - before2) {
-    realFps = (double)counter * 1000 / (now - before2);
-    counter = 0;
-    before2 = SDL_GetTicks();
-    }*/
+  gameTimer.counter++;    
+  if (1000 <= now - gameTimer.before2) {
+    realFps = (double)gameTimer.counter * 1000 / (now - gameTimer.before2);
+    gameTimer.counter = 0;
+    gameTimer.before2 = SDL_GetTicks();
+  }
 
   return Qnil;
 }

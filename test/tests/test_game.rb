@@ -5,7 +5,79 @@ include StarRuby
 
 class TestGame < Test::Unit::TestCase
 
-  def test_game
+  def test_new_defaults
+    g = nil
+    begin
+      g = Game.new(320, 240)
+      assert_equal "", g.title
+      assert_equal 30, g.fps
+    ensure
+      g.dispose if g
+    end
+  end
+
+  def test_new_duplicate
+    g = nil
+    begin
+      g = Game.new(320, 240)
+      assert_raise StarRubyError do
+        Game.new(320, 240)
+      end
+    ensure
+      g.dispose if g
+    end
+  end
+
+  def test_new_with_options
+    assert_nil Game.current
+    g = nil
+    begin
+      g = Game.new(320, 240, :title => "foo", :fps => 31)
+      assert_equal Game.current, g
+      assert_not_nil g.screen
+      assert_equal Game.screen, g.screen
+      assert_equal "foo", g.title
+      g.title = "bar"
+      assert_equal "bar", g.title
+      assert_equal 31, g.fps
+      g.fps = 32
+      assert_equal 32, g.fps
+      assert_equal false, g.terminated?
+      assert_equal 0.0, g.real_fps
+      g.update
+      assert_kind_of Float, g.real_fps
+      g.update
+      g.update
+      g.terminate
+      assert_equal true, g.terminated?
+    ensure
+      g.dispose if g
+    end
+    assert_nil Game.current
+  end
+
+  def test_new_type
+    assert_raise TypeError do
+      Game.new(nil, 240)
+    end
+    assert_raise TypeError do
+      Game.new(320, nil)
+    end
+    assert_raise TypeError do
+      Game.new(320, 240, false)
+    end
+    assert_raise TypeError do
+      Game.new(320, 240, :title => false)
+    end
+    assert_raise TypeError do
+      Game.new(320, 240, :fps => false)
+    end
+    assert_raise TypeError do
+      Game.new(320, 240, :window_scale => false)
+    end
+  end
+
+  def test_run
     assert_equal false, Game.running?
     called = false
     Game.run(320, 240, :title => "foo") do |g|
@@ -23,7 +95,7 @@ class TestGame < Test::Unit::TestCase
     assert_equal false, Game.running?
   end
 
-  def test_run
+  def test_run_window_scale
     Game.run(320, 240, :window_scale => 2) do
       assert_equal [320, 240], Game.screen.size
       Game.terminate
@@ -39,6 +111,12 @@ class TestGame < Test::Unit::TestCase
     end
     assert_raise TypeError do
       Game.run(320, 240, false) {}
+    end
+    assert_raise TypeError do
+      Game.run(320, 240, :title => false) {}
+    end
+    assert_raise TypeError do
+      Game.run(320, 240, :fps => false) {}
     end
     assert_raise TypeError do
       Game.run(320, 240, :window_scale => false) {}
@@ -98,60 +176,6 @@ class TestGame < Test::Unit::TestCase
     end
     ticks3 = Game.ticks
     assert ticks2 <= ticks3
-  end
-
-  def test_new_defaults
-    g = nil
-    begin
-      g = Game.new(320, 240)
-      assert_equal "", g.title
-      assert_equal 30, g.fps
-    ensure
-      g.dispose if g
-    end
-  end
-
-  def test_new_duplicate
-    g = nil
-    begin
-      g = Game.new(320, 240)
-      assert_raise StarRubyError do
-        Game.new(320, 240)
-      end
-    ensure
-      g.dispose if g
-    end
-  end
-
-  def test_new_with_options
-    assert_nil Game.current
-    g = nil
-    begin
-      g = Game.new(320, 240, :title => "foo", :fps => 31)
-      assert_equal Game.current, g
-      assert_not_nil g.screen
-      assert_equal Game.screen, g.screen
-      assert_equal "foo", g.title
-      g.title = "bar"
-      assert_equal "bar", g.title
-      assert_equal 31, g.fps
-      g.fps = 32
-      assert_equal 32, g.fps
-      assert_equal false, g.terminated?
-      assert_equal 0.0, g.real_fps
-      g.update
-      assert_kind_of Float, g.real_fps
-      g.update
-      g.update
-      g.terminate
-      assert_equal true, g.terminated?
-    ensure
-      g.dispose if g
-    end
-    assert_nil Game.current
-  end
-
-  def test_new_type
   end
 
 end

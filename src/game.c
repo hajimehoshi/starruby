@@ -337,7 +337,7 @@ Game_fps(VALUE self)
 static VALUE
 Game_fps_eq(VALUE self, VALUE rbFps)
 {
-  return rb_iv_set(self, "fps", rbFps);
+  return rb_iv_set(self, "fps", INT2NUM(NUM2INT(rbFps)));
 }
 
 static VALUE

@@ -21,8 +21,8 @@ fearless = false
 font = Font.new("fonts/ORANGEKI", 12)
 yellow = Color.new(255, 255, 128)
 
-Game.title = "Airship"
-Game.run(320, 240) do
+Game.run(320, 240, :title => "Airship") do |g|
+  g.title = g.real_fps.to_s
   # Begin Inputing
   if Input.keys(:keyboard, :duration => 1).include?(:f)
     fearless = ! fearless

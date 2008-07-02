@@ -19,7 +19,6 @@ static volatile VALUE symbol_fullscreen;
 static volatile VALUE symbol_title;
 static volatile VALUE symbol_window_scale;
 
-static double realFps = 0;
 static int realScreenWidth = 0;
 static int realScreenHeight = 0;
 static int windowScale = 1;
@@ -77,11 +76,6 @@ Game_s_new(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(Game_s_current(self)))
     rb_raise(strb_GetStarRubyErrorClass(), "already run");
 
-  gameTimer.error   = 0;
-  gameTimer.before  = SDL_GetTicks();
-  gameTimer.before2 = gameTimer.before;
-  gameTimer.counter = 0;
-
   VALUE rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21",
                &rbWidth, &rbHeight, &rbOptions);
@@ -98,7 +92,12 @@ Game_s_new(int argc, VALUE* argv, VALUE self)
 static VALUE
 Game_s_real_fps(VALUE self)
 {
-  return rb_float_new(realFps);
+  rb_warn("Game.real_fps is deprecated; use Game#real_fps instead");
+  volatile VALUE rbCurrent = Game_s_current(self);
+  if (!NIL_P(rbCurrent))
+    return rb_iv_get(rbCurrent, "real_fps");
+  else
+    return rb_float_new(0.0);
 }
 
 static VALUE
@@ -207,7 +206,13 @@ Game_alloc(VALUE klass)
 static VALUE
 Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 {
+  gameTimer.error   = 0;
+  gameTimer.before  = SDL_GetTicks();
+  gameTimer.before2 = gameTimer.before;
+  gameTimer.counter = 0;
+
   rb_iv_set(self, "terminated", Qfalse);
+  rb_iv_set(self, "real_fps", rb_float_new(0.0));
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
@@ -336,6 +341,12 @@ Game_fps_eq(VALUE self, VALUE rbFps)
 }
 
 static VALUE
+Game_real_fps(VALUE self)
+{
+  return rb_iv_get(self, "real_fps");
+}
+
+static VALUE
 Game_screen(VALUE self)
 {
   return rb_iv_get(self, "screen");
@@ -375,8 +386,6 @@ Game_update(VALUE self)
   if (Game_terminated(self))
     return Qnil;
 
-  realFps = 0;
-  
   SDL_Event event;
   if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
     rb_iv_set(self, "terminated", Qtrue);
@@ -474,8 +483,8 @@ Game_wait(VALUE self)
   if (Game_terminated(self))
     return Qnil;
 
-  Uint32 now = 0;
-  uint fps = INT2NUM(rb_iv_get(self, "fps"));
+  uint fps = NUM2INT(rb_iv_get(self, "fps"));
+  Uint32 now;
   while (true) {
     now = SDL_GetTicks();
     if (1000 <= (now - gameTimer.before) * fps + gameTimer.error) {
@@ -486,9 +495,10 @@ Game_wait(VALUE self)
     SDL_Delay(1);
   }
 
-  gameTimer.counter++;    
+  gameTimer.counter++;
   if (1000 <= now - gameTimer.before2) {
-    realFps = (double)gameTimer.counter * 1000 / (now - gameTimer.before2);
+    double realFps = (double)gameTimer.counter * 1000 / (now - gameTimer.before2);
+    rb_iv_set(self, "real_fps", rb_float_new(realFps));
     gameTimer.counter = 0;
     gameTimer.before2 = SDL_GetTicks();
   }
@@ -520,6 +530,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_method(rb_cGame, "screen",      Game_screen,     0);
   rb_define_method(rb_cGame, "fps",         Game_fps,        0);
   rb_define_method(rb_cGame, "fps=",        Game_fps_eq,     1);
+  rb_define_method(rb_cGame, "real_fps",    Game_real_fps,   0);
   rb_define_method(rb_cGame, "terminate",   Game_terminate,  0);
   rb_define_method(rb_cGame, "terminated?", Game_terminated, 0);
   rb_define_method(rb_cGame, "title",       Game_title,      0);

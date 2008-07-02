@@ -138,7 +138,9 @@ class TestGame < Test::Unit::TestCase
       g.fps = 32
       assert_equal 32, g.fps
       assert_equal false, g.terminated?
+      assert_equal 0.0, g.real_fps
       g.update
+      assert_kind_of Float, g.real_fps
       g.update
       g.update
       g.terminate
@@ -147,6 +149,9 @@ class TestGame < Test::Unit::TestCase
       g.dispose if g
     end
     assert_nil Game.current
+  end
+
+  def test_new_type
   end
 
 end

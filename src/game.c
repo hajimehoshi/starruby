@@ -1,15 +1,6 @@
 #include "starruby.h"
 #include "starruby_private.h"
 
-typedef struct {
-  Uint32 error;
-  Uint32 before;
-  Uint32 before2;
-  int counter;
-} GameTimer;
-
-static GameTimer gameTimer;
-
 static volatile VALUE rb_cGame;
 static volatile VALUE rb_mStarRuby;
 
@@ -23,6 +14,15 @@ static int realScreenWidth = 0;
 static int realScreenHeight = 0;
 
 static SDL_Surface* sdlScreen = NULL;
+
+typedef struct {
+  Uint32 error;
+  Uint32 before;
+  Uint32 before2;
+  int counter;
+} GameTimer;
+
+static GameTimer gameTimer;
 
 static VALUE Game_s_current(VALUE);
 int
@@ -388,7 +388,8 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 static VALUE
 Game_update_screen(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")) || RTEST(rb_iv_get(self, "window_closed")))
+  if (RTEST(rb_iv_get(self, "terminated")) ||
+      RTEST(rb_iv_get(self, "window_closed")))
     return Qnil;
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
@@ -477,7 +478,8 @@ Game_update_screen(VALUE self)
 static VALUE
 Game_update_state(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "window_closed")) || RTEST(rb_iv_get(self, "terminated")))
+  if (RTEST(rb_iv_get(self, "window_closed")) ||
+      RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
 
   SDL_Event event;
@@ -495,7 +497,8 @@ Game_update_state(VALUE self)
 static VALUE
 Game_wait(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "window_closed")) || RTEST(rb_iv_get(self, "terminated")))
+  if (RTEST(rb_iv_get(self, "window_closed")) ||
+      RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
   
   unsigned int fps = NUM2INT(rb_iv_get(self, "fps"));

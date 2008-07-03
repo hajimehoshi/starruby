@@ -42,14 +42,11 @@ class TestGame < Test::Unit::TestCase
       assert_equal 31, g.fps
       g.fps = 32
       assert_equal 32, g.fps
-      assert_equal false, g.terminated?
       assert_equal 0.0, g.real_fps
       g.update
       assert_kind_of Float, g.real_fps
       g.update
       g.update
-      g.terminate
-      assert_equal true, g.terminated?
     ensure
       g.dispose if g
     end
@@ -88,8 +85,7 @@ class TestGame < Test::Unit::TestCase
       assert_raise StarRubyError do
         Game.run(320, 240) {}
       end
-      Game.terminate
-      assert_equal true, Game.running?
+      break
     end
     assert called
     assert_equal false, Game.running?
@@ -98,7 +94,7 @@ class TestGame < Test::Unit::TestCase
   def test_run_window_scale
     Game.run(320, 240, :window_scale => 2) do
       assert_equal [320, 240], Game.screen.size
-      Game.terminate
+      break
     end
   end
 
@@ -127,12 +123,12 @@ class TestGame < Test::Unit::TestCase
     assert_equal false, Game.running?
     Game.run(320, 240) do
       assert_equal true, Game.running?
-      Game.terminate
+      break
     end
     assert_equal false, Game.running?
     Game.run(320, 240) do
       assert_equal true, Game.running?
-      Game.terminate
+      break
     end
     assert_equal false, Game.running?
   end
@@ -144,7 +140,7 @@ class TestGame < Test::Unit::TestCase
         assert_kind_of Texture, Game.screen
         assert_equal [320, 240], Game.screen.size
       ensure
-        Game.terminate
+        break
       end
     end
     Game.run(123, 456) do
@@ -152,7 +148,7 @@ class TestGame < Test::Unit::TestCase
         assert_kind_of Texture, Game.screen
         assert_equal [123, 456], Game.screen.size
       ensure
-        Game.terminate
+        break
       end
     end
     assert_nil Game.screen
@@ -172,7 +168,7 @@ class TestGame < Test::Unit::TestCase
     Game.run(320, 240) do
       ticks2 = Game.ticks
       assert ticks1 <= ticks2
-      Game.terminate
+      break
     end
     ticks3 = Game.ticks
     assert ticks2 <= ticks3

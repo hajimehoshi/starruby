@@ -47,7 +47,7 @@ end
 sprites = Array.new(200) {Sprite.new}
 
 Game.run(320, 240, :title => "Sprites (Click to speed up!)") do |g|
-  g.terminate if Input.keys(:keyboard).include?(:escape)
+  break if Input.keys(:keyboard).include?(:escape)
   if Input.keys(:mouse).include?(:left)
     g.fps = 100000
   else

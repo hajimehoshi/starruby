@@ -28,7 +28,7 @@ Game.run(320, 240, :title => "Airship") do |g|
   end
   keys = Input.keys(:keyboard)
   # Terminate if the ESC key is pressed
-  Game.terminate if keys.include?(:escape)
+  break if keys.include?(:escape)
   # Go left or right
   if keys.include?(:left)
     airship.yaw = (airship.yaw + 358) % 360

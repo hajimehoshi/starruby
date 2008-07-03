@@ -34,8 +34,8 @@ strb_GetWindowScale(void)
 static VALUE Game_dispose(VALUE);
 static VALUE Game_fps(VALUE);
 static VALUE Game_fps_eq(VALUE, VALUE);
-static VALUE Game_terminate(VALUE);
-static VALUE Game_terminated(VALUE);
+//static VALUE Game_terminate(VALUE);
+//static VALUE Game_terminated(VALUE);
 static VALUE Game_title(VALUE);
 static VALUE Game_title_eq(VALUE, VALUE);
 static VALUE Game_update(VALUE);
@@ -118,7 +118,7 @@ RunGame(VALUE rbGame)
     Game_wait(rbGame);
     rb_yield(rbGame);
     Game_update(rbGame);
-    if (Game_terminated(rbGame))
+    if (RTEST(rb_iv_get(rbGame, "terminated")))
       break;
   }
   return Qnil;
@@ -157,10 +157,12 @@ Game_s_screen(VALUE self)
 static VALUE
 Game_s_terminate(VALUE self)
 {
+  rb_warn("Game.terminate is deprecated;"
+          " use break instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (NIL_P(rbCurrent))
     rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
-  Game_terminate(rbCurrent);
+  rb_iv_set(rbCurrent, "terminated", Qtrue);
   return Qnil;
 }
 
@@ -353,19 +355,6 @@ Game_screen(VALUE self)
 }
 
 static VALUE
-Game_terminate(VALUE self)
-{
-  rb_iv_set(self, "terminated", Qtrue);
-  return Qnil;
-}
-
-static VALUE
-Game_terminated(VALUE self)
-{
-  return rb_iv_get(self, "terminated");
-}
-
-static VALUE
 Game_title(VALUE self)
 {
   return rb_iv_get(self, "title");
@@ -383,7 +372,7 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 static VALUE
 Game_update(VALUE self)
 {
-  if (Game_terminated(self))
+  if (RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
 
   SDL_Event event;
@@ -480,7 +469,7 @@ Game_update(VALUE self)
 static VALUE
 Game_wait(VALUE self)
 {
-  if (Game_terminated(self))
+  if (RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
 
   uint fps = NUM2INT(rb_iv_get(self, "fps"));
@@ -531,8 +520,6 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_method(rb_cGame, "fps",         Game_fps,        0);
   rb_define_method(rb_cGame, "fps=",        Game_fps_eq,     1);
   rb_define_method(rb_cGame, "real_fps",    Game_real_fps,   0);
-  rb_define_method(rb_cGame, "terminate",   Game_terminate,  0);
-  rb_define_method(rb_cGame, "terminated?", Game_terminated, 0);
   rb_define_method(rb_cGame, "title",       Game_title,      0);
   rb_define_method(rb_cGame, "title=",      Game_title_eq,   1);
   rb_define_method(rb_cGame, "update",      Game_update,     0);

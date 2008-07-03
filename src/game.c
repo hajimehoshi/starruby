@@ -21,14 +21,18 @@ static volatile VALUE symbol_window_scale;
 
 static int realScreenWidth = 0;
 static int realScreenHeight = 0;
-static int windowScale = 1;
 
 static SDL_Surface* sdlScreen = NULL;
 
+static VALUE Game_s_current(VALUE);
 int
 strb_GetWindowScale(void)
 {
-  return windowScale;
+  volatile VALUE rbCurrent = Game_s_current(rb_cGame);
+  if (!NIL_P(rbCurrent))
+    return NUM2INT(rb_iv_get(rbCurrent, "window_scale"));
+  else
+    return 1;
 }
 
 static VALUE Game_dispose(VALUE);
@@ -259,7 +263,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 
   bool cursor = false;
   bool fullscreen = false;
-  windowScale = 1;
+  int windowScale = 1;
 #ifndef GP2X
   int bpp = 32;
 #else
@@ -279,6 +283,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
       rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
   }
 #endif
+  rb_iv_set(self, "window_scale", INT2NUM(windowScale));
   realScreenWidth  = width * windowScale;
   realScreenHeight = height * windowScale;
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
@@ -392,6 +397,7 @@ Game_update_screen(VALUE self)
     sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
   int textureWidth  = texture->width;
   int textureHeight = texture->height;
+  int windowScale = NUM2INT(rb_iv_get(self, "window_scale"));
   switch (windowScale) {
   case 1:
     {
@@ -516,6 +522,12 @@ Game_window_closed(VALUE self)
   return rb_iv_get(self, "window_closed");
 }
 
+static VALUE
+Game_window_scale(VALUE self)
+{
+  return rb_iv_get(self, "window_scale");
+}
+
 VALUE
 strb_InitializeGame(VALUE _rb_mStarRuby)
 {
@@ -547,6 +559,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_method(rb_cGame, "update_state",   Game_update_state,  0);
   rb_define_method(rb_cGame, "wait",           Game_wait,          0);
   rb_define_method(rb_cGame, "window_closed?", Game_window_closed, 0);
+  rb_define_method(rb_cGame, "window_scale",   Game_window_scale,  0);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fps          = ID2SYM(rb_intern("fps"));

@@ -11,6 +11,7 @@ class TestGame < Test::Unit::TestCase
       g = Game.new(320, 240)
       assert_equal "", g.title
       assert_equal 30, g.fps
+      assert_equal 1, g.window_scale
     ensure
       g.dispose if g
     end
@@ -32,7 +33,8 @@ class TestGame < Test::Unit::TestCase
     assert_nil Game.current
     g = nil
     begin
-      g = Game.new(320, 240, :title => "foo", :fps => 31)
+      g = Game.new(320, 240,
+                   :title => "foo", :fps => 31, :window_scale => 2)
       assert_equal Game.current, g
       assert_equal false, g.window_closed?
       assert_not_nil g.screen
@@ -43,8 +45,8 @@ class TestGame < Test::Unit::TestCase
       assert_equal 31, g.fps
       g.fps = 32
       assert_equal 32, g.fps
+      assert_equal 2, g.window_scale
       assert_equal 0.0, g.real_fps
-      g.wait
       assert_kind_of Float, g.real_fps
       g.update_state
       g.update_screen

@@ -39,6 +39,7 @@ static VALUE Game_title_eq(VALUE, VALUE);
 static VALUE Game_update_screen(VALUE);
 static VALUE Game_update_state(VALUE);
 static VALUE Game_wait(VALUE);
+static VALUE Game_window_closed(VALUE);
 
 static VALUE
 Game_s_current(VALUE self)
@@ -115,7 +116,8 @@ RunGame(VALUE rbGame)
 {
   while (true) {
     Game_wait(rbGame);
-    if (!RTEST(Game_update_state(rbGame)))
+    Game_update_state(rbGame);
+    if (RTEST(Game_window_closed(rbGame)))
         break;
     rb_yield(rbGame);
     Game_update_screen(rbGame);
@@ -214,8 +216,11 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   gameTimer.before2 = gameTimer.before;
   gameTimer.counter = 0;
 
+  // backward compatibility
   rb_iv_set(self, "terminated", Qfalse);
+
   rb_iv_set(self, "real_fps", rb_float_new(0.0));
+  rb_iv_set(self, "window_closed", Qfalse);
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
@@ -373,7 +378,7 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 static VALUE
 Game_update_screen(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")))
+  if (RTEST(rb_iv_get(self, "terminated")) || RTEST(rb_iv_get(self, "window_closed")))
     return Qnil;
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
@@ -461,25 +466,25 @@ Game_update_screen(VALUE self)
 static VALUE
 Game_update_state(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")))
-    return Qfalse;
+  if (RTEST(rb_iv_get(self, "terminated")) || RTEST(rb_iv_get(self, "window_closed")))
+    return Qnil;
 
   SDL_Event event;
   if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
-    rb_iv_set(self, "terminated", Qtrue);
-    return Qfalse;
+    rb_iv_set(self, "window_closed", Qtrue);
+    return Qnil;
   }
 
   strb_UpdateAudio();
   strb_UpdateInput();
 
-  return Qtrue;
+  return Qnil;
 }
 
 static VALUE
 Game_wait(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")))
+  if (RTEST(rb_iv_get(self, "terminated")) || RTEST(rb_iv_get(self, "window_closed")))
     return Qnil;
 
   uint fps = NUM2INT(rb_iv_get(self, "fps"));
@@ -505,6 +510,12 @@ Game_wait(VALUE self)
   return Qnil;
 }
 
+static VALUE
+Game_window_closed(VALUE self)
+{
+  return rb_iv_get(self, "window_closed");
+}
+
 VALUE
 strb_InitializeGame(VALUE _rb_mStarRuby)
 {
@@ -525,16 +536,17 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
-  rb_define_method(rb_cGame, "dispose",       Game_dispose,       0);
-  rb_define_method(rb_cGame, "screen",        Game_screen,        0);
-  rb_define_method(rb_cGame, "fps",           Game_fps,           0);
-  rb_define_method(rb_cGame, "fps=",          Game_fps_eq,        1);
-  rb_define_method(rb_cGame, "real_fps",      Game_real_fps,      0);
-  rb_define_method(rb_cGame, "title",         Game_title,         0);
-  rb_define_method(rb_cGame, "title=",        Game_title_eq,      1);
-  rb_define_method(rb_cGame, "update_screen", Game_update_screen, 0);
-  rb_define_method(rb_cGame, "update_state",  Game_update_state,  0);
-  rb_define_method(rb_cGame, "wait",          Game_wait,          0);
+  rb_define_method(rb_cGame, "dispose",        Game_dispose,       0);
+  rb_define_method(rb_cGame, "screen",         Game_screen,        0);
+  rb_define_method(rb_cGame, "fps",            Game_fps,           0);
+  rb_define_method(rb_cGame, "fps=",           Game_fps_eq,        1);
+  rb_define_method(rb_cGame, "real_fps",       Game_real_fps,      0);
+  rb_define_method(rb_cGame, "title",          Game_title,         0);
+  rb_define_method(rb_cGame, "title=",         Game_title_eq,      1);
+  rb_define_method(rb_cGame, "update_screen",  Game_update_screen, 0);
+  rb_define_method(rb_cGame, "update_state",   Game_update_state,  0);
+  rb_define_method(rb_cGame, "wait",           Game_wait,          0);
+  rb_define_method(rb_cGame, "window_closed?", Game_window_closed, 0);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fps          = ID2SYM(rb_intern("fps"));

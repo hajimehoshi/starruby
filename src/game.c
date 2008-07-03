@@ -54,7 +54,8 @@ Game_s_current(VALUE self)
 static VALUE
 Game_s_fps(VALUE self)
 {
-  rb_warn("Game.fps is deprecated; use Game#fps instead");
+  rb_warn("Game.fps is deprecated;"
+          " use Game#fps instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (!NIL_P(rbCurrent))
     return Game_fps(rbCurrent);
@@ -96,7 +97,8 @@ Game_s_new(int argc, VALUE* argv, VALUE self)
 static VALUE
 Game_s_real_fps(VALUE self)
 {
-  rb_warn("Game.real_fps is deprecated; use Game#real_fps instead");
+  rb_warn("Game.real_fps is deprecated;"
+          " use Game#real_fps instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (!NIL_P(rbCurrent))
     return rb_iv_get(rbCurrent, "real_fps");
@@ -155,6 +157,8 @@ Game_s_running(VALUE self)
 static VALUE
 Game_s_screen(VALUE self)
 {
+  rb_warn("Game.screen is deprecated;"
+          " use Game#screen instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (NIL_P(rbCurrent))
     return Qnil;
@@ -182,7 +186,8 @@ Game_s_ticks(VALUE self)
 static VALUE
 Game_s_title(VALUE self)
 {
-  rb_warn("Game.title is deprecated; use Game#title instead");
+  rb_warn("Game.title is deprecated;"
+          " use Game#title instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (!NIL_P(rbCurrent))
     return Game_title(rbCurrent);

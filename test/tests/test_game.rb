@@ -38,7 +38,6 @@ class TestGame < Test::Unit::TestCase
       assert_equal Game.current, g
       assert_equal false, g.window_closed?
       assert_not_nil g.screen
-      assert_equal Game.screen, g.screen
       assert_equal "foo", g.title
       g.title = "bar"
       assert_equal "bar", g.title
@@ -95,10 +94,22 @@ class TestGame < Test::Unit::TestCase
     assert called
     assert_nil Game.current
   end
+  
+  def test_run_error
+    assert_nil Game.current
+    begin
+      Game.run(320, 240) do |game|
+        assert_not_nil game.screen
+        raise RuntimeError, "runtime error"
+      end
+    rescue RuntimeError
+    end
+    assert_nil Game.current
+  end
 
   def test_run_window_scale
-    Game.run(320, 240, :window_scale => 2) do
-      assert_equal [320, 240], Game.screen.size
+    Game.run(320, 240, :window_scale => 2) do |game|
+      assert_equal [320, 240], game.screen.size
       break
     end
   end
@@ -125,32 +136,22 @@ class TestGame < Test::Unit::TestCase
   end
 
   def test_screen
-    assert_nil Game.screen
-    Game.run(320, 240) do
+    Game.run(320, 240) do |game|
       begin
-        assert_kind_of Texture, Game.screen
-        assert_equal [320, 240], Game.screen.size
+        assert_kind_of Texture, game.screen
+        assert_equal [320, 240], game.screen.size
       ensure
         break
       end
     end
-    Game.run(123, 456) do
+    Game.run(123, 456) do |game|
       begin
-        assert_kind_of Texture, Game.screen
-        assert_equal [123, 456], Game.screen.size
+        assert_kind_of Texture, game.screen
+        assert_equal [123, 456], game.screen.size
       ensure
         break
       end
     end
-    assert_nil Game.screen
-    begin
-      Game.run(320, 240) do
-        assert_not_nil Game.screen
-        raise RuntimeError, "runtime error"
-      end
-    rescue RuntimeError
-    end
-    assert_nil Game.screen
   end
 
   def test_ticks

@@ -118,7 +118,7 @@ RunGame(VALUE rbGame)
     Game_wait(rbGame);
     Game_update_state(rbGame);
     if (RTEST(Game_window_closed(rbGame)))
-        break;
+      break;
     rb_yield(rbGame);
     Game_update_screen(rbGame);
   }
@@ -466,7 +466,7 @@ Game_update_screen(VALUE self)
 static VALUE
 Game_update_state(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")) || RTEST(rb_iv_get(self, "window_closed")))
+  if (RTEST(rb_iv_get(self, "window_closed")) || RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
 
   SDL_Event event;
@@ -484,10 +484,10 @@ Game_update_state(VALUE self)
 static VALUE
 Game_wait(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")) || RTEST(rb_iv_get(self, "window_closed")))
+  if (RTEST(rb_iv_get(self, "window_closed")) || RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
-
-  uint fps = NUM2INT(rb_iv_get(self, "fps"));
+  
+  unsigned int fps = NUM2INT(rb_iv_get(self, "fps"));
   Uint32 now;
   while (true) {
     now = SDL_GetTicks();

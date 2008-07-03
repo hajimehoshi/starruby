@@ -43,10 +43,12 @@ class TestGame < Test::Unit::TestCase
       g.fps = 32
       assert_equal 32, g.fps
       assert_equal 0.0, g.real_fps
-      g.update
+      g.wait
       assert_kind_of Float, g.real_fps
-      g.update
-      g.update
+      g.update_state
+      g.update_screen
+      g.update_state
+      g.update_screen
     ensure
       g.dispose if g
     end
@@ -75,11 +77,11 @@ class TestGame < Test::Unit::TestCase
   end
 
   def test_run
-    assert_equal false, Game.running?
+    assert_nil Game.current
     called = false
     Game.run(320, 240, :title => "foo") do |g|
       called = true
-      assert_equal true, Game.running?
+      assert_not_nil Game.current
       assert_equal "foo", g.title
       assert_equal 30, g.fps
       assert_raise StarRubyError do
@@ -88,7 +90,7 @@ class TestGame < Test::Unit::TestCase
       break
     end
     assert called
-    assert_equal false, Game.running?
+    assert_nil Game.current
   end
 
   def test_run_window_scale
@@ -119,20 +121,6 @@ class TestGame < Test::Unit::TestCase
     end
   end
 
-  def test_running
-    assert_equal false, Game.running?
-    Game.run(320, 240) do
-      assert_equal true, Game.running?
-      break
-    end
-    assert_equal false, Game.running?
-    Game.run(320, 240) do
-      assert_equal true, Game.running?
-      break
-    end
-    assert_equal false, Game.running?
-  end
-  
   def test_screen
     assert_nil Game.screen
     Game.run(320, 240) do

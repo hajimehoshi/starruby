@@ -34,11 +34,10 @@ strb_GetWindowScale(void)
 static VALUE Game_dispose(VALUE);
 static VALUE Game_fps(VALUE);
 static VALUE Game_fps_eq(VALUE, VALUE);
-//static VALUE Game_terminate(VALUE);
-//static VALUE Game_terminated(VALUE);
 static VALUE Game_title(VALUE);
 static VALUE Game_title_eq(VALUE, VALUE);
-static VALUE Game_update(VALUE);
+static VALUE Game_update_screen(VALUE);
+static VALUE Game_update_state(VALUE);
 static VALUE Game_wait(VALUE);
 
 static VALUE
@@ -116,10 +115,10 @@ RunGame(VALUE rbGame)
 {
   while (true) {
     Game_wait(rbGame);
+    if (!RTEST(Game_update_state(rbGame)))
+        break;
     rb_yield(rbGame);
-    Game_update(rbGame);
-    if (RTEST(rb_iv_get(rbGame, "terminated")))
-      break;
+    Game_update_screen(rbGame);
   }
   return Qnil;
 }
@@ -372,20 +371,10 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 }
 
 static VALUE
-Game_update(VALUE self)
+Game_update_screen(VALUE self)
 {
   if (RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
-
-  SDL_Event event;
-  if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
-    rb_iv_set(self, "terminated", Qtrue);
-    return Qnil;
-  }
-
-  // TODO
-  strb_UpdateAudio();
-  strb_UpdateInput();
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   Texture* texture;
@@ -470,6 +459,24 @@ Game_update(VALUE self)
 }
 
 static VALUE
+Game_update_state(VALUE self)
+{
+  if (RTEST(rb_iv_get(self, "terminated")))
+    return Qfalse;
+
+  SDL_Event event;
+  if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
+    rb_iv_set(self, "terminated", Qtrue);
+    return Qfalse;
+  }
+
+  strb_UpdateAudio();
+  strb_UpdateInput();
+
+  return Qtrue;
+}
+
+static VALUE
 Game_wait(VALUE self)
 {
   if (RTEST(rb_iv_get(self, "terminated")))
@@ -518,15 +525,16 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
-  rb_define_method(rb_cGame, "dispose",     Game_dispose,    0);
-  rb_define_method(rb_cGame, "screen",      Game_screen,     0);
-  rb_define_method(rb_cGame, "fps",         Game_fps,        0);
-  rb_define_method(rb_cGame, "fps=",        Game_fps_eq,     1);
-  rb_define_method(rb_cGame, "real_fps",    Game_real_fps,   0);
-  rb_define_method(rb_cGame, "title",       Game_title,      0);
-  rb_define_method(rb_cGame, "title=",      Game_title_eq,   1);
-  rb_define_method(rb_cGame, "update",      Game_update,     0);
-  rb_define_method(rb_cGame, "wait",        Game_wait,       0);
+  rb_define_method(rb_cGame, "dispose",       Game_dispose,       0);
+  rb_define_method(rb_cGame, "screen",        Game_screen,        0);
+  rb_define_method(rb_cGame, "fps",           Game_fps,           0);
+  rb_define_method(rb_cGame, "fps=",          Game_fps_eq,        1);
+  rb_define_method(rb_cGame, "real_fps",      Game_real_fps,      0);
+  rb_define_method(rb_cGame, "title",         Game_title,         0);
+  rb_define_method(rb_cGame, "title=",        Game_title_eq,      1);
+  rb_define_method(rb_cGame, "update_screen", Game_update_screen, 0);
+  rb_define_method(rb_cGame, "update_state",  Game_update_state,  0);
+  rb_define_method(rb_cGame, "wait",          Game_wait,          0);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fps          = ID2SYM(rb_intern("fps"));

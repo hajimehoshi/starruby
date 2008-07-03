@@ -67,7 +67,7 @@ static VALUE
 Game_s_fps_eq(VALUE self, VALUE rbFps)
 {
   rb_warn("Game.fps= is deprecated;"
-          " use Game#fps or Game.run(..., :fps => ...) instead");
+          " use Game#fps= or Game.run(..., :fps => ...) instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (!NIL_P(rbCurrent))
     return Game_fps_eq(rbCurrent, rbFps);

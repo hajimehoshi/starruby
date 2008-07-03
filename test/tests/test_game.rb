@@ -39,7 +39,9 @@ class TestGame < Test::Unit::TestCase
       assert_equal false, g.window_closed?
       assert_not_nil g.screen
       assert_equal "foo", g.title
-      g.title = "bar"
+      title = g.title = "bar"
+      assert_equal "bar", g.title
+      title << "baz"
       assert_equal "bar", g.title
       assert_equal 31, g.fps
       g.fps = 32

@@ -3,14 +3,12 @@
 require "starruby"
 include StarRuby
 
-Game.title = "Rectangles (Click to speed up!)"
-
-Game.run(320, 240) do
-  Game.terminate if Input.keys(:keyboard).include?(:escape)
+Game.run(320, 240, :title => "Rectangles (Click to speed up!)") do |game|
+  break if Input.keys(:keyboard).include?(:escape)
   if Input.keys(:mouse).include?(:left)
-    Game.fps = 10000
+    game.fps = 100000
   else
-    Game.fps = 30
+    game.fps = 30
   end
   begin
     x1 = rand(320)
@@ -23,5 +21,5 @@ Game.run(320, 240) do
   x = [x1, x2].min
   y = [y1, y2].min
   color = Color.new(rand(256), rand(256), rand(256), rand(256))
-  Game.screen.render_rect(x, y, width, height, color)
+  game.screen.render_rect(x, y, width, height, color)
 end

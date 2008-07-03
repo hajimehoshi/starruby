@@ -11,10 +11,9 @@ end
 
 color = Color.new(255, 255, 255, 255)
 
-Game.title = "Lines"
-Game.run(320, 240) do
-  Game.terminate if Input.keys(:keyboard).include?(:escape)
-  s = Game.screen
+Game.run(320, 240, :title => "Lines") do |game|
+  break if Input.keys(:keyboard).include?(:escape)
+  s = game.screen
   s.clear
 
   # S

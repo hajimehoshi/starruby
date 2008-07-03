@@ -9,14 +9,12 @@ white = Color.new(255, 255, 255)
 music_texture = Texture.load("images/music")
 sound_texture = Texture.load("images/sound")
 
-Game.title = "Audio"
-
 bgm_position = 0
-Game.run(320, 240) do
+Game.run(320, 240, :title => "Audio") do |game|
   music_alpha = Audio.playing_bgm? ? 255 : 128
   sound_alpha = 128
   keys = Input.keys(:keyboard, :duration => 1)
-  Game.terminate if keys.include?(:escape)
+  break if keys.include?(:escape)
   if keys.include?(:m)
     if Audio.playing_bgm?
       bgm_position = Audio.bgm_position
@@ -30,7 +28,7 @@ Game.run(320, 240) do
     Audio.play_se("sounds/hello")
     sound_alpha = 255
   end
-  s = Game.screen
+  s = game.screen
   s.clear
   s.render_texture(music_texture, 16, 16,
                    :alpha => music_alpha,

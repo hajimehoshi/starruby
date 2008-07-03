@@ -142,6 +142,8 @@ Game_s_run(int argc, VALUE* argv, VALUE self)
 static VALUE
 Game_s_running(VALUE self)
 {
+  rb_warn("Game.running? is deprecated;"
+          " use Game.current instead");
   return !NIL_P(Game_s_current(self)) ? Qtrue : Qfalse;
 }
 
@@ -231,7 +233,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   if (!NIL_P(rbFps)) {
     Game_fps_eq(self, rbFps);
   } else {
-    // for a backward compatibility
+    // backward compatibility
     volatile VALUE rbFps2 = rb_iv_get(rb_cGame, "fps");
     if (!NIL_P(rbFps2))
       Game_fps_eq(self, rbFps2);
@@ -243,7 +245,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   if (!NIL_P(rbTitle)) {
     Game_title_eq(self, rbTitle);
   } else {
-    // for a backward compatibility
+    // backward compatibility
     volatile VALUE rbTitle2 = rb_iv_get(rb_cGame, "title");
     if (!NIL_P(rbTitle2))
       Game_title_eq(self, rbTitle2);
@@ -381,6 +383,7 @@ Game_update(VALUE self)
     return Qnil;
   }
 
+  // TODO
   strb_UpdateAudio();
   strb_UpdateInput();
 

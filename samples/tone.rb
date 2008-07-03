@@ -15,11 +15,9 @@ tone_green = 0
 tone_blue  = 0
 saturation = 255
 
-Game.title = "Tone"
-
-Game.run(320, 240) do
-  Game.terminate if Input.keys(:keyboard).include?(:escape)
-  s = Game.screen
+Game.run(320, 240, :title => "Tone") do |game|
+  break if Input.keys(:keyboard).include?(:escape)
+  s = game.screen
   s.clear
   keys = Input.keys(:keyboard, :duration => 1, :delay => 8, :interval => 2)
   if keys.include?(:r)

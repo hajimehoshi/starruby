@@ -6,10 +6,8 @@ include StarRuby
 font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
 
-Game.title = "Keyboard"
-
-Game.run(320, 240) do
-  s = Game.screen
+Game.run(320, 240, :title => "Keyboard") do |game|
+  s = game.screen
   s.clear
   keys = Input.keys(:keyboard)
   s.render_text("Pressed Keys:", 8, 8,  font, white)

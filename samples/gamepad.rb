@@ -6,11 +6,9 @@ include StarRuby
 font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
 
-Game.title = "Gamepad"
-
-Game.run(320, 240) do
-  Game.terminate if Input.keys(:keyboard).include?(:escape)
-  s = Game.screen
+Game.run(320, 240, :title => "Gamepad") do |game|
+  break if Input.keys(:keyboard).include?(:escape)
+  s = game.screen
   s.clear
   keys = Input.keys(:gamepad)
   s.render_text("Directions:", 8, 8,  font, white)

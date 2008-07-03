@@ -409,7 +409,8 @@ Game_update_screen(VALUE self)
     {
       // For fullscreen
       dst += (realScreenWidth - textureWidth) / 2
-        + (realScreenHeight - textureHeight) / 2 * (realScreenWidth + screenPadding);
+        + (realScreenHeight - textureHeight) / 2 *
+          (realScreenWidth + screenPadding);
       int heightPadding = realScreenWidth - texture->width + screenPadding;
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst++) {

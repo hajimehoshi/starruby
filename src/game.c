@@ -345,6 +345,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
                                      game->realScreenHeight, bpp, options);
   if (!game->sdlScreen) {
     DisposeScreen(game->sdlScreen);
+    game->sdlScreen = NULL;
     rb_raise_sdl_error();
   }
 

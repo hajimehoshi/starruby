@@ -107,17 +107,6 @@ Game_s_real_fps(VALUE self)
 }
 
 static VALUE
-DisposeScreen(SDL_Surface* screen)
-{
-  screen = NULL;
-  volatile VALUE rbScreen = rb_iv_get(rb_cGame, "screen");
-  if (!NIL_P(rbScreen))
-    rb_funcall(rbScreen, rb_intern("dispose"), 0);
-  rb_iv_set(rb_cGame, "screen", Qnil);
-  return Qnil;
-}
-
-static VALUE
 RunGame(VALUE rbGame)
 {
   while (true) {
@@ -214,7 +203,6 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
 static void
 Game_free(Game* game)
 {
-  DisposeScreen(game->sdlScreen);
   game->sdlScreen = NULL;
   free(game);
 }
@@ -336,18 +324,15 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
     options |= SDL_SWSURFACE;
   }
 
+  game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
+                                     game->realScreenHeight, bpp, options);
+  if (!game->sdlScreen)
+    rb_raise_sdl_error();
+
   volatile VALUE rbScreen =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)},
                           strb_GetTextureClass());
   rb_iv_set(self, "screen", rbScreen);
-
-  game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
-                                     game->realScreenHeight, bpp, options);
-  if (!game->sdlScreen) {
-    DisposeScreen(game->sdlScreen);
-    game->sdlScreen = NULL;
-    rb_raise_sdl_error();
-  }
 
   return Qnil;
 }
@@ -357,8 +342,13 @@ Game_dispose(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  DisposeScreen(game->sdlScreen);
+  // no need to call SDL_FreeSurface
   game->sdlScreen = NULL;
+  volatile VALUE rbScreen = rb_iv_get(self, "screen");
+  if (!NIL_P(rbScreen)) {
+    rb_funcall(rbScreen, rb_intern("dispose"), 0);
+    rb_iv_set(self, "screen", Qnil);
+  }
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
   rb_iv_set(rb_cGame, "current", Qnil);
   return Qnil;

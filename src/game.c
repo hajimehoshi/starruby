@@ -203,7 +203,9 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
 static void
 Game_free(Game* game)
 {
-  game->sdlScreen = NULL;
+  // no need to call SDL_FreeSurface
+  if (game)
+    game->sdlScreen = NULL;
   free(game);
 }
 
@@ -342,8 +344,7 @@ Game_dispose(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  // no need to call SDL_FreeSurface
-  game->sdlScreen = NULL;
+  Game_free(game);
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   if (!NIL_P(rbScreen)) {
     rb_funcall(rbScreen, rb_intern("dispose"), 0);

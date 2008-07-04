@@ -10,11 +10,6 @@ static volatile VALUE symbol_fullscreen;
 static volatile VALUE symbol_title;
 static volatile VALUE symbol_window_scale;
 
-static int realScreenWidth = 0;
-static int realScreenHeight = 0;
-
-static SDL_Surface* sdlScreen = NULL;
-
 typedef struct {
   Uint32 error;
   Uint32 before;
@@ -22,7 +17,12 @@ typedef struct {
   int counter;
 } GameTimer;
 
-static GameTimer gameTimer;
+typedef struct {
+  int realScreenWidth;
+  int realScreenHeight;
+  SDL_Surface* sdlScreen;
+  GameTimer timer;
+} Game;
 
 static VALUE Game_s_current(VALUE);
 int
@@ -211,19 +211,33 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
   }
 }
 
+static void
+Game_free(Game* game)
+{
+  DisposeScreen(game->sdlScreen);
+  game->sdlScreen = NULL;
+  free(game);
+}
+
 static VALUE
 Game_alloc(VALUE klass)
 {
-  return Data_Wrap_Struct(klass, 0, 0, NULL);
+  Game* game = ALLOC(Game);
+  game->realScreenWidth = 0;
+  game->realScreenHeight = 0;
+  game->sdlScreen = NULL;
+  game->timer.error = 0;
+  game->timer.before = SDL_GetTicks();
+  game->timer.before2 = game->timer.before2;
+  game->timer.counter = 0;
+  return Data_Wrap_Struct(klass, 0, Game_free, game);
 }
 
 static VALUE
 Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 {
-  gameTimer.error   = 0;
-  gameTimer.before  = SDL_GetTicks();
-  gameTimer.before2 = gameTimer.before;
-  gameTimer.counter = 0;
+  Game* game;
+  Data_Get_Struct(self, Game, game);
 
   // backward compatibility
   rb_iv_set(self, "terminated", Qfalse);
@@ -289,8 +303,8 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   }
 #endif
   rb_iv_set(self, "window_scale", INT2NUM(windowScale));
-  realScreenWidth  = width * windowScale;
-  realScreenHeight = height * windowScale;
+  game->realScreenWidth  = width * windowScale;
+  game->realScreenHeight = height * windowScale;
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
 
   Uint32 options = 0;
@@ -304,18 +318,18 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
     if (!modes)
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     if (modes != (SDL_Rect**)-1) {
-      realScreenWidth = 0;
-      realScreenHeight = 0;
+      game->realScreenWidth = 0;
+      game->realScreenHeight = 0;
       for (int i = 0; modes[i]; i++) {
         int realBpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, bpp, options);
         if (width <= modes[i]->w && height <= modes[i]->h && realBpp == bpp) {
-          realScreenWidth  = modes[i]->w;
-          realScreenHeight = modes[i]->h;
+          game->realScreenWidth  = modes[i]->w;
+          game->realScreenHeight = modes[i]->h;
         } else {
           break;
         }
       }
-      if (realScreenWidth == 0 || realScreenHeight == 0)
+      if (game->realScreenWidth == 0 || game->realScreenHeight == 0)
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     }
   } else {
@@ -327,9 +341,10 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
                           strb_GetTextureClass());
   rb_iv_set(self, "screen", rbScreen);
 
-  sdlScreen = SDL_SetVideoMode(realScreenWidth, realScreenHeight, bpp, options);
-  if (!sdlScreen) {
-    DisposeScreen(sdlScreen);
+  game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
+                                     game->realScreenHeight, bpp, options);
+  if (!game->sdlScreen) {
+    DisposeScreen(game->sdlScreen);
     rb_raise_sdl_error();
   }
 
@@ -339,8 +354,10 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 static VALUE
 Game_dispose(VALUE self)
 {
-  DisposeScreen(sdlScreen);
-  sdlScreen = NULL;
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  DisposeScreen(game->sdlScreen);
+  game->sdlScreen = NULL;
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
   rb_iv_set(rb_cGame, "current", Qnil);
   return Qnil;
@@ -392,10 +409,16 @@ Game_update_screen(VALUE self)
       RTEST(rb_iv_get(self, "window_closed")))
     return Qnil;
 
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
   Pixel* src = texture->pixels;
+  int realScreenWidth    = game->realScreenWidth;
+  int realScreenHeight   = game->realScreenHeight;
+  SDL_Surface* sdlScreen = game->sdlScreen;
   SDL_LockSurface(sdlScreen);
 #ifndef GP2X
   Pixel* dst = (Pixel*)sdlScreen->pixels;
@@ -501,25 +524,30 @@ Game_wait(VALUE self)
   if (RTEST(rb_iv_get(self, "window_closed")) ||
       RTEST(rb_iv_get(self, "terminated")))
     return Qnil;
-  
+
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  GameTimer* gameTimer = &(game->timer);
   unsigned int fps = NUM2INT(rb_iv_get(self, "fps"));
   Uint32 now;
   while (true) {
     now = SDL_GetTicks();
-    if (1000 <= (now - gameTimer.before) * fps + gameTimer.error) {
-      gameTimer.error = MIN((now - gameTimer.before) * fps + gameTimer.error - 1000, 1000);
-      gameTimer.before = now;
+    if (1000 <= (now - gameTimer->before) * fps + gameTimer->error) {
+      gameTimer->error = MIN((now - gameTimer->before) * fps +
+                             gameTimer->error - 1000, 1000);
+      gameTimer->before = now;
       break;
     }        
     SDL_Delay(1);
   }
 
-  gameTimer.counter++;
-  if (1000 <= now - gameTimer.before2) {
-    double realFps = (double)gameTimer.counter * 1000 / (now - gameTimer.before2);
+  gameTimer->counter++;
+  if (1000 <= now - gameTimer->before2) {
+    double realFps = gameTimer->counter * 1000.0 /
+      (now - gameTimer->before2);
     rb_iv_set(self, "real_fps", rb_float_new(realFps));
-    gameTimer.counter = 0;
-    gameTimer.before2 = SDL_GetTicks();
+    gameTimer->counter = 0;
+    gameTimer->before2 = SDL_GetTicks();
   }
 
   return Qnil;

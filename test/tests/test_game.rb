@@ -36,7 +36,7 @@ class TestGame < Test::Unit::TestCase
       g = Game.new(320, 240,
                    :title => "foo", :fps => 31, :window_scale => 2)
       assert_equal Game.current, g
-      assert_equal false, g.window_closed?
+      assert_equal false, g.window_closing?
       assert_not_nil g.screen
       assert_equal "foo", g.title
       title = g.title = "bar"

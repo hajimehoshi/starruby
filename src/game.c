@@ -22,8 +22,10 @@ typedef struct {
   int realScreenWidth;
   int realScreenHeight;
   SDL_Surface* sdlScreen;
+  int fps;
   double realFps;
   GameTimer timer;
+  bool isWindowClosing;
   bool isTerminated; // backward compatibility
 } Game;
 
@@ -49,7 +51,7 @@ static VALUE Game_title_eq(VALUE, VALUE);
 static VALUE Game_update_screen(VALUE);
 static VALUE Game_update_state(VALUE);
 static VALUE Game_wait(VALUE);
-static VALUE Game_window_closed(VALUE);
+static VALUE Game_window_closing(VALUE);
 
 static VALUE
 Game_s_current(VALUE self)
@@ -120,7 +122,7 @@ RunGame(VALUE rbGame)
   while (true) {
     Game_wait(rbGame);
     Game_update_state(rbGame);
-    if (RTEST(Game_window_closed(rbGame)) || game->isTerminated)
+    if (RTEST(Game_window_closing(rbGame)) || game->isTerminated)
       break;
     rb_yield(rbGame);
     Game_update_screen(rbGame);
@@ -232,6 +234,7 @@ Game_alloc(VALUE klass)
   game->timer.before = SDL_GetTicks();
   game->timer.before2 = game->timer.before2;
   game->timer.counter = 0;
+  game->isWindowClosing = false;
   game->isTerminated = false;
   return Data_Wrap_Struct(klass, 0, Game_free, game);
 }
@@ -241,8 +244,6 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-
-  rb_iv_set(self, "window_closed", Qfalse);
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
@@ -366,13 +367,18 @@ Game_dispose(VALUE self)
 static VALUE
 Game_fps(VALUE self)
 {
-  return rb_iv_get(self, "fps");
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  return INT2NUM(game->fps);
 }
 
 static VALUE
 Game_fps_eq(VALUE self, VALUE rbFps)
 {
-  return rb_iv_set(self, "fps", INT2NUM(NUM2INT(rbFps)));
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  game->fps = NUM2INT(rbFps);
+  return rbFps;
 }
 
 static VALUE
@@ -409,8 +415,6 @@ Game_update_screen(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  if (RTEST(rb_iv_get(self, "window_closed")) || game->isTerminated)
-    return Qnil;
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   Texture* texture;
@@ -504,18 +508,10 @@ Game_update_state(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  if (RTEST(rb_iv_get(self, "window_closed")) || game->isTerminated)
-    return Qnil;
-
   SDL_Event event;
-  if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
-    rb_iv_set(self, "window_closed", Qtrue);
-    return Qnil;
-  }
-
+  game->isWindowClosing = (SDL_PollEvent(&event) && event.type == SDL_QUIT);
   strb_UpdateAudio();
   strb_UpdateInput();
-
   return Qnil;
 }
 
@@ -524,11 +520,8 @@ Game_wait(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  if (RTEST(rb_iv_get(self, "window_closed")) || game->isTerminated)
-    return Qnil;
-
   GameTimer* gameTimer = &(game->timer);
-  unsigned int fps = NUM2INT(rb_iv_get(self, "fps"));
+  unsigned int fps = game->fps;
   Uint32 now;
   while (true) {
     now = SDL_GetTicks();
@@ -540,7 +533,6 @@ Game_wait(VALUE self)
     }        
     SDL_Delay(1);
   }
-
   gameTimer->counter++;
   if (1000 <= now - gameTimer->before2) {
     game->realFps = gameTimer->counter * 1000.0 /
@@ -548,15 +540,15 @@ Game_wait(VALUE self)
     gameTimer->counter = 0;
     gameTimer->before2 = SDL_GetTicks();
   }
-
   return Qnil;
 }
 
 static VALUE
-Game_window_closed(VALUE self)
+Game_window_closing(VALUE self)
 {
-  // closing?
-  return rb_iv_get(self, "window_closed");
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  return game->isWindowClosing ? Qtrue : Qfalse;
 }
 
 static VALUE
@@ -587,18 +579,18 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
-  rb_define_method(rb_cGame, "dispose",        Game_dispose,       0);
-  rb_define_method(rb_cGame, "screen",         Game_screen,        0);
-  rb_define_method(rb_cGame, "fps",            Game_fps,           0);
-  rb_define_method(rb_cGame, "fps=",           Game_fps_eq,        1);
-  rb_define_method(rb_cGame, "real_fps",       Game_real_fps,      0);
-  rb_define_method(rb_cGame, "title",          Game_title,         0);
-  rb_define_method(rb_cGame, "title=",         Game_title_eq,      1);
-  rb_define_method(rb_cGame, "update_screen",  Game_update_screen, 0);
-  rb_define_method(rb_cGame, "update_state",   Game_update_state,  0);
-  rb_define_method(rb_cGame, "wait",           Game_wait,          0);
-  rb_define_method(rb_cGame, "window_closed?", Game_window_closed, 0);
-  rb_define_method(rb_cGame, "window_scale",   Game_window_scale,  0);
+  rb_define_method(rb_cGame, "dispose",         Game_dispose,       0);
+  rb_define_method(rb_cGame, "screen",          Game_screen,        0);
+  rb_define_method(rb_cGame, "fps",             Game_fps,           0);
+  rb_define_method(rb_cGame, "fps=",            Game_fps_eq,        1);
+  rb_define_method(rb_cGame, "real_fps",        Game_real_fps,      0);
+  rb_define_method(rb_cGame, "title",           Game_title,         0);
+  rb_define_method(rb_cGame, "title=",          Game_title_eq,      1);
+  rb_define_method(rb_cGame, "update_screen",   Game_update_screen, 0);
+  rb_define_method(rb_cGame, "update_state",    Game_update_state,  0);
+  rb_define_method(rb_cGame, "wait",            Game_wait,          0);
+  rb_define_method(rb_cGame, "window_closing?", Game_window_closing, 0);
+  rb_define_method(rb_cGame, "window_scale",    Game_window_scale,  0);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fps          = ID2SYM(rb_intern("fps"));

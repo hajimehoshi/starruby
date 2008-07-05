@@ -18,10 +18,13 @@ typedef struct {
 } GameTimer;
 
 typedef struct {
+  int windowScale;
   int realScreenWidth;
   int realScreenHeight;
   SDL_Surface* sdlScreen;
+  double realFps;
   GameTimer timer;
+  bool isTerminated; // backward compatibility
 } Game;
 
 static VALUE Game_s_current(VALUE);
@@ -29,10 +32,13 @@ int
 strb_GetWindowScale(void)
 {
   volatile VALUE rbCurrent = Game_s_current(rb_cGame);
-  if (!NIL_P(rbCurrent))
-    return NUM2INT(rb_iv_get(rbCurrent, "window_scale"));
-  else
+  if (!NIL_P(rbCurrent)) {
+    Game* game;
+    Data_Get_Struct(rbCurrent, Game, game);
+    return game->windowScale;
+  } else {
     return 1;
+  }
 }
 
 static VALUE Game_dispose(VALUE);
@@ -72,7 +78,7 @@ Game_s_fps_eq(VALUE self, VALUE rbFps)
   if (!NIL_P(rbCurrent))
     return Game_fps_eq(rbCurrent, rbFps);
   else
-    return rb_iv_set(self, "fps", rbFps);
+    return rb_iv_set(self, "fps", INT2NUM(NUM2INT(rbFps)));
 }
 
 static VALUE
@@ -109,10 +115,12 @@ Game_s_real_fps(VALUE self)
 static VALUE
 RunGame(VALUE rbGame)
 {
+  Game* game;
+  Data_Get_Struct(rbGame, Game, game);
   while (true) {
     Game_wait(rbGame);
     Game_update_state(rbGame);
-    if (RTEST(Game_window_closed(rbGame)))
+    if (RTEST(Game_window_closed(rbGame)) || game->isTerminated)
       break;
     rb_yield(rbGame);
     Game_update_screen(rbGame);
@@ -162,7 +170,9 @@ Game_s_terminate(VALUE self)
   volatile VALUE rbCurrent = Game_s_current(self);
   if (NIL_P(rbCurrent))
     rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
-  rb_iv_set(rbCurrent, "terminated", Qtrue);
+  Game* game;
+  Data_Get_Struct(rbCurrent, Game, game);
+  game->isTerminated = true;
   return Qnil;
 }
 
@@ -213,13 +223,16 @@ static VALUE
 Game_alloc(VALUE klass)
 {
   Game* game = ALLOC(Game);
+  game->windowScale = 1;
   game->realScreenWidth = 0;
   game->realScreenHeight = 0;
   game->sdlScreen = NULL;
+  game->realFps = 0;
   game->timer.error = 0;
   game->timer.before = SDL_GetTicks();
   game->timer.before2 = game->timer.before2;
   game->timer.counter = 0;
+  game->isTerminated = false;
   return Data_Wrap_Struct(klass, 0, Game_free, game);
 }
 
@@ -229,10 +242,6 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   Game* game;
   Data_Get_Struct(self, Game, game);
 
-  // backward compatibility
-  rb_iv_set(self, "terminated", Qfalse);
-
-  rb_iv_set(self, "real_fps", rb_float_new(0.0));
   rb_iv_set(self, "window_closed", Qfalse);
 
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
@@ -272,12 +281,12 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 
   bool cursor = false;
   bool fullscreen = false;
-  int windowScale = 1;
 #ifndef GP2X
   int bpp = 32;
 #else
   int bpp = 16;
 #endif
+  game->windowScale = 1;
 
 #ifndef GP2X
   volatile VALUE val;
@@ -287,14 +296,14 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen)))
     fullscreen = RTEST(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
-    windowScale = NUM2INT(val);
-    if (windowScale < 1)
-      rb_raise(rb_eArgError, "invalid window scale: %d", windowScale);
+    game->windowScale = NUM2INT(val);
+    if (game->windowScale < 1)
+      rb_raise(rb_eArgError, "invalid window scale: %d",
+               game->windowScale);
   }
 #endif
-  rb_iv_set(self, "window_scale", INT2NUM(windowScale));
-  game->realScreenWidth  = width * windowScale;
-  game->realScreenHeight = height * windowScale;
+  game->realScreenWidth  = width  * game->windowScale;
+  game->realScreenHeight = height * game->windowScale;
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
 
   Uint32 options = 0;
@@ -303,7 +312,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
 #endif
   if (fullscreen) {
     options |= SDL_HWSURFACE | SDL_FULLSCREEN;
-    windowScale = 1;    
+    game->windowScale = 1;    
     SDL_Rect** modes = SDL_ListModes(NULL, options);
     if (!modes)
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
@@ -344,7 +353,6 @@ Game_dispose(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  Game_free(game);
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   if (!NIL_P(rbScreen)) {
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
@@ -370,7 +378,9 @@ Game_fps_eq(VALUE self, VALUE rbFps)
 static VALUE
 Game_real_fps(VALUE self)
 {
-  return rb_iv_get(self, "real_fps");
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  return rb_float_new(game->realFps);
 }
 
 static VALUE
@@ -397,13 +407,11 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 static VALUE
 Game_update_screen(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "terminated")) ||
-      RTEST(rb_iv_get(self, "window_closed")))
-    return Qnil;
-
   Game* game;
   Data_Get_Struct(self, Game, game);
-  
+  if (RTEST(rb_iv_get(self, "window_closed")) || game->isTerminated)
+    return Qnil;
+
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
@@ -418,7 +426,7 @@ Game_update_screen(VALUE self)
     sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
   int textureWidth  = texture->width;
   int textureHeight = texture->height;
-  int windowScale = NUM2INT(rb_iv_get(self, "window_scale"));
+  int windowScale = game->windowScale;
   switch (windowScale) {
   case 1:
     {
@@ -494,8 +502,9 @@ Game_update_screen(VALUE self)
 static VALUE
 Game_update_state(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "window_closed")) ||
-      RTEST(rb_iv_get(self, "terminated")))
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  if (RTEST(rb_iv_get(self, "window_closed")) || game->isTerminated)
     return Qnil;
 
   SDL_Event event;
@@ -513,12 +522,11 @@ Game_update_state(VALUE self)
 static VALUE
 Game_wait(VALUE self)
 {
-  if (RTEST(rb_iv_get(self, "window_closed")) ||
-      RTEST(rb_iv_get(self, "terminated")))
-    return Qnil;
-
   Game* game;
   Data_Get_Struct(self, Game, game);
+  if (RTEST(rb_iv_get(self, "window_closed")) || game->isTerminated)
+    return Qnil;
+
   GameTimer* gameTimer = &(game->timer);
   unsigned int fps = NUM2INT(rb_iv_get(self, "fps"));
   Uint32 now;
@@ -535,9 +543,8 @@ Game_wait(VALUE self)
 
   gameTimer->counter++;
   if (1000 <= now - gameTimer->before2) {
-    double realFps = gameTimer->counter * 1000.0 /
+    game->realFps = gameTimer->counter * 1000.0 /
       (now - gameTimer->before2);
-    rb_iv_set(self, "real_fps", rb_float_new(realFps));
     gameTimer->counter = 0;
     gameTimer->before2 = SDL_GetTicks();
   }
@@ -555,7 +562,9 @@ Game_window_closed(VALUE self)
 static VALUE
 Game_window_scale(VALUE self)
 {
-  return rb_iv_get(self, "window_scale");
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  return INT2NUM(game->windowScale);
 }
 
 VALUE
@@ -596,6 +605,9 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_title        = ID2SYM(rb_intern("title"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
+
+  // backward compatibility
+  rb_iv_set(rb_cGame, "fps", INT2NUM(30));
 
   return rb_cGame;
 }

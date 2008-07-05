@@ -79,7 +79,7 @@ Game.run(320, 240, :title => "Airship") do |game|
   end
   # End Inputing
   # Begin View
-  s = Game.screen
+  s = game.screen
   s.fill(Color.new(128, 128, 128))
   options = {
     :camera_x => airship.x,

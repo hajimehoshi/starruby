@@ -48,6 +48,7 @@ static VALUE Game_fps(VALUE);
 static VALUE Game_fps_eq(VALUE, VALUE);
 static VALUE Game_title(VALUE);
 static VALUE Game_title_eq(VALUE, VALUE);
+static VALUE Game_real_fps(VALUE);
 static VALUE Game_update_screen(VALUE);
 static VALUE Game_update_state(VALUE);
 static VALUE Game_wait(VALUE);
@@ -68,7 +69,7 @@ Game_s_fps(VALUE self)
   if (!NIL_P(rbCurrent))
     return Game_fps(rbCurrent);
   else
-    return rb_iv_get(self, "fps");
+    return rb_iv_get(self, "default_fps");
 }
 
 static VALUE
@@ -80,7 +81,7 @@ Game_s_fps_eq(VALUE self, VALUE rbFps)
   if (!NIL_P(rbCurrent))
     return Game_fps_eq(rbCurrent, rbFps);
   else
-    return rb_iv_set(self, "fps", INT2NUM(NUM2INT(rbFps)));
+    return rb_iv_set(self, "default_fps", INT2NUM(NUM2INT(rbFps)));
 }
 
 static VALUE
@@ -109,7 +110,7 @@ Game_s_real_fps(VALUE self)
           " use Game#real_fps instead");
   volatile VALUE rbCurrent = Game_s_current(self);
   if (!NIL_P(rbCurrent))
-    return rb_iv_get(rbCurrent, "real_fps");
+    return Game_real_fps(rbCurrent);
   else
     return rb_float_new(0.0);
 }
@@ -193,7 +194,7 @@ Game_s_title(VALUE self)
   if (!NIL_P(rbCurrent))
     return Game_title(rbCurrent);
   else
-    return rb_iv_get(self, "title");
+    return rb_iv_get(self, "default_title");
 }
 
 static VALUE
@@ -208,14 +209,14 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
     Check_Type(rbTitle, T_STRING);
     if (SDL_WasInit(SDL_INIT_VIDEO))
       SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
-    return rb_iv_set(self, "title", rbTitle);
+    return rb_iv_set(self, "default_title", rbTitle);
   }
 }
 
 static void
 Game_free(Game* game)
 {
-  // no need to call SDL_FreeSurface
+  // should not to call SDL_FreeSurface
   if (game)
     game->sdlScreen = NULL;
   free(game);
@@ -261,7 +262,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
     Game_fps_eq(self, rbFps);
   } else {
     // backward compatibility
-    volatile VALUE rbFps2 = rb_iv_get(rb_cGame, "fps");
+    volatile VALUE rbFps2 = rb_iv_get(rb_cGame, "default_fps");
     if (!NIL_P(rbFps2))
       Game_fps_eq(self, rbFps2);
     else
@@ -273,7 +274,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
     Game_title_eq(self, rbTitle);
   } else {
     // backward compatibility
-    volatile VALUE rbTitle2 = rb_iv_get(rb_cGame, "title");
+    volatile VALUE rbTitle2 = rb_iv_get(rb_cGame, "default_title");
     if (!NIL_P(rbTitle2))
       Game_title_eq(self, rbTitle2);
     else
@@ -599,7 +600,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
   // backward compatibility
-  rb_iv_set(rb_cGame, "fps", INT2NUM(30));
+  rb_iv_set(rb_cGame, "default_fps", INT2NUM(30));
 
   return rb_cGame;
 }

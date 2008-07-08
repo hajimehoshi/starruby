@@ -535,6 +535,12 @@ Texture_height(VALUE self)
   return INT2NUM(texture->height);
 }
 
+static VALUE
+Texture_palette(VALUE self)
+{
+  return Qnil;
+}
+
 #define RENDER_PIXEL(_dst, _src)                              \
   do {                                                        \
     if (_dst.alpha == 0) {                                    \
@@ -1540,6 +1546,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   rb_define_method(rb_cTexture, "fill",           Texture_fill,            1);
   rb_define_method(rb_cTexture, "fill_rect",      Texture_fill_rect,       5);
   rb_define_method(rb_cTexture, "height",         Texture_height,          0);
+  rb_define_method(rb_cTexture, "palette",        Texture_palette,         0);
   rb_define_method(rb_cTexture, "render_in_perspective",
                    Texture_render_in_perspective, -1);
   rb_define_method(rb_cTexture, "render_line",    Texture_render_line,     5);

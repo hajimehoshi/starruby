@@ -1406,6 +1406,17 @@ class TestTexture < Test::Unit::TestCase
     assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[2]
     assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[253]
     assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[254]
+    texture = Texture.load("images/ruby8_without_alpha")
+    assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[0]
+    assert_equal Color.new(0x73, 0x09, 0x03, 0xff), texture.palette[1]
+    assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[251]
+    assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[252]
+    texture = Texture.load("images/ruby8_16colors")
+    assert_equal 0, texture.palette[0].alpha
+    assert_equal Color.new(0x8c, 0x0c, 0x02, 0xff), texture.palette[1]
+    assert_equal Color.new(0x96, 0x0f, 0x00, 0xff), texture.palette[2]
+    assert_equal Color.new(0xfb, 0xf6, 0xf3, 0xff), texture.palette[14]
+    assert_equal Color.new(0x7d, 0x0b, 0x06, 0xff), texture.palette[15]
   end
 
 end

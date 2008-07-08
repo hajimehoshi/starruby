@@ -596,7 +596,8 @@ Texture_palette(VALUE self)
           INT2NUM(colors->blue),
           INT2NUM(colors->alpha),
         };
-        volatile VALUE rbColor = rb_class_new_instance(4, rbArgs, rb_cColor);
+        volatile VALUE rbColor =
+          rb_class_new_instance(sizeof(rbArgs) / sizeof(VALUE), rbArgs, rb_cColor);
         rb_ary_push(rbArray, rbColor);
       }
       OBJ_FREEZE(rbArray);

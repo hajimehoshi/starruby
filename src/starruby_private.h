@@ -36,6 +36,8 @@ typedef union {
 typedef struct {
   uint16_t width, height;
   Pixel* pixels;
+  Color* palette;
+  uint8_t* indexes;
 } Texture;
 
 typedef struct {

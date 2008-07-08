@@ -1395,10 +1395,11 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_palette
-    #texture = Texture.load("images/ruby")
-    #assert_nil texture.palette
-    #texture = Texture.load("images/ruby8")
-    # assert texture.palette.frozen?
+    texture = Texture.load("images/ruby")
+    assert_nil texture.palette
+    texture = Texture.load("images/ruby8")
+    #assert_kind_of Array, texture.palette
+    #assert texture.palette.frozen?
   end
 
 end

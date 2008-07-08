@@ -200,27 +200,55 @@ Texture_s_load(VALUE self, VALUE rbPath)
     rb_raise(strb_GetStarRubyErrorClass(),
              "not supported interlacing PNG image: %s", path);
   }
-  if (bitDepth == 16)
-    png_set_strip_16(pngPtr);
-  if (colorType == PNG_COLOR_TYPE_PALETTE)
-    png_set_palette_to_rgb(pngPtr);
-  if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
-    png_set_gray_1_2_4_to_8(pngPtr);
-  if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
-    png_set_tRNS_to_alpha(pngPtr);
-  png_read_update_info(pngPtr, infoPtr);
+
   volatile VALUE rbTexture =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)}, self);
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
 
+  if (bitDepth == 16)
+    png_set_strip_16(pngPtr);
+  if (colorType == PNG_COLOR_TYPE_PALETTE && 8 < bitDepth) {
+    png_set_palette_to_rgb(pngPtr);
+    if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
+      png_set_tRNS_to_alpha(pngPtr);
+  }
+  if (bitDepth < 8)
+    png_set_packing(pngPtr);
+  if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+    png_set_gray_1_2_4_to_8(pngPtr);
+  png_read_update_info(pngPtr, infoPtr);
+  png_colorp palette = infoPtr->palette;
+  int numTrans = infoPtr->num_trans;
+  png_bytep trans = infoPtr->trans;
+  texture->palette = ALLOC_N(Color, infoPtr->num_palette);
+  Color* p = texture->palette;
+  for (int i = 0; i < infoPtr->num_palette; i++, p++) {
+    png_colorp pngColorP = &(palette[i]);
+    p->red   = pngColorP->red;
+    p->green = pngColorP->green;
+    p->blue  = pngColorP->blue;
+    p->alpha = 0xff;
+    for (int j = 0; j < numTrans; j++) {
+      if (i == trans[j]) {
+        p->alpha = 0;
+        break;
+      }
+    }
+  }
   int channels = png_get_channels(pngPtr, infoPtr);
+  Color* colorPalette = texture->palette;
   for (unsigned int j = 0; j < height; j++) {
     png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);
     for (unsigned int i = 0; i < width; i++) {
       Color* c = &(texture->pixels[width * j + i].color);
       switch (channels) {
+      case 1:
+        ;
+        int index = row[i];
+        *c = colorPalette[index];
+        break;
       case 2:
         c->red = c->green = c->blue = row[i * channels];
         c->alpha = row[i * channels + 1];
@@ -247,6 +275,10 @@ Texture_free(Texture* texture)
 {
   free(texture->pixels);
   texture->pixels = NULL;
+  free(texture->palette);
+  texture->palette = NULL;
+  free(texture->indexes);
+  texture->indexes = NULL;
   free(texture);
 }
 
@@ -255,6 +287,8 @@ Texture_alloc(VALUE klass)
 {
   Texture* texture = ALLOC(Texture);
   texture->pixels = NULL;
+  texture->palette = NULL;
+  texture->indexes = NULL;
   return Data_Wrap_Struct(klass, 0, Texture_free, texture);
 }
 
@@ -432,6 +466,10 @@ Texture_dispose(VALUE self)
   Data_Get_Struct(self, Texture, texture);
   free(texture->pixels);
   texture->pixels = NULL;
+  free(texture->palette);
+  texture->palette = NULL;
+  free(texture->indexes);
+  texture->indexes = NULL;
   return Qnil;
 }
 
@@ -538,7 +576,13 @@ Texture_height(VALUE self)
 static VALUE
 Texture_palette(VALUE self)
 {
-  return Qnil;
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  if (texture->palette) {
+    return Qnil;
+  } else {
+    return Qnil;
+  }
 }
 
 #define RENDER_PIXEL(_dst, _src)                              \

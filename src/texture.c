@@ -218,26 +218,28 @@ Texture_s_load(VALUE self, VALUE rbPath)
   if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
     png_set_gray_1_2_4_to_8(pngPtr);
   png_read_update_info(pngPtr, infoPtr);
-  png_colorp palette = infoPtr->palette;
-  int numTrans = infoPtr->num_trans;
-  png_bytep trans = infoPtr->trans;
-  texture->palette = ALLOC_N(Color, infoPtr->num_palette);
-  Color* p = texture->palette;
-  for (int i = 0; i < infoPtr->num_palette; i++, p++) {
-    png_colorp pngColorP = &(palette[i]);
-    p->red   = pngColorP->red;
-    p->green = pngColorP->green;
-    p->blue  = pngColorP->blue;
-    p->alpha = 0xff;
-    for (int j = 0; j < numTrans; j++) {
-      if (i == trans[j]) {
-        p->alpha = 0;
-        break;
+  if (0 < infoPtr->num_palette) {
+    png_colorp palette = infoPtr->palette;
+    int numTrans = infoPtr->num_trans;
+    png_bytep trans = infoPtr->trans;
+    texture->palette = ALLOC_N(Color, infoPtr->num_palette);
+    Color* p = texture->palette;
+    for (int i = 0; i < infoPtr->num_palette; i++, p++) {
+      png_colorp pngColorP = &(palette[i]);
+      p->red   = pngColorP->red;
+      p->green = pngColorP->green;
+      p->blue  = pngColorP->blue;
+      p->alpha = 0xff;
+      for (int j = 0; j < numTrans; j++) {
+        if (i == trans[j]) {
+          p->alpha = 0;
+          break;
+        }
       }
     }
   }
   int channels = png_get_channels(pngPtr, infoPtr);
-  Color* colorPalette = texture->palette;
+  Color* palette = texture->palette;
   for (unsigned int j = 0; j < height; j++) {
     png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);
@@ -247,7 +249,7 @@ Texture_s_load(VALUE self, VALUE rbPath)
       case 1:
         ;
         int index = row[i];
-        *c = colorPalette[index];
+        *c = palette[index];
         break;
       case 2:
         c->red = c->green = c->blue = row[i * channels];

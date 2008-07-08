@@ -4,6 +4,7 @@
 #include <png.h>
 #include "st.h"
 
+#define PALETTE_SIZE (256)
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 #define LOOP(process, length) \
@@ -219,11 +220,12 @@ Texture_s_load(VALUE self, VALUE rbPath)
     png_set_gray_1_2_4_to_8(pngPtr);
   png_read_update_info(pngPtr, infoPtr);
   if (0 < infoPtr->num_palette) {
+    texture->indexes = ALLOC_N(uint8_t, width * height);
     png_colorp palette = infoPtr->palette;
     int numTrans = infoPtr->num_trans;
     png_bytep trans = infoPtr->trans;
-    texture->palette = ALLOC_N(Color, infoPtr->num_palette);
-    Color* p = texture->palette;
+    Color* p = texture->palette = ALLOC_N(Color, PALETTE_SIZE);
+    MEMZERO(texture->palette, Color, PALETTE_SIZE);
     for (int i = 0; i < infoPtr->num_palette; i++, p++) {
       png_colorp pngColorP = &(palette[i]);
       p->red   = pngColorP->red;
@@ -240,6 +242,7 @@ Texture_s_load(VALUE self, VALUE rbPath)
   }
   int channels = png_get_channels(pngPtr, infoPtr);
   Color* palette = texture->palette;
+  uint8_t* indexes = texture->indexes;
   for (unsigned int j = 0; j < height; j++) {
     png_byte row[width * channels];
     png_read_row(pngPtr, row, NULL);
@@ -247,9 +250,7 @@ Texture_s_load(VALUE self, VALUE rbPath)
       Color* c = &(texture->pixels[width * j + i].color);
       switch (channels) {
       case 1:
-        ;
-        int index = row[i];
-        *c = palette[index];
+        *c = palette[*indexes = row[i]];
         break;
       case 2:
         c->red = c->green = c->blue = row[i * channels];
@@ -581,7 +582,26 @@ Texture_palette(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   if (texture->palette) {
-    return Qnil;
+    volatile VALUE rbArray = rb_iv_get(self, "palette");
+    if (!NIL_P(rbArray)) {
+      return rbArray;
+    } else {
+      rbArray = rb_ary_new2(PALETTE_SIZE);
+      Color* colors = texture->palette;
+      volatile VALUE rb_cColor = strb_GetColorClass();
+      for (int i = 0; i < PALETTE_SIZE; i++, colors++) {
+        VALUE rbArgs[4] = {
+          INT2NUM(colors->red),
+          INT2NUM(colors->green),
+          INT2NUM(colors->blue),
+          INT2NUM(colors->alpha),
+        };
+        volatile VALUE rbColor = rb_class_new_instance(4, rbArgs, rb_cColor);
+        rb_ary_push(rbArray, rbColor);
+      }
+      OBJ_FREEZE(rbArray);
+      return rb_iv_set(self, "palette", rbArray);
+    }
   } else {
     return Qnil;
   }

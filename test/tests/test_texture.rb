@@ -1398,8 +1398,14 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     assert_nil texture.palette
     texture = Texture.load("images/ruby8")
-    #assert_kind_of Array, texture.palette
-    #assert texture.palette.frozen?
+    assert_kind_of Array, texture.palette
+    assert_equal 256, texture.palette.size
+    assert texture.palette.frozen?
+    assert_equal 0, texture.palette[0].alpha
+    assert_equal Color.new(0x79, 0x03, 0x00, 0xff), texture.palette[1]
+    assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[2]
+    assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[253]
+    assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[254]
   end
 
 end

@@ -10,7 +10,7 @@ counter = 0
 Game.run(320, 240, :title => "Palette") do |game|
   break if Input.keys(:keyboard).include?(:escape)
   counter += 1
-  counter %= game.fps
+  counter %= game.fps * 2
 
   if counter == 0
     new_palette = Array.new(main_texture.palette.size) do |i|
@@ -28,6 +28,6 @@ Game.run(320, 240, :title => "Palette") do |game|
 
   s = game.screen
   s.clear
-  s.render_texture(main_texture, 32, 32)
-  s.render_texture(palette_texture, 32 + main_texture.width + 32, 32)
+  s.render_texture(main_texture, 16, 16, :scale_x => 2, :scale_y => 2)
+  s.render_texture(palette_texture, 16 + main_texture.width * 2 + 16, 16)
 end

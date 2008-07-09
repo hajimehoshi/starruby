@@ -1435,4 +1435,75 @@ class TestTexture < Test::Unit::TestCase
     end
   end
 
+  def test_change_palette
+    texture = Texture.load("images/ruby")
+    assert_raise StarRubyError do
+      texture.change_palette!([])
+    end
+    texture = Texture.load("images/ruby8")
+    texture_orig = texture.dup
+    texture.change_palette!(texture.palette)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture_orig[i, j], texture[i, j], [i, j].inspect
+      end
+    end
+    texture = Texture.load("images/ruby8")
+    size = texture.palette.size
+    texture.change_palette!([])
+    assert_equal ([Color.new(0, 0, 0, 0)] * size), texture.palette
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0, 0, 0, 0), texture[i, j]
+      end
+    end
+    texture = Texture.load("images/ruby8")
+    assert_equal Color.new(0x79, 0x03, 0x00, 0xff), texture.palette[1]
+    assert_equal Color.new(0x79, 0x03, 0x00, 0xff), texture[93, 8]
+    assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[2]
+    assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture[81, 55]
+    texture.change_palette!([Color.new(1, 2, 3, 4),
+                             Color.new(5, 6, 7, 8),
+                             Color.new(9, 10, 11, 12)])
+    assert size, texture.palette.size
+    assert_equal Color.new(1, 2, 3, 4), texture.palette[0]
+    assert_equal Color.new(5, 6, 7, 8), texture.palette[1]
+    assert_equal Color.new(9, 10, 11, 12), texture.palette[2]
+    assert_equal [Color.new(0, 0, 0, 0)] * (size - 3), texture.palette[3, size - 3]
+    assert_equal Color.new(1, 2, 3, 4), texture[0, 0]
+    assert_equal Color.new(5, 6, 7, 8), texture[93, 8]
+    assert_equal Color.new(9, 10, 11, 12), texture[81, 55]
+    texture = Texture.load("images/ruby8")
+    texture.change_palette!([Color.new(0x24, 0x3f, 0x6a, 0x88)] * 512)
+    assert_equal size, texture.palette.size
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal Color.new(0x24, 0x3f, 0x6a, 0x88), texture[i, j]
+      end
+    end
+  end
+
+  def test_change_palette_frozen
+    texture = Texture.load("images/ruby8")
+    texture.freeze
+    assert_raise FrozenError do
+      texture.change_palette!([])
+    end
+  end
+
+  def test_change_palette_disposed
+    texture = Texture.load("images/ruby8")
+    texture.dispose
+    assert_raise RuntimeError do
+      texture.change_palette!([])
+    end
+  end
+
+  def test_change_palette_type
+    texture = Texture.load("images/ruby8")
+    assert_raise TypeError do
+      texture.change_palette!(false)
+    end
+  end
+
 end

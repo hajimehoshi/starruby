@@ -326,6 +326,14 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
   int length = texture->width * texture->height;
   texture->pixels = ALLOC_N(Pixel, length);
   MEMCPY(texture->pixels, origTexture->pixels, Pixel, length);
+  if (origTexture->palette) {
+    int paletteSize = texture->paletteSize = origTexture->paletteSize;
+    texture->palette = ALLOC_N(Color, paletteSize);
+    MEMCPY(texture->palette, origTexture->palette, Color, paletteSize);
+    int length = texture->width * texture->height;
+    texture->indexes = ALLOC_N(uint8_t, length);
+    MEMCPY(texture->indexes, origTexture->indexes, uint8_t, length);
+  }
   return Qnil;
 }
 
@@ -450,6 +458,18 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
     }
   }
   return Qnil;
+}
+
+static VALUE Texture_change_palette_bang(VALUE, VALUE);
+static VALUE
+Texture_change_palette(VALUE self, VALUE rbPalette)
+{
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  CheckDisposed(texture);
+  volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
+  Texture_change_palette_bang(rbTexture, rbPalette);
+  return rbTexture;
 }
 
 static VALUE
@@ -1629,6 +1649,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   rb_define_method(rb_cTexture, "[]=",             Texture_set_pixel,           3);
   rb_define_method(rb_cTexture, "change_hue",      Texture_change_hue,          1);
   rb_define_method(rb_cTexture, "change_hue!",     Texture_change_hue_bang,     1);
+  rb_define_method(rb_cTexture, "change_palette",  Texture_change_palette,      1);
   rb_define_method(rb_cTexture, "change_palette!", Texture_change_palette_bang, 1);
   rb_define_method(rb_cTexture, "clear",           Texture_clear,               0);
   rb_define_method(rb_cTexture, "dispose",         Texture_dispose,             0);

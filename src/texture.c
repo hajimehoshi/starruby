@@ -4,7 +4,6 @@
 #include <png.h>
 #include "st.h"
 
-#define PALETTE_SIZE (256)
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 #define LOOP(process, length) \
@@ -224,9 +223,10 @@ Texture_s_load(VALUE self, VALUE rbPath)
     png_colorp palette = infoPtr->palette;
     int numTrans = infoPtr->num_trans;
     png_bytep trans = infoPtr->trans;
-    Color* p = texture->palette = ALLOC_N(Color, PALETTE_SIZE);
-    MEMZERO(texture->palette, Color, PALETTE_SIZE);
-    for (int i = 0; i < infoPtr->num_palette; i++, p++) {
+    texture->paletteSize = infoPtr->num_palette;
+    Color* p = texture->palette = ALLOC_N(Color, texture->paletteSize);
+    // MEMZERO(texture->palette, Color, texture->paletteSize);
+    for (int i = 0; i < texture->paletteSize; i++, p++) {
       png_colorp pngColorP = &(palette[i]);
       p->red   = pngColorP->red;
       p->green = pngColorP->green;
@@ -290,6 +290,7 @@ Texture_alloc(VALUE klass)
 {
   Texture* texture = ALLOC(Texture);
   texture->pixels = NULL;
+  texture->paletteSize = 0;
   texture->palette = NULL;
   texture->indexes = NULL;
   return Data_Wrap_Struct(klass, 0, Texture_free, texture);
@@ -581,28 +582,24 @@ Texture_palette(VALUE self)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
+  CheckDisposed(texture);
   if (texture->palette) {
-    volatile VALUE rbArray = rb_iv_get(self, "palette");
-    if (!NIL_P(rbArray)) {
-      return rbArray;
-    } else {
-      rbArray = rb_ary_new2(PALETTE_SIZE);
-      Color* colors = texture->palette;
-      volatile VALUE rb_cColor = strb_GetColorClass();
-      for (int i = 0; i < PALETTE_SIZE; i++, colors++) {
-        VALUE rbArgs[4] = {
-          INT2NUM(colors->red),
-          INT2NUM(colors->green),
-          INT2NUM(colors->blue),
-          INT2NUM(colors->alpha),
-        };
-        volatile VALUE rbColor =
-          rb_class_new_instance(sizeof(rbArgs) / sizeof(VALUE), rbArgs, rb_cColor);
-        rb_ary_push(rbArray, rbColor);
-      }
-      OBJ_FREEZE(rbArray);
-      return rb_iv_set(self, "palette", rbArray);
+    volatile VALUE rbArray = rb_ary_new2(texture->paletteSize);
+    Color* colors = texture->palette;
+    volatile VALUE rb_cColor = strb_GetColorClass();
+    for (int i = 0; i < texture->paletteSize; i++, colors++) {
+      VALUE rbArgs[4] = {
+        INT2NUM(colors->red),
+        INT2NUM(colors->green),
+        INT2NUM(colors->blue),
+        INT2NUM(colors->alpha),
+      };
+      volatile VALUE rbColor =
+        rb_class_new_instance(sizeof(rbArgs) / sizeof(VALUE), rbArgs, rb_cColor);
+      rb_ary_push(rbArray, rbColor);
     }
+    OBJ_FREEZE(rbArray);
+    return rbArray;
   } else {
     return Qnil;
   }

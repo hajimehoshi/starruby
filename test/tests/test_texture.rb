@@ -1399,24 +1399,40 @@ class TestTexture < Test::Unit::TestCase
     assert_nil texture.palette
     texture = Texture.load("images/ruby8")
     assert_kind_of Array, texture.palette
-    assert_equal 256, texture.palette.size
     assert texture.palette.frozen?
+    assert_equal 255, texture.palette.size
     assert_equal 0, texture.palette[0].alpha
     assert_equal Color.new(0x79, 0x03, 0x00, 0xff), texture.palette[1]
     assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[2]
     assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[253]
     assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[254]
     texture = Texture.load("images/ruby8_without_alpha")
+    assert_equal 253, texture.palette.size
     assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[0]
     assert_equal Color.new(0x73, 0x09, 0x03, 0xff), texture.palette[1]
     assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[251]
     assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[252]
     texture = Texture.load("images/ruby8_16colors")
+    assert_equal 16, texture.palette.size
     assert_equal 0, texture.palette[0].alpha
     assert_equal Color.new(0x8c, 0x0c, 0x02, 0xff), texture.palette[1]
     assert_equal Color.new(0x96, 0x0f, 0x00, 0xff), texture.palette[2]
     assert_equal Color.new(0xfb, 0xf6, 0xf3, 0xff), texture.palette[14]
     assert_equal Color.new(0x7d, 0x0b, 0x06, 0xff), texture.palette[15]
+  end
+
+  def test_palette_frozen
+    texture = Texture.load("images/ruby8")
+    texture.freeze
+    assert_kind_of Array, texture.palette
+  end
+
+  def test_palette_disposed
+    texture = Texture.load("images/ruby8")
+    texture.dispose
+    assert_raise RuntimeError do
+      texture.palette
+    end
   end
 
 end

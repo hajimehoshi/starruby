@@ -1632,6 +1632,14 @@ class TestTexture < Test::Unit::TestCase
     assert_raise StarRubyError do
       palette_texture.render_texture(target_texture, 0, 0)
     end
+    # undump
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    size = normal_texture.width * normal_texture.height
+    normal_texture.undump("\0" * size, "r")
+    assert_raise StarRubyError do
+      palette_texture.undump("\0" * size, "r")
+    end
   end
   
   def test_change_palette_original_palette

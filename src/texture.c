@@ -1654,6 +1654,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   char* format = StringValuePtr(rbFormat);
   int formatLength = RSTRING_LEN(rbFormat);
   int pixelLength = texture->width * texture->height;

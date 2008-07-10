@@ -415,15 +415,52 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
   Texture* newTexture;
   Data_Get_Struct(rbTexture, Texture, newTexture);
-  if (newTexture->palette) {
-    newTexture->paletteSize = 0;
-    free(newTexture->palette);
-    newTexture->palette = NULL;
-    free(newTexture->indexes);
-    newTexture->indexes = NULL;
-  }
   Texture_change_hue_bang(rbTexture, rbAngle);
   return rbTexture;
+}
+
+static inline void
+ChangeHue(Color* color, double angle)
+{
+  uint8_t r = color->red;
+  uint8_t g = color->green;
+  uint8_t b = color->blue;
+  uint8_t max = MAX(MAX(r, g), b);
+  uint8_t min = MIN(MIN(r, g), b);
+  if (max != 0) {
+    double delta255 = max - min;
+    double v = max / 255.0;
+    double s = delta255 / max;
+    double h;
+    if (max == r)
+      h =     (g - b) / delta255;
+    else if (max == g)
+      h = 2 + (b - r) / delta255;
+    else
+      h = 4 + (r - g) / delta255;
+    if (h < 0.0)
+      h += 6.0;
+    h += angle * 6.0 / (2 * PI);
+    if (6.0 <= h)
+      h -= 6.0;
+    int ii = (int)h;
+    double f = h - ii;
+    uint8_t v255 = max;
+    uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
+    uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
+    uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
+    switch (ii) {
+    case 0: r = v255;  g = cc255; b = aa255; break;
+    case 1: r = bb255; g = v255;  b = aa255; break;
+    case 2: r = aa255; g = v255;  b = cc255; break;
+    case 3: r = aa255; g = bb255; b = v255;  break;
+    case 4: r = cc255; g = aa255; b = v255;  break;
+    case 5: r = v255;  g = aa255; b = bb255; break;
+    }
+    color->red   = r;
+    color->green = g;
+    color->blue  = b;
+  }
 }
 
 static VALUE
@@ -433,52 +470,24 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  CheckPalette(texture);
   double angle = NUM2DBL(rbAngle);
   if (angle == 0)
     return Qnil;
-  int length = texture->width * texture->height;
-  Pixel* pixel = texture->pixels;
-  for (int i = 0; i < length; i++, pixel++) {
-    uint8_t r = pixel->color.red;
-    uint8_t g = pixel->color.green;
-    uint8_t b = pixel->color.blue;
-    uint8_t max = MAX(MAX(r, g), b);
-    uint8_t min = MIN(MIN(r, g), b);
-    if (max != 0) {
-      double delta255 = max - min;
-      double v = max / 255.0;
-      double s = delta255 / max;
-      double h;
-      if (max == r)
-        h =     (g - b) / delta255;
-      else if (max == g)
-        h = 2 + (b - r) / delta255;
-      else
-        h = 4 + (r - g) / delta255;
-      if (h < 0.0)
-        h += 6.0;
-      h += angle * 6.0 / (2 * PI);
-      if (6.0 <= h)
-        h -= 6.0;
-      int ii = (int)h;
-      double f = h - ii;
-      uint8_t v255 = max;
-      uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
-      uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
-      uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
-      switch (ii) {
-      case 0: r = v255;  g = cc255; b = aa255; break;
-      case 1: r = bb255; g = v255;  b = aa255; break;
-      case 2: r = aa255; g = v255;  b = cc255; break;
-      case 3: r = aa255; g = bb255; b = v255;  break;
-      case 4: r = cc255; g = aa255; b = v255;  break;
-      case 5: r = v255;  g = aa255; b = bb255; break;
-      }
-      pixel->color.red   = r;
-      pixel->color.green = g;
-      pixel->color.blue  = b;
-    }
+  Pixel* pixels = texture->pixels;
+  if (!texture->palette) {
+    int length = texture->width * texture->height;
+    for (int i = 0; i < length; i++, pixels++)
+      ChangeHue(&(pixels->color), angle);
+  } else {
+    int paletteSize = texture->paletteSize;
+    Color* palette = texture->palette;
+    for (int i = 0; i < paletteSize; i++, palette++)
+      ChangeHue(palette, angle);
+    palette = texture->palette;
+    uint8_t* indexes = texture->indexes;
+    int length = texture->width * texture->height;
+    for (int i = 0; i < length; i++, pixels++, indexes++)
+      pixels->color = palette[*indexes];
   }
   return Qnil;
 }

@@ -459,6 +459,7 @@ class TestTexture < Test::Unit::TestCase
   def test_change_hue
     texture = Texture.load("images/ruby")
     orig_texture = texture.clone
+    # 0
     texture = orig_texture.change_hue(0)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -472,6 +473,7 @@ class TestTexture < Test::Unit::TestCase
         assert_equal orig_texture[i, j], texture[i, j]
       end
     end
+    # (2/3) * pi
     texture = orig_texture.change_hue(Math::PI * 2 / 3)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -495,6 +497,7 @@ class TestTexture < Test::Unit::TestCase
         assert_equal p1.alpha, p2.alpha
       end
     end
+    # (4/3) * pi
     texture = orig_texture.change_hue(Math::PI * 4 / 3)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -517,6 +520,103 @@ class TestTexture < Test::Unit::TestCase
         assert_in_delta p1.red,   p2.blue,  1
         assert_equal p1.alpha, p2.alpha
       end
+    end
+  end
+
+  def test_change_hue_palette
+    texture = Texture.load("images/ruby8", :palette => true)
+    orig_texture = texture.clone
+    # 0
+    texture = orig_texture.change_hue(0)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal orig_texture[i, j], texture[i, j]
+      end
+    end
+    assert_equal orig_texture.palette, texture.palette
+    texture = orig_texture.clone
+    texture.change_hue!(0)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal orig_texture[i, j], texture[i, j]
+      end
+    end
+    assert_equal orig_texture.palette, texture.palette
+    # (2/3) * pi
+    texture = orig_texture.change_hue(Math::PI * 2 / 3)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
+        assert_in_delta p1.blue,  p2.red,   1
+        assert_in_delta p1.red,   p2.green, 1
+        assert_in_delta p1.green, p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    orig_texture.palette.zip(texture.palette).each_with_index do |ps, i|
+      p1, p2 = ps
+      assert_in_delta p1.blue,  p2.red,   1
+      assert_in_delta p1.red,   p2.green, 1
+      assert_in_delta p1.green, p2.blue,  1
+      assert_equal p1.alpha, p2.alpha
+    end
+    texture = orig_texture.clone
+    texture.change_hue!(Math::PI * 2 / 3)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
+        assert_in_delta p1.blue,  p2.red,   1
+        assert_in_delta p1.red,   p2.green, 1
+        assert_in_delta p1.green, p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    orig_texture.palette.zip(texture.palette).each_with_index do |ps, i|
+      p1, p2 = ps
+      assert_in_delta p1.blue,  p2.red,   1
+      assert_in_delta p1.red,   p2.green, 1
+      assert_in_delta p1.green, p2.blue,  1
+      assert_equal p1.alpha, p2.alpha
+    end
+    # (4/3) * pi
+    texture = orig_texture.change_hue(Math::PI * 4 / 3)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
+        assert_in_delta p1.green, p2.red,   1
+        assert_in_delta p1.blue,  p2.green, 1
+        assert_in_delta p1.red,   p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    orig_texture.palette.zip(texture.palette).each_with_index do |ps, i|
+      p1, p2 = ps
+      assert_in_delta p1.green, p2.red,   1
+      assert_in_delta p1.blue,  p2.green, 1
+      assert_in_delta p1.red,   p2.blue,  1
+      assert_equal p1.alpha, p2.alpha
+    end
+    texture = orig_texture.clone
+    texture.change_hue!(Math::PI * 4 / 3)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        p1 = orig_texture[i, j]
+        p2 = texture[i, j]
+        assert_in_delta p1.green, p2.red,   1
+        assert_in_delta p1.blue,  p2.green, 1
+        assert_in_delta p1.red,   p2.blue,  1
+        assert_equal p1.alpha, p2.alpha
+      end
+    end
+    orig_texture.palette.zip(texture.palette).each_with_index do |ps, i|
+      p1, p2 = ps
+      assert_in_delta p1.green, p2.red,   1
+      assert_in_delta p1.blue,  p2.green, 1
+      assert_in_delta p1.red,   p2.blue,  1
+      assert_equal p1.alpha, p2.alpha
     end
   end
   
@@ -1468,9 +1568,7 @@ class TestTexture < Test::Unit::TestCase
     palette_texture.change_hue(0)
     # change_hue!
     normal_texture.change_hue!(0)
-    assert_raise StarRubyError do
-      palette_texture.change_hue!(0)
-    end
+    palette_texture.change_hue!(0)
     # clear
     normal_texture  = orig_normal_texture.dup
     palette_texture = orig_palette_texture.dup

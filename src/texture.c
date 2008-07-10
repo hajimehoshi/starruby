@@ -118,9 +118,9 @@ typedef struct {
   int toneRed;
   int toneGreen;
   int toneBlue;
+  int saturation;
   BlendType blendType;
   uint8_t alpha;
-  uint8_t saturation;
 } RenderingTextureOptions;
 
 VALUE
@@ -955,11 +955,11 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   SDL_Surface* textSurfaceRaw;
   if (antiAlias)
     textSurfaceRaw = TTF_RenderUTF8_Shaded(font->sdlFont, text,
-                                           (SDL_Color) {255, 255, 255, 255},
-                                           (SDL_Color) {0, 0, 0, 0});
+                                           (SDL_Color){255, 255, 255, 255},
+                                           (SDL_Color){0, 0, 0, 0});
   else
     textSurfaceRaw = TTF_RenderUTF8_Solid(font->sdlFont, text,
-                                          (SDL_Color) {255, 255, 255, 255});
+                                          (SDL_Color){255, 255, 255, 255});
   if (!textSurfaceRaw)
     rb_raise_sdl_ttf_error();
   SDL_PixelFormat format = {
@@ -1161,6 +1161,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
                            &(options.srcX), &(options.srcY),
                            &(options.srcWidth), &(options.srcHeight)))
     return Qnil;
+
+  if (options.toneRed   < -255 || 255 < options.toneRed   ||
+      options.toneGreen < -255 || 255 < options.toneGreen ||
+      options.toneBlue  < -255 || 255 < options.toneBlue  ||
+      options.saturation < 0 || 255 < options.saturation)
+    rb_raise(rb_eArgError, "invalid tone value: (r:%d, g:%d, b:%d, s:%d)",
+             options.toneRed, options.toneGreen, options.toneBlue,
+             options.saturation);
 
   uint8_t alpha       = options.alpha;
   double angle        = options.angle;

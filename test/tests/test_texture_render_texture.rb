@@ -630,8 +630,41 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal p1.alpha, p2.alpha
       end
     end
+    texture2.clear
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :tone_red => -256)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :tone_red => 256)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :tone_green => -256)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :tone_green => 256)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :tone_blue => -256)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :tone_blue => 256)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :saturation => -1)
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0,
+                              :saturation => 256)
+    end
   end
-  
+
   def test_render_texture_self
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)

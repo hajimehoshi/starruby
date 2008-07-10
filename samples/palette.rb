@@ -3,7 +3,7 @@
 require "starruby"
 include StarRuby
 
-main_texture = Texture.load("images/ruby_palette")
+main_texture = Texture.load("images/ruby_palette", :palette => true)
 palette_texture = Texture.new(16 * 4, 16 * 4)
 
 counter = 0

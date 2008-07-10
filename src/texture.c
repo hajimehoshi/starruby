@@ -44,6 +44,7 @@ static volatile VALUE symbol_intersection_y;
 static volatile VALUE symbol_loop;
 static volatile VALUE symbol_mask;
 static volatile VALUE symbol_none;
+static volatile VALUE symbol_palette;
 static volatile VALUE symbol_saturation;
 static volatile VALUE symbol_scale_x;
 static volatile VALUE symbol_scale_y;
@@ -136,6 +137,14 @@ CheckDisposed(Texture* texture)
              "can't modify disposed StarRuby::Texture");
 }
 
+inline static void
+CheckPalette(Texture* texture)
+{
+  if (texture->palette)
+    rb_raise(strb_GetStarRubyErrorClass(),
+             "can't modify a texture with a palette");
+}
+
 inline static bool
 ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
 {
@@ -159,8 +168,13 @@ ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
 }
 
 static VALUE
-Texture_s_load(VALUE self, VALUE rbPath)
+Texture_s_load(int argc, VALUE* argv, VALUE self)
 {
+  volatile VALUE rbPath, rbOptions;
+  rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+  bool hasPalette = RTEST(rb_hash_aref(rbOptions, symbol_palette));
   volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
   char* path = StringValuePtr(rbCompletePath);
   FILE* fp = fopen(path, "rb");
@@ -208,7 +222,7 @@ Texture_s_load(VALUE self, VALUE rbPath)
 
   if (bitDepth == 16)
     png_set_strip_16(pngPtr);
-  if (colorType == PNG_COLOR_TYPE_PALETTE && 8 < bitDepth) {
+  if (colorType == PNG_COLOR_TYPE_PALETTE && !hasPalette) {
     png_set_palette_to_rgb(pngPtr);
     if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
       png_set_tRNS_to_alpha(pngPtr);
@@ -218,14 +232,13 @@ Texture_s_load(VALUE self, VALUE rbPath)
   if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
     png_set_gray_1_2_4_to_8(pngPtr);
   png_read_update_info(pngPtr, infoPtr);
-  if (0 < infoPtr->num_palette) {
+  if (0 < infoPtr->num_palette && hasPalette) {
     texture->indexes = ALLOC_N(uint8_t, width * height);
     png_colorp palette = infoPtr->palette;
     int numTrans = infoPtr->num_trans;
     png_bytep trans = infoPtr->trans;
     texture->paletteSize = infoPtr->num_palette;
     Color* p = texture->palette = ALLOC_N(Color, texture->paletteSize);
-    // MEMZERO(texture->palette, Color, texture->paletteSize);
     for (int i = 0; i < texture->paletteSize; i++, p++) {
       png_colorp pngColorP = &(palette[i]);
       p->red   = pngColorP->red;
@@ -400,6 +413,15 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
+  Texture* newTexture;
+  Data_Get_Struct(rbTexture, Texture, newTexture);
+  if (newTexture->palette) {
+    newTexture->paletteSize = 0;
+    free(newTexture->palette);
+    newTexture->palette = NULL;
+    free(newTexture->indexes);
+    newTexture->indexes = NULL;
+  }
   Texture_change_hue_bang(rbTexture, rbAngle);
   return rbTexture;
 }
@@ -411,6 +433,7 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   double angle = NUM2DBL(rbAngle);
   if (angle == 0)
     return Qnil;
@@ -505,6 +528,7 @@ Texture_clear(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   MEMZERO(texture->pixels, Color, texture->width * texture->height);
   return Qnil;
 }
@@ -563,6 +587,7 @@ Texture_fill(VALUE self, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
   int length = texture->width * texture->height;
@@ -580,6 +605,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
@@ -702,6 +728,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   CheckDisposed(dstTexture);
+  CheckPalette(dstTexture);
   if (srcTexture == dstTexture)
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
   PerspectiveOptions options;
@@ -814,6 +841,7 @@ Texture_render_line(VALUE self,
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
   int x = x1;
@@ -863,6 +891,7 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
@@ -882,6 +911,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
@@ -1038,6 +1068,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   CheckDisposed(dstTexture);
+  CheckPalette(dstTexture);
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
   if (3 <= argc && argc <= 4) {
@@ -1518,6 +1549,7 @@ Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
+  CheckPalette(texture);
   int x = NUM2INT(rbX);
   int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
@@ -1640,7 +1672,7 @@ VALUE
 strb_InitializeTexture(VALUE rb_mStarRuby)
 {
   rb_cTexture = rb_define_class_under(rb_mStarRuby, "Texture", rb_cObject);
-  rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, 1);
+  rb_define_singleton_method(rb_cTexture, "load", Texture_s_load, -1);
   rb_define_alloc_func(rb_cTexture, Texture_alloc);
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
@@ -1693,6 +1725,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   symbol_loop           = ID2SYM(rb_intern("loop"));
   symbol_mask           = ID2SYM(rb_intern("mask"));
   symbol_none           = ID2SYM(rb_intern("none"));
+  symbol_palette        = ID2SYM(rb_intern("palette"));
   symbol_saturation     = ID2SYM(rb_intern("saturation"));
   symbol_scale_x        = ID2SYM(rb_intern("scale_x"));
   symbol_scale_y        = ID2SYM(rb_intern("scale_y"));

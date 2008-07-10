@@ -1398,6 +1398,10 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     assert_nil texture.palette
     texture = Texture.load("images/ruby8")
+    assert_nil texture.palette
+    texture = Texture.load("images/ruby8", :palette => false)
+    assert_nil texture.palette
+    texture = Texture.load("images/ruby8", :palette => true)
     assert_kind_of Array, texture.palette
     assert texture.palette.frozen?
     assert_equal 255, texture.palette.size
@@ -1406,13 +1410,13 @@ class TestTexture < Test::Unit::TestCase
     assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[2]
     assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[253]
     assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[254]
-    texture = Texture.load("images/ruby8_without_alpha")
+    texture = Texture.load("images/ruby8_without_alpha", :palette => true)
     assert_equal 253, texture.palette.size
     assert_equal Color.new(0x82, 0x00, 0x00, 0xff), texture.palette[0]
     assert_equal Color.new(0x73, 0x09, 0x03, 0xff), texture.palette[1]
     assert_equal Color.new(0xff, 0xfc, 0xfb, 0xff), texture.palette[251]
     assert_equal Color.new(0xfd, 0xff, 0xfc, 0xff), texture.palette[252]
-    texture = Texture.load("images/ruby8_16colors")
+    texture = Texture.load("images/ruby8_16colors", :palette => true)
     assert_equal 16, texture.palette.size
     assert_equal 0, texture.palette[0].alpha
     assert_equal Color.new(0x8c, 0x0c, 0x02, 0xff), texture.palette[1]
@@ -1422,13 +1426,13 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_palette_frozen
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     texture.freeze
     assert_kind_of Array, texture.palette
   end
 
   def test_palette_disposed
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     texture.dispose
     assert_raise RuntimeError do
       texture.palette
@@ -1436,13 +1440,104 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_palette_dup
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     assert_equal texture.palette, texture.dup.palette
     assert_equal texture.palette, texture.clone.palette
   end
+
+  def test_palette2
+    orig_normal_texture  = normal_texture  = Texture.load("images/ruby8")
+    orig_palette_texture = palette_texture = Texture.load("images/ruby8", :palette => true)
+    target_texture = Texture.load("images/ruby")
+    if Font.exist?("Arial")
+      font = Font.new("Arial", 16)
+    elsif Font.exist?("FreeSans")
+      font = Font.new("FreeSans", 16)
+    elsif Font.exist?("Helvetica Neue")
+      font = Font.new("Helvetica Neue", 16)
+    else
+      flunk
+    end
+    # []=
+    normal_texture[0, 0] = Color.new(0, 0, 0, 0)
+    assert_raise StarRubyError do
+      palette_texture[0, 0] = Color.new(0, 0, 0, 0)
+    end
+    # change_hue
+    normal_texture.change_hue(0)
+    palette_texture.change_hue(0)
+    # change_hue!
+    normal_texture.change_hue!(0)
+    assert_raise StarRubyError do
+      palette_texture.change_hue!(0)
+    end
+    # clear
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.clear
+    assert_raise StarRubyError do
+      palette_texture.clear
+    end
+    # fill
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.fill(Color.new(1, 2, 3, 4))
+    assert_raise StarRubyError do
+      palette_texture.fill(Color.new(1, 2, 3, 4))
+    end
+    # fill_rect
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.fill_rect(1, 2, 3, 4, Color.new(1, 2, 3, 4))
+    assert_raise StarRubyError do
+      palette_texture.fill_rect(1, 2, 3, 4, Color.new(1, 2, 3, 4))
+    end
+    # render_in_perspective
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.render_in_perspective(target_texture)
+    assert_raise StarRubyError do
+      palette_texture.render_in_perspective(target_texture)
+    end
+    # render_line
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.render_line(1, 2, 3, 4, Color.new(1, 2, 3, 4))
+    assert_raise StarRubyError do
+      palette_texture.render_line(1, 2, 3, 4, Color.new(1, 2, 3, 4))
+    end
+    # render_pixel
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.render_pixel(1, 2, Color.new(1, 2, 3, 4))
+    assert_raise StarRubyError do
+      palette_texture.render_pixel(1, 2, Color.new(1, 2, 3, 4))
+    end
+    # render_rect
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.render_rect(1, 2, 3, 4, Color.new(1, 2, 3, 4))
+    assert_raise StarRubyError do
+      palette_texture.render_rect(1, 2, 3, 4, Color.new(1, 2, 3, 4))
+    end
+    # render_text
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.render_text("text", 0, 0, font, Color.new(1, 2, 3, 4))
+    assert_raise StarRubyError do
+      palette_texture.render_text("text", 0, 0, font, Color.new(1, 2, 3, 4))
+    end
+    # render_texture
+    normal_texture  = orig_normal_texture.dup
+    palette_texture = orig_palette_texture.dup
+    normal_texture.render_texture(target_texture, 0, 0)
+    assert_raise StarRubyError do
+      palette_texture.render_texture(target_texture, 0, 0)
+    end
+  end
   
   def test_change_palette_original_palette
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     orig_texture = texture.dup
     texture.change_palette!(texture.palette)
     texture.height.times do |j|
@@ -1450,7 +1545,7 @@ class TestTexture < Test::Unit::TestCase
         assert_equal orig_texture[i, j], texture[i, j], [i, j].inspect
       end
     end
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     texture2 = texture.change_palette(texture.palette)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -1460,7 +1555,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_null_palette
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     size = texture.palette.size
     texture.change_palette!([])
     assert_equal ([Color.new(0, 0, 0, 0)] * size), texture.palette
@@ -1469,7 +1564,7 @@ class TestTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture[i, j]
       end
     end
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     orig_texture = texture.dup
     texture2 = texture.change_palette([])
     assert_equal orig_texture.palette, texture.palette
@@ -1483,7 +1578,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_small_palette
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     size = texture.palette.size
     assert_equal Color.new(0x79, 0x03, 0x00, 0xff), texture.palette[1]
     assert_equal Color.new(0x79, 0x03, 0x00, 0xff), texture[93, 8]
@@ -1500,7 +1595,7 @@ class TestTexture < Test::Unit::TestCase
     assert_equal Color.new(1, 2, 3, 4), texture[0, 0]
     assert_equal Color.new(5, 6, 7, 8), texture[93, 8]
     assert_equal Color.new(9, 10, 11, 12), texture[81, 55]
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     orig_texture = texture.dup
     texture2 = texture.change_palette([Color.new(1, 2, 3, 4),
                                        Color.new(5, 6, 7, 8),
@@ -1521,7 +1616,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_big_palette
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     size = texture.palette.size
     texture.change_palette!([Color.new(0x24, 0x3f, 0x6a, 0x88)] * 512)
     assert_equal size, texture.palette.size
@@ -1530,7 +1625,7 @@ class TestTexture < Test::Unit::TestCase
         assert_equal Color.new(0x24, 0x3f, 0x6a, 0x88), texture[i, j]
       end
     end
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     orig_texture = texture.dup
     texture2 = texture.change_palette([Color.new(0x24, 0x3f, 0x6a, 0x88)] * 512)
     assert_equal orig_texture.palette, texture.palette
@@ -1543,7 +1638,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_without_palette
-    texture = Texture.load("images/ruby")
+    texture = Texture.load("images/ruby", :palette => true)
     assert_raise StarRubyError do
       texture.change_palette!([])
     end
@@ -1553,7 +1648,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_frozen
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     texture.freeze
     assert_raise FrozenError do
       texture.change_palette!([])
@@ -1562,7 +1657,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_disposed
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     texture.dispose
     assert_raise RuntimeError do
       texture.change_palette!([])
@@ -1573,7 +1668,7 @@ class TestTexture < Test::Unit::TestCase
   end
 
   def test_change_palette_type
-    texture = Texture.load("images/ruby8")
+    texture = Texture.load("images/ruby8", :palette => true)
     assert_raise TypeError do
       texture.change_palette!(false)
     end

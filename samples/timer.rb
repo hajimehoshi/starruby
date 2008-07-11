@@ -20,4 +20,3 @@ Game.run(320, 240, :timer => "Timer") do |game|
   s.render_text("Frames: #{counter}",              8, 8 + 32 * (i += 1), font, white)
   s.render_text("Ticks: #{Game.ticks}",            8, 8 + 32 * (i += 1), font, white)
 end
-

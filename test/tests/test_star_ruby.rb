@@ -5,7 +5,7 @@ require "starruby"
 class TestStarRuby < Test::Unit::TestCase
 
   def test_version
-    assert_equal "0.2.0", StarRuby::VERSION
+    assert_equal "0.3.0", StarRuby::VERSION
     assert StarRuby::VERSION.frozen?
   end
 

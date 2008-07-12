@@ -26,8 +26,17 @@ typedef struct {
   double realFps;
   GameTimer timer;
   bool isWindowClosing;
+  bool isDisposed;
   bool isTerminated; // backward compatibility
 } Game;
+
+inline static void
+CheckDisposed(Game* game)
+{
+  if (game->isDisposed)
+    rb_raise(rb_eRuntimeError,
+             "can't modify disposed StarRuby::Game");
+}
 
 static VALUE Game_s_current(VALUE);
 int
@@ -98,7 +107,7 @@ Game_s_new(int argc, VALUE* argv, VALUE self)
   else
     Check_Type(rbOptions, T_HASH);
   VALUE args[] = {rbWidth, rbHeight, rbOptions};
-  volatile VALUE rbGame = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
+  volatile VALUE rbGame = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);;
   rb_iv_set(self, "current", rbGame);
   return rbGame;
 }
@@ -236,6 +245,7 @@ Game_alloc(VALUE klass)
   game->timer.before2 = game->timer.before2;
   game->timer.counter = 0;
   game->isWindowClosing = false;
+  game->isDisposed = false;
   game->isTerminated = false;
   return Data_Wrap_Struct(klass, 0, Game_free, game);
 }
@@ -355,6 +365,7 @@ Game_dispose(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  game->isDisposed = true;
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   if (!NIL_P(rbScreen)) {
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
@@ -370,6 +381,7 @@ Game_fps(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   return INT2NUM(game->fps);
 }
 
@@ -378,6 +390,7 @@ Game_fps_eq(VALUE self, VALUE rbFps)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   game->fps = NUM2INT(rbFps);
   return rbFps;
 }
@@ -387,24 +400,34 @@ Game_real_fps(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   return rb_float_new(game->realFps);
 }
 
 static VALUE
 Game_screen(VALUE self)
 {
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   return rb_iv_get(self, "screen");
 }
 
 static VALUE
 Game_title(VALUE self)
 {
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   return rb_iv_get(self, "title");
 }
 
 static VALUE
 Game_title_eq(VALUE self, VALUE rbTitle)
 {
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   Check_Type(rbTitle, T_STRING);
   if (SDL_WasInit(SDL_INIT_VIDEO))
     SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
@@ -416,6 +439,7 @@ Game_update_screen(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   Texture* texture;
@@ -509,6 +533,7 @@ Game_update_state(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   SDL_Event event;
   game->isWindowClosing = (SDL_PollEvent(&event) && event.type == SDL_QUIT);
   strb_UpdateAudio();
@@ -521,6 +546,7 @@ Game_wait(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   GameTimer* gameTimer = &(game->timer);
   unsigned int fps = game->fps;
   Uint32 now;
@@ -549,6 +575,7 @@ Game_window_closing(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   return game->isWindowClosing ? Qtrue : Qfalse;
 }
 
@@ -557,6 +584,7 @@ Game_window_scale(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
   return INT2NUM(game->windowScale);
 }
 
@@ -581,10 +609,10 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
   rb_define_method(rb_cGame, "dispose",         Game_dispose,       0);
-  rb_define_method(rb_cGame, "screen",          Game_screen,        0);
   rb_define_method(rb_cGame, "fps",             Game_fps,           0);
   rb_define_method(rb_cGame, "fps=",            Game_fps_eq,        1);
   rb_define_method(rb_cGame, "real_fps",        Game_real_fps,      0);
+  rb_define_method(rb_cGame, "screen",          Game_screen,        0);
   rb_define_method(rb_cGame, "title",           Game_title,         0);
   rb_define_method(rb_cGame, "title=",          Game_title_eq,      1);
   rb_define_method(rb_cGame, "update_screen",   Game_update_screen, 0);

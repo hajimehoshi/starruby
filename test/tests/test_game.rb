@@ -80,6 +80,44 @@ class TestGame < Test::Unit::TestCase
     end
   end
 
+  def test_dispose
+    g = Game.new(320, 240)
+    g.dispose
+    assert_raise RuntimeError do
+      g.fps
+    end
+    assert_raise RuntimeError do
+      g.fps = 30
+    end
+    assert_raise RuntimeError do
+      g.real_fps
+    end
+    assert_raise RuntimeError do
+      g.screen
+    end
+    assert_raise RuntimeError do
+      g.title
+    end
+    assert_raise RuntimeError do
+      g.title = "foo"
+    end
+    assert_raise RuntimeError do
+      g.update_screen
+    end
+    assert_raise RuntimeError do
+      g.update_state
+    end
+    assert_raise RuntimeError do
+      g.wait
+    end
+    assert_raise RuntimeError do
+      g.window_closing?
+    end
+    assert_raise RuntimeError do
+      g.window_scale
+    end
+  end
+
   def test_run
     assert_nil Game.current
     called = false

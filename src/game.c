@@ -377,6 +377,14 @@ Game_dispose(VALUE self)
 }
 
 static VALUE
+Game_disposed(VALUE self)
+{
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  return game->isDisposed ? Qtrue : Qfalse;
+}
+
+static VALUE
 Game_fps(VALUE self)
 {
   Game* game;
@@ -609,6 +617,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
   rb_define_method(rb_cGame, "dispose",         Game_dispose,       0);
+  rb_define_method(rb_cGame, "disposed?",       Game_disposed,      0);
   rb_define_method(rb_cGame, "fps",             Game_fps,           0);
   rb_define_method(rb_cGame, "fps=",            Game_fps_eq,        1);
   rb_define_method(rb_cGame, "real_fps",        Game_real_fps,      0);

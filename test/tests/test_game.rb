@@ -12,8 +12,12 @@ class TestGame < Test::Unit::TestCase
       assert_equal "", g.title
       assert_equal 30, g.fps
       assert_equal 1, g.window_scale
+      assert_equal false, g.disposed?
     ensure
-      g.dispose if g
+      if g
+        g.dispose
+        assert_equal true, g.disposed?
+      end
     end
   end
 
@@ -82,7 +86,9 @@ class TestGame < Test::Unit::TestCase
 
   def test_dispose
     g = Game.new(320, 240)
+    assert_equal false, g.disposed?
     g.dispose
+    assert_equal true, g.disposed?
     assert_raise RuntimeError do
       g.fps
     end
@@ -134,7 +140,7 @@ class TestGame < Test::Unit::TestCase
     assert called
     assert_nil Game.current
   end
-  
+
   def test_run_error
     assert_nil Game.current
     begin

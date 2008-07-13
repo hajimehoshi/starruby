@@ -122,6 +122,8 @@ class TestGame < Test::Unit::TestCase
     assert_raise RuntimeError do
       g.window_scale
     end
+  ensure
+    g.dispose if g
   end
 
   def test_run

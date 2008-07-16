@@ -544,7 +544,6 @@ Game_update_state(VALUE self)
   CheckDisposed(game);
   SDL_Event event;
   game->isWindowClosing = (SDL_PollEvent(&event) && event.type == SDL_QUIT);
-  strb_UpdateAudio();
   strb_UpdateInput();
   return Qnil;
 }

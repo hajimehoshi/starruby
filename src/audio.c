@@ -6,10 +6,9 @@
 
 static bool isEnabled = false;
 static bool bgmLoop = false;
-static Uint32 bgmPosition = 0;
 static int bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
-static Uint32 sdlPreviousTicks = 0;
+static Uint32 sdlBgmStartTicks = 0;
 
 static volatile VALUE rbChunkCache;
 static volatile VALUE rbMusicCache;
@@ -23,7 +22,10 @@ static volatile VALUE symbol_volume;
 static VALUE
 Audio_bgm_position(VALUE self)
 {
-  return LONG2NUM(bgmPosition);
+  if (isEnabled && Mix_PlayingMusic())
+    return LONG2NUM(SDL_GetTicks() - sdlBgmStartTicks);
+  else
+    return Qnil;
 }
 
 static VALUE
@@ -64,11 +66,12 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 
   int time   = 0;
   int volume = 255;
+  long bgmPosition = 0;
 
   Check_Type(rbOptions, T_HASH);
   bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position)))
-    bgmPosition = MAX(NUM2INT(val), 0);
+    bgmPosition = MAX(NUM2LONG(val), 0);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
@@ -89,10 +92,11 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   }
   Mix_RewindMusic();
   if (bgmPosition) {
-    bgmPosition = (bgmPosition / 2000 * 2000);
-    if (Mix_SetMusicPosition(bgmPosition / 1000))
+    bgmPosition = (bgmPosition / 500 * 500);
+    if (Mix_SetMusicPosition(bgmPosition / 1000.0))
       rb_raise_sdl_mix_error();
   }
+  sdlBgmStartTicks = SDL_GetTicks() - bgmPosition;
   
   return Qnil;
 }
@@ -233,10 +237,10 @@ static void
 SdlMusicFinished(void)
 {
   if (sdlBgm && bgmLoop) {
-    bgmPosition = 0;
+    sdlBgmStartTicks = SDL_GetTicks();
     if (isEnabled)
       if (Mix_PlayMusic(sdlBgm, 0))
-	rb_raise_sdl_mix_error();
+        rb_raise_sdl_mix_error();
   }
 }
 
@@ -290,17 +294,6 @@ strb_InitializeAudio(VALUE rb_mStarRuby)
   rbChunkCache = rb_iv_set(rb_mAudio, "chunk_cache", rb_hash_new());
 
   return rb_mAudio;
-}
-
-void
-strb_UpdateAudio(void)
-{
-  Uint32 now = SDL_GetTicks();
-  if (isEnabled && Mix_PlayingMusic())
-    bgmPosition += now - sdlPreviousTicks;
-  else
-    bgmPosition = 0;
-  sdlPreviousTicks = now;
 }
 
 static int

@@ -80,7 +80,6 @@ VALUE strb_InitializeInput(VALUE rb_mStarRuby);
 VALUE strb_InitializeStarRubyError(VALUE rb_mStarRuby);
 VALUE strb_InitializeTexture(VALUE rb_mStarRuby);
 
-void strb_UpdateAudio(void);
 void strb_UpdateInput(void);
 
 void strb_FinalizeAudio(void);

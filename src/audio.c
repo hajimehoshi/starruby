@@ -92,7 +92,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   }
   Mix_RewindMusic();
   if (bgmPosition) {
-    bgmPosition = (bgmPosition / 500 * 500);
+    bgmPosition = (bgmPosition / 1000 * 1000);
     if (Mix_SetMusicPosition(bgmPosition / 1000.0))
       rb_raise_sdl_mix_error();
   }

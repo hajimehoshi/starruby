@@ -15,9 +15,9 @@ Game.run(320, 240, :title => "Audio") do |game|
   sound_alpha = 128
   keys = Input.keys(:keyboard, :duration => 1)
   break if keys.include?(:escape)
+  bgm_position = Audio.bgm_position
   if keys.include?(:m)
     if Audio.playing_bgm?
-      bgm_position = Audio.bgm_position
       Audio.stop_bgm
     else
       Audio.play_bgm("sounds/music",
@@ -37,7 +37,7 @@ Game.run(320, 240, :title => "Audio") do |game|
                    :scale_y => 4)
   text = "Press 'm' to #{Audio.playing_bgm? ? 'stop':'play'} music"
   s.render_text(text, 96, 32, font, white)
-  s.render_text("Position: #{Audio.bgm_position}", 96, 48, font, white)
+  s.render_text("Position: #{bgm_position}", 96, 48, font, white)
   s.render_texture(sound_texture, 16, 80,
                    :alpha => sound_alpha,
                    :scale_x => 4,

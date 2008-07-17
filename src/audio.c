@@ -9,6 +9,7 @@ static bool bgmLoop = false;
 static int bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlBgmStartTicks = 0;
+static Uint32 sdlBgmLastPausedPosition = 0;
 
 static volatile VALUE rbChunkCache;
 static volatile VALUE rbMusicCache;
@@ -22,10 +23,13 @@ static volatile VALUE symbol_volume;
 static VALUE
 Audio_bgm_position(VALUE self)
 {
-  if (isEnabled && Mix_PlayingMusic())
-    return LONG2NUM(SDL_GetTicks() - sdlBgmStartTicks);
-  else
+  if (isEnabled) {
+    if (Mix_PlayingMusic())
+      sdlBgmLastPausedPosition = SDL_GetTicks() - sdlBgmStartTicks;
+    return LONG2NUM(sdlBgmLastPausedPosition);
+  } else {
     return Qnil;
+  }
 }
 
 static VALUE
@@ -64,8 +68,8 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     rb_hash_aset(rbMusicCache, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
   }
 
-  int time   = 0;
-  int volume = 255;
+  int time         = 0;
+  int volume       = 255;
   long bgmPosition = 0;
 
   Check_Type(rbOptions, T_HASH);
@@ -74,6 +78,8 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     bgmPosition = MAX(NUM2LONG(val), 0);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
+  if (bgmPosition)
+    time = MAX(time, 100);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
     volume = NUM2INT(val);
     if (volume < 0 || 256 <= volume)
@@ -83,7 +89,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   Audio_bgm_volume_eq(self, INT2NUM(volume));
   if (!isEnabled)
     return Qnil;
-  if (time <= 50) {
+  if (time < 50) {
     if (Mix_PlayMusic(sdlBgm, 0))
       rb_raise_sdl_mix_error();
   } else {
@@ -92,7 +98,6 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   }
   Mix_RewindMusic();
   if (bgmPosition) {
-    bgmPosition = (bgmPosition / 1000 * 1000);
     if (Mix_SetMusicPosition(bgmPosition / 1000.0))
       rb_raise_sdl_mix_error();
   }

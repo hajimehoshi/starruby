@@ -91,8 +91,11 @@ class TestTexture < Test::Unit::TestCase
     assert_raise TypeError do
       Texture.load(nil)
     end
+    assert_raise TypeError do
+      Texture.load("images/ruby", :io_length => false)
+    end
   end
-  
+
   def test_load_various_png
     texture8 = Texture.load("images/ruby8")
     assert_equal 0, texture8[1, 1].alpha
@@ -136,10 +139,75 @@ class TestTexture < Test::Unit::TestCase
         assert_equal orig_texture[i, j], texture[i, j]
       end
     end
+    texture = open("images/ruby.png") do |io|
+      data = io.read
+      Texture.load(StringIO.new(data), :io_length => data.size)
+    end
+    assert_equal orig_texture.width, texture.width
+    assert_equal orig_texture.height, texture.height
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal orig_texture[i, j], texture[i, j]
+      end
+    end
+  end
+
+  def test_load_io_cat
+    path1 = "images/ruby.png"
+    path2 = "images/ruby8.png"
+    orig_texture1 = Texture.load(path1)
+    orig_texture2 = Texture.load(path2)
+    data = open(path1){|fp| fp.read} + open(path2){|fp| fp.read}
+    io = StringIO.new(data)
+    texture1 = Texture.load(io, :io_length => FileTest.size(path1))
+    texture2 = Texture.load(io, :io_length => FileTest.size(path2))
+    io.close
+    assert_equal orig_texture1.width, texture1.width
+    assert_equal orig_texture1.height, texture1.height
+    texture1.height.times do |j|
+      texture1.width.times do |i|
+        assert_equal orig_texture1[i, j], texture1[i, j]
+      end
+    end
+    assert_equal orig_texture2.width, texture2.width
+    assert_equal orig_texture2.height, texture2.height
+    texture2.height.times do |j|
+      texture2.width.times do |i|
+        assert_equal orig_texture2[i, j], texture2[i, j]
+      end
+    end
+  end
+
+  def test_load_io_error
     assert_raise StarRubyError do
       open("images/ruby.png") do |io|
         io.getc
         Texture.load(io)
+      end
+    end
+    assert_raise StarRubyError do
+      Texture.load(StringIO.new(""))
+    end
+    assert_raise StarRubyError do
+      Texture.load(StringIO.new("aaaaaaa"))
+    end
+    assert_raise StarRubyError do
+      Texture.load(StringIO.new("aaaaaaaa"))
+    end
+    assert_raise StarRubyError do
+      open("images/ruby.png") do |io|
+        data = io.read
+        Texture.load(StringIO.new(data), :io_length => data.size - 1)
+      end
+    end
+    assert_raise ArgumentError do
+      open("images/ruby.png") do |io|
+        Texture.load(StringIO.new(io.read), :io_length => -1)
+      end
+    end
+    assert_raise ArgumentError do
+      open("images/ruby.png") do |io|
+        Texture.load(StringIO.new(io.read), :io_length => 8)
       end
     end
   end

@@ -41,6 +41,7 @@ static volatile VALUE symbol_center_y;
 static volatile VALUE symbol_height;
 static volatile VALUE symbol_intersection_x;
 static volatile VALUE symbol_intersection_y;
+static volatile VALUE symbol_io_length;
 static volatile VALUE symbol_loop;
 static volatile VALUE symbol_mask;
 static volatile VALUE symbol_none;
@@ -181,7 +182,6 @@ ReadPng(png_structp pngPtr, png_bytep buf, png_size_t size)
     MEMCPY(buf, &(pngBuffer->bytes[pngBuffer->offset]), char, size);
     pngBuffer->offset += size;
   } else {
-    png_error(pngPtr, "buffer overflow");
     rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG data");
   }
 }
@@ -194,9 +194,23 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
   bool hasPalette = RTEST(rb_hash_aref(rbOptions, symbol_palette));
+  unsigned long ioLength = 0;
+  volatile VALUE val;
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_io_length))) {
+    if (RTEST(rb_obj_is_kind_of(val, rb_cNumeric))) {
+      if (RTEST(rb_funcall(val, rb_intern("<="), 1, INT2NUM(0))))
+        rb_raise(rb_eArgError, "invalid io_length");
+      ioLength = NUM2ULONG(val);
+      if (ioLength <= 8)
+        rb_raise(rb_eArgError, "invalid io_length");
+    } else {
+      rb_raise(rb_eTypeError, "wrong argument type %s (expected Numeric)",
+               rb_obj_classname(rbPathOrIO));
+    }
+  }
 
-  png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
-                                              NULL, NULL, NULL);
+  png_structp pngPtr =
+    png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   if (!pngPtr)
     rb_raise(strb_GetStarRubyErrorClass(), "PNG error");
   png_infop infoPtr = png_create_info_struct(pngPtr);
@@ -222,6 +236,11 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
              rb_obj_classname(rbPathOrIO));
   }
   volatile VALUE rbHeader = rb_funcall(rbIO, rb_intern("read"), 1, INT2NUM(8));
+  if (NIL_P(rbHeader)) {
+    if (!NIL_P(rbIOToClose))
+      rb_funcall(rbIOToClose, rb_intern("close"), 0);
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+  }
   png_byte header[8];
   MEMCPY(header, StringValuePtr(rbHeader), png_byte, 8);
   if (png_sig_cmp(header, 0, 8)) {
@@ -229,7 +248,10 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
     rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
   }
-  volatile VALUE rbData = rb_funcall(rbIO, rb_intern("read"), 0);
+  volatile VALUE rbData =
+    ioLength == 0 ?
+    rb_funcall(rbIO, rb_intern("read"), 0) :
+    rb_funcall(rbIO, rb_intern("read"), 1, ULONG2NUM(ioLength - 8));
   PngBuffer pngBuffer = {
     .bytes = StringValuePtr(rbData),
     .size = RSTRING_LEN(rbData),
@@ -1775,6 +1797,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   symbol_height         = ID2SYM(rb_intern("height"));
   symbol_intersection_x = ID2SYM(rb_intern("intersection_x"));
   symbol_intersection_y = ID2SYM(rb_intern("intersection_y"));
+  symbol_io_length      = ID2SYM(rb_intern("io_length"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
   symbol_mask           = ID2SYM(rb_intern("mask"));
   symbol_none           = ID2SYM(rb_intern("none"));

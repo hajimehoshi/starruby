@@ -79,7 +79,9 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
   if (bgmPosition)
-    time = MAX(time, 100);
+    time = MAX(time, 50);
+  else if (time < 50)
+    time = 0;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
     volume = NUM2INT(val);
     if (volume < 0 || 256 <= volume)
@@ -89,18 +91,8 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   Audio_bgm_volume_eq(self, INT2NUM(volume));
   if (!isEnabled)
     return Qnil;
-  if (time < 50) {
-    if (Mix_PlayMusic(sdlBgm, 0))
-      rb_raise_sdl_mix_error();
-  } else {
-    if (Mix_FadeInMusic(sdlBgm, 0, time))
-      rb_raise_sdl_mix_error();
-  }
-  Mix_RewindMusic();
-  if (bgmPosition) {
-    if (Mix_SetMusicPosition(bgmPosition / 1000.0))
-      rb_raise_sdl_mix_error();
-  }
+  if (Mix_FadeInMusicPos(sdlBgm, 0, time, bgmPosition))
+    rb_raise_sdl_mix_error();
   sdlBgmStartTicks = SDL_GetTicks() - bgmPosition;
   
   return Qnil;
@@ -219,17 +211,18 @@ Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
 
+  if (!isEnabled)
+    return Qnil;
+
   int time = 0;
   
   Check_Type(rbOptions, T_HASH);
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
+  time = MAX(time, 50);
 
-  if (!isEnabled)
-    return Qnil;
-  
-  if (time <= 50)
+  if (time < 50)
     Mix_HaltMusic();
   else
     Mix_FadeOutMusic(time);

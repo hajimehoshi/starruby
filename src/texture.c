@@ -167,41 +167,69 @@ ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
   return true;
 }
 
+typedef struct {
+  char* bytes;
+  unsigned long size;
+  unsigned long offset;
+} PngBuffer;
+
+static void
+ReadPng(png_structp pngPtr, png_bytep buf, png_size_t size)
+{
+  PngBuffer* pngBuffer = (PngBuffer*)png_get_io_ptr(pngPtr);
+  if (pngBuffer->offset + size <= pngBuffer->size) {
+    MEMCPY(buf, &(pngBuffer->bytes[pngBuffer->offset]), char, size);
+    pngBuffer->offset += size;
+  } else {
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+  }
+}
+
 static VALUE
 Texture_s_load(int argc, VALUE* argv, VALUE self)
 {
-  volatile VALUE rbPath, rbOptions;
-  rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
+  volatile VALUE rbPathOrIO, rbIO, rbOptions;
+  rb_scan_args(argc, argv, "11", &rbPathOrIO, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
   bool hasPalette = RTEST(rb_hash_aref(rbOptions, symbol_palette));
-  volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
-  char* path = StringValuePtr(rbCompletePath);
-  FILE* fp = fopen(path, "rb");
-  png_byte header[8];
-  fread(&header, 1, 8, fp);
-  if (png_sig_cmp(header, 0, 8))
-    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file: %s", path);
+
   png_structp pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
                                               NULL, NULL, NULL);
-  if (!pngPtr) {
-    fclose(fp);
-    rb_raise(strb_GetStarRubyErrorClass(), "PNG error: %s", path);
-  }
+  if (!pngPtr)
+    rb_raise(strb_GetStarRubyErrorClass(), "PNG error");
   png_infop infoPtr = png_create_info_struct(pngPtr);
   if (!infoPtr) {
     png_destroy_read_struct(&pngPtr, NULL, NULL);
-    fclose(fp);
-    rb_raise(strb_GetStarRubyErrorClass(), "PNG error: %s", path);
+    rb_raise(strb_GetStarRubyErrorClass(), "PNG error");
   }
   png_infop endInfo = png_create_info_struct(pngPtr);
   if (!endInfo) {
     png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
-    fclose(fp);
-    rb_raise(strb_GetStarRubyErrorClass(), "PNG error: %s", path);
+    rb_raise(strb_GetStarRubyErrorClass(), "PNG error");
   }
 
-  png_init_io(pngPtr, fp);
+  if (TYPE(rbPathOrIO) == T_STRING) {
+    volatile VALUE rbCompletePath = strb_GetCompletePath(rbPathOrIO, true);
+    rbIO = rb_funcall(rb_mKernel, rb_intern("open"), 1, rbCompletePath);
+  } else if (rb_respond_to(rbPathOrIO, rb_intern("read"))) {
+    rbIO = rbPathOrIO;
+  } else {
+    rb_raise(rb_eTypeError, "wrong argument type %s (expected String or IO)",
+             rb_obj_classname(rbPathOrIO));
+  }
+  volatile VALUE rbHeader = rb_funcall(rbIO, rb_intern("read"), 1, INT2NUM(8));
+  png_byte header[8];
+  MEMCPY(header, StringValuePtr(rbHeader), png_byte, 8);
+  if (png_sig_cmp(header, 0, 8))
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+  volatile VALUE rbData = rb_funcall(rbIO, rb_intern("read"), 0);
+  PngBuffer pngBuffer = {
+    .bytes = StringValuePtr(rbData),
+    .size = RSTRING_LEN(rbData),
+    .offset = 0,
+  };
+  png_set_read_fn(pngPtr, (png_voidp)(&pngBuffer), (png_rw_ptr)ReadPng);
   png_set_sig_bytes(pngPtr, 8);
   png_read_info(pngPtr, infoPtr);
   png_uint_32 width, height;
@@ -210,9 +238,8 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
                &bitDepth, &colorType, &interlaceType, NULL, NULL);
   if (interlaceType != PNG_INTERLACE_NONE) {
     png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-    fclose(fp);
     rb_raise(strb_GetStarRubyErrorClass(),
-             "not supported interlacing PNG image: %s", path);
+             "not supported interlacing PNG image");
   }
 
   volatile VALUE rbTexture =
@@ -281,7 +308,6 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   }
   png_read_end(pngPtr, endInfo);
   png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-  fclose(fp);
 
   return rbTexture;
 }

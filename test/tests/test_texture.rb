@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require "stringio"
 require "starruby"
 include StarRuby
 
@@ -123,6 +124,22 @@ class TestTexture < Test::Unit::TestCase
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal orig_texture[i, j], texture[i, j]
+      end
+    end
+    texture = open("images/ruby.png") do |io|
+      Texture.load(StringIO.new(io.read))
+    end
+    assert_equal orig_texture.width, texture.width
+    assert_equal orig_texture.height, texture.height
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal orig_texture[i, j], texture[i, j]
+      end
+    end
+    assert_raise StarRubyError do
+      open("images/ruby.png") do |io|
+        io.getc
+        Texture.load(io)
       end
     end
   end

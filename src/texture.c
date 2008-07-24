@@ -181,14 +181,15 @@ ReadPng(png_structp pngPtr, png_bytep buf, png_size_t size)
     MEMCPY(buf, &(pngBuffer->bytes[pngBuffer->offset]), char, size);
     pngBuffer->offset += size;
   } else {
-    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+    png_error(pngPtr, "buffer overflow");
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG data");
   }
 }
 
 static VALUE
 Texture_s_load(int argc, VALUE* argv, VALUE self)
 {
-  volatile VALUE rbPathOrIO, rbIO, rbOptions;
+  volatile VALUE rbPathOrIO, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPathOrIO, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
@@ -209,9 +210,11 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
     rb_raise(strb_GetStarRubyErrorClass(), "PNG error");
   }
 
+  volatile VALUE rbIO, rbIOToClose = Qnil;
   if (TYPE(rbPathOrIO) == T_STRING) {
     volatile VALUE rbCompletePath = strb_GetCompletePath(rbPathOrIO, true);
-    rbIO = rb_funcall(rb_mKernel, rb_intern("open"), 1, rbCompletePath);
+    rbIOToClose = rbIO =
+      rb_funcall(rb_mKernel, rb_intern("open"), 1, rbCompletePath);
   } else if (rb_respond_to(rbPathOrIO, rb_intern("read"))) {
     rbIO = rbPathOrIO;
   } else {
@@ -221,8 +224,11 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbHeader = rb_funcall(rbIO, rb_intern("read"), 1, INT2NUM(8));
   png_byte header[8];
   MEMCPY(header, StringValuePtr(rbHeader), png_byte, 8);
-  if (png_sig_cmp(header, 0, 8))
+  if (png_sig_cmp(header, 0, 8)) {
+    if (!NIL_P(rbIOToClose))
+      rb_funcall(rbIOToClose, rb_intern("close"), 0);
     rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+  }
   volatile VALUE rbData = rb_funcall(rbIO, rb_intern("read"), 0);
   PngBuffer pngBuffer = {
     .bytes = StringValuePtr(rbData),
@@ -238,6 +244,8 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
                &bitDepth, &colorType, &interlaceType, NULL, NULL);
   if (interlaceType != PNG_INTERLACE_NONE) {
     png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
+    if (!NIL_P(rbIOToClose))
+      rb_funcall(rbIOToClose, rb_intern("close"), 0);
     rb_raise(strb_GetStarRubyErrorClass(),
              "not supported interlacing PNG image");
   }
@@ -308,7 +316,8 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   }
   png_read_end(pngPtr, endInfo);
   png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-
+  if (!NIL_P(rbIOToClose))
+    rb_funcall(rbIOToClose, rb_intern("close"), 0);
   return rbTexture;
 }
 

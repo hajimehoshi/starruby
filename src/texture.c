@@ -239,14 +239,14 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   if (NIL_P(rbHeader)) {
     if (!NIL_P(rbIOToClose))
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
-    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file (none header)");
   }
   png_byte header[8];
   MEMCPY(header, StringValuePtr(rbHeader), png_byte, 8);
   if (png_sig_cmp(header, 0, 8)) {
     if (!NIL_P(rbIOToClose))
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
-    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file");
+    rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file (invalid header)");
   }
   volatile VALUE rbData =
     ioLength == 0 ?

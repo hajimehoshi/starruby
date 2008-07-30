@@ -63,8 +63,8 @@ void
 Init_starruby(void)
 {
   volatile VALUE rb_mStarRuby = rb_define_module("StarRuby");
-  rb_eStarRubyError = rb_define_class_under(rb_mStarRuby, "StarRubyError",
-                                            rb_eStandardError);
+  rb_eStarRubyError =
+    rb_define_class_under(rb_mStarRuby, "StarRubyError", rb_eStandardError);
 
   if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
     rb_raise_sdl_error();

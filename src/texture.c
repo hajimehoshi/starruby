@@ -900,7 +900,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
 
 static VALUE
 Texture_render_line(VALUE self,
-                    VALUE rbX1, VALUE rbY1, VALUE rbX2, VALUE rbY2, VALUE rbColor)
+                    VALUE rbX1, VALUE rbY1, VALUE rbX2, VALUE rbY2,
+                    VALUE rbColor)
 {
   rb_check_frozen(self);
   int x1 = NUM2INT(rbX1);
@@ -1015,7 +1016,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
-  volatile VALUE rbTextTexture = rb_class_new_instance(2, RARRAY_PTR(rbSize), rb_cTexture);
+  volatile VALUE rbTextTexture =
+    rb_class_new_instance(2, RARRAY_PTR(rbSize), rb_cTexture);
   Texture* textTexture;
   Data_Get_Struct(rbTextTexture, Texture, textTexture);
   Color color;
@@ -1023,12 +1025,14 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
 
   SDL_Surface* textSurfaceRaw;
   if (antiAlias)
-    textSurfaceRaw = TTF_RenderUTF8_Shaded(font->sdlFont, text,
-                                           (SDL_Color){255, 255, 255, 255},
-                                           (SDL_Color){0, 0, 0, 0});
+    textSurfaceRaw =
+      TTF_RenderUTF8_Shaded(font->sdlFont, text,
+                            (SDL_Color){255, 255, 255, 255},
+                            (SDL_Color){0, 0, 0, 0});
   else
-    textSurfaceRaw = TTF_RenderUTF8_Solid(font->sdlFont, text,
-                                          (SDL_Color){255, 255, 255, 255});
+    textSurfaceRaw =
+      TTF_RenderUTF8_Solid(font->sdlFont, text,
+                           (SDL_Color){255, 255, 255, 255});
   if (!textSurfaceRaw)
     rb_raise_sdl_ttf_error();
   SDL_PixelFormat format = {
@@ -1066,8 +1070,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
 }
 
 static int
-AssignRenderingTextureOptions_st(st_data_t key, st_data_t val,
-                                 RenderingTextureOptions* options)
+AssignRenderingTextureOptions(st_data_t key, st_data_t val,
+                              RenderingTextureOptions* options)
 {
   if (key == symbol_src_x) {
     options->srcX = NUM2INT(val);
@@ -1165,7 +1169,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       st_table* table = RHASH(rbOptions)->tbl;
       if (0 < table->num_entries) {
         volatile VALUE val;
-        st_foreach(table, AssignRenderingTextureOptions_st, (st_data_t)&options);
+        st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);
         if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
           options.srcWidth = srcTextureWidth - options.srcX;
         if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))

@@ -457,7 +457,8 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
         options->blurType = BLUR_TYPE_NONE;
       break;
     default:
-      rb_raise(rb_eTypeError, "wrong argument type %s (expected Color or Symbol)",
+      rb_raise(rb_eTypeError,
+               "wrong argument type %s (expected Color or Symbol)",
                rb_obj_classname(val));
       break;
     }
@@ -1036,7 +1037,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     .Bmask = 0x000000ff, .Amask = 0xff000000,
     .colorkey = 0, .alpha = 255,
   };
-  SDL_Surface* textSurface = SDL_ConvertSurface(textSurfaceRaw, &format, SDL_SWSURFACE);
+  SDL_Surface* textSurface =
+    SDL_ConvertSurface(textSurfaceRaw, &format, SDL_SWSURFACE);
   SDL_FreeSurface(textSurfaceRaw);
   textSurfaceRaw = NULL;
   if (!textSurface)
@@ -1062,24 +1064,6 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   Texture_dispose(rbTextTexture);
   return Qnil;
 }
-
-static const RenderingTextureOptions defaultOptions = {
-  .srcX       = 0,
-  .srcY       = 0,
-  .srcWidth   = -1,
-  .srcHeight  = -1,
-  .scaleX     = 1,
-  .scaleY     = 1,
-  .angle      = 0,
-  .centerX    = 0,
-  .centerY    = 0,
-  .alpha      = 255,
-  .blendType  = BLEND_TYPE_ALPHA,
-  .toneRed    = 0,
-  .toneGreen  = 0,
-  .toneBlue   = 0,
-  .saturation = 255,
-};
 
 static int
 AssignRenderingTextureOptions_st(st_data_t key, st_data_t val,
@@ -1157,9 +1141,23 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int dstTextureWidth  = dstTexture->width;
   int dstTextureHeight = dstTexture->height;
 
-  RenderingTextureOptions options = defaultOptions;
-  options.srcWidth  = srcTextureWidth;
-  options.srcHeight = srcTextureHeight;
+  RenderingTextureOptions options = {
+    .srcX       = 0,
+    .srcY       = 0,
+    .srcWidth   = srcTextureWidth,
+    .srcHeight  = srcTextureHeight,
+    .scaleX     = 1,
+    .scaleY     = 1,
+    .angle      = 0,
+    .centerX    = 0,
+    .centerY    = 0,
+    .alpha      = 255,
+    .blendType  = BLEND_TYPE_ALPHA,
+    .toneRed    = 0,
+    .toneGreen  = 0,
+    .toneBlue   = 0,
+    .saturation = 255,
+  };
 
   if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
     if (NIL_P(RHASH(rbOptions)->ifnone)) {
@@ -1222,7 +1220,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         options.saturation = NUM2INT(val);
     }
   } else if (!NIL_P(rbOptions)) {
-    Check_Type(rbOptions, T_HASH);      
+    Check_Type(rbOptions, T_HASH);
   }
 
   if (!ModifyRectInTexture(srcTexture,
@@ -1296,9 +1294,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               } else if (beta) {
                 if (dstAlpha < beta)
                   dst->color.alpha = beta;
-                dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
-                dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
-                dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
+                dst->color.red =
+                  ALPHA(src->color.red,   dst->color.red,   beta);
+                dst->color.green =
+                  ALPHA(src->color.green, dst->color.green, beta);
+                dst->color.blue =
+                  ALPHA(src->color.blue,  dst->color.blue,  beta);
               }
               src++;
               dst++;
@@ -1317,9 +1318,12 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               } else if (beta) {
                 if (dstAlpha < beta)
                   dst->color.alpha = beta;
-                dst->color.red   = ALPHA(src->color.red,   dst->color.red,   beta);
-                dst->color.green = ALPHA(src->color.green, dst->color.green, beta);
-                dst->color.blue  = ALPHA(src->color.blue,  dst->color.blue,  beta);
+                dst->color.red =
+                  ALPHA(src->color.red,   dst->color.red,   beta);
+                dst->color.green =
+                  ALPHA(src->color.green, dst->color.green, beta);
+                dst->color.blue =
+                  ALPHA(src->color.blue,  dst->color.blue,  beta);
               }
               src++;
               dst++;
@@ -1570,8 +1574,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             }
           }
         }
-      } else if ((srcI < srcX && srcDXX <= 0) || (srcX2 <= srcI && 0 <= srcDXX) ||
-                 (srcJ < srcY && srcDXY <= 0) || (srcY2 <= srcJ && 0 <= srcDXY)) {
+      } else if ((srcI < srcX && srcDXX <= 0) ||
+                 (srcX2 <= srcI && 0 <= srcDXX) ||
+                 (srcJ < srcY && srcDXY <= 0) ||
+                 (srcY2 <= srcJ && 0 <= srcDXY)) {
         break;
       }
     }
@@ -1642,8 +1648,8 @@ Texture_size(VALUE self)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  volatile VALUE rbSize = rb_assoc_new(INT2NUM(texture->width),
-                                       INT2NUM(texture->height));
+  volatile VALUE rbSize =
+    rb_assoc_new(INT2NUM(texture->width), INT2NUM(texture->height));
   OBJ_FREEZE(rbSize);
   return rbSize;
 }
@@ -1754,33 +1760,56 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   rb_define_private_method(rb_cTexture, "initialize", Texture_initialize, 2);
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
-  rb_define_method(rb_cTexture, "[]",              Texture_get_pixel,           2);
-  rb_define_method(rb_cTexture, "[]=",             Texture_set_pixel,           3);
-  rb_define_method(rb_cTexture, "change_hue",      Texture_change_hue,          1);
-  rb_define_method(rb_cTexture, "change_hue!",     Texture_change_hue_bang,     1);
-  rb_define_method(rb_cTexture, "change_palette",  Texture_change_palette,      1);
-  rb_define_method(rb_cTexture, "change_palette!", Texture_change_palette_bang, 1);
-  rb_define_method(rb_cTexture, "clear",           Texture_clear,               0);
-  rb_define_method(rb_cTexture, "dispose",         Texture_dispose,             0);
-  rb_define_method(rb_cTexture, "disposed?",       Texture_disposed,            0);
-  rb_define_method(rb_cTexture, "dump",            Texture_dump,                1);
-  rb_define_method(rb_cTexture, "fill",            Texture_fill,                1);
-  rb_define_method(rb_cTexture, "fill_rect",       Texture_fill_rect,           5);
-  rb_define_method(rb_cTexture, "height",          Texture_height,              0);
-  rb_define_method(rb_cTexture, "palette",         Texture_palette,             0);
+  rb_define_method(rb_cTexture, "[]",
+                   Texture_get_pixel, 2);
+  rb_define_method(rb_cTexture, "[]=",
+                   Texture_set_pixel, 3);
+  rb_define_method(rb_cTexture, "change_hue",
+                   Texture_change_hue, 1);
+  rb_define_method(rb_cTexture, "change_hue!",
+                   Texture_change_hue_bang, 1);
+  rb_define_method(rb_cTexture, "change_palette",
+                   Texture_change_palette, 1);
+  rb_define_method(rb_cTexture, "change_palette!",
+                   Texture_change_palette_bang, 1);
+  rb_define_method(rb_cTexture, "clear",
+                   Texture_clear, 0);
+  rb_define_method(rb_cTexture, "dispose",
+                   Texture_dispose, 0);
+  rb_define_method(rb_cTexture, "disposed?",
+                   Texture_disposed, 0);
+  rb_define_method(rb_cTexture, "dump",
+                   Texture_dump, 1);
+  rb_define_method(rb_cTexture, "fill",
+                   Texture_fill, 1);
+  rb_define_method(rb_cTexture, "fill_rect",
+                   Texture_fill_rect, 5);
+  rb_define_method(rb_cTexture, "height",
+                   Texture_height, 0);
+  rb_define_method(rb_cTexture, "palette",
+                   Texture_palette, 0);
   rb_define_method(rb_cTexture, "render_in_perspective",
                    Texture_render_in_perspective, -1);
-  rb_define_method(rb_cTexture, "render_line",     Texture_render_line,         5);
-  rb_define_method(rb_cTexture, "render_pixel",    Texture_render_pixel,        3);
-  rb_define_method(rb_cTexture, "render_rect",     Texture_render_rect,         5);
-  rb_define_method(rb_cTexture, "render_text",     Texture_render_text,         -1);
-  rb_define_method(rb_cTexture, "render_texture",  Texture_render_texture,      -1);
-  rb_define_method(rb_cTexture, "save",            Texture_save,                1);
-  rb_define_method(rb_cTexture, "size",            Texture_size,                0);
+  rb_define_method(rb_cTexture, "render_line",
+                   Texture_render_line, 5);
+  rb_define_method(rb_cTexture, "render_pixel",
+                   Texture_render_pixel, 3);
+  rb_define_method(rb_cTexture, "render_rect",
+                   Texture_render_rect, 5);
+  rb_define_method(rb_cTexture, "render_text",
+                   Texture_render_text, -1);
+  rb_define_method(rb_cTexture, "render_texture",
+                   Texture_render_texture, -1);
+  rb_define_method(rb_cTexture, "save",
+                   Texture_save, 1);
+  rb_define_method(rb_cTexture, "size",
+                   Texture_size, 0);
   rb_define_method(rb_cTexture, "transform_in_perspective",
                    Texture_transform_in_perspective, -1);
-  rb_define_method(rb_cTexture, "undump",          Texture_undump,              2);
-  rb_define_method(rb_cTexture, "width",           Texture_width,               0);
+  rb_define_method(rb_cTexture, "undump",
+                   Texture_undump, 2);
+  rb_define_method(rb_cTexture, "width",
+                   Texture_width, 0);
 
   symbol_add            = ID2SYM(rb_intern("add"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));

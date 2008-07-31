@@ -447,7 +447,6 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
       options->blurType = BLUR_TYPE_COLOR;
       Color color;
       strb_GetColorFromRubyValue(&color, val);
-      options->blurType  = BLUR_TYPE_COLOR;
       options->blurColor = color;
       break;
     case T_SYMBOL:

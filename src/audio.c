@@ -6,7 +6,7 @@
 
 static bool isEnabled = false;
 static bool bgmLoop = false;
-static int bgmVolume = 255;
+static uint8_t bgmVolume = 255;
 static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlBgmStartTicks = 0;
 static Uint32 sdlBgmLastPausedPosition = 0;
@@ -35,18 +35,19 @@ Audio_bgm_position(VALUE self)
 static VALUE
 Audio_bgm_volume(VALUE self)
 {
-  return INT2NUM(bgmVolume);
+  return INT2FIX(bgmVolume);
 }
 
 static VALUE
 Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
 {
-  bgmVolume = NUM2INT(rbVolume);
-  if (bgmVolume < 0 || 256 <= bgmVolume)
+  int tmpBgmVolume = NUM2INT(rbVolume);
+  if (tmpBgmVolume < 0 || 256 <= tmpBgmVolume)
     rb_raise(rb_eArgError, "invalid bgm volume: %d", bgmVolume);
+  bgmVolume = tmpBgmVolume;
   if (isEnabled)
     Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
-  return INT2NUM(bgmVolume);
+  return INT2FIX(bgmVolume);
 }
 
 static VALUE
@@ -88,7 +89,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
       rb_raise(rb_eArgError, "invalid volume: %d", volume);
   }
 
-  Audio_bgm_volume_eq(self, INT2NUM(volume));
+  Audio_bgm_volume_eq(self, INT2FIX(volume));
   if (!isEnabled)
     return Qnil;
   if (Mix_FadeInMusicPos(sdlBgm, 0, time, bgmPosition))
@@ -152,11 +153,10 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   Mix_Volume(sdlChannel, DIV255(volume * MIX_MAX_VOLUME));
   int sdlLeftPanning  = 255;
   int sdlRightPanning = 255;
-  if (panning < 0) {
+  if (panning < 0)
     sdlRightPanning = 255 - (-panning);
-  } else if (0 < panning) {
+  else if (0 < panning)
     sdlLeftPanning = 255 - panning;
-  }
   if (!Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning))
     rb_raise_sdl_mix_error();
 
@@ -173,8 +173,8 @@ static VALUE
 Audio_playing_se_count(VALUE self)
 {
   if (!isEnabled)
-    return INT2NUM(0);
-  return INT2NUM(Mix_Playing(-1));
+    return INT2FIX(0);
+  return INT2FIX(Mix_Playing(-1));
 }
 
 static VALUE
@@ -236,9 +236,8 @@ SdlMusicFinished(void)
 {
   if (sdlBgm && bgmLoop) {
     sdlBgmStartTicks = SDL_GetTicks();
-    if (isEnabled)
-      if (Mix_PlayMusic(sdlBgm, 0))
-        rb_raise_sdl_mix_error();
+    if (isEnabled && Mix_PlayMusic(sdlBgm, 0))
+      rb_raise_sdl_mix_error();
   }
 }
 
@@ -260,25 +259,25 @@ strb_InitializeAudio(VALUE rb_mStarRuby)
 {
   VALUE rb_mAudio = rb_define_module_under(rb_mStarRuby, "Audio");
   rb_define_module_function(rb_mAudio, "bgm_position",
-                            Audio_bgm_position,     0);
+                            Audio_bgm_position, 0);
   rb_define_module_function(rb_mAudio, "bgm_volume",
-                            Audio_bgm_volume,       0);
+                            Audio_bgm_volume, 0);
   rb_define_module_function(rb_mAudio, "bgm_volume=",
-                            Audio_bgm_volume_eq,    1);
+                            Audio_bgm_volume_eq, 1);
   rb_define_module_function(rb_mAudio, "play_bgm",
-                            Audio_play_bgm,         -1);
+                            Audio_play_bgm, -1);
   rb_define_module_function(rb_mAudio, "play_se",
-                            Audio_play_se,          -1);
+                            Audio_play_se, -1);
   rb_define_module_function(rb_mAudio, "playing_bgm?",
-                            Audio_playing_bgm,      0);
+                            Audio_playing_bgm, 0);
   rb_define_module_function(rb_mAudio, "playing_se_count",
                             Audio_playing_se_count, 0);
   rb_define_module_function(rb_mAudio, "stop_all_ses",
-                            Audio_stop_all_ses,     -1);
+                            Audio_stop_all_ses, -1);
   rb_define_module_function(rb_mAudio, "stop_bgm",
-                            Audio_stop_bgm,         -1);
+                            Audio_stop_bgm, -1);
 
-  rb_define_const(rb_mAudio, "MAX_SE_COUNT", INT2NUM(MAX_CHANNEL_COUNT));
+  rb_define_const(rb_mAudio, "MAX_SE_COUNT", INT2FIX(MAX_CHANNEL_COUNT));
 
   symbol_loop     = ID2SYM(rb_intern("loop"));
   symbol_panning  = ID2SYM(rb_intern("panning"));
@@ -286,7 +285,7 @@ strb_InitializeAudio(VALUE rb_mStarRuby)
   symbol_time     = ID2SYM(rb_intern("time"));
   symbol_volume   = ID2SYM(rb_intern("volume"));
 
-  Audio_bgm_volume_eq(rb_mAudio, INT2NUM(255));
+  Audio_bgm_volume_eq(rb_mAudio, INT2FIX(255));
 
   rbMusicCache = rb_iv_set(rb_mAudio, "music_cache", rb_hash_new());
   rbChunkCache = rb_iv_set(rb_mAudio, "chunk_cache", rb_hash_new());

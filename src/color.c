@@ -11,16 +11,6 @@ strb_GetColorClass(void)
   return rb_cColor;
 }
 
-static uint32_t
-CalcColorHash(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha)
-{
-  // The max value of FIXNUM is 0x3fffffff in 32bit machines.
-  return ((alpha >> 6) << 24) |
-    ((red ^ ((alpha >> 4) & 0x3)) << 16) |
-    ((green ^ ((alpha >> 2) & 0x3)) << 8) |
-    (blue ^ (alpha & 0x3));
-}
-
 static VALUE
 Color_s_new(int argc, VALUE* argv, VALUE self)
 {
@@ -55,7 +45,7 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
     }
   }
   VALUE args[] = {
-    rbRed, rbGreen, rbBlue, NIL_P(rbAlpha) ? INT2NUM(255) : rbAlpha,
+    rbRed, rbGreen, rbBlue, NIL_P(rbAlpha) ? INT2FIX(255) : rbAlpha,
   };
   VALUE rbColor = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
   rb_ary_pop(rbColorCache);
@@ -94,7 +84,7 @@ Color_alpha(VALUE self)
 {
   Color color;
   strb_GetColorFromRubyValue(&color, self);
-  return INT2NUM(color.alpha);
+  return INT2FIX(color.alpha);
 }
 
 static VALUE
@@ -102,7 +92,7 @@ Color_blue(VALUE self)
 {
   Color color;
   strb_GetColorFromRubyValue(&color, self);
-  return INT2NUM(color.blue);
+  return INT2FIX(color.blue);
 }
 
 static VALUE
@@ -126,7 +116,7 @@ Color_green(VALUE self)
 {
   Color color;
   strb_GetColorFromRubyValue(&color, self);
-  return INT2NUM(color.green);
+  return INT2FIX(color.green);
 }
 
 static VALUE
@@ -134,7 +124,19 @@ Color_hash(VALUE self)
 {
   Color color;
   strb_GetColorFromRubyValue(&color, self);
-  return INT2NUM(CalcColorHash(color.red, color.green, color.blue, color.alpha));
+  uint32_t hash;
+#if POSFIXABLE(0xffffffff)
+  hash = (color.alpha << 24) |
+    (color.red << 16) |
+    (color.green << 8) |
+    color.blue;
+#else
+  hash = ((color.alpha >> 6) << 24) |
+    ((color.red ^ ((color.alpha >> 4) & 0x3)) << 16) |
+    ((color.green ^ ((color.alpha >> 2) & 0x3)) << 8) |
+    (color.blue ^ (color.alpha & 0x3));
+#endif
+  return INT2FIX(hash);
 }
 
 static VALUE
@@ -142,7 +144,7 @@ Color_red(VALUE self)
 {
   Color color;
   strb_GetColorFromRubyValue(&color, self);
-  return INT2NUM(color.red);
+  return INT2FIX(color.red);
 }
 
 static VALUE

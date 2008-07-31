@@ -276,7 +276,7 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
     if (!NIL_P(rbFps2))
       Game_fps_eq(self, rbFps2);
     else
-      Game_fps_eq(self, INT2NUM(30));
+      Game_fps_eq(self, INT2FIX(30));
   }
 
   volatile VALUE rbTitle = rb_hash_aref(rbOptions, symbol_title);
@@ -592,7 +592,7 @@ Game_window_scale(VALUE self)
   Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
-  return INT2NUM(game->windowScale);
+  return INT2FIX(game->windowScale);
 }
 
 VALUE
@@ -636,7 +636,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
   // backward compatibility
-  rb_iv_set(rb_cGame, "default_fps", INT2NUM(30));
+  rb_iv_set(rb_cGame, "default_fps", INT2FIX(30));
 
   return rb_cGame;
 }

@@ -29,7 +29,7 @@ strb_GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
     case 1:
       return RARRAY_PTR(rbPathes)[0];
     default:
-      rb_raise(rb_path2class("ArgumentError"), "ambiguous path: %s", path);
+      rb_raise(rb_eArgError, "ambiguous path: %s", path);
       break;
     }
     return Qnil;

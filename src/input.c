@@ -47,7 +47,7 @@ static volatile VALUE symbol_up;
 static VALUE
 Input_gamepad_count(VALUE self)
 {
-  return INT2NUM(gamepadCount);
+  return INT2FIX(gamepadCount);
 }
 
 static VALUE
@@ -146,7 +146,7 @@ Input_keys(int argc, VALUE* argv, VALUE self)
         rb_ary_push(rbResult, symbol_up);
       for (int i = 0; i < gamepad->buttonCount; i++)
         if (IsPressed(gamepad->buttonStates[i], duration, delay, interval))
-          rb_ary_push(rbResult, INT2NUM(i + 1));
+          rb_ary_push(rbResult, INT2FIX(i + 1));
     }
   } else if (rbDevice == symbol_mouse) {
     if (IsPressed(mouse->leftState, duration, delay, interval))
@@ -346,7 +346,7 @@ strb_InitializeInput(VALUE rb_mStarRuby)
   symbol_right         = ID2SYM(rb_intern("right"));
   symbol_up            = ID2SYM(rb_intern("up"));
 
-  volatile VALUE rbMouseLocation = rb_assoc_new(INT2NUM(0), INT2NUM(0));
+  volatile VALUE rbMouseLocation = rb_assoc_new(INT2FIX(0), INT2FIX(0));
   OBJ_FREEZE(rbMouseLocation);
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 

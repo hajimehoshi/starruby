@@ -209,7 +209,7 @@ Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
   font->size = size;
   font->sdlFont = TTF_OpenFontIndex(path, size, ttcIndex);
   if (!font->sdlFont)
-    rb_raise_sdl_ttf_error();
+    rb_raise(strb_GetStarRubyErrorClass(), "%s (%s)", TTF_GetError(), path);
   int style = TTF_STYLE_NORMAL |
     (bold ? TTF_STYLE_BOLD : 0) | (italic ? TTF_STYLE_ITALIC : 0);
   TTF_SetFontStyle(font->sdlFont, style);

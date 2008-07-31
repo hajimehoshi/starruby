@@ -655,16 +655,6 @@ class TestTexture < Test::Unit::TestCase
   def test_render_in_perspective
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)
-    texture2.render_in_perspective(texture)
-    assert_raise TypeError do
-      texture2.render_in_perspective(nil)
-    end
-    [:camera_x, :camera_y, :camera_height, :camera_yaw, :camera_pitch, :camera_roll,
-     :view_angle, :intersection_x, :intersection_y, :blur].each do |key|
-      assert_raise TypeError do
-        texture2.render_in_perspective(texture, key => false)
-      end
-    end
     assert_raise RuntimeError do
       texture2.render_in_perspective(texture2) # self
     end
@@ -693,6 +683,21 @@ class TestTexture < Test::Unit::TestCase
     texture2.freeze
     assert_raise FrozenError do
       texture2.render_in_perspective(texture)
+    end
+  end
+
+  def test_render_in_perspective_type
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(100, 100)
+    texture2.render_in_perspective(texture)
+    assert_raise TypeError do
+      texture2.render_in_perspective(nil)
+    end
+    [:camera_x, :camera_y, :camera_height, :camera_yaw, :camera_pitch, :camera_roll,
+     :view_angle, :intersection_x, :intersection_y, :blur].each do |key|
+      assert_raise TypeError do
+        texture2.render_in_perspective(texture, key => false)
+      end
     end
   end
 
@@ -1494,6 +1499,47 @@ class TestTexture < Test::Unit::TestCase
     assert_raise TypeError do
       texture.transform_in_perspective(0, 0, 0, false)
     end
+  end
+
+  def test_returning_self
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.clear
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.fill(Color.new(1, 2, 3))
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.fill_rect(1, 2, 3, 4, Color.new(1, 2, 3))
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.fill_rect(-4, -3, 2, 1, Color.new(1, 2, 3))
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_in_perspective(texture.dup)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_in_perspective(texture.dup, :camera_height => 10)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_line(1, 2, 3, 4, Color.new(1, 2, 3))
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_pixel(1, 2, Color.new(1, 2, 3))
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_rect(1, 2, 3, 4, Color.new(1, 2, 3))
+    font = Font.new("fonts/ORANGEKI", 12)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_text("foo", 1, 2, font, Color.new(1, 2, 3), false)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_text("", 1, 2, font, Color.new(1, 2, 3), false)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_texture(texture.dup, 0, 0)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_texture(texture.dup, 0, 0,
+                                                 :src_x => -10, :src_y => -10,
+                                                 :src_width => 5, :src_height => 5)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_texture(texture.dup, 0, 0,
+                                                 :scale_x => 0, :scale_y => 0)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_texture(texture.dup, -(texture.width * 1.2), -(texture.height * 1.2),
+                                                 :scale_x => 1.1, :scale_y => 1.1)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_texture(texture.dup, 0, 0,
+                                                 :scale_x => 1.1, :scale_y => 1.1)
   end
 
 end

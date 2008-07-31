@@ -599,7 +599,7 @@ Texture_clear(VALUE self)
   CheckDisposed(texture);
   CheckPalette(texture);
   MEMZERO(texture->pixels, Color, texture->width * texture->height);
-  return Qnil;
+  return self;
 }
 
 static VALUE
@@ -663,7 +663,7 @@ Texture_fill(VALUE self, VALUE rbColor)
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < length; i++, pixels++)
     pixels->color = color;
-  return Qnil;
+  return self;
 }
 
 static VALUE
@@ -680,7 +680,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
-    return Qnil;
+    return self;
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);  
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
@@ -688,7 +688,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
     for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
       pixels->color = color;
-  return Qnil;
+  return self;
 }
 
 static VALUE
@@ -803,7 +803,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
   if (options.cameraHeight == 0)
-    return Qnil;
+    return self;
   int srcWidth  = srcTexture->width;
   int srcHeight = srcTexture->height;
   int dstWidth  = dstTexture->width;
@@ -895,7 +895,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
         screenP.z += screenDX.z;
       }, dstWidth);
   }
-  return Qnil;
+  return self;
 }
 
 static VALUE
@@ -951,7 +951,7 @@ Texture_render_line(VALUE self,
       }
     }
   }
-  return Qnil;
+  return self;
 }
 
 static VALUE
@@ -970,7 +970,7 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixel = &(texture->pixels[x + y * texture->width]);
   RENDER_PIXEL(pixel->color, color);
-  return Qnil;
+  return self;
 }
 
 static VALUE
@@ -995,7 +995,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
     for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
       RENDER_PIXEL(pixels->color, color);
-  return Qnil;
+  return self;
 }
 
 static VALUE Texture_render_texture(int, VALUE*, VALUE);
@@ -1007,7 +1007,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
                &rbText, &rbX, &rbY, &rbFont, &rbColor, &rbAntiAlias);
   Check_Type(rbText, T_STRING);
   if (!(RSTRING_LEN(rbText)))
-    return Qnil;
+    return self;
   bool antiAlias = RTEST(rbAntiAlias);
   Check_Type(rbText, T_STRING);
   if (!RSTRING_LEN(rbText))
@@ -1066,7 +1066,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
 
   Texture_render_texture(3, (VALUE[]) {rbTextTexture, rbX, rbY}, self);
   Texture_dispose(rbTextTexture);
-  return Qnil;
+  return self;
 }
 
 static int
@@ -1230,7 +1230,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!ModifyRectInTexture(srcTexture,
                            &(options.srcX), &(options.srcY),
                            &(options.srcWidth), &(options.srcHeight)))
-    return Qnil;
+    return self;
 
   if (options.toneRed   < -255 || 255 < options.toneRed   ||
       options.toneGreen < -255 || 255 < options.toneGreen ||
@@ -1347,7 +1347,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       assert(false);
       break;
     }
-    return Qnil;
+    return self;
   }
 
   AffineMatrix mat = {
@@ -1390,7 +1390,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   mat.ty += NUM2INT(rbY);
   double det = mat.a * mat.d - mat.b * mat.c;
   if (det == 0)
-    return Qnil;
+    return self;
 
   double dstX00 = mat.tx;
   double dstY00 = mat.ty;
@@ -1406,7 +1406,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
   if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
       dstX1 < 0 || dstY1 < 0)
-    return Qnil;
+    return self;
 
   AffineMatrix matInv = {
     .a = mat.d  / det,
@@ -1590,7 +1590,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(rbClonedTexture))
     Texture_dispose(rbClonedTexture);
 
-  return Qnil;
+  return self;
 }
 
 static VALUE

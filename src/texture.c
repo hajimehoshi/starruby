@@ -198,7 +198,7 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_io_length))) {
     if (RTEST(rb_obj_is_kind_of(val, rb_cNumeric))) {
-      if (RTEST(rb_funcall(val, rb_intern("<="), 1, INT2NUM(0))))
+      if (RTEST(rb_funcall(val, rb_intern("<="), 1, INT2FIX(0))))
         rb_raise(rb_eArgError, "invalid io_length");
       ioLength = NUM2ULONG(val);
       if (ioLength <= 8)
@@ -237,7 +237,7 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eTypeError, "wrong argument type %s (expected String or IO)",
              rb_obj_classname(rbPathOrIO));
   }
-  volatile VALUE rbHeader = rb_funcall(rbIO, rb_intern("read"), 1, INT2NUM(8));
+  volatile VALUE rbHeader = rb_funcall(rbIO, rb_intern("read"), 1, INT2FIX(8));
   if (NIL_P(rbHeader)) {
     if (!NIL_P(rbIOToClose))
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
@@ -703,10 +703,10 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
   Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(strb_GetColorClass(), rb_intern("new"), 4,
-                    INT2NUM(color.red),
-                    INT2NUM(color.green),
-                    INT2NUM(color.blue),
-                    INT2NUM(color.alpha));
+                    INT2FIX(color.red),
+                    INT2FIX(color.green),
+                    INT2FIX(color.blue),
+                    INT2FIX(color.alpha));
 }
 
 static VALUE
@@ -730,10 +730,10 @@ Texture_palette(VALUE self)
     volatile VALUE rb_cColor = strb_GetColorClass();
     for (int i = 0; i < texture->paletteSize; i++, colors++) {
       VALUE rbArgs[4] = {
-        INT2NUM(colors->red),
-        INT2NUM(colors->green),
-        INT2NUM(colors->blue),
-        INT2NUM(colors->alpha),
+        INT2FIX(colors->red),
+        INT2FIX(colors->green),
+        INT2FIX(colors->blue),
+        INT2FIX(colors->alpha),
       };
       volatile VALUE rbColor =
         rb_class_new_instance(sizeof(rbArgs) / sizeof(VALUE), rbArgs, rb_cColor);

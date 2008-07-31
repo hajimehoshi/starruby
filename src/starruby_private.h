@@ -11,17 +11,21 @@
 #include <SDL_ttf.h>
 #include <ruby.h>
 #ifdef WIN32
-#include <windows.h>
-#include <winreg.h>
-#include <shlobj.h>
-#ifndef SHGFP_TYPE_CURRENT
-#define SHGFP_TYPE_CURRENT (0)
-#endif
+# include <windows.h>
+# include <winreg.h>
+# include <shlobj.h>
+# ifndef SHGFP_TYPE_CURRENT
+#  define SHGFP_TYPE_CURRENT (0)
+# endif
 #endif
 #include "starruby.h"
 
 #ifndef PI
-#define PI (3.1415926535897932384626433832795)
+# ifdef M_PI
+#  define PI M_PI
+# else
+#  define PI (3.1415926535897932384626433832795)
+# endif
 #endif
 
 typedef struct {

@@ -728,7 +728,7 @@ Texture_palette(VALUE self)
     Color* colors = texture->palette;
     volatile VALUE rb_cColor = strb_GetColorClass();
     for (int i = 0; i < texture->paletteSize; i++, colors++) {
-      VALUE rbArgs[4] = {
+      VALUE rbArgs[] = {
         INT2FIX(colors->red),
         INT2FIX(colors->green),
         INT2FIX(colors->blue),

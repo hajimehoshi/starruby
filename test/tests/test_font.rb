@@ -95,10 +95,10 @@ class TestFont < Test::Unit::TestCase
     case RUBY_PLATFORM
     when /mswin32|cygwin|mingw32|bccwin32|interix|djgpp/
       names = ["MS UI Gothic", "Arial", "Arial Black"]
-    when /darwin/
-      names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier, Regular"]
     when /linux/
       names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier 10 Pitch, Regular"]
+    when /darwin/
+      names = ["Bitstream Charter, Bold", "Bitstream Charter, Bold Italic", "Courier, Regular"]
     end
     assert names.all?{|name| Font.exist?(name)}
     assert Font.new(names[0], 12).equal?(Font.new(names[0], 12))

@@ -25,10 +25,10 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
       blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha)
     rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
              red, green, blue, alpha);
-  VALUE* cacheP = RARRAY_PTR(rbColorCache);
+  VALUE* rbColorCacheP = RARRAY_PTR(rbColorCache);
   int length = RARRAY_LEN(rbColorCache);
-  for (int i = 0; i < length; i++) {
-    VALUE rbColor = cacheP[i];
+  for (int i = 0; i < length; i++, rbColorCacheP++) {
+    volatile VALUE rbColor = *rbColorCacheP;
     if (NIL_P(rbColor))
       break;
     Color color;

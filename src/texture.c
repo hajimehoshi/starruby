@@ -1598,7 +1598,7 @@ Texture_save(VALUE self, VALUE rbPath)
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  char* path = StringValuePtr(rbPath);
+  char* path = StringValueCStr(rbPath);
   FILE* fp = fopen(path, "wb");
   if (!fp)
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);

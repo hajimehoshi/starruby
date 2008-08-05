@@ -54,8 +54,9 @@ SearchFont(VALUE rbFilePathOrName,
     rb_raise(strb_GetStarRubyErrorClass(), "can't initialize fontconfig library");
     return;
   }
-  char name[RSTRING_LEN(rbFilePathOrName) + 1];
-  strcpy(name, StringValueCStr(rbFilePathOrName));
+  int nameLength = RSTRING_LEN(rbFilePathOrName) + 1;
+  char name[nameLength];
+  strncpy(name, StringValueCStr(rbFilePathOrName), nameLength);
   FcPattern* pattern;
   char* delimiter = strchr(name, ',');
   char* style = NULL;

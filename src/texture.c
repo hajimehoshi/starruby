@@ -409,59 +409,40 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
   return Qnil;
 }
 
-static void
-AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
+static VALUE
+Texture_aref(VALUE self, VALUE rbX, VALUE rbY)
 {
-  volatile VALUE val;
-  Check_Type(rbOptions, T_HASH);
-  MEMZERO(options, PerspectiveOptions, 1);
-  options->viewAngle = PI / 4;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
-    options->cameraX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
-    options->cameraY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
-    options->cameraHeight = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_yaw)))
-    options->cameraYaw = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_pitch)))
-    options->cameraPitch = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_roll)))
-    options->cameraRoll = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_view_angle))) {
-    options->viewAngle = NUM2DBL(val);
-    if (!isfinite(options->viewAngle))
-      rb_raise(rb_eArgError, "invalid :view_angle value");
-    if (options->viewAngle <= 0 || PI <= options->viewAngle)
-      rb_raise(rb_eArgError, "invalid :view_angle value");
-  }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))
-    options->intersectionX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y)))
-    options->intersectionY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
-    options->isLoop = RTEST(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blur))) {
-    switch (TYPE(val)) {
-    case T_DATA:
-      options->blurType = BLUR_TYPE_COLOR;
-      Color color;
-      strb_GetColorFromRubyValue(&color, val);
-      options->blurColor = color;
-      break;
-    case T_SYMBOL:
-      if (val == symbol_background)
-        options->blurType = BLUR_TYPE_BACKGROUND;
-      else
-        options->blurType = BLUR_TYPE_NONE;
-      break;
-    default:
-      rb_raise(rb_eTypeError,
-               "wrong argument type %s (expected Color or Symbol)",
-               rb_obj_classname(val));
-      break;
-    }
-  }
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  CheckDisposed(texture);
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
+  Color color = texture->pixels[x + y * texture->width].color;
+  return rb_funcall(strb_GetColorClass(), rb_intern("new"), 4,
+                    INT2FIX(color.red),
+                    INT2FIX(color.green),
+                    INT2FIX(color.blue),
+                    INT2FIX(color.alpha));
+}
+
+static VALUE
+Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  CheckDisposed(texture);
+  CheckPalette(texture);
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    return Qnil;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
+  texture->pixels[x + y * texture->width].color = color;
+  return rbColor;
 }
 
 static VALUE Texture_change_hue_bang(VALUE, VALUE);
@@ -691,42 +672,6 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
 }
 
 static VALUE
-Texture_aref(VALUE self, VALUE rbX, VALUE rbY)
-{
-  Texture* texture;
-  Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
-    rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
-  Color color = texture->pixels[x + y * texture->width].color;
-  return rb_funcall(strb_GetColorClass(), rb_intern("new"), 4,
-                    INT2FIX(color.red),
-                    INT2FIX(color.green),
-                    INT2FIX(color.blue),
-                    INT2FIX(color.alpha));
-}
-
-static VALUE
-Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
-{
-  rb_check_frozen(self);
-  Texture* texture;
-  Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
-  CheckPalette(texture);
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
-    return Qnil;
-  Color color;
-  strb_GetColorFromRubyValue(&color, rbColor);
-  texture->pixels[x + y * texture->width].color = color;
-  return rbColor;
-}
-
-static VALUE
 Texture_height(VALUE self)
 {
   Texture* texture;
@@ -775,6 +720,61 @@ Texture_palette(VALUE self)
       _dst.blue  = ALPHA(_src.blue,  _dst.blue,  _src.alpha); \
     }                                                         \
   } while (false)
+
+static void
+AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
+{
+  volatile VALUE val;
+  Check_Type(rbOptions, T_HASH);
+  MEMZERO(options, PerspectiveOptions, 1);
+  options->viewAngle = PI / 4;
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
+    options->cameraX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
+    options->cameraY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
+    options->cameraHeight = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_yaw)))
+    options->cameraYaw = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_pitch)))
+    options->cameraPitch = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_roll)))
+    options->cameraRoll = NUM2DBL(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_view_angle))) {
+    options->viewAngle = NUM2DBL(val);
+    if (!isfinite(options->viewAngle))
+      rb_raise(rb_eArgError, "invalid :view_angle value");
+    if (options->viewAngle <= 0 || PI <= options->viewAngle)
+      rb_raise(rb_eArgError, "invalid :view_angle value");
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))
+    options->intersectionX = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y)))
+    options->intersectionY = NUM2INT(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
+    options->isLoop = RTEST(val);
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blur))) {
+    switch (TYPE(val)) {
+    case T_DATA:
+      options->blurType = BLUR_TYPE_COLOR;
+      Color color;
+      strb_GetColorFromRubyValue(&color, val);
+      options->blurColor = color;
+      break;
+    case T_SYMBOL:
+      if (val == symbol_background)
+        options->blurType = BLUR_TYPE_BACKGROUND;
+      else
+        options->blurType = BLUR_TYPE_NONE;
+      break;
+    default:
+      rb_raise(rb_eTypeError,
+               "wrong argument type %s (expected Color or Symbol)",
+               rb_obj_classname(val));
+      break;
+    }
+  }
+}
 
 static VALUE
 Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
@@ -1078,7 +1078,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   SDL_FreeSurface(textSurface);
   textSurface = NULL;
 
-  Texture_render_texture(3, (VALUE[]) {rbTextTexture, rbX, rbY}, self);
+  Texture_render_texture(3, (VALUE[]){rbTextTexture, rbX, rbY}, self);
   Texture_dispose(rbTextTexture);
   return self;
 }
@@ -1242,11 +1242,6 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
              rb_obj_classname(rbOptions));
   }
 
-  if (!ModifyRectInTexture(srcTexture,
-                           &(options.srcX), &(options.srcY),
-                           &(options.srcWidth), &(options.srcHeight)))
-    return self;
-
   if (options.toneRed   < -255 || 255 < options.toneRed   ||
       options.toneGreen < -255 || 255 < options.toneGreen ||
       options.toneBlue  < -255 || 255 < options.toneBlue  ||
@@ -1254,6 +1249,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eArgError, "invalid tone value: (r:%d, g:%d, b:%d, s:%d)",
              options.toneRed, options.toneGreen, options.toneBlue,
              options.saturation);
+
+  if (!ModifyRectInTexture(srcTexture,
+                           &(options.srcX), &(options.srcY),
+                           &(options.srcWidth), &(options.srcHeight)))
+    return self;
 
   uint8_t alpha       = options.alpha;
   double angle        = options.angle;
@@ -1404,7 +1404,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   mat.tx += NUM2INT(rbX);
   mat.ty += NUM2INT(rbY);
   double det = mat.a * mat.d - mat.b * mat.c;
-  if (det == 0)
+  if (!det)
     return self;
 
   double dstX00 = mat.tx;

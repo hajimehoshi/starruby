@@ -158,7 +158,7 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   } else {
     volatile VALUE rbDeviceInspect =
       rb_funcall(rbDevice, rb_intern("inspect"), 0);
-    rb_raise(rb_eArgError, "invalid device: %s", StringValuePtr(rbDeviceInspect));
+    rb_raise(rb_eArgError, "invalid device: %s", StringValueCStr(rbDeviceInspect));
   }
 
   OBJ_FREEZE(rbResult);

@@ -1011,7 +1011,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   Check_Type(rbText, T_STRING);
   if (!RSTRING_LEN(rbText))
     rb_raise(rb_eArgError, "empty text");
-  char* text = StringValuePtr(rbText);
+  char* text = StringValueCStr(rbText);
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);

@@ -33,7 +33,7 @@ SearchFont(VALUE rbFilePathOrName,
   if (!NIL_P(*rbRealFilePath))
     return;
   volatile VALUE rbFontNameSymbol =
-    ID2SYM(rb_intern(StringValuePtr(rbFilePathOrName)));
+    ID2SYM(rb_intern(StringValueCStr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
@@ -54,9 +54,8 @@ SearchFont(VALUE rbFilePathOrName,
     rb_raise(strb_GetStarRubyErrorClass(), "can't initialize fontconfig library");
     return;
   }
-  int nameLength = RSTRING_LEN(rbFilePathOrName) + 1;
-  char name[nameLength];
-  MEMCPY(name, StringValuePtr(rbFilePathOrName), char, nameLength);
+  char name[RSTRING_LEN(rbFilePathOrName) + 1];
+  strcpy(name, StringValueCStr(rbFilePathOrName));
   FcPattern* pattern;
   char* delimiter = strchr(name, ',');
   char* style = NULL;
@@ -90,7 +89,7 @@ SearchFont(VALUE rbFilePathOrName,
         volatile VALUE rbFontName = rb_str_new2((char*)fontName);
         free(fontName);
         fontName = NULL;
-        if (ttcIndex != NULL && strchr(StringValuePtr(rbFontName), ','))
+        if (ttcIndex != NULL && strchr(StringValueCStr(rbFontName), ','))
           *ttcIndex = 0;
       }
     }
@@ -132,7 +131,7 @@ Font_s_new(int argc, VALUE* argv, VALUE self)
   int preTtcIndex = -1;
   SearchFont(rbPath, (VALUE*)&rbRealFilePath, &preTtcIndex);
   if (NIL_P(rbRealFilePath)) {
-    char* path = StringValuePtr(rbPath);
+    char* path = StringValueCStr(rbPath);
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
     return Qnil;
   }
@@ -198,7 +197,7 @@ static VALUE
 Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
                 VALUE rbBold, VALUE rbItalic, VALUE rbTtcIndex)
 {
-  char* path   = StringValuePtr(rbRealFilePath);
+  char* path   = StringValueCStr(rbRealFilePath);
   int size     = NUM2INT(rbSize);
   bool bold    = RTEST(rbBold);
   bool italic  = RTEST(rbItalic);
@@ -238,7 +237,7 @@ Font_get_size(VALUE self, VALUE rbText)
 {
   Font* font;
   Data_Get_Struct(self, Font, font);
-  char* text = StringValuePtr(rbText);
+  char* text = StringValueCStr(rbText);
   int width, height;
   if (TTF_SizeUTF8(font->sdlFont, text, &width, &height))
     rb_raise_sdl_ttf_error();
@@ -334,7 +333,7 @@ strb_InitializeSdlFont(void)
           volatile VALUE rbFontName = rb_str_new2(fontName);
           rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
                                   rbNkfOption, rbFontName);
-          if (strchr(StringValuePtr(rbFontName), '&')) {
+          if (strchr(StringValueCStr(rbFontName), '&')) {
             volatile VALUE rbArr = rb_str_split(rbFontName, "&");
             int arrLength = RARRAY_LEN(rbArr);
             int ttcIndex = 0;

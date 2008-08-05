@@ -63,7 +63,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbMusicCache, rbCompletePath))) {
     sdlBgm = (Mix_Music*)NUM2LONG(val);
   } else {
-    char* path = StringValuePtr(rbCompletePath);
+    char* path = StringValueCStr(rbCompletePath);
     if (!(sdlBgm = Mix_LoadMUS(path)))
       rb_raise_sdl_mix_error();
     rb_hash_aset(rbMusicCache, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
@@ -114,7 +114,7 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
     if (!NIL_P(val = rb_hash_aref(rbChunkCache, rbCompletePath))) {
       sdlSE = (Mix_Chunk*)NUM2ULONG(val);
     } else {
-      char* path = StringValuePtr(rbCompletePath);
+      char* path = StringValueCStr(rbCompletePath);
       if (!(sdlSE = Mix_LoadWAV(path)))
 	rb_raise_sdl_mix_error();
       rb_hash_aset(rbChunkCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));

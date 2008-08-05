@@ -217,7 +217,7 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
   } else {
     Check_Type(rbTitle, T_STRING);
     if (SDL_WasInit(SDL_INIT_VIDEO))
-      SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
+      SDL_WM_SetCaption(StringValueCStr(rbTitle), NULL);
     return rb_iv_set(self, "default_title", rbTitle);
   }
 }
@@ -438,7 +438,7 @@ Game_title_eq(VALUE self, VALUE rbTitle)
   CheckDisposed(game);
   Check_Type(rbTitle, T_STRING);
   if (SDL_WasInit(SDL_INIT_VIDEO))
-    SDL_WM_SetCaption(StringValuePtr(rbTitle), NULL);
+    SDL_WM_SetCaption(StringValueCStr(rbTitle), NULL);
   return rb_iv_set(self, "title", rb_str_dup(rbTitle));
 }
 

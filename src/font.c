@@ -57,7 +57,6 @@ SearchFont(VALUE rbFilePathOrName,
   int nameLength = RSTRING_LEN(rbFilePathOrName) + 1;
   char name[nameLength];
   strncpy(name, StringValueCStr(rbFilePathOrName), nameLength);
-  FcPattern* pattern;
   char* delimiter = strchr(name, ',');
   char* style = NULL;
   if (delimiter) {
@@ -71,7 +70,7 @@ SearchFont(VALUE rbFilePathOrName,
     while (*style == ' ')
       style++;
   }
-  pattern = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, name, NULL);
+  FcPattern* pattern = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, name, NULL);
   if (style && 0 < strlen(style))
     FcPatternAddString(pattern, FC_STYLE, (FcChar8*)style);
   FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);

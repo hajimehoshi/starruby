@@ -1008,9 +1008,6 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   if (!(RSTRING_LEN(rbText)))
     return self;
   bool antiAlias = RTEST(rbAntiAlias);
-  Check_Type(rbText, T_STRING);
-  if (!RSTRING_LEN(rbText))
-    rb_raise(rb_eArgError, "empty text");
   char* text = StringValueCStr(rbText);
   Font* font;
   Data_Get_Struct(rbFont, Font, font);
@@ -1223,7 +1220,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
         options.saturation = NUM2INT(val);
     }
   } else if (!NIL_P(rbOptions)) {
-    Check_Type(rbOptions, T_HASH);
+    rb_raise(rb_eTypeError, "wrong argument type %s (expected Hash)",
+             rb_obj_classname(rbOptions));
   }
 
   if (!ModifyRectInTexture(srcTexture,

@@ -530,7 +530,7 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   double angle = NUM2DBL(rbAngle);
-  if (angle == 0)
+  if (!angle)
     return Qnil;
   Pixel* pixels = texture->pixels;
   if (!texture->palette) {
@@ -691,7 +691,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
 }
 
 static VALUE
-Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
+Texture_aref(VALUE self, VALUE rbX, VALUE rbY)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
@@ -706,6 +706,24 @@ Texture_get_pixel(VALUE self, VALUE rbX, VALUE rbY)
                     INT2FIX(color.green),
                     INT2FIX(color.blue),
                     INT2FIX(color.alpha));
+}
+
+static VALUE
+Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
+{
+  rb_check_frozen(self);
+  Texture* texture;
+  Data_Get_Struct(self, Texture, texture);
+  CheckDisposed(texture);
+  CheckPalette(texture);
+  int x = NUM2INT(rbX);
+  int y = NUM2INT(rbY);
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+    return Qnil;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
+  texture->pixels[x + y * texture->width].color = color;
+  return rbColor;
 }
 
 static VALUE
@@ -747,7 +765,7 @@ Texture_palette(VALUE self)
 
 #define RENDER_PIXEL(_dst, _src)                              \
   do {                                                        \
-    if (_dst.alpha == 0) {                                    \
+    if (!_dst.alpha) {                                        \
       _dst = _src;                                            \
     } else {                                                  \
       if (_dst.alpha < _src.alpha)                            \
@@ -801,7 +819,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  if (options.cameraHeight == 0)
+  if (!options.cameraHeight)
     return self;
   int srcWidth  = srcTexture->width;
   int srcHeight = srcTexture->height;
@@ -1311,7 +1329,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           LOOP({
               uint8_t dstAlpha = dst->color.alpha;
               uint8_t beta = DIV255(src->color.alpha * alpha);
-              if (dstAlpha == 0) {
+              if (!dstAlpha) {
                 dst->color.alpha = beta;
                 dst->color.red   = src->color.red;
                 dst->color.green = src->color.green;
@@ -1626,24 +1644,6 @@ Texture_save(VALUE self, VALUE rbPath)
 }
 
 static VALUE
-Texture_set_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
-{
-  rb_check_frozen(self);
-  Texture* texture;
-  Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
-  CheckPalette(texture);
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
-    return Qnil;
-  Color color;
-  strb_GetColorFromRubyValue(&color, rbColor);
-  texture->pixels[x + y * texture->width].color = color;
-  return rbColor;
-}
-
-static VALUE
 Texture_size(VALUE self)
 {
   Texture* texture;
@@ -1689,18 +1689,16 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   z = z2;
   volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
   OBJ_FREEZE(rbResult);
-  if (z == 0)
+  if (!z)
     return rbResult;
   double distance = screenWidth / (2 * tan(options.viewAngle / 2));
   double scale = -distance / z;
   double screenX = x * scale;
   double screenY = (options.cameraHeight - y) * scale;
-  double screenX2 = cosRoll  * screenX + sinRoll * screenY;
-  double screenY2 = -sinRoll * screenX + cosRoll * screenY;
-  screenX = screenX2 + options.intersectionX;
-  screenY = screenY2 + options.intersectionY;
-  long screenXLong = (long)screenX;
-  long screenYLong = (long)screenY;
+  long screenXLong =
+    (long)(cosRoll  * screenX + sinRoll * screenY + options.intersectionX);
+  long screenYLong =
+    (long)(-sinRoll * screenX + cosRoll * screenY + options.intersectionY);
   if (FIXABLE(screenXLong) && INT_MIN <= screenXLong && screenXLong <= INT_MAX)
     RARRAY_PTR(rbResult)[0] = LONG2FIX(screenXLong);
   else
@@ -1762,9 +1760,9 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   rb_define_private_method(rb_cTexture, "initialize_copy",
                            Texture_initialize_copy, 1);
   rb_define_method(rb_cTexture, "[]",
-                   Texture_get_pixel, 2);
+                   Texture_aref, 2);
   rb_define_method(rb_cTexture, "[]=",
-                   Texture_set_pixel, 3);
+                   Texture_aset, 3);
   rb_define_method(rb_cTexture, "change_hue",
                    Texture_change_hue, 1);
   rb_define_method(rb_cTexture, "change_hue!",

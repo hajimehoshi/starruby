@@ -131,7 +131,7 @@ strb_GetTextureClass(void)
 }
 
 inline static void
-CheckDisposed(Texture* texture)
+CheckDisposed(const Texture* texture)
 {
   if (!texture->pixels)
     rb_raise(rb_eRuntimeError,
@@ -139,7 +139,7 @@ CheckDisposed(Texture* texture)
 }
 
 inline static void
-CheckPalette(Texture* texture)
+CheckPalette(const Texture* texture)
 {
   if (texture->palette)
     rb_raise(strb_GetStarRubyErrorClass(),
@@ -147,7 +147,7 @@ CheckPalette(Texture* texture)
 }
 
 inline static bool
-ModifyRectInTexture(Texture* texture, int* x, int* y, int* width, int* height)
+ModifyRectInTexture(const Texture* texture, int* x, int* y, int* width, int* height)
 {
   if (*x < 0) {
     *width -= -(*x);
@@ -193,7 +193,7 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbPathOrIO, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  bool hasPalette = RTEST(rb_hash_aref(rbOptions, symbol_palette));
+  const bool hasPalette = RTEST(rb_hash_aref(rbOptions, symbol_palette));
   unsigned long ioLength = 0;
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_io_length))) {
@@ -293,13 +293,13 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   png_read_update_info(pngPtr, infoPtr);
   if (0 < infoPtr->num_palette && hasPalette) {
     texture->indexes = ALLOC_N(uint8_t, width * height);
-    png_colorp palette = infoPtr->palette;
-    int numTrans = infoPtr->num_trans;
-    png_bytep trans = infoPtr->trans;
+    const png_colorp palette = infoPtr->palette;
+    const int numTrans = infoPtr->num_trans;
+    const png_bytep trans = infoPtr->trans;
     texture->paletteSize = infoPtr->num_palette;
     Color* p = texture->palette = ALLOC_N(Color, texture->paletteSize);
     for (int i = 0; i < texture->paletteSize; i++, p++) {
-      png_colorp pngColorP = &(palette[i]);
+      const png_colorp pngColorP = &(palette[i]);
       p->red   = pngColorP->red;
       p->green = pngColorP->green;
       p->blue  = pngColorP->blue;
@@ -312,8 +312,8 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
       }
     }
   }
-  int channels = png_get_channels(pngPtr, infoPtr);
-  Color* palette = texture->palette;
+  const int channels = png_get_channels(pngPtr, infoPtr);
+  const Color* palette = texture->palette;
   uint8_t* indexes = texture->indexes;
   for (unsigned int j = 0; j < height; j++) {
     png_byte row[width * channels];
@@ -373,8 +373,8 @@ Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  int width  = NUM2INT(rbWidth);
-  int height = NUM2INT(rbHeight);
+  const int width  = NUM2INT(rbWidth);
+  const int height = NUM2INT(rbHeight);
   if (width <= 0)
     rb_raise(rb_eArgError, "width less than or equal to 0");
   if (height <= 0)
@@ -391,18 +391,18 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
 {
   Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  Texture* origTexture;
+  const Texture* origTexture;
   Data_Get_Struct(rbTexture, Texture, origTexture);
   texture->width  = origTexture->width;
   texture->height = origTexture->height;
-  int length = texture->width * texture->height;
+  const int length = texture->width * texture->height;
   texture->pixels = ALLOC_N(Pixel, length);
   MEMCPY(texture->pixels, origTexture->pixels, Pixel, length);
   if (origTexture->palette) {
-    int paletteSize = texture->paletteSize = origTexture->paletteSize;
+    const int paletteSize = texture->paletteSize = origTexture->paletteSize;
     texture->palette = ALLOC_N(Color, paletteSize);
     MEMCPY(texture->palette, origTexture->palette, Color, paletteSize);
-    int length = texture->width * texture->height;
+    const int length = texture->width * texture->height;
     texture->indexes = ALLOC_N(uint8_t, length);
     MEMCPY(texture->indexes, origTexture->indexes, uint8_t, length);
   }
@@ -412,14 +412,14 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
 static VALUE
 Texture_aref(VALUE self, VALUE rbX, VALUE rbY)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
+  const int x = NUM2INT(rbX);
+  const int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
-  Color color = texture->pixels[x + y * texture->width].color;
+  const Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(strb_GetColorClass(), rb_intern("new"), 4,
                     INT2FIX(color.red),
                     INT2FIX(color.green),
@@ -431,12 +431,12 @@ static VALUE
 Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
+  const int x = NUM2INT(rbX);
+  const int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     return Qnil;
   Color color;
@@ -449,7 +449,7 @@ static VALUE Texture_change_hue_bang(VALUE, VALUE);
 static VALUE
 Texture_change_hue(VALUE self, VALUE rbAngle)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
@@ -460,7 +460,7 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
 }
 
 static inline void
-ChangeHue(Color* color, double angle)
+ChangeHue(Color* color, const double angle)
 {
   uint8_t r = color->red;
   uint8_t g = color->green;
@@ -468,9 +468,9 @@ ChangeHue(Color* color, double angle)
   uint8_t max = MAX(MAX(r, g), b);
   uint8_t min = MIN(MIN(r, g), b);
   if (max != 0) {
-    double delta255 = max - min;
-    double v = max / 255.0;
-    double s = delta255 / max;
+    const double delta255 = max - min;
+    const double v = max / 255.0;
+    const double s = delta255 / max;
     double h;
     if (max == r)
       h =     (g - b) / delta255;
@@ -483,12 +483,12 @@ ChangeHue(Color* color, double angle)
     h += angle * 6.0 / (2 * PI);
     if (6.0 <= h)
       h -= 6.0;
-    int ii = (int)h;
-    double f = h - ii;
-    uint8_t v255 = max;
-    uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
-    uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
-    uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
+    const int ii = (int)h;
+    const double f = h - ii;
+    const uint8_t v255 = max;
+    const uint8_t aa255 = (uint8_t)(v * (1 - s) * 255);
+    const uint8_t bb255 = (uint8_t)(v * (1 - s * f) * 255);
+    const uint8_t cc255 = (uint8_t)(v * (1 - s * (1 - f)) * 255);
     switch (ii) {
     case 0: r = v255;  g = cc255; b = aa255; break;
     case 1: r = bb255; g = v255;  b = aa255; break;
@@ -507,25 +507,25 @@ static VALUE
 Texture_change_hue_bang(VALUE self, VALUE rbAngle)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  double angle = NUM2DBL(rbAngle);
+  const double angle = NUM2DBL(rbAngle);
   if (!angle)
     return Qnil;
   Pixel* pixels = texture->pixels;
   if (!texture->palette) {
-    int length = texture->width * texture->height;
+    const int length = texture->width * texture->height;
     for (int i = 0; i < length; i++, pixels++)
       ChangeHue(&(pixels->color), angle);
   } else {
-    int paletteSize = texture->paletteSize;
+    const int paletteSize = texture->paletteSize;
     Color* palette = texture->palette;
     for (int i = 0; i < paletteSize; i++, palette++)
       ChangeHue(palette, angle);
     palette = texture->palette;
     uint8_t* indexes = texture->indexes;
-    int length = texture->width * texture->height;
+    const int length = texture->width * texture->height;
     for (int i = 0; i < length; i++, pixels++, indexes++)
       pixels->color = palette[*indexes];
   }
@@ -536,7 +536,7 @@ static VALUE Texture_change_palette_bang(VALUE, VALUE);
 static VALUE
 Texture_change_palette(VALUE self, VALUE rbPalette)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
@@ -548,7 +548,7 @@ static VALUE
 Texture_change_palette_bang(VALUE self, VALUE rbPalette)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   if (!texture->palette)
@@ -563,8 +563,8 @@ Texture_change_palette_bang(VALUE self, VALUE rbPalette)
       *palette = (Color){0, 0, 0, 0};
   Pixel* pixels = texture->pixels;
   palette = texture->palette;
-  uint8_t* indexes = texture->indexes;
-  int length = texture->width * texture->height;
+  const uint8_t* indexes = texture->indexes;
+  const int length = texture->width * texture->height;
   for (int i = 0; i < length; i++, pixels++, indexes++)
     pixels->color = palette[*indexes];
   return Qnil;
@@ -574,7 +574,7 @@ static VALUE
 Texture_clear(VALUE self)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
@@ -599,7 +599,7 @@ Texture_dispose(VALUE self)
 static VALUE
 Texture_disposed(VALUE self)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   return !texture->pixels ? Qtrue : Qfalse;
 }
@@ -607,15 +607,15 @@ Texture_disposed(VALUE self)
 static VALUE
 Texture_dump(VALUE self, VALUE rbFormat)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  char* format = StringValuePtr(rbFormat);
-  int formatLength = RSTRING_LEN(rbFormat);
-  int pixelLength = texture->width * texture->height;
+  const char* format = StringValuePtr(rbFormat);
+  const int formatLength = RSTRING_LEN(rbFormat);
+  const int pixelLength = texture->width * texture->height;
   volatile VALUE rbResult = rb_str_new(NULL, pixelLength * formatLength);
   uint8_t* strPtr = (uint8_t*)RSTRING_PTR(rbResult);
-  Pixel* pixels = texture->pixels;
+  const Pixel* pixels = texture->pixels;
   for (int i = 0; i < pixelLength; i++, pixels++) {
     for (int j = 0; j < formatLength; j++, strPtr++) {
       switch (format[j]) {
@@ -633,13 +633,13 @@ static VALUE
 Texture_fill(VALUE self, VALUE rbColor)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
-  int length = texture->width * texture->height;
+  const int length = texture->width * texture->height;
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < length; i++, pixels++)
     pixels->color = color;
@@ -651,7 +651,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
                   VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
@@ -664,7 +664,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);  
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
-  int paddingJ = texture->width - rectWidth;
+  const int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
     for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
       pixels->color = color;
@@ -674,7 +674,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
 static VALUE
 Texture_height(VALUE self)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   return INT2NUM(texture->height);
@@ -683,12 +683,12 @@ Texture_height(VALUE self)
 static VALUE
 Texture_palette(VALUE self)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   if (texture->palette) {
     volatile VALUE rbArray = rb_ary_new2(texture->paletteSize);
-    Color* colors = texture->palette;
+    const Color* colors = texture->palette;
     volatile VALUE rb_cColor = strb_GetColorClass();
     for (int i = 0; i < texture->paletteSize; i++, colors++) {
       VALUE rbArgs[] = {
@@ -808,10 +808,10 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbTexture, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  Texture* srcTexture;
+  const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   CheckDisposed(srcTexture);
-  Texture* dstTexture;
+  const Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   CheckDisposed(dstTexture);
   CheckPalette(dstTexture);
@@ -821,33 +821,33 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   AssignPerspectiveOptions(&options, rbOptions);
   if (!options.cameraHeight)
     return self;
-  int srcWidth  = srcTexture->width;
-  int srcHeight = srcTexture->height;
-  int dstWidth  = dstTexture->width;
-  int dstHeight = dstTexture->height;
-  double cosYaw   = cos(options.cameraYaw);
-  double sinYaw   = sin(options.cameraYaw);
-  double cosPitch = cos(options.cameraPitch);
-  double sinPitch = sin(options.cameraPitch);
-  double cosRoll  = cos(options.cameraRoll);
-  double sinRoll  = sin(options.cameraRoll);
-  VectorF screenDX = {
+  const int srcWidth  = srcTexture->width;
+  const int srcHeight = srcTexture->height;
+  const int dstWidth  = dstTexture->width;
+  const int dstHeight = dstTexture->height;
+  const double cosYaw   = cos(options.cameraYaw);
+  const double sinYaw   = sin(options.cameraYaw);
+  const double cosPitch = cos(options.cameraPitch);
+  const double sinPitch = sin(options.cameraPitch);
+  const double cosRoll  = cos(options.cameraRoll);
+  const double sinRoll  = sin(options.cameraRoll);
+  const VectorF screenDX = {
     cosRoll * cosYaw + sinRoll * sinPitch * sinYaw,
     sinRoll * -cosPitch,
     cosRoll * sinYaw - sinRoll * sinPitch * cosYaw,
   };
-  VectorF screenDY = {
+  const VectorF screenDY = {
     -sinRoll * cosYaw + cosRoll * sinPitch * sinYaw,
     cosRoll * -cosPitch,
     -sinRoll * sinYaw - cosRoll * sinPitch * cosYaw,
   };
-  double distance = dstWidth / (2 * (tan(options.viewAngle / 2)));
-  PointF intersection = {
+  const double distance = dstWidth / (2 * (tan(options.viewAngle / 2)));
+  const PointF intersection = {
     distance * (cosPitch * sinYaw),
     distance * sinPitch + options.cameraHeight,
     distance * (-cosPitch * cosYaw),
   };
-  PointF screenO = {
+  const PointF screenO = {
     intersection.x
     - options.intersectionX * screenDX.x
     - options.intersectionY * screenDY.x,
@@ -858,8 +858,8 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     - options.intersectionX * screenDX.z
     - options.intersectionY * screenDY.z
   };
-  int cameraHeight = (int)options.cameraHeight;
-  Pixel* src = srcTexture->pixels;
+  const int cameraHeight = (int)options.cameraHeight;
+  const Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
   PointF screenP;
   for (int j = 0; j < dstHeight; j++) {
@@ -870,7 +870,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
         if (cameraHeight != screenP.y &&
             ((0 < cameraHeight && screenP.y < cameraHeight) ||
              (cameraHeight < 0 && cameraHeight < screenP.y))) {
-          double scale = cameraHeight / (cameraHeight - screenP.y);
+          const double scale = cameraHeight / (cameraHeight - screenP.y);
           int srcX = (int)((screenP.x) * scale + options.cameraX);
           int srcZ = (int)((screenP.z) * scale + options.cameraY);
           if (options.isLoop) {
@@ -883,11 +883,11 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
           }
           if (options.isLoop ||
               (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
-            Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
+            const Color* srcColor = &(src[srcX + srcZ * srcWidth].color);
             if (options.blurType == BLUR_TYPE_NONE || scale <= 1) {
               RENDER_PIXEL(dst->color, (*srcColor));
             } else {
-              int rate = (int)(255 * (1 / scale));
+              const int rate = (int)(255 * (1 / scale));
               if (options.blurType == BLUR_TYPE_BACKGROUND) {
                 Color c;
                 c.red   = srcColor->red;
@@ -921,11 +921,11 @@ Texture_render_line(VALUE self,
                     VALUE rbColor)
 {
   rb_check_frozen(self);
-  int x1 = NUM2INT(rbX1);
-  int y1 = NUM2INT(rbY1);
-  int x2 = NUM2INT(rbX2);
-  int y2 = NUM2INT(rbY2);
-  Texture* texture;
+  const int x1 = NUM2INT(rbX1);
+  const int y1 = NUM2INT(rbY1);
+  const int x2 = NUM2INT(rbX2);
+  const int y2 = NUM2INT(rbY2);
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
@@ -933,13 +933,13 @@ Texture_render_line(VALUE self,
   strb_GetColorFromRubyValue(&color, rbColor);
   int x = x1;
   int y = y1;
-  int dx = abs(x2 - x1);
-  int dy = abs(y2 - y1);
-  int signX = (x1 <= x2) ? 1 : -1;
-  int signY = (y1 <= y2) ? 1 : -1;
+  const int dx = abs(x2 - x1);
+  const int dy = abs(y2 - y1);
+  const int signX = (x1 <= x2) ? 1 : -1;
+  const int signY = (y1 <= y2) ? 1 : -1;
   if (dy <= dx) {
     int e = dx;
-    int eLimit = dx * 2;
+    const int eLimit = dx * 2;
     for (int i = 0; i <= dx; i++) {
       if (0 <= x && x < texture->width && 0 <= y && y < texture->height) {
         Pixel* pixel = &(texture->pixels[x + y * texture->width]);
@@ -954,7 +954,7 @@ Texture_render_line(VALUE self,
     }
   } else {
     int e = dy;
-    int eLimit = dy * 2;
+    const int eLimit = dy * 2;
     for (int i = 0; i <= dy; i++) {
       if (0 <= x && x < texture->width && 0 <= y && y < texture->height) {
         Pixel* pixel = &(texture->pixels[x + y * texture->width]);
@@ -975,12 +975,12 @@ static VALUE
 Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
-  int x = NUM2INT(rbX);
-  int y = NUM2INT(rbY);
+  const int x = NUM2INT(rbX);
+  const int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
     return Qnil;
   Color color;
@@ -995,7 +995,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
                     VALUE rbWidth, VALUE rbHeight, VALUE rbColor)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
@@ -1008,7 +1008,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
-  int paddingJ = texture->width - rectWidth;
+  const int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
     for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
       RENDER_PIXEL(pixels->color, color);
@@ -1025,14 +1025,14 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   Check_Type(rbText, T_STRING);
   if (!(RSTRING_LEN(rbText)))
     return self;
-  bool antiAlias = RTEST(rbAntiAlias);
-  char* text = StringValueCStr(rbText);
-  Font* font;
+  const bool antiAlias = RTEST(rbAntiAlias);
+  const char* text = StringValueCStr(rbText);
+  const Font* font;
   Data_Get_Struct(rbFont, Font, font);
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
   volatile VALUE rbTextTexture =
     rb_class_new_instance(2, RARRAY_PTR(rbSize), rb_cTexture);
-  Texture* textTexture;
+  const Texture* textTexture;
   Data_Get_Struct(rbTextTexture, Texture, textTexture);
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
@@ -1062,9 +1062,9 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   if (!textSurface)
     rb_raise_sdl_error();
   SDL_LockSurface(textSurface);
-  Pixel* src = (Pixel*)(textSurface->pixels);
+  const Pixel* src = (Pixel*)(textSurface->pixels);
   Pixel* dst = textTexture->pixels;
-  int size = textTexture->width * textTexture->height;
+  const int size = textTexture->width * textTexture->height;
   for (int i = 0; i < size; i++, src++, dst++) {
     if (src->value) {
       dst->color = color;
@@ -1135,7 +1135,7 @@ static VALUE
 Texture_render_texture(int argc, VALUE* argv, VALUE self)
 {
   rb_check_frozen(self);
-  Texture* dstTexture;
+  const Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
   CheckDisposed(dstTexture);
   CheckPalette(dstTexture);
@@ -1150,14 +1150,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
   }
 
-  Texture* srcTexture;
+  const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   CheckDisposed(srcTexture);
 
-  int srcTextureWidth  = srcTexture->width;
-  int srcTextureHeight = srcTexture->height;
-  int dstTextureWidth  = dstTexture->width;
-  int dstTextureHeight = dstTexture->height;
+  const int srcTextureWidth  = srcTexture->width;
+  const int srcTextureHeight = srcTexture->height;
+  const int dstTextureWidth  = dstTexture->width;
+  const int dstTextureHeight = dstTexture->height;
 
   RenderingTextureOptions options = {
     .srcX       = 0,
@@ -1255,21 +1255,21 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
                            &(options.srcWidth), &(options.srcHeight)))
     return self;
 
-  uint8_t alpha       = options.alpha;
-  double angle        = options.angle;
-  BlendType blendType = options.blendType;
-  int centerX         = options.centerX;
-  int centerY         = options.centerY;
-  uint8_t saturation  = options.saturation;
-  double scaleX       = options.scaleX;
-  double scaleY       = options.scaleY;
-  int srcHeight       = options.srcHeight;
-  int srcWidth        = options.srcWidth;
-  int srcX            = options.srcX;
-  int srcY            = options.srcY;
-  int toneRed         = options.toneRed;
-  int toneGreen       = options.toneGreen;
-  int toneBlue        = options.toneBlue;
+  const uint8_t alpha       = options.alpha;
+  const double angle        = options.angle;
+  const BlendType blendType = options.blendType;
+  const int centerX         = options.centerX;
+  const int centerY         = options.centerY;
+  const uint8_t saturation  = options.saturation;
+  const double scaleX       = options.scaleX;
+  const double scaleY       = options.scaleY;
+  const int toneRed         = options.toneRed;
+  const int toneGreen       = options.toneGreen;
+  const int toneBlue        = options.toneBlue;
+  int srcHeight = options.srcHeight;
+  int srcWidth  = options.srcWidth;
+  int srcX      = options.srcX;
+  int srcY      = options.srcY;
 
   if (srcTexture != dstTexture &&
       (scaleX == 1 && scaleY == 1 && angle == 0 &&
@@ -1295,19 +1295,19 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     } else if (dstTextureHeight <= dstY) {
       return Qnil;
     }
-    int width  = MIN(srcWidth,  dstTextureWidth - dstX);
-    int height = MIN(srcHeight, dstTextureHeight - dstY);
-    Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
-    Pixel* dst = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
-    int srcPadding = srcTextureWidth - width;
-    int dstPadding = dstTextureWidth - width;
+    const int width  = MIN(srcWidth,  dstTextureWidth - dstX);
+    const int height = MIN(srcHeight, dstTextureHeight - dstY);
+    const Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
+    Pixel* dst       = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
+    const int srcPadding = srcTextureWidth - width;
+    const int dstPadding = dstTextureWidth - width;
     switch (blendType) {
     case BLEND_TYPE_ALPHA:
       if (alpha == 255) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           LOOP({
-              uint8_t beta = src->color.alpha;
-              uint8_t dstAlpha = dst->color.alpha;
+              const uint8_t beta = src->color.alpha;
+              const uint8_t dstAlpha = dst->color.alpha;
               if ((beta == 255) | (dstAlpha == 0)) {
                 *dst = *src;
               } else if (beta) {
@@ -1327,8 +1327,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       } else if (0 < alpha) {
         for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
           LOOP({
-              uint8_t dstAlpha = dst->color.alpha;
-              uint8_t beta = DIV255(src->color.alpha * alpha);
+              const uint8_t dstAlpha = dst->color.alpha;
+              const uint8_t beta = DIV255(src->color.alpha * alpha);
               if (!dstAlpha) {
                 dst->color.alpha = beta;
                 dst->color.red   = src->color.red;
@@ -1383,14 +1383,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       mat.ty *= scaleY;
     }
     if (angle != 0) {
-      double a  = mat.a;
-      double b  = mat.b;
-      double c  = mat.c;
-      double d  = mat.d;
-      double tx = mat.tx;
-      double ty = mat.ty;
-      double cosAngle = cos(angle);
-      double sinAngle = sin(angle);
+      const double a  = mat.a;
+      const double b  = mat.b;
+      const double c  = mat.c;
+      const double d  = mat.d;
+      const double tx = mat.tx;
+      const double ty = mat.ty;
+      const double cosAngle = cos(angle);
+      const double sinAngle = sin(angle);
       mat.a  = cosAngle * a  - sinAngle * c;
       mat.b  = cosAngle * b  - sinAngle * d;
       mat.c  = sinAngle * a  + cosAngle * c;
@@ -1403,18 +1403,18 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   }
   mat.tx += NUM2INT(rbX);
   mat.ty += NUM2INT(rbY);
-  double det = mat.a * mat.d - mat.b * mat.c;
+  const double det = mat.a * mat.d - mat.b * mat.c;
   if (!det)
     return self;
 
-  double dstX00 = mat.tx;
-  double dstY00 = mat.ty;
-  double dstX01 = mat.b * srcHeight + mat.tx;
-  double dstY01 = mat.d * srcHeight + mat.ty;
-  double dstX10 = mat.a * srcWidth  + mat.tx;
-  double dstY10 = mat.c * srcWidth  + mat.ty;
-  double dstX11 = mat.a * srcWidth  + mat.b * srcHeight + mat.tx;
-  double dstY11 = mat.c * srcWidth  + mat.d * srcHeight + mat.ty;
+  const double dstX00 = mat.tx;
+  const double dstY00 = mat.ty;
+  const double dstX01 = mat.b * srcHeight + mat.tx;
+  const double dstY01 = mat.d * srcHeight + mat.ty;
+  const double dstX10 = mat.a * srcWidth  + mat.tx;
+  const double dstY10 = mat.c * srcWidth  + mat.ty;
+  const double dstX11 = mat.a * srcWidth  + mat.b * srcHeight + mat.tx;
+  const double dstY11 = mat.c * srcWidth  + mat.d * srcHeight + mat.ty;
   double dstX0 = MIN(MIN(MIN(dstX00, dstX01), dstX10), dstX11);
   double dstY0 = MIN(MIN(MIN(dstY00, dstY01), dstY10), dstY11);
   double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
@@ -1450,17 +1450,17 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     srcOY -= dstY0 * srcDYY;
     dstY0 = 0;
   }
-  int dstX0Int = (int)dstX0;
-  int dstY0Int = (int)dstY0;
-  int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
-  int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
+  const int dstX0Int = (int)dstX0;
+  const int dstY0Int = (int)dstY0;
+  const int dstWidth  = MIN(dstTextureWidth,  (int)dstX1) - dstX0Int;
+  const int dstHeight = MIN(dstTextureHeight, (int)dstY1) - dstY0Int;
 
-  int_fast32_t srcOX16  = (int_fast32_t)(srcOX  * (1 << 16));
-  int_fast32_t srcOY16  = (int_fast32_t)(srcOY  * (1 << 16));
-  int_fast32_t srcDXX16 = (int_fast32_t)(srcDXX * (1 << 16));
-  int_fast32_t srcDXY16 = (int_fast32_t)(srcDXY * (1 << 16));
-  int_fast32_t srcDYX16 = (int_fast32_t)(srcDYX * (1 << 16));
-  int_fast32_t srcDYY16 = (int_fast32_t)(srcDYY * (1 << 16));
+  const int_fast32_t srcOX16  = (int_fast32_t)(srcOX  * (1 << 16));
+  const int_fast32_t srcOY16  = (int_fast32_t)(srcOY  * (1 << 16));
+  const int_fast32_t srcDXX16 = (int_fast32_t)(srcDXX * (1 << 16));
+  const int_fast32_t srcDXY16 = (int_fast32_t)(srcDXY * (1 << 16));
+  const int_fast32_t srcDYX16 = (int_fast32_t)(srcDYX * (1 << 16));
+  const int_fast32_t srcDYY16 = (int_fast32_t)(srcDYY * (1 << 16));
 
   volatile VALUE rbClonedTexture = Qnil;
   if (self == rbTexture) {
@@ -1468,8 +1468,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
   }
 
-  int srcX2 = srcX + srcWidth;
-  int srcY2 = srcY + srcHeight;
+  const int srcX2 = srcX + srcWidth;
+  const int srcY2 = srcY + srcHeight;
   for (int j = 0; j < dstHeight; j++) {
     int_fast32_t srcI16 = srcOX16 + j * srcDYX16;
     int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;
@@ -1477,10 +1477,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       &(dstTexture->pixels[dstX0Int + (dstY0Int + j) * dstTextureWidth]);
     for (int i = 0; i < dstWidth;
          i++, dst++, srcI16 += srcDXX16, srcJ16 += srcDXY16) {
-      int_fast32_t srcI = srcI16 >> 16;
-      int_fast32_t srcJ = srcJ16 >> 16;
+      const int_fast32_t srcI = srcI16 >> 16;
+      const int_fast32_t srcJ = srcJ16 >> 16;
       if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {
-        Color srcColor = srcTexture->pixels[srcI + srcJ * srcTextureWidth].color;
+        const Color srcColor = srcTexture->pixels[srcI + srcJ * srcTextureWidth].color;
         if (blendType == BLEND_TYPE_MASK) {
           dst->color.alpha = srcColor.red;
         } else {
@@ -1490,9 +1490,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
           uint8_t srcAlpha = srcColor.alpha;
           if (saturation < 255) {
             // http://www.poynton.com/ColorFAQ.html
-            uint8_t y = (6969  * srcRed +
-                         23434 * srcGreen +
-                         2365  * srcBlue) / 32768;
+            const uint8_t y =
+              (6969 * srcRed + 23434 * srcGreen + 2365 * srcBlue) / 32768;
             srcRed   = ALPHA(srcRed,   y, saturation);
             srcGreen = ALPHA(srcGreen, y, saturation);
             srcBlue  = ALPHA(srcBlue,  y, saturation);
@@ -1521,7 +1520,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             dst->color.blue  = srcBlue;
             dst->color.alpha = srcAlpha;
           } else if (dst->color.alpha == 0) {
-            uint8_t beta = DIV255(srcAlpha * alpha);
+            const uint8_t beta = DIV255(srcAlpha * alpha);
             switch (blendType) {
             case BLEND_TYPE_ALPHA:
               dst->color.red   = srcRed;
@@ -1531,9 +1530,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               break;
             case BLEND_TYPE_ADD:
               ;
-              int addR = srcRed   + dst->color.red;
-              int addG = srcGreen + dst->color.green;
-              int addB = srcBlue  + dst->color.blue;
+              const int addR = srcRed   + dst->color.red;
+              const int addG = srcGreen + dst->color.green;
+              const int addB = srcBlue  + dst->color.blue;
               dst->color.red   = MIN(255, addR);
               dst->color.green = MIN(255, addG);
               dst->color.blue  = MIN(255, addB);
@@ -1541,9 +1540,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               break;
             case BLEND_TYPE_SUB:
               ;
-              int subR = -srcRed   + dst->color.red;
-              int subG = -srcGreen + dst->color.green;
-              int subB = -srcBlue  + dst->color.blue;
+              const int subR = -srcRed   + dst->color.red;
+              const int subG = -srcGreen + dst->color.green;
+              const int subB = -srcBlue  + dst->color.blue;
               dst->color.red   = MAX(0, subR);
               dst->color.green = MAX(0, subG);
               dst->color.blue  = MAX(0, subB);
@@ -1557,7 +1556,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               break;
             }
           } else {
-            uint8_t beta = DIV255(srcAlpha * alpha);
+            const uint8_t beta = DIV255(srcAlpha * alpha);
             if (dst->color.alpha < beta)
               dst->color.alpha = beta;
             switch (blendType) {
@@ -1568,18 +1567,18 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               break;
             case BLEND_TYPE_ADD:
               ;
-              int addR = DIV255(srcRed   * beta) + dst->color.red;
-              int addG = DIV255(srcGreen * beta) + dst->color.green;
-              int addB = DIV255(srcBlue  * beta) + dst->color.blue;
+              const int addR = DIV255(srcRed   * beta) + dst->color.red;
+              const int addG = DIV255(srcGreen * beta) + dst->color.green;
+              const int addB = DIV255(srcBlue  * beta) + dst->color.blue;
               dst->color.red   = MIN(255, addR);
               dst->color.green = MIN(255, addG);
               dst->color.blue  = MIN(255, addB);
               break;
             case BLEND_TYPE_SUB:
               ;
-              int subR = -DIV255(srcRed   * beta) + dst->color.red;
-              int subG = -DIV255(srcGreen * beta) + dst->color.green;
-              int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
+              const int subR = -DIV255(srcRed   * beta) + dst->color.red;
+              const int subG = -DIV255(srcGreen * beta) + dst->color.green;
+              const int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
               dst->color.red   = MAX(0, subR);
               dst->color.green = MAX(0, subG);
               dst->color.blue  = MAX(0, subB);
@@ -1611,10 +1610,10 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 static VALUE
 Texture_save(VALUE self, VALUE rbPath)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  char* path = StringValueCStr(rbPath);
+  const char* path = StringValueCStr(rbPath);
   FILE* fp = fopen(path, "wb");
   if (!fp)
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
@@ -1629,7 +1628,7 @@ Texture_save(VALUE self, VALUE rbPath)
   for (int j = 0; j < texture->height; j++) {
     png_byte row[texture->width * 4];
     for (int i = 0; i < texture->width; i++) {
-      Color* c = &(texture->pixels[texture->width * j + i].color);
+      const Color* c = &(texture->pixels[texture->width * j + i].color);
       row[i * 4]     = c->red;
       row[i * 4 + 1] = c->green;
       row[i * 4 + 2] = c->blue;
@@ -1646,7 +1645,7 @@ Texture_save(VALUE self, VALUE rbPath)
 static VALUE
 Texture_size(VALUE self)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   volatile VALUE rbSize =
@@ -1658,22 +1657,22 @@ Texture_size(VALUE self)
 static VALUE
 Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   volatile VALUE rbX, rbY, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
-  int screenWidth = texture->width;
+  const int screenWidth = texture->width;
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  double cosYaw   = cos(options.cameraYaw);
-  double sinYaw   = sin(options.cameraYaw);
-  double cosPitch = cos(options.cameraPitch);
-  double sinPitch = sin(options.cameraPitch);
-  double cosRoll  = cos(options.cameraRoll);
-  double sinRoll  = sin(options.cameraRoll);
+  const double cosYaw   = cos(options.cameraYaw);
+  const double sinYaw   = sin(options.cameraYaw);
+  const double cosPitch = cos(options.cameraPitch);
+  const double sinPitch = sin(options.cameraPitch);
+  const double cosRoll  = cos(options.cameraRoll);
+  const double sinRoll  = sin(options.cameraRoll);
   double x = NUM2INT(rbX) - options.cameraX;
   double y = NUM2DBL(rbHeight);
   double z = NUM2INT(rbY) - options.cameraY;
@@ -1691,13 +1690,13 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   OBJ_FREEZE(rbResult);
   if (!z)
     return rbResult;
-  double distance = screenWidth / (2 * tan(options.viewAngle / 2));
-  double scale = -distance / z;
-  double screenX = x * scale;
-  double screenY = (options.cameraHeight - y) * scale;
-  long screenXLong =
+  const double distance = screenWidth / (2 * tan(options.viewAngle / 2));
+  const double scale = -distance / z;
+  const double screenX = x * scale;
+  const double screenY = (options.cameraHeight - y) * scale;
+  const long screenXLong =
     (long)(cosRoll  * screenX + sinRoll * screenY + options.intersectionX);
-  long screenYLong =
+  const long screenYLong =
     (long)(-sinRoll * screenX + cosRoll * screenY + options.intersectionY);
   if (FIXABLE(screenXLong) && INT_MIN <= screenXLong && screenXLong <= INT_MAX)
     RARRAY_PTR(rbResult)[0] = LONG2FIX(screenXLong);
@@ -1715,18 +1714,18 @@ static VALUE
 Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 {
   rb_check_frozen(self);
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
-  char* format = StringValuePtr(rbFormat);
-  int formatLength = RSTRING_LEN(rbFormat);
-  int pixelLength = texture->width * texture->height;
+  const char* format = StringValuePtr(rbFormat);
+  const int formatLength = RSTRING_LEN(rbFormat);
+  const int pixelLength = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
   if (pixelLength * formatLength != RSTRING_LEN(rbData))
     rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
              pixelLength * formatLength, RSTRING_LEN(rbData));
-  uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
+  const uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < pixelLength; i++, pixels++) {
     for (int j = 0; j < formatLength; j++, data++) {
@@ -1744,7 +1743,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
 static VALUE
 Texture_width(VALUE self)
 {
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   return INT2NUM(texture->width);

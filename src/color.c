@@ -17,10 +17,10 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbRed, rbGreen, rbBlue, rbAlpha;
   rb_scan_args(argc, argv, "31",
                &rbRed, &rbGreen, &rbBlue, &rbAlpha);
-  int red   = NUM2INT(rbRed);
-  int green = NUM2INT(rbGreen);
-  int blue  = NUM2INT(rbBlue);
-  int alpha = NIL_P(rbAlpha) ? 255 : NUM2INT(rbAlpha);
+  const int red   = NUM2INT(rbRed);
+  const int green = NUM2INT(rbGreen);
+  const int blue  = NUM2INT(rbBlue);
+  const int alpha = NIL_P(rbAlpha) ? 255 : NUM2INT(rbAlpha);
   if (red < 0 || 256 <= red || green < 0 || 256 <= green ||
       blue < 0 || 256 <= blue || alpha < 0 || 256 <= alpha)
     rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
@@ -62,11 +62,11 @@ Color_alloc(VALUE klass)
 static VALUE
 Color_initialize(VALUE self, VALUE rbRed, VALUE rbGreen, VALUE rbBlue, VALUE rbAlpha)
 {
-  int red   = NUM2INT(rbRed);
-  int green = NUM2INT(rbGreen);
-  int blue  = NUM2INT(rbBlue);
-  int alpha = NUM2INT(rbAlpha);
-  Pixel pixel = {
+  const int red   = NUM2INT(rbRed);
+  const int green = NUM2INT(rbGreen);
+  const int blue  = NUM2INT(rbBlue);
+  const int alpha = NUM2INT(rbAlpha);
+  const Pixel pixel = {
     .color = {
       .red   = red,
       .green = green,
@@ -124,14 +124,13 @@ Color_hash(VALUE self)
 {
   Color color;
   strb_GetColorFromRubyValue(&color, self);
-  uint32_t hash;
 #if POSFIXABLE(0xffffffff)
-  hash = (color.alpha << 24) |
+  const uint32_t hash = (color.alpha << 24) |
     (color.red << 16) |
     (color.green << 8) |
     color.blue;
 #else
-  hash = ((color.alpha >> 6) << 24) |
+  const uint32_t hash = ((color.alpha >> 6) << 24) |
     ((color.red ^ ((color.alpha >> 4) & 0x3)) << 16) |
     ((color.green ^ ((color.alpha >> 2) & 0x3)) << 8) |
     (color.blue ^ (color.alpha & 0x3));
@@ -175,7 +174,7 @@ strb_InitializeColor(VALUE rb_mStarRuby)
   rb_define_method(rb_cColor, "red",   Color_red,   0);
   rb_define_method(rb_cColor, "to_s",  Color_to_s,  0);
 
-  int length = 128;
+  const int length = 128;
   rbColorCache = rb_iv_set(rb_cColor, "color_cache", rb_ary_new2(length));
   for (int i = 0; i < length; i++)
     rb_ary_push(rbColorCache, Qnil);

@@ -6,7 +6,7 @@ static volatile VALUE rb_eStarRubyError;
 VALUE
 strb_GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
 {
-  char* path = StringValueCStr(rbPath);
+  const char* path = StringValueCStr(rbPath);
   if (!RTEST(rb_funcall(rb_mFileTest, rb_intern("file?"), 1, rbPath))) {
     volatile VALUE rbPathes =
       rb_funcall(rb_cDir, rb_intern("[]"), 1,

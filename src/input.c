@@ -62,7 +62,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
   Check_Type(rbValue, T_ARRAY);
   if (RARRAY_LEN(rbValue) != 2)
     rb_raise(rb_eArgError, "array size should be 2, %ld given", RARRAY_LEN(rbValue));
-  int windowScale = strb_GetWindowScale();
+  const int windowScale = strb_GetWindowScale();
   SDL_WarpMouse(NUM2INT(RARRAY_PTR(rbValue)[0]) * windowScale,
                 NUM2INT(RARRAY_PTR(rbValue)[1]) * windowScale);
   int mouseLocationX, mouseLocationY;
@@ -76,7 +76,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
 }
 
 static bool
-IsPressed(int status, int duration, int delay, int interval)
+IsPressed(const int status, const int duration, const int delay, const int interval)
 {
   /*
    * on:  ------------         -           -              ...
@@ -182,7 +182,7 @@ strb_UpdateInput(void)
   SDL_PumpEvents();
   SDL_JoystickUpdate();
 
-  Uint8* sdlKeyState = SDL_GetKeyState(NULL);
+  const Uint8* sdlKeyState = SDL_GetKeyState(NULL);
   KeyboardKey* key = keyboardKeys;
   while (key) {
     if (sdlKeyState[key->sdlKey])
@@ -217,9 +217,10 @@ strb_UpdateInput(void)
         gamepad->buttonStates[j] = 0;
   }
 
-  int windowScale = strb_GetWindowScale();
+  const int windowScale = strb_GetWindowScale();
   int mouseLocationX, mouseLocationY;
-  Uint8 sdlMouseButtons = SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
+  const Uint8 sdlMouseButtons =
+    SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
   volatile VALUE rbMouseLocation =
     rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
                  INT2NUM(mouseLocationY / windowScale));
@@ -312,7 +313,7 @@ strb_InitializeSdlInput()
     SDL_Joystick* ptr = gamepads[i].sdlJoystick = SDL_JoystickOpen(i);
     if (ptr == NULL)
       rb_raise_sdl_error();
-    int buttonCount = gamepads[i].buttonCount = SDL_JoystickNumButtons(ptr);
+    const int buttonCount = gamepads[i].buttonCount = SDL_JoystickNumButtons(ptr);
     gamepads[i].buttonStates = ALLOC_N(int, buttonCount);
     MEMZERO(gamepads[i].buttonStates, int, buttonCount);
   }

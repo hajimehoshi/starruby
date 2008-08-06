@@ -197,11 +197,11 @@ static VALUE
 Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
                 VALUE rbBold, VALUE rbItalic, VALUE rbTtcIndex)
 {
-  char* path   = StringValueCStr(rbRealFilePath);
-  int size     = NUM2INT(rbSize);
-  bool bold    = RTEST(rbBold);
-  bool italic  = RTEST(rbItalic);
-  int ttcIndex = NUM2INT(rbTtcIndex);
+  const char* path   = StringValueCStr(rbRealFilePath);
+  const int size     = NUM2INT(rbSize);
+  const bool bold    = RTEST(rbBold);
+  const bool italic  = RTEST(rbItalic);
+  const int ttcIndex = NUM2INT(rbTtcIndex);
 
   Font* font;
   Data_Get_Struct(self, Font, font);
@@ -209,7 +209,7 @@ Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
   font->sdlFont = TTF_OpenFontIndex(path, size, ttcIndex);
   if (!font->sdlFont)
     rb_raise(strb_GetStarRubyErrorClass(), "%s (%s)", TTF_GetError(), path);
-  int style = TTF_STYLE_NORMAL |
+  const int style = TTF_STYLE_NORMAL |
     (bold ? TTF_STYLE_BOLD : 0) | (italic ? TTF_STYLE_ITALIC : 0);
   TTF_SetFontStyle(font->sdlFont, style);
 
@@ -219,7 +219,7 @@ Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
 static VALUE
 Font_bold(VALUE self)
 {
-  Font* font;
+  const Font* font;
   Data_Get_Struct(self, Font, font);
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_BOLD) ? Qtrue : Qfalse;
 }
@@ -227,7 +227,7 @@ Font_bold(VALUE self)
 static VALUE
 Font_italic(VALUE self)
 {
-  Font* font;
+  const Font* font;
   Data_Get_Struct(self, Font, font);
   return (TTF_GetFontStyle(font->sdlFont) & TTF_STYLE_ITALIC) ? Qtrue : Qfalse;
 }
@@ -235,9 +235,9 @@ Font_italic(VALUE self)
 static VALUE
 Font_get_size(VALUE self, VALUE rbText)
 {
-  Font* font;
+  const Font* font;
   Data_Get_Struct(self, Font, font);
-  char* text = StringValueCStr(rbText);
+  const char* text = StringValueCStr(rbText);
   int width, height;
   if (TTF_SizeUTF8(font->sdlFont, text, &width, &height))
     rb_raise_sdl_ttf_error();
@@ -249,7 +249,7 @@ Font_get_size(VALUE self, VALUE rbText)
 static VALUE
 Font_name(VALUE self)
 {
-  Font* font;
+  const Font* font;
   Data_Get_Struct(self, Font, font);
   return rb_str_new2(TTF_FontFaceFamilyName(font->sdlFont));
 }
@@ -257,7 +257,7 @@ Font_name(VALUE self)
 static VALUE
 Font_size(VALUE self)
 {
-  Font* font;
+  const Font* font;
   Data_Get_Struct(self, Font, font);
   return INT2NUM(font->size);
 }
@@ -317,11 +317,11 @@ strb_InitializeSdlFont(void)
       // In Windows 2000 or older, fontNameBuffLength may hold an invalid value
       fontNameBuffLength = strlen(fontNameBuff) + 1;
       if (result == ERROR_SUCCESS) {
-        char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
+        const char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
         if (tolower(ext[0]) == 't' && tolower(ext[1]) == 't' &&
             (tolower(ext[2]) == 'f' || tolower(ext[2]) == 'c')) {
-          char* fontName = fontNameBuff;
-          char* fileName = fileNameBuff;
+          const char* fontName = fontNameBuff;
+          const char* fileName = fileNameBuff;
           // A TTF font name must end with ' (TrueType)'.
           fontName[fontNameBuffLength - 12] = '\0';
           for (int i = fileNameBuffLength - 1; 0 <= i; i--) {
@@ -331,11 +331,11 @@ strb_InitializeSdlFont(void)
             }
           }
           volatile VALUE rbFontName = rb_str_new2(fontName);
-          rbFontName = rb_funcall(rb_mNKF, rb_intern("nkf"), 2,
-                                  rbNkfOption, rbFontName);
+          rbFontName =
+            rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFontName);
           if (strchr(StringValueCStr(rbFontName), '&')) {
             volatile VALUE rbArr = rb_str_split(rbFontName, "&");
-            int arrLength = RARRAY_LEN(rbArr);
+            const int arrLength = RARRAY_LEN(rbArr);
             int ttcIndex = 0;
             for (int i = 0; i < arrLength; i++) {
               volatile VALUE rbFontName = rb_ary_entry(rbArr, i);

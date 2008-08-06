@@ -31,7 +31,7 @@ typedef struct {
 } Game;
 
 inline static void
-CheckDisposed(Game* game)
+CheckDisposed(const Game* game)
 {
   if (game->isDisposed)
     rb_raise(rb_eRuntimeError,
@@ -44,7 +44,7 @@ strb_GetWindowScale(void)
 {
   volatile VALUE rbCurrent = Game_s_current(rb_cGame);
   if (!NIL_P(rbCurrent)) {
-    Game* game;
+    const Game* game;
     Data_Get_Struct(rbCurrent, Game, game);
     return game->windowScale;
   } else {
@@ -127,7 +127,7 @@ Game_s_real_fps(VALUE self)
 static VALUE
 RunGame(VALUE rbGame)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(rbGame, Game, game);
   while (true) {
     Game_wait(rbGame);
@@ -260,11 +260,11 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
     rb_raise_sdl_error();
 
 #ifndef GP2X
-  int width   = NUM2INT(rbWidth);
-  int height  = NUM2INT(rbHeight);
+  const int width   = NUM2INT(rbWidth);
+  const int height  = NUM2INT(rbHeight);
 #else
-  int width   = 320;
-  int height  = 240;
+  const int width   = 320;
+  const int height  = 240;
 #endif
 
   volatile VALUE rbFps = rb_hash_aref(rbOptions, symbol_fps);
@@ -294,9 +294,9 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
   bool cursor = false;
   bool fullscreen = false;
 #ifndef GP2X
-  int bpp = 32;
+  const int bpp = 32;
 #else
-  int bpp = 16;
+  const int bpp = 16;
 #endif
   game->windowScale = 1;
 
@@ -379,7 +379,7 @@ Game_dispose(VALUE self)
 static VALUE
 Game_disposed(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   return game->isDisposed ? Qtrue : Qfalse;
 }
@@ -387,7 +387,7 @@ Game_disposed(VALUE self)
 static VALUE
 Game_fps(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   return INT2NUM(game->fps);
@@ -406,7 +406,7 @@ Game_fps_eq(VALUE self, VALUE rbFps)
 static VALUE
 Game_real_fps(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   return rb_float_new(game->realFps);
@@ -415,7 +415,7 @@ Game_real_fps(VALUE self)
 static VALUE
 Game_screen(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   return rb_iv_get(self, "screen");
@@ -424,7 +424,7 @@ Game_screen(VALUE self)
 static VALUE
 Game_title(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   return rb_iv_get(self, "title");
@@ -445,25 +445,25 @@ Game_title_eq(VALUE self, VALUE rbTitle)
 static VALUE
 Game_update_screen(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
 
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
-  Texture* texture;
+  const Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
-  Pixel* src = texture->pixels;
-  int realScreenWidth    = game->realScreenWidth;
-  int realScreenHeight   = game->realScreenHeight;
+  const Pixel* src = texture->pixels;
+  const int realScreenWidth    = game->realScreenWidth;
+  const int realScreenHeight   = game->realScreenHeight;
   SDL_Surface* sdlScreen = game->sdlScreen;
   SDL_LockSurface(sdlScreen);
 #ifndef GP2X
   Pixel* dst = (Pixel*)sdlScreen->pixels;
-  int screenPadding =
+  const int screenPadding =
     sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
-  int textureWidth  = texture->width;
-  int textureHeight = texture->height;
-  int windowScale = game->windowScale;
+  const int textureWidth  = texture->width;
+  const int textureHeight = texture->height;
+  const int windowScale = game->windowScale;
   switch (windowScale) {
   case 1:
     {
@@ -471,10 +471,10 @@ Game_update_screen(VALUE self)
       dst += (realScreenWidth - textureWidth) / 2
         + (realScreenHeight - textureHeight) / 2 *
           (realScreenWidth + screenPadding);
-      int heightPadding = realScreenWidth - texture->width + screenPadding;
+      const int heightPadding = realScreenWidth - texture->width + screenPadding;
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst++) {
-          uint8_t alpha = src->color.alpha;
+          const uint8_t alpha = src->color.alpha;
           dst->color.red   = DIV255(src->color.red   * alpha);
           dst->color.green = DIV255(src->color.green * alpha);
           dst->color.blue  = DIV255(src->color.blue  * alpha);
@@ -484,11 +484,11 @@ Game_update_screen(VALUE self)
     break;
   case 2:
     {
-      int textureWidth2x = textureWidth * 2;
-      int heightPadding = textureWidth2x + screenPadding * 2;
+      const int textureWidth2x = textureWidth * 2;
+      const int heightPadding = textureWidth2x + screenPadding * 2;
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
-          uint8_t alpha = src->color.alpha;
+          const uint8_t alpha = src->color.alpha;
           dst->color.red   = DIV255(src->color.red   * alpha);
           dst->color.green = DIV255(src->color.green * alpha);
           dst->color.blue  = DIV255(src->color.blue  * alpha);
@@ -499,12 +499,12 @@ Game_update_screen(VALUE self)
     break;
   default:
     {
-      int textureWidthN = textureWidth * windowScale;
-      int heightPadding =
+      const int textureWidthN = textureWidth * windowScale;
+      const int heightPadding =
         textureWidth * windowScale * (windowScale - 1) + screenPadding * windowScale;
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst += windowScale) {
-          uint8_t alpha = src->color.alpha;
+          const uint8_t alpha = src->color.alpha;
           dst->color.red   = DIV255(src->color.red   * alpha);
           dst->color.green = DIV255(src->color.green * alpha);
           dst->color.blue  = DIV255(src->color.blue  * alpha);
@@ -520,9 +520,9 @@ Game_update_screen(VALUE self)
   }
 #else
   uint16_t* dst = (uint16_t*)sdlScreen->pixels;
-  int length = texture->width * texture->height;
+  const int length = texture->width * texture->height;
   for (int i = 0; i < length; i++, src++, dst++) {
-    uint8_t alpha = src->color.alpha;
+    const uint8_t alpha = src->color.alpha;
     *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
                       (DIV255(src->color.green * alpha) >> 2) << 5 |
                       (DIV255(src->color.blue  * alpha) >> 3));
@@ -555,7 +555,7 @@ Game_wait(VALUE self)
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   GameTimer* gameTimer = &(game->timer);
-  unsigned int fps = game->fps;
+  const unsigned int fps = game->fps;
   Uint32 now;
   while (true) {
     now = SDL_GetTicks();
@@ -580,7 +580,7 @@ Game_wait(VALUE self)
 static VALUE
 Game_window_closing(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   return game->isWindowClosing ? Qtrue : Qfalse;
@@ -589,7 +589,7 @@ Game_window_closing(VALUE self)
 static VALUE
 Game_window_scale(VALUE self)
 {
-  Game* game;
+  const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   return INT2FIX(game->windowScale);

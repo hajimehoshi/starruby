@@ -64,7 +64,7 @@ typedef struct {
 #define strb_GetColorFromRubyValue(colorP, rbColor) \
   do {                                              \
     Check_Type(rbColor, T_DATA);                    \
-    Pixel p = (Pixel){                              \
+    const Pixel p = (Pixel){                        \
       .value = (uint32_t)(VALUE)DATA_PTR(rbColor)   \
     };                                              \
     *colorP = p.color;                              \

@@ -131,7 +131,7 @@ strb_GetTextureClass(void)
 }
 
 inline static void
-CheckDisposed(const Texture* texture)
+CheckDisposed(const Texture* const texture)
 {
   if (!texture->pixels)
     rb_raise(rb_eRuntimeError,
@@ -139,7 +139,7 @@ CheckDisposed(const Texture* texture)
 }
 
 inline static void
-CheckPalette(const Texture* texture)
+CheckPalette(const Texture* const texture)
 {
   if (texture->palette)
     rb_raise(strb_GetStarRubyErrorClass(),
@@ -147,7 +147,8 @@ CheckPalette(const Texture* texture)
 }
 
 inline static bool
-ModifyRectInTexture(const Texture* texture, int* x, int* y, int* width, int* height)
+ModifyRectInTexture(const Texture* texture,
+                    int* const x, int* const y, int* const width, int* const height)
 {
   if (*x < 0) {
     *width -= -(*x);
@@ -1242,17 +1243,22 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
              rb_obj_classname(rbOptions));
   }
 
-  if (options.toneRed   < -255 || 255 < options.toneRed   ||
-      options.toneGreen < -255 || 255 < options.toneGreen ||
-      options.toneBlue  < -255 || 255 < options.toneBlue  ||
-      options.saturation < 0 || 255 < options.saturation)
+  const int saturation = options.saturation;
+  const int toneRed    = options.toneRed;
+  const int toneGreen  = options.toneGreen;
+  const int toneBlue   = options.toneBlue;
+  if (toneRed   < -255 || 255 < toneRed   ||
+      toneGreen < -255 || 255 < toneGreen ||
+      toneBlue  < -255 || 255 < toneBlue  ||
+      saturation < 0   || 255 < saturation)
     rb_raise(rb_eArgError, "invalid tone value: (r:%d, g:%d, b:%d, s:%d)",
-             options.toneRed, options.toneGreen, options.toneBlue,
-             options.saturation);
+             toneRed, toneGreen, toneBlue, saturation);
 
-  if (!ModifyRectInTexture(srcTexture,
-                           &(options.srcX), &(options.srcY),
-                           &(options.srcWidth), &(options.srcHeight)))
+  int srcHeight = options.srcHeight;
+  int srcWidth  = options.srcWidth;
+  int srcX      = options.srcX;
+  int srcY      = options.srcY;
+  if (!ModifyRectInTexture(srcTexture, &(srcX), &(srcY), &(srcWidth), &(srcHeight)))
     return self;
 
   const uint8_t alpha       = options.alpha;
@@ -1260,16 +1266,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   const BlendType blendType = options.blendType;
   const int centerX         = options.centerX;
   const int centerY         = options.centerY;
-  const uint8_t saturation  = options.saturation;
   const double scaleX       = options.scaleX;
   const double scaleY       = options.scaleY;
-  const int toneRed         = options.toneRed;
-  const int toneGreen       = options.toneGreen;
-  const int toneBlue        = options.toneBlue;
-  int srcHeight = options.srcHeight;
-  int srcWidth  = options.srcWidth;
-  int srcX      = options.srcX;
-  int srcY      = options.srcY;
 
   if (srcTexture != dstTexture &&
       (scaleX == 1 && scaleY == 1 && angle == 0 &&
@@ -1529,24 +1527,26 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.alpha = beta;
               break;
             case BLEND_TYPE_ADD:
-              ;
-              const int addR = srcRed   + dst->color.red;
-              const int addG = srcGreen + dst->color.green;
-              const int addB = srcBlue  + dst->color.blue;
-              dst->color.red   = MIN(255, addR);
-              dst->color.green = MIN(255, addG);
-              dst->color.blue  = MIN(255, addB);
-              dst->color.alpha = beta;
+              {
+                const int addR = srcRed   + dst->color.red;
+                const int addG = srcGreen + dst->color.green;
+                const int addB = srcBlue  + dst->color.blue;
+                dst->color.red   = MIN(255, addR);
+                dst->color.green = MIN(255, addG);
+                dst->color.blue  = MIN(255, addB);
+                dst->color.alpha = beta;
+              }
               break;
             case BLEND_TYPE_SUB:
-              ;
-              const int subR = -srcRed   + dst->color.red;
-              const int subG = -srcGreen + dst->color.green;
-              const int subB = -srcBlue  + dst->color.blue;
-              dst->color.red   = MAX(0, subR);
-              dst->color.green = MAX(0, subG);
-              dst->color.blue  = MAX(0, subB);
-              dst->color.alpha = beta;
+              {
+                const int subR = -srcRed   + dst->color.red;
+                const int subG = -srcGreen + dst->color.green;
+                const int subB = -srcBlue  + dst->color.blue;
+                dst->color.red   = MAX(0, subR);
+                dst->color.green = MAX(0, subG);
+                dst->color.blue  = MAX(0, subB);
+                dst->color.alpha = beta;
+              }
               break;
             case BLEND_TYPE_MASK:
               assert(false);
@@ -1566,22 +1566,24 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
               break;
             case BLEND_TYPE_ADD:
-              ;
-              const int addR = DIV255(srcRed   * beta) + dst->color.red;
-              const int addG = DIV255(srcGreen * beta) + dst->color.green;
-              const int addB = DIV255(srcBlue  * beta) + dst->color.blue;
-              dst->color.red   = MIN(255, addR);
-              dst->color.green = MIN(255, addG);
-              dst->color.blue  = MIN(255, addB);
+              {
+                const int addR = DIV255(srcRed   * beta) + dst->color.red;
+                const int addG = DIV255(srcGreen * beta) + dst->color.green;
+                const int addB = DIV255(srcBlue  * beta) + dst->color.blue;
+                dst->color.red   = MIN(255, addR);
+                dst->color.green = MIN(255, addG);
+                dst->color.blue  = MIN(255, addB);
+              }
               break;
             case BLEND_TYPE_SUB:
-              ;
-              const int subR = -DIV255(srcRed   * beta) + dst->color.red;
-              const int subG = -DIV255(srcGreen * beta) + dst->color.green;
-              const int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
-              dst->color.red   = MAX(0, subR);
-              dst->color.green = MAX(0, subG);
-              dst->color.blue  = MAX(0, subB);
+              {
+                const int subR = -DIV255(srcRed   * beta) + dst->color.red;
+                const int subG = -DIV255(srcGreen * beta) + dst->color.green;
+                const int subB = -DIV255(srcBlue  * beta) + dst->color.blue;
+                dst->color.red   = MAX(0, subR);
+                dst->color.green = MAX(0, subG);
+                dst->color.blue  = MAX(0, subB);
+              }
               break;
             case BLEND_TYPE_MASK:
               assert(false);
@@ -1617,8 +1619,8 @@ Texture_save(VALUE self, VALUE rbPath)
   FILE* fp = fopen(path, "wb");
   if (!fp)
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
-  png_structp pngPtr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
-                                               NULL, NULL, NULL);
+  png_structp pngPtr =
+    png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   png_infop infoPtr = png_create_info_struct(pngPtr);
   png_init_io(pngPtr, fp);
   png_set_IHDR(pngPtr, infoPtr, texture->width, texture->height,
@@ -1629,10 +1631,11 @@ Texture_save(VALUE self, VALUE rbPath)
     png_byte row[texture->width * 4];
     for (int i = 0; i < texture->width; i++) {
       const Color* c = &(texture->pixels[texture->width * j + i].color);
-      row[i * 4]     = c->red;
-      row[i * 4 + 1] = c->green;
-      row[i * 4 + 2] = c->blue;
-      row[i * 4 + 3] = c->alpha;
+      png_byte* const r = &(row[i * 4]);
+      r[0] = c->red;
+      r[1] = c->green;
+      r[2] = c->blue;
+      r[3] = c->alpha;
     }
     png_write_row(pngPtr, row);
   }
@@ -1677,7 +1680,7 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   double y = NUM2DBL(rbHeight);
   double z = NUM2INT(rbY) - options.cameraY;
   double x2, y2, z2;
-  x2 = cosYaw * x  + sinYaw * z;
+  x2 = cosYaw  * x + sinYaw * z;
   z2 = -sinYaw * x + cosYaw * z;
   x = x2;
   z = z2;

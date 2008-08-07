@@ -61,20 +61,16 @@ typedef struct {
 #define rb_raise_sdl_ttf_error() \
   rb_raise(strb_GetStarRubyErrorClass(), "%s", TTF_GetError())
 
-#define strb_GetColorFromRubyValue(colorP, rbColor) \
-  do {                                              \
-    Check_Type(rbColor, T_DATA);                    \
-    const Pixel p = (Pixel){                        \
-      .value = (uint32_t)(VALUE)DATA_PTR(rbColor)   \
-    };                                              \
-    *colorP = p.color;                              \
-  } while (false)
-
 VALUE strb_GetColorClass(void);
 VALUE strb_GetStarRubyErrorClass(void);
 VALUE strb_GetTextureClass(void);
 
 VALUE strb_GetCompletePath(VALUE, bool);
+
+inline void strb_GetColorFromRubyValue(Color*, VALUE);
+
+inline void strb_CheckFont(VALUE);
+inline void strb_CheckTexture(VALUE);
 
 VALUE strb_InitializeAudio(VALUE rb_mStarRuby);
 VALUE strb_InitializeColor(VALUE rb_mStarRuby);

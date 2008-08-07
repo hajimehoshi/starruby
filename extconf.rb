@@ -52,6 +52,7 @@ $libs += " " + `env libpng-config --libs`.chomp
 
 $CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter -pedantic -std=c99 -funit-at-a-time"
 $CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/
+$LDFLAGS += " -Wl,--no-undefined"
 
 have_library("SDL_mixer") or exit(false)
 have_library("SDL_ttf") or exit(false)

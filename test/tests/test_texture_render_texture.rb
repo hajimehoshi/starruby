@@ -78,6 +78,9 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         texture2.render_texture(texture, 0, 0, key => false)
       end
     end
+    assert_raise TypeError do
+      texture2.render_texture(Color.new(0, 0, 0, 0), 0, 0)
+    end
   end
   
   def test_render_texture_blending

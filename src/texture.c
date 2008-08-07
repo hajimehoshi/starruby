@@ -130,6 +130,16 @@ strb_GetTextureClass(void)
   return rb_cTexture;
 }
 
+static void Texture_free(Texture*);
+inline void
+strb_CheckTexture(VALUE rbTexture)
+{
+  Check_Type(rbTexture, T_DATA);
+  if (RDATA(rbTexture)->dfree != (RUBY_DATA_FUNC)Texture_free)
+    rb_raise(rb_eTypeError, "wrong argument type %s (expected StarRuby::Texture)",
+             rb_obj_classname(rbTexture));
+}
+
 inline static void
 CheckDisposed(const Texture* const texture)
 {
@@ -809,6 +819,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbTexture, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  strb_CheckTexture(rbTexture);
   const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   CheckDisposed(srcTexture);
@@ -1028,6 +1039,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     return self;
   const bool antiAlias = RTEST(rbAntiAlias);
   const char* text = StringValueCStr(rbText);
+  strb_CheckFont(rbFont);
   const Font* font;
   Data_Get_Struct(rbFont, Font, font);
   volatile VALUE rbSize = rb_funcall(rbFont, rb_intern("get_size"), 1, rbText);
@@ -1151,6 +1163,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
   }
 
+  strb_CheckTexture(rbTexture);
   const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
   CheckDisposed(srcTexture);
@@ -1462,7 +1475,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE rbClonedTexture = Qnil;
   if (self == rbTexture) {
-    rbClonedTexture = rb_funcall(rbTexture, rb_intern("clone"), 0);
+    rbClonedTexture = rb_obj_clone(rbTexture);
     Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
   }
 

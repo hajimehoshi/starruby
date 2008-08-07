@@ -22,6 +22,16 @@ typedef struct FontFileInfo {
 } FontFileInfo;
 static FontFileInfo* fontFileInfos;
 
+static void Font_free(Font*);
+inline void
+strb_CheckFont(VALUE rbFont)
+{
+  Check_Type(rbFont, T_DATA);
+  if (RDATA(rbFont)->dfree != (RUBY_DATA_FUNC)Font_free)
+    rb_raise(rb_eTypeError, "wrong argument type %s (expected StarRuby::Font)",
+             rb_obj_classname(rbFont));
+}
+
 static void
 SearchFont(VALUE rbFilePathOrName,
            VALUE* volatile rbRealFilePath, int* ttcIndex)

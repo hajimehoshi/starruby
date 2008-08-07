@@ -731,6 +731,9 @@ class TestTexture < Test::Unit::TestCase
         texture2.render_in_perspective(texture, key => false)
       end
     end
+    assert_raise TypeError do
+      texture2.render_in_perspective(Color.new(0, 0, 0, 0), :camera_height => 100)
+    end
   end
 
   def test_render_line
@@ -1200,6 +1203,12 @@ class TestTexture < Test::Unit::TestCase
     end
     assert_raise TypeError do
       texture.render_text("aa", 0, 0, font, nil)
+    end
+    assert_raise TypeError do
+      texture.render_text("A", 0, 0, Color.new(0, 0, 0, 0), color)
+    end
+    assert_raise TypeError do
+      texture.render_text("A", 0, 0, font, font)
     end
   end
   

@@ -453,7 +453,7 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
+  volatile VALUE rbTexture = rb_obj_dup(self);
   Texture* newTexture;
   Data_Get_Struct(rbTexture, Texture, newTexture);
   Texture_change_hue_bang(rbTexture, rbAngle);
@@ -540,7 +540,7 @@ Texture_change_palette(VALUE self, VALUE rbPalette)
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  volatile VALUE rbTexture = rb_funcall(self, rb_intern("dup"), 0);
+  volatile VALUE rbTexture = rb_obj_dup(self);
   Texture_change_palette_bang(rbTexture, rbPalette);
   return rbTexture;
 }

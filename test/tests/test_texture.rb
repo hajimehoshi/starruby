@@ -652,6 +652,38 @@ class TestTexture < Test::Unit::TestCase
     end
   end
 
+  def test_change_hue_overrided_dup
+    texture = Texture.load("images/ruby")
+    texture2 = texture.change_hue(20.degrees)
+    def texture.dup
+      Color.new(0, 0, 0, 0)
+    end
+    texture3 = texture.change_hue(20.degrees)
+    assert_equal texture2.width, texture3.width
+    assert_equal texture2.height, texture3.height
+    texture2.height.times do |j|
+      texture2.width.times do |i|
+        assert_equal texture2[i, j], texture3[i, j]
+      end
+    end
+  end
+
+  def test_change_hue_overrided_clone
+    texture = Texture.load("images/ruby")
+    texture2 = texture.change_hue(20.degrees)
+    def texture.clone
+      Color.new(0, 0, 0, 0)
+    end
+    texture3 = texture.change_hue(20.degrees)
+    assert_equal texture2.width, texture3.width
+    assert_equal texture2.height, texture3.height
+    texture2.height.times do |j|
+      texture2.width.times do |i|
+        assert_equal texture2[i, j], texture3[i, j]
+      end
+    end
+  end
+
   def test_render_in_perspective
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(100, 100)

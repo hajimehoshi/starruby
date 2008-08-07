@@ -5,7 +5,7 @@ include StarRuby
 
 require "frozen_error"
 
-class TestTexturePalette
+class TestTexturePalette < Test::Unit::TestCase
 
   def test_palette
     texture = Texture.load("images/ruby")
@@ -392,5 +392,43 @@ class TestTexturePalette
       assert_equal p1.alpha, p2.alpha
     end
   end
-  
+
+  def test_change_palette_overrided_dup
+    texture = Texture.load("images/ruby8", :palette => true)
+    palette = texture.palette.map do
+      Color.new(rand(0xff), rand(0xff), rand(0xff), rand(0xff))
+    end
+    texture2 = texture.change_palette(palette)
+    def texture.dup
+      Color.new(0, 0, 0, 0)
+    end
+    texture3 = texture.change_palette(palette)
+    assert_equal texture2.width, texture3.width
+    assert_equal texture2.height, texture3.height
+    texture2.height.times do |j|
+      texture2.width.times do |i|
+        assert_equal texture2[i, j], texture3[i, j]
+      end
+    end
+  end
+
+  def test_change_palette_overrided_clone
+    texture = Texture.load("images/ruby8", :palette => true)
+    palette = texture.palette.map do
+      Color.new(rand(0xff), rand(0xff), rand(0xff), rand(0xff))
+    end
+    texture2 = texture.change_palette(palette)
+    def texture.clone
+      Color.new(0, 0, 0, 0)
+    end
+    texture3 = texture.change_palette(palette)
+    assert_equal texture2.width, texture3.width
+    assert_equal texture2.height, texture3.height
+    texture2.height.times do |j|
+      texture2.width.times do |i|
+        assert_equal texture2[i, j], texture3[i, j]
+      end
+    end
+  end
+
 end

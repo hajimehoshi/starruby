@@ -1,9 +1,5 @@
 require "mkmf"
 
-lib_base     = ""
-ninclude_base = ""
-sdl_base     = ""
-
 if arg_config("--gp2x", false)
 =begin
   case CONFIG["arch"]
@@ -45,24 +41,24 @@ when /mswin32|cygwin|bccwin32|interix|djgpp/
   raise "not supported arch: #{CONFIG["arch"]}"
 end
 
-$CFLAGS  += " " + `env sdl-config --cflags`.chomp
-$CFLAGS  += " " + `env libpng-config --cflags`.chomp
-$libs += " " + `env sdl-config --libs`.chomp
-$libs += " " + `env libpng-config --libs`.chomp
+$CFLAGS     += " " + `env libpng-config --cflags`.chomp
+$CFLAGS     += " " + `env sdl-config --cflags`.chomp
+$LOCAL_LIBS += " " + `env libpng-config --libs`.chomp
+$LOCAL_LIBS += " " + `env sdl-config --libs`.chomp
 
-$CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter -pedantic -std=c99 -funit-at-a-time"
-$CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/
-$LDFLAGS += " -Wl,--no-undefined"
-
-have_library("SDL_mixer") or exit(false)
-have_library("SDL_ttf") or exit(false)
 have_header("png.h") or exit(false)
 have_header("zlib.h") or exit(false)
+have_library("SDL_mixer", "Mix_OpenAudio") or exit(false)
+have_library("SDL_ttf", "TTF_Init") or exit(false)
 
 if CONFIG["arch"] =~ /linux|darwin/
   have_header("fontconfig/fontconfig.h") or exit(false)
   have_library("fontconfig", "FcInit") or exit(false)
 end
+
+$CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter -pedantic -std=c99 -funit-at-a-time"
+$CFLAGS += " -mfpmath=sse -msse2" if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/
+$LDFLAGS += " -Wl,--no-undefined" if CONFIG["arch"] !~ /darwin/
 
 if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0 -g -pg"

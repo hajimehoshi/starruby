@@ -112,12 +112,12 @@ RunGame(VALUE rbGame)
   const Game* game;
   Data_Get_Struct(rbGame, Game, game);
   while (true) {
-    Game_wait(rbGame);
     Game_update_state(rbGame);
     if (RTEST(Game_window_closing(rbGame)) || game->isTerminated)
       break;
     rb_yield(rbGame);
     Game_update_screen(rbGame);
+    Game_wait(rbGame);
   }
   return Qnil;
 }

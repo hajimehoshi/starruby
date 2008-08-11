@@ -26,14 +26,13 @@ typedef struct {
   double realFps;
   GameTimer timer;
   bool isWindowClosing;
-  bool isDisposed;
   bool isTerminated; // backward compatibility
 } Game;
 
 inline static void
 CheckDisposed(const Game* game)
 {
-  if (game->isDisposed)
+  if (!game)
     rb_raise(rb_eRuntimeError,
              "can't modify disposed StarRuby::Game");
 }
@@ -94,25 +93,6 @@ Game_s_fps_eq(VALUE self, VALUE rbFps)
 }
 
 static VALUE
-Game_s_new(int argc, VALUE* argv, VALUE self)
-{
-  if (!NIL_P(Game_s_current(self)))
-    rb_raise(strb_GetStarRubyErrorClass(), "already run");
-
-  VALUE rbWidth, rbHeight, rbOptions;
-  rb_scan_args(argc, argv, "21",
-               &rbWidth, &rbHeight, &rbOptions);
-  if (NIL_P(rbOptions))
-    rbOptions = rb_hash_new();
-  else
-    Check_Type(rbOptions, T_HASH);
-  VALUE args[] = {rbWidth, rbHeight, rbOptions};
-  volatile VALUE rbGame = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);;
-  rb_iv_set(self, "current", rbGame);
-  return rbGame;
-}
-
-static VALUE
 Game_s_real_fps(VALUE self)
 {
   rb_warn("Game.real_fps is deprecated;"
@@ -150,7 +130,7 @@ RunGameEnsure(VALUE rbGame)
 static VALUE
 Game_s_run(int argc, VALUE* argv, VALUE self)
 {
-  volatile VALUE rbGame = Game_s_new(argc, argv, self);
+  volatile VALUE rbGame = rb_funcall2(self, rb_intern("new"), argc, argv);
   rb_ensure(RunGame, rbGame, RunGameEnsure, rbGame);
   return Qnil;
 }
@@ -234,6 +214,8 @@ Game_free(Game* game)
 static VALUE
 Game_alloc(VALUE klass)
 {
+  if (!NIL_P(Game_s_current(klass)))
+    rb_raise(strb_GetStarRubyErrorClass(), "already run");
   Game* game = ALLOC(Game);
   game->windowScale = 1;
   game->realScreenWidth = 0;
@@ -245,14 +227,20 @@ Game_alloc(VALUE klass)
   game->timer.before2 = game->timer.before2;
   game->timer.counter = 0;
   game->isWindowClosing = false;
-  game->isDisposed = false;
   game->isTerminated = false;
-  return Data_Wrap_Struct(klass, 0, Game_free, game);
+  return Data_Wrap_Struct(klass, 0, Game_free, game);;
 }
 
 static VALUE
-Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
+Game_initialize(int argc, VALUE* argv, VALUE self)
 {
+  volatile VALUE rbWidth, rbHeight, rbOptions;
+  rb_scan_args(argc, argv, "21", &rbWidth, &rbHeight, &rbOptions);
+  if (NIL_P(rbOptions))
+    rbOptions = rb_hash_new();
+  else
+    Check_Type(rbOptions, T_HASH);
+
   Game* game;
   Data_Get_Struct(self, Game, game);
 
@@ -357,6 +345,8 @@ Game_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight, VALUE rbOptions)
                           strb_GetTextureClass());
   rb_iv_set(self, "screen", rbScreen);
 
+  rb_iv_set(rb_cGame, "current", self);
+
   return Qnil;
 }
 
@@ -365,7 +355,7 @@ Game_dispose(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  game->isDisposed = true;
+  RDATA(self)->data = NULL;
   volatile VALUE rbScreen = rb_iv_get(self, "screen");
   if (!NIL_P(rbScreen)) {
     rb_funcall(rbScreen, rb_intern("dispose"), 0);
@@ -381,7 +371,7 @@ Game_disposed(VALUE self)
 {
   const Game* game;
   Data_Get_Struct(self, Game, game);
-  return game->isDisposed ? Qtrue : Qfalse;
+  return !game ? Qtrue : Qfalse;
 }
 
 static VALUE
@@ -604,7 +594,6 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "current",   Game_s_current,   0);
   rb_define_singleton_method(rb_cGame, "fps",       Game_s_fps,       0);
   rb_define_singleton_method(rb_cGame, "fps=",      Game_s_fps_eq,    1);
-  rb_define_singleton_method(rb_cGame, "new",       Game_s_new,       -1);
   rb_define_singleton_method(rb_cGame, "real_fps",  Game_s_real_fps,  0);
   rb_define_singleton_method(rb_cGame, "run",       Game_s_run,       -1);
   rb_define_singleton_method(rb_cGame, "running?",  Game_s_running,   0);
@@ -614,7 +603,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "title",     Game_s_title,     0);
   rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
-  rb_define_private_method(rb_cGame, "initialize", Game_initialize, 3);
+  rb_define_private_method(rb_cGame, "initialize", Game_initialize, -1);
   rb_define_method(rb_cGame, "dispose",         Game_dispose,       0);
   rb_define_method(rb_cGame, "disposed?",       Game_disposed,      0);
   rb_define_method(rb_cGame, "fps",             Game_fps,           0);

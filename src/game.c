@@ -21,6 +21,7 @@ typedef struct {
   int windowScale;
   int realScreenWidth;
   int realScreenHeight;
+  VALUE screen;
   SDL_Surface* sdlScreen;
   int fps;
   double realFps;
@@ -54,6 +55,7 @@ strb_GetWindowScale(void)
 static VALUE Game_dispose(VALUE);
 static VALUE Game_fps(VALUE);
 static VALUE Game_fps_eq(VALUE, VALUE);
+static VALUE Game_screen(VALUE);
 static VALUE Game_title(VALUE);
 static VALUE Game_title_eq(VALUE, VALUE);
 static VALUE Game_real_fps(VALUE);
@@ -151,7 +153,7 @@ Game_s_screen(VALUE self)
   volatile VALUE rbCurrent = Game_s_current(self);
   if (NIL_P(rbCurrent))
     return Qnil;
-  return rb_iv_get(rbCurrent, "screen");
+  return Game_screen(rbCurrent);
 }
 
 static VALUE
@@ -203,6 +205,14 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
 }
 
 static void
+Game_mark(Game* game)
+{
+  if (game)
+    if (!NIL_P(game->screen))
+      rb_gc_mark(game->screen);
+}
+
+static void
 Game_free(Game* game)
 {
   // should not to call SDL_FreeSurface
@@ -220,6 +230,7 @@ Game_alloc(VALUE klass)
   game->windowScale = 1;
   game->realScreenWidth = 0;
   game->realScreenHeight = 0;
+  game->screen = Qnil;
   game->sdlScreen = NULL;
   game->realFps = 0;
   game->timer.error = 0;
@@ -228,7 +239,7 @@ Game_alloc(VALUE klass)
   game->timer.counter = 0;
   game->isWindowClosing = false;
   game->isTerminated = false;
-  return Data_Wrap_Struct(klass, 0, Game_free, game);;
+  return Data_Wrap_Struct(klass, Game_mark, Game_free, game);;
 }
 
 static VALUE
@@ -343,7 +354,7 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbScreen =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)},
                           strb_GetTextureClass());
-  rb_iv_set(self, "screen", rbScreen);
+  game->screen = rbScreen;
 
   rb_iv_set(rb_cGame, "current", self);
 
@@ -356,10 +367,12 @@ Game_dispose(VALUE self)
   Game* game;
   Data_Get_Struct(self, Game, game);
   RDATA(self)->data = NULL;
-  volatile VALUE rbScreen = rb_iv_get(self, "screen");
-  if (!NIL_P(rbScreen)) {
-    rb_funcall(rbScreen, rb_intern("dispose"), 0);
-    rb_iv_set(self, "screen", Qnil);
+  if (game) {
+    volatile VALUE rbScreen = game->screen;
+    if (!NIL_P(rbScreen)) {
+      rb_funcall(rbScreen, rb_intern("dispose"), 0);
+      game->screen = Qnil;
+    }
   }
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
   rb_iv_set(rb_cGame, "current", Qnil);
@@ -408,7 +421,7 @@ Game_screen(VALUE self)
   const Game* game;
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
-  return rb_iv_get(self, "screen");
+  return game->screen;
 }
 
 static VALUE
@@ -439,7 +452,7 @@ Game_update_screen(VALUE self)
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
 
-  volatile VALUE rbScreen = rb_iv_get(self, "screen");
+  volatile VALUE rbScreen = game->screen;
   const Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
   const Pixel* src = texture->pixels;

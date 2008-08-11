@@ -31,11 +31,10 @@ typedef struct {
 } Game;
 
 inline static void
-CheckDisposed(const Game* game)
+CheckDisposed(const Game* const game)
 {
   if (!game)
-    rb_raise(rb_eRuntimeError,
-             "can't modify disposed StarRuby::Game");
+    rb_raise(rb_eRuntimeError, "can't modify disposed StarRuby::Game");
 }
 
 static VALUE Game_s_current(VALUE);

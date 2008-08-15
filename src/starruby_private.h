@@ -67,10 +67,10 @@ VALUE strb_GetTextureClass(void);
 
 VALUE strb_GetCompletePath(VALUE, bool);
 
-inline void strb_GetColorFromRubyValue(Color*, VALUE);
+void strb_GetColorFromRubyValue(Color*, VALUE);
 
-inline void strb_CheckFont(VALUE);
-inline void strb_CheckTexture(VALUE);
+void strb_CheckFont(VALUE);
+void strb_CheckTexture(VALUE);
 
 VALUE strb_InitializeAudio(VALUE rb_mStarRuby);
 VALUE strb_InitializeColor(VALUE rb_mStarRuby);

@@ -257,13 +257,8 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
     rb_raise_sdl_error();
 
-#ifndef GP2X
   const int width   = NUM2INT(rbWidth);
   const int height  = NUM2INT(rbHeight);
-#else
-  const int width   = 320;
-  const int height  = 240;
-#endif
 
   volatile VALUE rbFps = rb_hash_aref(rbOptions, symbol_fps);
   if (!NIL_P(rbFps)) {
@@ -291,14 +286,9 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
 
   bool cursor = false;
   bool fullscreen = false;
-#ifndef GP2X
   const int bpp = 32;
-#else
-  const int bpp = 16;
-#endif
   game->windowScale = 1;
 
-#ifndef GP2X
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_cursor)))
@@ -311,15 +301,12 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
       rb_raise(rb_eArgError, "invalid window scale: %d",
                game->windowScale);
   }
-#endif
   game->realScreenWidth  = width  * game->windowScale;
   game->realScreenHeight = height * game->windowScale;
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
 
   Uint32 options = 0;
-#ifndef GP2X
   options |= SDL_DOUBLEBUF;
-#endif
   if (fullscreen) {
     options |= SDL_HWSURFACE | SDL_FULLSCREEN;
     game->windowScale = 1;    
@@ -459,7 +446,6 @@ Game_update_screen(VALUE self)
   const int realScreenHeight   = game->realScreenHeight;
   SDL_Surface* sdlScreen = game->sdlScreen;
   SDL_LockSurface(sdlScreen);
-#ifndef GP2X
   Pixel* dst = (Pixel*)sdlScreen->pixels;
   const int screenPadding =
     sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
@@ -520,16 +506,6 @@ Game_update_screen(VALUE self)
     }
     break;
   }
-#else
-  uint16_t* dst = (uint16_t*)sdlScreen->pixels;
-  const int length = texture->width * texture->height;
-  for (int i = 0; i < length; i++, src++, dst++) {
-    const uint8_t alpha = src->color.alpha;
-    *dst = (uint16_t)((DIV255(src->color.red   * alpha) >> 3) << 11 |
-                      (DIV255(src->color.green * alpha) >> 2) << 5 |
-                      (DIV255(src->color.blue  * alpha) >> 3));
-  }
-#endif
   SDL_UnlockSurface(sdlScreen);
 
   if (SDL_Flip(sdlScreen))

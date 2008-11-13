@@ -330,7 +330,7 @@ strb_InitializeSdlFont(void)
         const char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
         if (tolower(ext[0]) == 't' && tolower(ext[1]) == 't' &&
             (tolower(ext[2]) == 'f' || tolower(ext[2]) == 'c')) {
-          const char* fontName = fontNameBuff;
+          char* fontName = fontNameBuff;
           const char* fileName = fileNameBuff;
           // A TTF font name must end with ' (TrueType)'.
           fontName[fontNameBuffLength - 12] = '\0';

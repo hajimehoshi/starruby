@@ -238,7 +238,7 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbIO, rbIOToClose = Qnil;
   if (TYPE(rbPathOrIO) == T_STRING) {
     volatile VALUE rbCompletePath = strb_GetCompletePath(rbPathOrIO, true);
-    volatile VALUE rbOpenOption =rb_str_new2("rb"); 
+    volatile VALUE rbOpenOption = rb_str_new2("rb"); 
     rbIOToClose = rbIO =
       rb_funcall(rb_mKernel, rb_intern("open"), 2,
                  rbCompletePath, rbOpenOption);

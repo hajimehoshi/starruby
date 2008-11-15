@@ -3,10 +3,5 @@ unless defined? FrozenError
     FrozenError = RuntimeError
   else
     FrozenError = TypeError
-    class Fixnum
-      def ord
-        self
-      end
-    end
   end
 end

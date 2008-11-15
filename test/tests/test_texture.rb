@@ -1260,9 +1260,9 @@ class TestTexture < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture[i, j]
         origin = i + j * texture.width
-        assert_equal str[3 * origin].ord,     p.red
-        assert_equal str[3 * origin + 1].ord, p.green
-        assert_equal str[3 * origin + 2].ord, p.blue
+        assert_equal str[3 * origin, 1],     p.red.chr
+        assert_equal str[3 * origin + 1, 1], p.green.chr
+        assert_equal str[3 * origin + 2, 1], p.blue.chr
       end
     end
     str = texture.dump("rgba")
@@ -1271,10 +1271,10 @@ class TestTexture < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture[i, j]
         origin = i + j * texture.width
-        assert_equal str[4 * origin].ord,     p.red
-        assert_equal str[4 * origin + 1].ord, p.green
-        assert_equal str[4 * origin + 2].ord, p.blue
-        assert_equal str[4 * origin + 3].ord, p.alpha
+        assert_equal str[4 * origin, 1],     p.red.chr
+        assert_equal str[4 * origin + 1, 1], p.green.chr
+        assert_equal str[4 * origin + 2, 1], p.blue.chr
+        assert_equal str[4 * origin + 3, 1], p.alpha.chr
       end
     end
     str = texture.dump("argb")
@@ -1283,10 +1283,10 @@ class TestTexture < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture[i, j]
         origin = i + j * texture.width
-        assert_equal str[4 * origin].ord,     p.alpha
-        assert_equal str[4 * origin + 1].ord, p.red
-        assert_equal str[4 * origin + 2].ord, p.green
-        assert_equal str[4 * origin + 3].ord, p.blue
+        assert_equal str[4 * origin, 1],     p.alpha.chr
+        assert_equal str[4 * origin + 1, 1], p.red.chr
+        assert_equal str[4 * origin + 2, 1], p.green.chr
+        assert_equal str[4 * origin + 3, 1], p.blue.chr
       end
     end
     str = texture.dump("rrrragb")
@@ -1295,13 +1295,13 @@ class TestTexture < Test::Unit::TestCase
       texture.width.times do |i|
         p = texture[i, j]
         origin = i + j * texture.width
-        assert_equal str[7 * origin].ord,     p.red
-        assert_equal str[7 * origin + 1].ord, p.red
-        assert_equal str[7 * origin + 2].ord, p.red
-        assert_equal str[7 * origin + 3].ord, p.red
-        assert_equal str[7 * origin + 4].ord, p.alpha
-        assert_equal str[7 * origin + 5].ord, p.green
-        assert_equal str[7 * origin + 6].ord, p.blue
+        assert_equal str[7 * origin, 1],     p.red.chr
+        assert_equal str[7 * origin + 1, 1], p.red.chr
+        assert_equal str[7 * origin + 2, 1], p.red.chr
+        assert_equal str[7 * origin + 3, 1], p.red.chr
+        assert_equal str[7 * origin + 4, 1], p.alpha.chr
+        assert_equal str[7 * origin + 5, 1], p.green.chr
+        assert_equal str[7 * origin + 6, 1], p.blue.chr
       end
     end
   end

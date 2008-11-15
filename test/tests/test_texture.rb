@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "stringio"
+require "test/unit"
 require "starruby"
 include StarRuby
 

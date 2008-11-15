@@ -1,5 +1,13 @@
 #!/usr/bin/env ruby
 
+=begin
+If you execute these tests singularly, it will fail
+because both Test::Unit and StarRuby use Kernel#at_exit.
+When these tests are executed, the game module of Star Ruby
+is closed at the same time.
+=end
+
+require "test/unit"
 require "starruby"
 include StarRuby
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require "test/unit"
 require "starruby"
 
 class TestStarRuby < Test::Unit::TestCase

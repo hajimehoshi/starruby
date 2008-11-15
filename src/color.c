@@ -1,4 +1,3 @@
-#include "st.h"
 #include "starruby.h"
 #include "starruby_private.h"
 

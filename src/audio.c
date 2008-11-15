@@ -1,6 +1,10 @@
 #include "starruby.h"
 #include "starruby_private.h"
-#include "st.h"
+#if RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
+# include "st.h"
+#elif RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 9
+# include "ruby/st.h"
+#endif
 
 #define MAX_CHANNEL_COUNT (8)
 

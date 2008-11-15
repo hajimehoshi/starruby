@@ -2,7 +2,11 @@
 #include "starruby.h"
 #include "starruby_private.h"
 #include <png.h>
-#include "st.h"
+#if RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
+# include "st.h"
+#elif RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 9
+# include "ruby/st.h"
+#endif
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
@@ -1193,8 +1197,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
 
   if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
     if (NIL_P(RHASH(rbOptions)->ifnone)) {
-      // Only for Ruby 1.8
-      st_table* table = RHASH(rbOptions)->tbl;
+      st_table* table = RHASH_TBL(rbOptions);
       if (0 < table->num_entries) {
         volatile VALUE val;
         st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);

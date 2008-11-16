@@ -2,11 +2,6 @@
 #include "starruby.h"
 #include "starruby_private.h"
 #include <png.h>
-#if defined(RUBY_1_8)
-# include "st.h"
-#elif defined(RUBY_1_9)
-# include "ruby/st.h"
-#endif
 
 #define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 

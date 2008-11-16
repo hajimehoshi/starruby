@@ -11,13 +11,16 @@
 #include <SDL_ttf.h>
 
 #include <ruby.h>
-#ifdef RUBY_1_8
-# ifndef RHASH_IFNONE
-#  define RHASH_IFNONE(h) (RHASH(h)->ifnone)
-# endif
-# ifndef RHASH_TBL
-#  define RHASH_TBL(h) (RHASH(h)->tbl)
-# endif
+#ifndef RHASH_IFNONE
+# define RHASH_IFNONE(h) (RHASH(h)->ifnone)
+#endif
+#ifndef RHASH_TBL
+# define RHASH_TBL(h) (RHASH(h)->tbl)
+#endif
+#ifdef HAVE_RUBY_ST_H
+# include "ruby/st.h"
+#else
+# include "st.h"
 #endif
 
 #ifdef WIN32

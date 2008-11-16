@@ -1,10 +1,5 @@
 #include "starruby.h"
 #include "starruby_private.h"
-#if defined(RUBY_1_8)
-# include "st.h"
-#elif defined(RUBY_1_9)
-# include "ruby/st.h"
-#endif
 
 #define MAX_CHANNEL_COUNT (8)
 

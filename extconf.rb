@@ -34,17 +34,18 @@ if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0 -g -pg"
 end
 
-# ex) RUBY_1_8
-$CFLAGS += " -DRUBY_#{RUBY_VERSION[0, 1]}_#{RUBY_VERSION[2, 1]}"
-
 create_makefile("starruby", "./src")
 
-if "1.9.0" <= RUBY_VERSION and CONFIG["arch"] =~ /mingw32/
-  drive_name = Dir.pwd[/^(.+:)/].upcase
-  makefile = open("./Makefile", "rb") do |fp|
-    fp.read.gsub(/ \/msys\//){ " #{drive_name}/msys/" }
+if "1.9.0" <= RUBY_VERSION
+  str = open("./Makefile", "rb") do |fp|
+    str = fp.read
+    if CONFIG["arch"] =~ /mingw32/
+      drive_name = Dir.pwd[/^(.+:)/].upcase
+      str.gsub!(/ \/msys\//, " #{drive_name}/msys/")
+    end
+    str
   end
   open("./Makefile", "wb") do |fp|
-    fp.write(makefile)
+    fp.write(str)
   end
 end

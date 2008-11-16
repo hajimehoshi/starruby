@@ -19,14 +19,14 @@ def main
     end
   end
   # dlls
-  Dir["win32/*\0win32/dll/*.dll"].each do |path|
+  Dir.glob("win32/*\0win32/dll/*.dll") do |path|
     next unless FileTest.file?(path)
     dir = File.join(main_dir, File.dirname(path.split("/")[1..-1].join("/")))
     mkdir_p(dir, :verbose => true) unless FileTest.directory?(dir)
     cp(path, dir, :verbose => true)
   end
   # samples
-  Dir["samples/**/*"].each do |path|
+  Dir.glob("samples/**/*") do |path|
     next unless FileTest.file?(path)
     dir = File.join(main_dir, File.dirname(path))
     mkdir_p(dir, :verbose => true) unless FileTest.directory?(dir)

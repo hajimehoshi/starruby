@@ -2,9 +2,9 @@
 #include "starruby.h"
 #include "starruby_private.h"
 #include <png.h>
-#if RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
+#if defined(RUBY_1_8)
 # include "st.h"
-#elif RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 9
+#elif defined(RUBY_1_9)
 # include "ruby/st.h"
 #endif
 
@@ -1196,7 +1196,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   };
 
   if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
-    if (NIL_P(RHASH(rbOptions)->ifnone)) {
+    if (NIL_P(RHASH_IFNONE(rbOptions))) {
       st_table* table = RHASH_TBL(rbOptions);
       if (0 < table->num_entries) {
         volatile VALUE val;

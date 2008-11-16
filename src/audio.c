@@ -1,8 +1,8 @@
 #include "starruby.h"
 #include "starruby_private.h"
-#if RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 8
+#if defined(RUBY_1_8)
 # include "st.h"
-#elif RUBY_VERSION_MAJOR == 1 && RUBY_VERSION_MINOR == 9
+#elif defined(RUBY_1_9)
 # include "ruby/st.h"
 #endif
 
@@ -61,6 +61,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  Check_Type(rbOptions, T_HASH);
 
   volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
   volatile VALUE val;
@@ -77,7 +78,6 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   int volume       = 255;
   long bgmPosition = 0;
 
-  Check_Type(rbOptions, T_HASH);
   bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position)))
     bgmPosition = MAX(NUM2LONG(val), 0);
@@ -110,6 +110,7 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  Check_Type(rbOptions, T_HASH);
 
   volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
   Mix_Chunk* sdlSE = NULL;
@@ -129,7 +130,6 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   int time    = 0;
   int volume  = 255;
 
-  Check_Type(rbOptions, T_HASH);
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning))) {
     panning = NUM2INT(val);
     if (panning <= -256 || 256 <= panning)
@@ -188,10 +188,10 @@ Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "01", &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  Check_Type(rbOptions, T_HASH);
 
   int time = 0;
-  
-  Check_Type(rbOptions, T_HASH);
+
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);
@@ -214,13 +214,13 @@ Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "01", &rbOptions);
   if (NIL_P(rbOptions))
     rbOptions = rb_hash_new();
+  Check_Type(rbOptions, T_HASH);
 
   if (!isEnabled)
     return Qnil;
 
   int time = 0;
   
-  Check_Type(rbOptions, T_HASH);
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
     time = NUM2INT(val);

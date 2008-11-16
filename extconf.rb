@@ -34,6 +34,9 @@ if arg_config("--debug", false)
   $CFLAGS += " -DDEBUG -O0 -g -pg"
 end
 
+# ex) RUBY_1_8
+$CFLAGS += " -DRUBY_#{RUBY_VERSION[0, 1]}_#{RUBY_VERSION[2, 1]}"
+
 create_makefile("starruby", "./src")
 
 if "1.9.0" <= RUBY_VERSION and CONFIG["arch"] =~ /mingw32/

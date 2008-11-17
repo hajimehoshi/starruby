@@ -164,6 +164,7 @@ Font_s_new(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE rbHashKey = rb_str_dup(rbRealFilePath);  
   char temp[256];
+  // TODO: change the delimiter or the way to name a hash key
   rb_str_cat2(rbHashKey, ";size=");
   snprintf(temp, sizeof(temp), "%d", size);
   rb_str_cat2(rbHashKey, temp);

@@ -5,7 +5,7 @@
 #include <fontconfig/fontconfig.h>
 #endif
 #ifdef WIN32
-static char windowsFontDirPath[256];
+static volatile VALUE rbWindowsFontDirPathSymbol;
 #endif
 
 static volatile VALUE rbFontCache;
@@ -49,7 +49,8 @@ SearchFont(VALUE rbFilePathOrName,
     if (info->rbFontNameSymbol == rbFontNameSymbol) {
       *rbRealFilePath = rb_str_new2(rb_id2name(SYM2ID(info->rbFileNameSymbol)));
 #ifdef WIN32
-      volatile VALUE rbTemp = rb_str_new2(windowsFontDirPath);
+      volatile VALUE rbTemp =
+        rb_str_new2(rb_id2name(SYM2ID(rbWindowsFontDirPathSymbol)));
       *rbRealFilePath = rb_str_concat(rb_str_cat2(rbTemp, "\\"), *rbRealFilePath);
 #endif
       if (ttcIndex != NULL)
@@ -298,51 +299,63 @@ strb_InitializeSdlFont(void)
   (void)currentInfo;
 
 #ifdef WIN32
+  rb_require("nkf");
+  volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
+  volatile VALUE rbNkfOption = rb_str_new2("-W16L -w");
   HKEY hKey;
-  const char* regPath =
-    "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
+  LPCTSTR regPath =
+    _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts");
   if (SUCCEEDED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0,
                              KEY_READ, &hKey))) {
-    DWORD type;
+    //DWORD type;
     DWORD fontNameBuffMaxLength;
-    DWORD fileNameBuffMaxLength;
+    DWORD fileNameBuffMaxByteLength;
     RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-                    &fontNameBuffMaxLength, &fileNameBuffMaxLength,
+                    &fontNameBuffMaxLength, &fileNameBuffMaxByteLength,
                     NULL, NULL);
-    // For multibyte characters
-    char fontNameBuff[fontNameBuffMaxLength * 2];
-    char fileNameBuff[fileNameBuffMaxLength * 2];
-    DWORD fontNameBuffLength;
-    DWORD fileNameBuffLength;
-    rb_require("nkf");
-    volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
-    volatile VALUE rbNkfOption = rb_str_new2("-S -w --cp932");
+    TCHAR fontNameBuff[fontNameBuffMaxLength + 1];
+    char fileNameByteBuff[fileNameBuffMaxByteLength];
     for (DWORD dwIndex = 0; ;dwIndex++) {
-      fontNameBuffLength = sizeof(fontNameBuff);
-      fileNameBuffLength = sizeof(fileNameBuff);
+      ZeroMemory(fontNameBuff, sizeof(fontNameBuff));
+      ZeroMemory(fileNameByteBuff, sizeof(fileNameByteBuff));
+      DWORD fontNameBuffLength = sizeof(fontNameBuff) / sizeof(TCHAR);
+      DWORD fileNameBuffByteLength = fileNameBuffMaxByteLength;
       LONG result = RegEnumValue(hKey, dwIndex,
-                                 (LPTSTR)fontNameBuff, &fontNameBuffLength,
-                                 NULL, &type,
-                                 (LPBYTE)fileNameBuff, &fileNameBuffLength);
-      // In Windows 2000 or older, fontNameBuffLength may hold an invalid value
-      fontNameBuffLength = strlen(fontNameBuff) + 1;
+                                 fontNameBuff,
+                                 &fontNameBuffLength,
+                                 NULL, NULL,
+                                 (PBYTE)fileNameByteBuff,
+                                 &fileNameBuffByteLength);
+      TCHAR* fileNameBuff = (TCHAR*)fileNameByteBuff;
+      DWORD fileNameBuffLength = _tcslen(fileNameBuff);
       if (result == ERROR_SUCCESS) {
-        const char* ext = &(fileNameBuff[fileNameBuffLength - 3 - 1]);
-        if (tolower(ext[0]) == 't' && tolower(ext[1]) == 't' &&
-            (tolower(ext[2]) == 'f' || tolower(ext[2]) == 'c')) {
-          char* fontName = fontNameBuff;
-          const char* fileName = fileNameBuff;
+        const TCHAR* ext = &(fileNameBuff[fileNameBuffLength - 3]);
+        if (tolower(ext[0]) == _T('t') &&
+            tolower(ext[1]) == _T('t') &&
+            (tolower(ext[2]) == _T('f') ||
+             tolower(ext[2]) == _T('c'))) {
+          DWORD fontNameLength = fontNameBuffLength;
+          DWORD fileNameLength = fileNameBuffLength;
+          TCHAR* fontName = fontNameBuff;
+          const TCHAR* fileName = fileNameBuff;
           // A TTF font name must end with ' (TrueType)'.
-          fontName[fontNameBuffLength - 12] = '\0';
+          fontName[fontNameBuffLength - 11] = _T('\0');
+          fontNameLength -= 11;
           for (int i = fileNameBuffLength - 1; 0 <= i; i--) {
-            if (fileName[i] == '\\') {
+            if (fileName[i] == _T('\\')) {
               fileName += i + 1;
+              fileNameLength -= i + 1;
               break;
             }
           }
-          volatile VALUE rbFontName = rb_str_new2(fontName);
+          volatile VALUE rbFontName =
+            rb_str_new((char*)fontName, fontNameLength * 2);
           rbFontName =
             rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFontName);
+          volatile VALUE rbFileName =
+            rb_str_new((char*)fileName, fileNameLength * 2);
+          rbFileName =
+            rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFileName);
           if (strchr(StringValueCStr(rbFontName), '&')) {
             volatile VALUE rbArr = rb_str_split(rbFontName, "&");
             const int arrLength = RARRAY_LEN(rbArr);
@@ -352,7 +365,7 @@ strb_InitializeSdlFont(void)
               rb_funcall(rbFontName, rb_intern("strip!"), 0);
               if (0 < RSTRING_LEN(rbFontName)) {
                 volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-                volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+                volatile VALUE rbFileNameSymbol = rb_str_intern(rbFileName);
                 ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol,
                          ttcIndex);
                 ttcIndex++;
@@ -360,7 +373,7 @@ strb_InitializeSdlFont(void)
             }
           } else {
             volatile VALUE rbFontNameSymbol = rb_str_intern(rbFontName);
-            volatile VALUE rbFileNameSymbol = ID2SYM(rb_intern(fileName));
+            volatile VALUE rbFileNameSymbol = rb_str_intern(rbFileName);
             ADD_INFO(currentInfo, rbFontNameSymbol, rbFileNameSymbol, -1);
           }
         }
@@ -373,10 +386,18 @@ strb_InitializeSdlFont(void)
     rb_raise(strb_GetStarRubyErrorClass(),
              "Win32API error: %d", (int)GetLastError());
   }
+  TCHAR szWindowsFontDirPath[MAX_PATH + 1];
   if (FAILED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
-                             SHGFP_TYPE_CURRENT, windowsFontDirPath)))
+                             SHGFP_TYPE_CURRENT,
+                             szWindowsFontDirPath)))
     rb_raise(strb_GetStarRubyErrorClass(),
              "Win32API error: %d", (int)GetLastError());
+  size_t length = _tcslen(szWindowsFontDirPath);
+  volatile VALUE rbWindowsFontDirPath =
+    rb_str_new((char*)szWindowsFontDirPath, length * 2);
+  rbWindowsFontDirPath =
+    rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbWindowsFontDirPath);
+  rbWindowsFontDirPathSymbol = rb_str_intern(rbWindowsFontDirPath);
 #endif
 }
 

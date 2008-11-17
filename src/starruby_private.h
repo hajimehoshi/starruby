@@ -25,6 +25,7 @@
 
 #ifdef WIN32
 # include <windows.h>
+# include <tchar.h>
 # include <winreg.h>
 # include <shlobj.h>
 # ifndef SHGFP_TYPE_CURRENT

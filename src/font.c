@@ -299,6 +299,7 @@ strb_InitializeSdlFont(void)
   (void)currentInfo;
 
 #ifdef WIN32
+  // TODO: Use WideCharToMultiByte function
   rb_require("nkf");
   volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
   volatile VALUE rbNkfOption = rb_str_new2("-W16L -w");

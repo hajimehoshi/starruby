@@ -286,19 +286,6 @@ Font_size(VALUE self)
     currentInfo = info;                          \
   } while (false)
 
-#ifdef WIN32
-static size_t
-CountBytesOfLPTSTR(const TCHAR* str)
-{
-  int c = 0;
-  while (*str) {
-    c++;
-    str++;
-  }
-  return c * sizeof(TCHAR);
-}
-#endif
-
 void
 strb_InitializeSdlFont(void)
 {
@@ -360,11 +347,11 @@ strb_InitializeSdlFont(void)
             }
           }
           volatile VALUE rbFontName =
-            rb_str_new((char*)fontName, CountBytesOfLPTSTR(fontName));
+            rb_str_new((char*)fontName, _tcslen(fontName) * sizeof(TCHAR));
           rbFontName =
             rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFontName);
           volatile VALUE rbFileName =
-            rb_str_new((char*)fileName, CountBytesOfLPTSTR(fileName));
+            rb_str_new((char*)fileName, _tcslen(fileName) * sizeof(TCHAR));
           rbFileName =
             rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFileName);
           if (strchr(StringValueCStr(rbFontName), '&')) {
@@ -405,7 +392,7 @@ strb_InitializeSdlFont(void)
              "Win32API error: %d", (int)GetLastError());
   volatile VALUE rbWindowsFontDirPath =
     rb_str_new((char*)szWindowsFontDirPath,
-               CountBytesOfLPTSTR(szWindowsFontDirPath));
+               _tcslen(szWindowsFontDirPath) * sizeof(TCHAR));
   rbWindowsFontDirPath =
     rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbWindowsFontDirPath);
   rbWindowsFontDirPathSymbol = rb_str_intern(rbWindowsFontDirPath);

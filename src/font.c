@@ -286,6 +286,19 @@ Font_size(VALUE self)
     currentInfo = info;                          \
   } while (false)
 
+#ifdef WIN32
+static size_t
+CountBytesOfLPTSTR(const TCHAR* str)
+{
+  int c = 0;
+  while (*str) {
+    c++;
+    str++;
+  }
+  return c * sizeof(TCHAR);
+}
+#endif
+
 void
 strb_InitializeSdlFont(void)
 {
@@ -336,26 +349,22 @@ strb_InitializeSdlFont(void)
             tolower(ext[1]) == _T('t') &&
             (tolower(ext[2]) == _T('f') ||
              tolower(ext[2]) == _T('c'))) {
-          DWORD fontNameLength = fontNameBuffLength;
-          DWORD fileNameLength = fileNameBuffLength;
           TCHAR* fontName = fontNameBuff;
           const TCHAR* fileName = fileNameBuff;
           // A TTF font name must end with ' (TrueType)'.
           fontName[fontNameBuffLength - 11] = _T('\0');
-          fontNameLength -= 11;
           for (int i = fileNameBuffLength - 1; 0 <= i; i--) {
             if (fileName[i] == _T('\\')) {
               fileName += i + 1;
-              fileNameLength -= i + 1;
               break;
             }
           }
           volatile VALUE rbFontName =
-            rb_str_new((char*)fontName, fontNameLength * 2);
+            rb_str_new((char*)fontName, CountBytesOfLPTSTR(fontName));
           rbFontName =
             rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFontName);
           volatile VALUE rbFileName =
-            rb_str_new((char*)fileName, fileNameLength * 2);
+            rb_str_new((char*)fileName, CountBytesOfLPTSTR(fileName));
           rbFileName =
             rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFileName);
           if (strchr(StringValueCStr(rbFontName), '&')) {
@@ -394,9 +403,9 @@ strb_InitializeSdlFont(void)
                              szWindowsFontDirPath)))
     rb_raise(strb_GetStarRubyErrorClass(),
              "Win32API error: %d", (int)GetLastError());
-  size_t length = _tcslen(szWindowsFontDirPath);
   volatile VALUE rbWindowsFontDirPath =
-    rb_str_new((char*)szWindowsFontDirPath, length * 2);
+    rb_str_new((char*)szWindowsFontDirPath,
+               CountBytesOfLPTSTR(szWindowsFontDirPath));
   rbWindowsFontDirPath =
     rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbWindowsFontDirPath);
   rbWindowsFontDirPathSymbol = rb_str_intern(rbWindowsFontDirPath);

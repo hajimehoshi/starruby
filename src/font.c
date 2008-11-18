@@ -316,18 +316,16 @@ strb_InitializeSdlFont(void)
                     &fontNameBuffMaxLength, &fileNameBuffMaxByteLength,
                     NULL, NULL);
     TCHAR fontNameBuff[fontNameBuffMaxLength + 1];
-    char fileNameByteBuff[fileNameBuffMaxByteLength];
+    BYTE fileNameByteBuff[fileNameBuffMaxByteLength];
     for (DWORD dwIndex = 0; ;dwIndex++) {
       ZeroMemory(fontNameBuff, sizeof(fontNameBuff));
       ZeroMemory(fileNameByteBuff, sizeof(fileNameByteBuff));
       DWORD fontNameBuffLength = sizeof(fontNameBuff) / sizeof(TCHAR);
       DWORD fileNameBuffByteLength = fileNameBuffMaxByteLength;
       LONG result = RegEnumValue(hKey, dwIndex,
-                                 fontNameBuff,
-                                 &fontNameBuffLength,
+                                 fontNameBuff, &fontNameBuffLength,
                                  NULL, NULL,
-                                 (PBYTE)fileNameByteBuff,
-                                 &fileNameBuffByteLength);
+                                 fileNameByteBuff, &fileNameBuffByteLength);
       TCHAR* fileNameBuff = (TCHAR*)fileNameByteBuff;
       DWORD fileNameBuffLength = _tcslen(fileNameBuff);
       if (result == ERROR_SUCCESS) {
@@ -390,6 +388,8 @@ strb_InitializeSdlFont(void)
                              szWindowsFontDirPath)))
     rb_raise(strb_GetStarRubyErrorClass(),
              "Win32API error: %d", (int)GetLastError());
+  //WideCharToMultiByte(CP_ACP, // ANSI
+  //                    NULL, NULL);
   volatile VALUE rbWindowsFontDirPath =
     rb_str_new((char*)szWindowsFontDirPath,
                _tcslen(szWindowsFontDirPath) * sizeof(TCHAR));

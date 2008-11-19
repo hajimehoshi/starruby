@@ -300,16 +300,11 @@ strb_InitializeSdlFont(void)
   (void)currentInfo;
 
 #ifdef WIN32
-  // TODO: Use WideCharToMultiByte function
-  rb_require("nkf");
-  volatile VALUE rb_mNKF = rb_const_get(rb_cObject, rb_intern("NKF"));
-  volatile VALUE rbNkfOption = rb_str_new2("-W16L -w");
   HKEY hKey;
   LPCTSTR regPath =
     _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts");
   if (SUCCEEDED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0,
                              KEY_READ, &hKey))) {
-    //DWORD type;
     DWORD fontNameBuffMaxLength;
     DWORD fileNameBuffMaxByteLength;
     RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -344,14 +339,28 @@ strb_InitializeSdlFont(void)
               break;
             }
           }
-          volatile VALUE rbFontName =
-            rb_str_new((char*)fontName, _tcslen(fontName) * sizeof(TCHAR));
-          rbFontName =
-            rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFontName);
-          volatile VALUE rbFileName =
-            rb_str_new((char*)fileName, _tcslen(fileName) * sizeof(TCHAR));
-          rbFileName =
-            rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbFileName);
+          int length =
+            WideCharToMultiByte(CP_UTF8, 0,
+                                fontName, -1,
+                                NULL, 0,
+                                NULL, NULL);
+          char fontNameUTF8[length];
+          WideCharToMultiByte(CP_UTF8, 0,
+                              fontName, -1,
+                              fontNameUTF8, length,
+                              NULL, NULL);
+          volatile VALUE rbFontName = rb_str_new2(fontNameUTF8);
+          length =
+            WideCharToMultiByte(CP_ACP, 0,
+                                fileName, -1,
+                                NULL, 0,
+                                NULL, NULL);
+          char fileNameANSI[length];
+          WideCharToMultiByte(CP_ACP, 0,
+                              fileName, -1,
+                              fileNameANSI, length,
+                              NULL, NULL);
+          volatile VALUE rbFileName = rb_str_new2(fileNameANSI);
           if (strchr(StringValueCStr(rbFontName), '&')) {
             volatile VALUE rbArr = rb_str_split(rbFontName, "&");
             const int arrLength = RARRAY_LEN(rbArr);
@@ -385,16 +394,21 @@ strb_InitializeSdlFont(void)
   TCHAR szWindowsFontDirPath[MAX_PATH + 1];
   if (FAILED(SHGetFolderPath(NULL, CSIDL_FONTS, NULL,
                              SHGFP_TYPE_CURRENT,
-                             szWindowsFontDirPath)))
+                             szWindowsFontDirPath))) {
     rb_raise(strb_GetStarRubyErrorClass(),
              "Win32API error: %d", (int)GetLastError());
-  //WideCharToMultiByte(CP_ACP, // ANSI
-  //                    NULL, NULL);
-  volatile VALUE rbWindowsFontDirPath =
-    rb_str_new((char*)szWindowsFontDirPath,
-               _tcslen(szWindowsFontDirPath) * sizeof(TCHAR));
-  rbWindowsFontDirPath =
-    rb_funcall(rb_mNKF, rb_intern("nkf"), 2, rbNkfOption, rbWindowsFontDirPath);
+  }
+  int length =
+    WideCharToMultiByte(CP_UTF8, 0,
+                        szWindowsFontDirPath, -1,
+                        NULL, 0,
+                        NULL, NULL);
+  char szWindowsFontDirPathUTF8[length];
+  WideCharToMultiByte(CP_UTF8, 0,
+                      szWindowsFontDirPath, -1,
+                      szWindowsFontDirPathUTF8, length,
+                      NULL, NULL);
+  volatile VALUE rbWindowsFontDirPath = rb_str_new2(szWindowsFontDirPathUTF8);
   rbWindowsFontDirPathSymbol = rb_str_intern(rbWindowsFontDirPath);
 #endif
 }

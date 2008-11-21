@@ -114,7 +114,7 @@ Color_blue(VALUE self)
 }
 
 static VALUE
-Color_eq(VALUE self, VALUE rbOther)
+Color_equal(VALUE self, VALUE rbOther)
 {
   if (self == rbOther)
     return Qtrue;
@@ -185,8 +185,8 @@ strb_InitializeColor(VALUE rb_mStarRuby)
   rb_define_private_method(rb_cColor, "initialize", Color_initialize, 4);
   rb_define_method(rb_cColor, "alpha", Color_alpha, 0);
   rb_define_method(rb_cColor, "blue",  Color_blue,  0);
-  rb_define_method(rb_cColor, "==",    Color_eq,    1);
-  rb_define_method(rb_cColor, "eql?",  Color_eq,    1);
+  rb_define_method(rb_cColor, "==",    Color_equal, 1);
+  rb_define_method(rb_cColor, "eql?",  Color_equal, 1);
   rb_define_method(rb_cColor, "green", Color_green, 0);
   rb_define_method(rb_cColor, "hash",  Color_hash,  0);
   rb_define_method(rb_cColor, "red",   Color_red,   0);

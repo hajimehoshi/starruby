@@ -60,8 +60,9 @@ static VALUE
 Input_mouse_location_eq(VALUE self, VALUE rbValue)
 {
   Check_Type(rbValue, T_ARRAY);
-  if (RARRAY_LEN(rbValue) != 2)
+  if (RARRAY_LEN(rbValue) != 2) {
     rb_raise(rb_eArgError, "array size should be 2, %ld given", RARRAY_LEN(rbValue));
+  }
   const int windowScale = strb_GetWindowScale();
   SDL_WarpMouse(NUM2INT(RARRAY_PTR(rbValue)[0]) * windowScale,
                 NUM2INT(RARRAY_PTR(rbValue)[1]) * windowScale);
@@ -82,20 +83,25 @@ IsPressed(const int status, const int duration, const int delay, const int inter
    * on:  ------------         -           -              ...
    * off:             --------- ------------ ------------ ...
    *      <-duration-><-delay-> <-interval-> <-interval-> ...
-   *
    */
-  if (status <= 0 || duration == 0)
+  if (status <= 0 || duration == 0) {
     return false;
-  if (duration < 0)
+  }
+  if (duration < 0) {
     return true;
-  if (status <= duration)
+  }
+  if (status <= duration) {
     return true;
-  if (delay < 0)
+  }
+  if (delay < 0) {
     return false;
-  if (status <= duration + delay)
+  }
+  if (status <= duration + delay) {
     return false;
-  if (0 <= interval)
+  }
+  if (0 <= interval) {
     return (status - (duration + delay + 1)) % (interval + 1) == 0;
+  }
   return false;
 }
 
@@ -105,9 +111,9 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   volatile VALUE rbDevice, rbOptions;
   rb_scan_args(argc, argv, "11", &rbDevice, &rbOptions);
   Check_Type(rbDevice, T_SYMBOL);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
-
+  }
   volatile VALUE rbResult = rb_ary_new();
 
   int deviceNumber = 0;
@@ -117,44 +123,57 @@ Input_keys(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_device_number)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_device_number))) {
     deviceNumber = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_duration)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_duration))) {
     duration = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_delay)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_delay))) {
     delay = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_interval)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_interval))) {
     interval = NUM2INT(val);
-  
+  }
   if (rbDevice == symbol_keyboard) {
     KeyboardKey* key = keyboardKeys;
     while (key) {
-      if (IsPressed(key->state, duration, delay, interval))
+      if (IsPressed(key->state, duration, delay, interval)) {
         rb_ary_push(rbResult, key->rbSymbol);
+      }
       key = key->next;
     }
   } else if (rbDevice == symbol_gamepad) {
     if (0 <= deviceNumber && deviceNumber < gamepadCount) {
       Gamepad* gamepad = &(gamepads[deviceNumber]);
-      if (IsPressed(gamepad->downState, duration, delay, interval))
+      if (IsPressed(gamepad->downState, duration, delay, interval)) {
         rb_ary_push(rbResult, symbol_down);
-      if (IsPressed(gamepad->leftState, duration, delay, interval))
+      }
+      if (IsPressed(gamepad->leftState, duration, delay, interval)) {
         rb_ary_push(rbResult, symbol_left);
-      if (IsPressed(gamepad->rightState, duration, delay, interval))
+      }
+      if (IsPressed(gamepad->rightState, duration, delay, interval)) {
         rb_ary_push(rbResult, symbol_right);
-      if (IsPressed(gamepad->upState, duration, delay, interval))
+      }
+      if (IsPressed(gamepad->upState, duration, delay, interval)) {
         rb_ary_push(rbResult, symbol_up);
-      for (int i = 0; i < gamepad->buttonCount; i++)
-        if (IsPressed(gamepad->buttonStates[i], duration, delay, interval))
+      }
+      for (int i = 0; i < gamepad->buttonCount; i++) {
+        if (IsPressed(gamepad->buttonStates[i], duration, delay, interval)) {
           rb_ary_push(rbResult, INT2FIX(i + 1));
+        }
+      }
     }
   } else if (rbDevice == symbol_mouse) {
-    if (IsPressed(mouse->leftState, duration, delay, interval))
+    if (IsPressed(mouse->leftState, duration, delay, interval)) {
       rb_ary_push(rbResult, symbol_left);
-    if (IsPressed(mouse->middleState, duration, delay, interval))
+    }
+    if (IsPressed(mouse->middleState, duration, delay, interval)) {
       rb_ary_push(rbResult, symbol_middle);
-    if (IsPressed(mouse->rightState, duration, delay, interval))
+    }
+    if (IsPressed(mouse->rightState, duration, delay, interval)) {
       rb_ary_push(rbResult, symbol_right);
+    }
   } else {
     volatile VALUE rbDeviceInspect =
       rb_funcall(rbDevice, rb_intern("inspect"), 0);
@@ -185,36 +204,43 @@ strb_UpdateInput(void)
   const Uint8* sdlKeyState = SDL_GetKeyState(NULL);
   KeyboardKey* key = keyboardKeys;
   while (key) {
-    if (sdlKeyState[key->sdlKey])
+    if (sdlKeyState[key->sdlKey]) {
       key->state++;
-    else
+    } else {
       key->state = 0;
+    }
     key = key->next;
   }
 
   for (int i = 0; i < gamepadCount; i++) {
     Gamepad* gamepad = &(gamepads[i]);
-    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) > 3200)
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) > 3200) {
       gamepad->downState++;
-    else
+    } else {
       gamepad->downState = 0;
-    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 0) < -3200)
+    }
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 0) < -3200) {
       gamepad->leftState++;
-    else
+    } else {
       gamepad->leftState = 0;
-    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 0) > 3200)
+    }
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 0) > 3200) {
       gamepad->rightState++;
-    else
+    } else {
       gamepad->rightState = 0;
-    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) < -3200)
+    }
+    if (SDL_JoystickGetAxis(gamepad->sdlJoystick, 1) < -3200) {
       gamepad->upState++;
-    else
+    } else {
       gamepad->upState = 0;
-    for (int j = 0; j < gamepad->buttonCount; j++)
-      if (SDL_JoystickGetButton(gamepad->sdlJoystick, j) == SDL_PRESSED)
+    }
+    for (int j = 0; j < gamepad->buttonCount; j++) {
+      if (SDL_JoystickGetButton(gamepad->sdlJoystick, j) == SDL_PRESSED) {
         gamepad->buttonStates[j]++;
-      else
+      } else {
         gamepad->buttonStates[j] = 0;
+      }
+    }
   }
 
   const int windowScale = strb_GetWindowScale();
@@ -227,18 +253,21 @@ strb_UpdateInput(void)
   OBJ_FREEZE(rbMouseLocation);
   rb_iv_set(rb_mInput, "mouse_location", rbMouseLocation);
 
-  if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT))
+  if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_LEFT)) {
     mouse->leftState++;
-  else
+  } else {
     mouse->leftState = 0;
-  if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_MIDDLE))
+  }
+  if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
     mouse->middleState++;
-  else
+  } else {
     mouse->middleState = 0;
-  if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_RIGHT))
+  }
+  if (sdlMouseButtons & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
     mouse->rightState++;
-  else
+  } else {
     mouse->rightState = 0;
+  }
 }
 
 void
@@ -251,18 +280,21 @@ strb_InitializeSdlInput()
   keyboardKeys->next     = NULL;
   
   KeyboardKey* currentKey = keyboardKeys;
-  for (int i = 0; i < SDLK_z - SDLK_a + 1; i++)
+  for (int i = 0; i < SDLK_z - SDLK_a + 1; i++) {
     ADD_KEY(currentKey, ((char[]){'a' + i, '\0'}), SDLK_a + i);
-  for (int i = 0; i <= 9; i++)
+  }
+  for (int i = 0; i <= 9; i++) {
     ADD_KEY(currentKey, ((char[]){'d', '0' + i, '\0'}), SDLK_0 + i);
+  }
   for (int i = 0; i < 15; i++) {
     char name[4];
     snprintf(name, sizeof(name), "f%d", i + 1);
     ADD_KEY(currentKey, name, SDLK_F1 + i);
   }
-  for (int i = 0; i <= 9; i++)
+  for (int i = 0; i <= 9; i++) {
     ADD_KEY(currentKey, ((char[]){'n','u','m','p','a','d', '0' + i, '\0'}),
             SDLK_KP0 + i);
+  }
   char* names[] = {
     "add",
     "back",
@@ -302,17 +334,18 @@ strb_InitializeSdlInput()
   char** name;
   for (sdlKey = sdlKeys, name = names;
        *name;
-       name++, sdlKey++)
+       name++, sdlKey++) {
     ADD_KEY(currentKey, *name, *sdlKey);
-
+  }
   SDL_JoystickEventState(SDL_ENABLE);
   gamepadCount = SDL_NumJoysticks();
   gamepads = ALLOC_N(Gamepad, gamepadCount);
   MEMZERO(gamepads, Gamepad, gamepadCount);
   for (int i = 0; i < gamepadCount; i++) {
     SDL_Joystick* ptr = gamepads[i].sdlJoystick = SDL_JoystickOpen(i);
-    if (ptr == NULL)
+    if (ptr == NULL) {
       rb_raise_sdl_error();
+    }
     const int buttonCount = gamepads[i].buttonCount = SDL_JoystickNumButtons(ptr);
     gamepads[i].buttonStates = ALLOC_N(int, buttonCount);
     MEMZERO(gamepads[i].buttonStates, int, buttonCount);
@@ -362,8 +395,9 @@ strb_FinalizeInput(void)
 
   for (int i = 0; i < gamepadCount; i++) {
     Gamepad* gamepad = &(gamepads[i]);
-    if (SDL_JoystickOpened(i))
+    if (SDL_JoystickOpened(i)) {
       SDL_JoystickClose(gamepad->sdlJoystick);
+    }
     gamepad->sdlJoystick = NULL;
     free(gamepad->buttonStates);
     gamepad->buttonStates = NULL;
@@ -387,8 +421,9 @@ searchKey(const char* name)
   volatile VALUE rbNameSymbol = ID2SYM(rb_intern(name));
   KeyboardKey* key = keyboardKeys;
   while (key) {
-    if (key->rbSymbol == rbNameSymbol)
+    if (key->rbSymbol == rbNameSymbol) {
       return key;
+    }
     key = key->next;
   }
   return NULL;
@@ -432,8 +467,9 @@ strb_TestInput(void)
   assert(SDLK_RIGHT == searchKey("right")->sdlKey);
   assert(SDLK_UP    == searchKey("up")->sdlKey);
 
-  for (KeyboardKey* key = keyboardKeys; key; key = key->next)
+  for (KeyboardKey* key = keyboardKeys; key; key = key->next) {
     assert(0 == key->state);
+  }
 
   assert(false == IsPressed(0, -1, -1, 0));
   assert(true  == IsPressed(1, -1, -1, 0));

@@ -33,8 +33,9 @@ typedef struct {
 inline static void
 CheckDisposed(const Game* const game)
 {
-  if (!game)
+  if (!game) {
     rb_raise(rb_eRuntimeError, "can't modify disposed StarRuby::Game");
+  }
 }
 
 static VALUE Game_s_current(VALUE);
@@ -75,10 +76,11 @@ Game_s_fps(VALUE self)
   rb_warn("Game.fps is deprecated;"
           " use Game#fps instead");
   volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent))
+  if (!NIL_P(rbCurrent)) {
     return Game_fps(rbCurrent);
-  else
+  } else {
     return rb_iv_get(self, "default_fps");
+  }
 }
 
 static VALUE
@@ -87,10 +89,11 @@ Game_s_fps_eq(VALUE self, VALUE rbFps)
   rb_warn("Game.fps= is deprecated;"
           " use Game#fps= or Game.run(..., :fps => ...) instead");
   volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent))
+  if (!NIL_P(rbCurrent)) {
     return Game_fps_eq(rbCurrent, rbFps);
-  else
+  } else {
     return rb_iv_set(self, "default_fps", INT2NUM(NUM2INT(rbFps)));
+  }
 }
 
 static VALUE
@@ -99,10 +102,11 @@ Game_s_real_fps(VALUE self)
   rb_warn("Game.real_fps is deprecated;"
           " use Game#real_fps instead");
   volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent))
+  if (!NIL_P(rbCurrent)) {
     return Game_real_fps(rbCurrent);
-  else
+  } else {
     return rb_float_new(0.0);
+  }
 }
 
 static VALUE
@@ -112,8 +116,9 @@ RunGame(VALUE rbGame)
   Data_Get_Struct(rbGame, Game, game);
   while (true) {
     Game_update_state(rbGame);
-    if (RTEST(Game_window_closing(rbGame)) || game->isTerminated)
+    if (RTEST(Game_window_closing(rbGame)) || game->isTerminated) {
       break;
+    }
     rb_yield(rbGame);
     Game_update_screen(rbGame);
     Game_wait(rbGame);
@@ -150,8 +155,9 @@ Game_s_screen(VALUE self)
   rb_warn("Game.screen is deprecated;"
           " use Game#screen instead");
   volatile VALUE rbCurrent = Game_s_current(self);
-  if (NIL_P(rbCurrent))
+  if (NIL_P(rbCurrent)) {
     return Qnil;
+  }
   return Game_screen(rbCurrent);
 }
 
@@ -161,8 +167,9 @@ Game_s_terminate(VALUE self)
   rb_warn("Game.terminate is deprecated;"
           " use break instead");
   volatile VALUE rbCurrent = Game_s_current(self);
-  if (NIL_P(rbCurrent))
+  if (NIL_P(rbCurrent)) {
     rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
+  }
   Game* game;
   Data_Get_Struct(rbCurrent, Game, game);
   game->isTerminated = true;
@@ -181,10 +188,11 @@ Game_s_title(VALUE self)
   rb_warn("Game.title is deprecated;"
           " use Game#title instead");
   volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent))
+  if (!NIL_P(rbCurrent)) {
     return Game_title(rbCurrent);
-  else
+  } else {
     return rb_iv_get(self, "default_title");
+  }
 }
 
 static VALUE
@@ -197,8 +205,9 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
     return Game_title_eq(rbCurrent, rbTitle);
   } else {
     Check_Type(rbTitle, T_STRING);
-    if (SDL_WasInit(SDL_INIT_VIDEO))
+    if (SDL_WasInit(SDL_INIT_VIDEO)) {
       SDL_WM_SetCaption(StringValueCStr(rbTitle), NULL);
+    }
     return rb_iv_set(self, "default_title", rbTitle);
   }
 }
@@ -206,25 +215,27 @@ Game_s_title_eq(VALUE self, VALUE rbTitle)
 static void
 Game_mark(Game* game)
 {
-  if (game)
-    if (!NIL_P(game->screen))
-      rb_gc_mark(game->screen);
+  if (game && !NIL_P(game->screen)) {
+    rb_gc_mark(game->screen);
+  }
 }
 
 static void
 Game_free(Game* game)
 {
-  // should not to call SDL_FreeSurface
-  if (game)
+  // should NOT to call SDL_FreeSurface
+  if (game) {
     game->sdlScreen = NULL;
+  }
   free(game);
 }
 
 static VALUE
 Game_alloc(VALUE klass)
 {
-  if (!NIL_P(Game_s_current(klass)))
+  if (!NIL_P(Game_s_current(klass))) {
     rb_raise(strb_GetStarRubyErrorClass(), "already run");
+  }
   Game* game = ALLOC(Game);
   game->windowScale = 1;
   game->realScreenWidth = 0;
@@ -246,17 +257,17 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21", &rbWidth, &rbHeight, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
-  else
+  } else {
     Check_Type(rbOptions, T_HASH);
-
+  }
   Game* game;
   Data_Get_Struct(self, Game, game);
 
-  if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER))
+  if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
     rb_raise_sdl_error();
-
+  }
   const int width   = NUM2INT(rbWidth);
   const int height  = NUM2INT(rbHeight);
 
@@ -266,10 +277,11 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   } else {
     // backward compatibility
     volatile VALUE rbFps2 = rb_iv_get(rb_cGame, "default_fps");
-    if (!NIL_P(rbFps2))
+    if (!NIL_P(rbFps2)) {
       Game_fps_eq(self, rbFps2);
-    else
+    } else {
       Game_fps_eq(self, INT2FIX(30));
+    }
   }
 
   volatile VALUE rbTitle = rb_hash_aref(rbOptions, symbol_title);
@@ -278,10 +290,11 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   } else {
     // backward compatibility
     volatile VALUE rbTitle2 = rb_iv_get(rb_cGame, "default_title");
-    if (!NIL_P(rbTitle2))
+    if (!NIL_P(rbTitle2)) {
       Game_title_eq(self, rbTitle2);
-    else
+    } else {
       Game_title_eq(self, rb_str_new2(""));
+    }
   }
 
   bool cursor = false;
@@ -291,15 +304,18 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
 
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_cursor)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_cursor))) {
     cursor = RTEST(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen))) {
     fullscreen = RTEST(val);
+  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
     game->windowScale = NUM2INT(val);
-    if (game->windowScale < 1)
+    if (game->windowScale < 1) {
       rb_raise(rb_eArgError, "invalid window scale: %d",
                game->windowScale);
+    }
   }
   game->realScreenWidth  = width  * game->windowScale;
   game->realScreenHeight = height * game->windowScale;
@@ -311,8 +327,9 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
     options |= SDL_HWSURFACE | SDL_FULLSCREEN;
     game->windowScale = 1;    
     SDL_Rect** modes = SDL_ListModes(NULL, options);
-    if (!modes)
+    if (!modes) {
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
+    }
     if (modes != (SDL_Rect**)-1) {
       game->realScreenWidth = 0;
       game->realScreenHeight = 0;
@@ -325,8 +342,9 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
           break;
         }
       }
-      if (game->realScreenWidth == 0 || game->realScreenHeight == 0)
+      if (game->realScreenWidth == 0 || game->realScreenHeight == 0) {
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
+      }
     }
   } else {
     options |= SDL_SWSURFACE;
@@ -334,9 +352,9 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
 
   game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
                                      game->realScreenHeight, bpp, options);
-  if (!game->sdlScreen)
+  if (!game->sdlScreen) {
     rb_raise_sdl_error();
-
+  }
   volatile VALUE rbScreen =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)},
                           strb_GetTextureClass());
@@ -426,8 +444,9 @@ Game_title_eq(VALUE self, VALUE rbTitle)
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   Check_Type(rbTitle, T_STRING);
-  if (SDL_WasInit(SDL_INIT_VIDEO))
+  if (SDL_WasInit(SDL_INIT_VIDEO)) {
     SDL_WM_SetCaption(StringValueCStr(rbTitle), NULL);
+  }
   return rb_iv_set(self, "title", rb_str_dup(rbTitle));
 }
 
@@ -496,11 +515,14 @@ Game_update_screen(VALUE self)
           dst->color.red   = DIV255(src->color.red   * alpha);
           dst->color.green = DIV255(src->color.green * alpha);
           dst->color.blue  = DIV255(src->color.blue  * alpha);
-          for (int k = 1; k < windowScale; k++)
+          for (int k = 1; k < windowScale; k++) {
             dst[k] = *dst;
-          for (int l = 1; l < windowScale; l++)
-            for (int k = 0; k < windowScale; k++)
+          }
+          for (int l = 1; l < windowScale; l++) {
+            for (int k = 0; k < windowScale; k++) {
               dst[(textureWidthN + screenPadding) * l + k] = *dst;
+            }
+          }
         }
       }
     }
@@ -508,9 +530,9 @@ Game_update_screen(VALUE self)
   }
   SDL_UnlockSurface(sdlScreen);
 
-  if (SDL_Flip(sdlScreen))
+  if (SDL_Flip(sdlScreen)) {
     rb_raise_sdl_error();
-
+  }
   return Qnil;
 }
 

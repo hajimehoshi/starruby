@@ -17,14 +17,16 @@ strb_GetCompletePath(VALUE rbPath, bool raiseNotFoundError)
       volatile VALUE rbFileNameWithoutExt =
         rb_funcall(rb_cFile, rb_intern("basename"), 2,
                    RARRAY_PTR(rbPathes)[i], rb_str_new2(".*"));
-      if (rb_str_cmp(rbFileName, rbFileNameWithoutExt) != 0)
+      if (rb_str_cmp(rbFileName, rbFileNameWithoutExt) != 0) {
         RARRAY_PTR(rbPathes)[i] = Qnil;
+      }
     }
     rb_funcall(rbPathes, rb_intern("compact!"), 0);
     switch (RARRAY_LEN(rbPathes)) {
     case 0:
-      if (raiseNotFoundError)
+      if (raiseNotFoundError) {
         rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
+      }
       break;
     case 1:
       return RARRAY_PTR(rbPathes)[0];
@@ -66,8 +68,9 @@ Init_starruby(void)
   rb_eStarRubyError =
     rb_define_class_under(rb_mStarRuby, "StarRubyError", rb_eStandardError);
 
-  if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK))
+  if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_JOYSTICK)) {
     rb_raise_sdl_error();
+  }
   strb_InitializeSdlAudio();
   strb_InitializeSdlFont();
   strb_InitializeSdlInput();

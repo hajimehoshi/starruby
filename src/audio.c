@@ -23,8 +23,9 @@ static VALUE
 Audio_bgm_position(VALUE self)
 {
   if (isEnabled) {
-    if (Mix_PlayingMusic())
+    if (Mix_PlayingMusic()) {
       sdlBgmLastPausedPosition = SDL_GetTicks() - sdlBgmStartTicks;
+    }
     return LONG2NUM(sdlBgmLastPausedPosition);
   } else {
     return Qnil;
@@ -41,11 +42,13 @@ static VALUE
 Audio_bgm_volume_eq(VALUE self, VALUE rbVolume)
 {
   int tmpBgmVolume = NUM2INT(rbVolume);
-  if (tmpBgmVolume < 0 || 256 <= tmpBgmVolume)
+  if (tmpBgmVolume < 0 || 256 <= tmpBgmVolume) {
     rb_raise(rb_eArgError, "invalid bgm volume: %d", bgmVolume);
+  }
   bgmVolume = tmpBgmVolume;
-  if (isEnabled)
+  if (isEnabled) {
     Mix_VolumeMusic(DIV255((int)(bgmVolume * MIX_MAX_VOLUME)));
+  }
   return INT2FIX(bgmVolume);
 }
 
@@ -54,8 +57,9 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   Check_Type(rbOptions, T_HASH);
 
   volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
@@ -64,35 +68,40 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     sdlBgm = (Mix_Music*)NUM2LONG(val);
   } else {
     const char* path = StringValueCStr(rbCompletePath);
-    if (!(sdlBgm = Mix_LoadMUS(path)))
+    if (!(sdlBgm = Mix_LoadMUS(path))) {
       rb_raise_sdl_mix_error();
+    }
     rb_hash_aset(rbMusicCache, rbCompletePath, ULONG2NUM((unsigned long)sdlBgm));
   }
 
   int time         = 0;
   int volume       = 255;
   long bgmPosition = 0;
-
   bgmLoop = RTEST(rb_hash_aref(rbOptions, symbol_loop));
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_position))) {
     bgmPosition = MAX(NUM2LONG(val), 0);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) {
     time = NUM2INT(val);
-  if (bgmPosition)
+  }
+  if (bgmPosition) {
     time = MAX(time, 50);
-  else if (time < 50)
+  } else if (time < 50) {
     time = 0;
+  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
     volume = NUM2INT(val);
-    if (volume < 0 || 256 <= volume)
+    if (volume < 0 || 256 <= volume) {
       rb_raise(rb_eArgError, "invalid volume: %d", volume);
+    }
   }
-
   Audio_bgm_volume_eq(self, INT2FIX(volume));
-  if (!isEnabled)
+  if (!isEnabled) {
     return Qnil;
-  if (Mix_FadeInMusicPos(sdlBgm, 0, time, bgmPosition))
+  }
+  if (Mix_FadeInMusicPos(sdlBgm, 0, time, bgmPosition)) {
     rb_raise_sdl_mix_error();
+  }
   sdlBgmStartTicks = SDL_GetTicks() - bgmPosition;
   
   return Qnil;
@@ -103,8 +112,9 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPath, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   Check_Type(rbOptions, T_HASH);
 
   volatile VALUE rbCompletePath = strb_GetCompletePath(rbPath, true);
@@ -115,8 +125,9 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
       sdlSE = (Mix_Chunk*)NUM2ULONG(val);
     } else {
       const char* path = StringValueCStr(rbCompletePath);
-      if (!(sdlSE = Mix_LoadWAV(path)))
+      if (!(sdlSE = Mix_LoadWAV(path))) {
         rb_raise_sdl_mix_error();
+      }
       rb_hash_aset(rbChunkCache, rbCompletePath, ULONG2NUM((unsigned long)sdlSE));
     }
   }
@@ -124,40 +135,44 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
   int panning = 0;
   int time    = 0;
   int volume  = 255;
-
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_panning))) {
     panning = NUM2INT(val);
-    if (panning <= -256 || 256 <= panning)
+    if (panning <= -256 || 256 <= panning) {
       rb_raise(rb_eArgError, "invalid panning: %d", panning);
+    }
   }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) 
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) {
     time = NUM2INT(val);
+  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
     volume = NUM2INT(val);
-    if (volume < 0 || 256 <= volume)
+    if (volume < 0 || 256 <= volume) {
       rb_raise(rb_eArgError, "invalid volume: %d", volume);
+    }
   }
-
-  if (!isEnabled)
+  if (!isEnabled) {
     return Qnil;
-  
+  }
   int sdlChannel;
-  if (time <= 50)
+  if (time <= 50) {
     sdlChannel = Mix_PlayChannel(-1, sdlSE, 0);
-  else
+  } else {
     sdlChannel = Mix_FadeInChannel(-1, sdlSE, 0, time);
-  if (sdlChannel == -1)
+  }
+  if (sdlChannel == -1) {
     return Qnil;
-
+  }
   Mix_Volume(sdlChannel, DIV255(volume * MIX_MAX_VOLUME));
   int sdlLeftPanning  = 255;
   int sdlRightPanning = 255;
-  if (panning < 0)
+  if (panning < 0) {
     sdlRightPanning = 255 - (-panning);
-  else if (0 < panning)
+  } else if (0 < panning) {
     sdlLeftPanning = 255 - panning;
-  if (!Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning))
+  }
+  if (!Mix_SetPanning(sdlChannel, sdlLeftPanning, sdlRightPanning)) {
     rb_raise_sdl_mix_error();
+  }
 
   return Qnil;
 }
@@ -171,8 +186,9 @@ Audio_playing_bgm(VALUE self)
 static VALUE
 Audio_playing_se_count(VALUE self)
 {
-  if (!isEnabled)
+  if (!isEnabled) {
     return INT2FIX(0);
+  }
   return INT2FIX(Mix_Playing(-1));
 }
 
@@ -181,24 +197,24 @@ Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbOptions;
   rb_scan_args(argc, argv, "01", &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   Check_Type(rbOptions, T_HASH);
 
   int time = 0;
-
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) {
     time = NUM2INT(val);
-
-  if (!isEnabled)
+  }
+  if (!isEnabled) {
     return Qnil;
-  
-  if (time <= 50)
+  }
+  if (time <= 50) {
     Mix_HaltChannel(-1);
-  else
+  } else {
     Mix_FadeOutChannel(-1, time);
-  
+  }
   return Qnil;
 }
 
@@ -207,26 +223,26 @@ Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbOptions;
   rb_scan_args(argc, argv, "01", &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   Check_Type(rbOptions, T_HASH);
 
-  if (!isEnabled)
+  if (!isEnabled) {
     return Qnil;
-
+  }
   int time = 0;
-  
   volatile VALUE val;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) {
     time = NUM2INT(val);
+  }
   time = MAX(time, 50);
-
-  if (time < 50)
+  if (time < 50) {
     Mix_HaltMusic();
-  else
+  } else {
     Mix_FadeOutMusic(time);
+  }
   sdlBgm = NULL;
-  
   return Qnil;
 }
 
@@ -235,8 +251,9 @@ SdlMusicFinished(void)
 {
   if (sdlBgm && bgmLoop) {
     sdlBgmStartTicks = SDL_GetTicks();
-    if (isEnabled && Mix_PlayMusic(sdlBgm, 0))
+    if (isEnabled && Mix_PlayMusic(sdlBgm, 0)) {
       rb_raise_sdl_mix_error();
+    }
   }
 }
 
@@ -296,8 +313,9 @@ static int
 FreeChunkCacheItem(VALUE rbKey, VALUE rbValue)
 {
   Mix_Chunk* chunk = (Mix_Chunk*)NUM2ULONG(rbValue);
-  if (chunk)
+  if (chunk) {
     Mix_FreeChunk(chunk);
+  }
   return ST_CONTINUE;
 }
 
@@ -305,8 +323,9 @@ static int
 FreeMusicCacheItem(VALUE rbKey, VALUE rbValue)
 {
   Mix_Music* music = (Mix_Music*)NUM2ULONG(rbValue);
-  if (music)
+  if (music) {
     Mix_FreeMusic(music);
+  }
   return ST_CONTINUE;
 }
 

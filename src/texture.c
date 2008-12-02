@@ -134,25 +134,28 @@ inline void
 strb_CheckTexture(VALUE rbTexture)
 {
   Check_Type(rbTexture, T_DATA);
-  if (RDATA(rbTexture)->dfree != (RUBY_DATA_FUNC)Texture_free)
+  if (RDATA(rbTexture)->dfree != (RUBY_DATA_FUNC)Texture_free) {
     rb_raise(rb_eTypeError, "wrong argument type %s (expected StarRuby::Texture)",
              rb_obj_classname(rbTexture));
+  }
 }
 
 inline static void
 CheckDisposed(const Texture* const texture)
 {
-  if (!texture->pixels)
+  if (!texture->pixels) {
     rb_raise(rb_eRuntimeError,
              "can't modify disposed StarRuby::Texture");
+  }
 }
 
 inline static void
 CheckPalette(const Texture* const texture)
 {
-  if (texture->palette)
+  if (texture->palette) {
     rb_raise(strb_GetStarRubyErrorClass(),
              "can't modify a texture with a palette");
+  }
 }
 
 inline static bool
@@ -167,14 +170,18 @@ ModifyRectInTexture(const Texture* texture,
     *height -= -(*y);
     *y = 0;
   }
-  if (texture->width <= *x || texture->height <= *y)
+  if (texture->width <= *x || texture->height <= *y) {
     return false;
-  if (texture->width <= *x + *width)
+  }
+  if (texture->width <= *x + *width) {
     *width = texture->width - *x;
-  if (texture->height <= *y + *height)
+  }
+  if (texture->height <= *y + *height) {
     *height = texture->height - *y;
-  if (*width <= 0 || *height <= 0)
+  }
+  if (*width <= 0 || *height <= 0) {
     return false;
+  }
   return true;
 }
 
@@ -201,18 +208,21 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPathOrIO, rbOptions;
   rb_scan_args(argc, argv, "11", &rbPathOrIO, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   const bool hasPalette = RTEST(rb_hash_aref(rbOptions, symbol_palette));
   unsigned long ioLength = 0;
   volatile VALUE val;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_io_length))) {
     if (RTEST(rb_obj_is_kind_of(val, rb_cNumeric))) {
-      if (RTEST(rb_funcall(val, rb_intern("<="), 1, INT2FIX(0))))
+      if (RTEST(rb_funcall(val, rb_intern("<="), 1, INT2FIX(0)))) {
         rb_raise(rb_eArgError, "invalid io_length");
+      }
       ioLength = NUM2ULONG(val);
-      if (ioLength <= 8)
+      if (ioLength <= 8) {
         rb_raise(rb_eArgError, "invalid io_length");
+      }
     } else {
       rb_raise(rb_eTypeError, "wrong argument type %s (expected Numeric)",
                rb_obj_classname(rbPathOrIO));
@@ -221,8 +231,9 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
 
   png_structp pngPtr =
     png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-  if (!pngPtr)
+  if (!pngPtr) {
     rb_raise(strb_GetStarRubyErrorClass(), "PNG error");
+  }
   png_infop infoPtr = png_create_info_struct(pngPtr);
   if (!infoPtr) {
     png_destroy_read_struct(&pngPtr, NULL, NULL);
@@ -249,15 +260,17 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   }
   volatile VALUE rbHeader = rb_funcall(rbIO, rb_intern("read"), 1, INT2FIX(8));
   if (NIL_P(rbHeader)) {
-    if (!NIL_P(rbIOToClose))
+    if (!NIL_P(rbIOToClose)) {
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
+    }
     rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file (none header)");
   }
   png_byte header[8];
   MEMCPY(header, StringValuePtr(rbHeader), png_byte, 8);
   if (png_sig_cmp(header, 0, 8)) {
-    if (!NIL_P(rbIOToClose))
+    if (!NIL_P(rbIOToClose)) {
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
+    }
     rb_raise(strb_GetStarRubyErrorClass(), "invalid PNG file (invalid header)");
   }
   volatile VALUE rbData =
@@ -278,8 +291,9 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
                &bitDepth, &colorType, &interlaceType, NULL, NULL);
   if (interlaceType != PNG_INTERLACE_NONE) {
     png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-    if (!NIL_P(rbIOToClose))
+    if (!NIL_P(rbIOToClose)) {
       rb_funcall(rbIOToClose, rb_intern("close"), 0);
+    }
     rb_raise(strb_GetStarRubyErrorClass(),
              "not supported interlacing PNG image");
   }
@@ -289,17 +303,21 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   Texture* texture;
   Data_Get_Struct(rbTexture, Texture, texture);
 
-  if (bitDepth == 16)
+  if (bitDepth == 16) {
     png_set_strip_16(pngPtr);
+  }
   if (colorType == PNG_COLOR_TYPE_PALETTE && !hasPalette) {
     png_set_palette_to_rgb(pngPtr);
-    if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
+    if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS)) {
       png_set_tRNS_to_alpha(pngPtr);
+    }
   }
-  if (bitDepth < 8)
+  if (bitDepth < 8) {
     png_set_packing(pngPtr);
-  if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+  }
+  if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8) {
     png_set_gray_1_2_4_to_8(pngPtr);
+  }
   png_read_update_info(pngPtr, infoPtr);
   if (0 < infoPtr->num_palette && hasPalette) {
     texture->indexes = ALLOC_N(uint8_t, width * height);
@@ -350,8 +368,9 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
   }
   png_read_end(pngPtr, endInfo);
   png_destroy_read_struct(&pngPtr, &infoPtr, &endInfo);
-  if (!NIL_P(rbIOToClose))
+  if (!NIL_P(rbIOToClose)) {
     rb_funcall(rbIOToClose, rb_intern("close"), 0);
+  }
   return rbTexture;
 }
 
@@ -385,10 +404,12 @@ Texture_initialize(VALUE self, VALUE rbWidth, VALUE rbHeight)
   Data_Get_Struct(self, Texture, texture);
   const int width  = NUM2INT(rbWidth);
   const int height = NUM2INT(rbHeight);
-  if (width <= 0)
+  if (width <= 0) {
     rb_raise(rb_eArgError, "width less than or equal to 0");
-  if (height <= 0)
+  }
+  if (height <= 0) {
     rb_raise(rb_eArgError, "height less than or equal to 0");
+  }
   texture->width  = width;
   texture->height = height;
   texture->pixels = ALLOC_N(Pixel, texture->width * texture->height);
@@ -427,8 +448,9 @@ Texture_aref(VALUE self, VALUE rbX, VALUE rbY)
   CheckDisposed(texture);
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     rb_raise(rb_eArgError, "index out of range: (%d, %d)", x, y);
+  }
   const Color color = texture->pixels[x + y * texture->width].color;
   return rb_funcall(strb_GetColorClass(), rb_intern("new"), 4,
                     INT2FIX(color.red),
@@ -447,8 +469,9 @@ Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   CheckPalette(texture);
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     return Qnil;
+  }
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
   texture->pixels[x + y * texture->width].color = color;
@@ -482,17 +505,20 @@ ChangeHue(Color* color, const double angle)
     const double v = max / 255.0;
     const double s = delta255 / max;
     double h;
-    if (max == r)
+    if (max == r) {
       h =     (g - b) / delta255;
-    else if (max == g)
+    } else if (max == g) {
       h = 2 + (b - r) / delta255;
-    else
+    } else {
       h = 4 + (r - g) / delta255;
-    if (h < 0.0)
+    }
+    if (h < 0.0) {
       h += 6.0;
+    }
     h += angle * 6.0 / (2 * PI);
-    if (6.0 <= h)
+    if (6.0 <= h) {
       h -= 6.0;
+    }
     const int ii = (int)h;
     const double f = h - ii;
     const uint8_t v255 = max;
@@ -521,23 +547,27 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   const double angle = NUM2DBL(rbAngle);
-  if (!angle)
+  if (!angle) {
     return Qnil;
+  }
   Pixel* pixels = texture->pixels;
   if (!texture->palette) {
     const int length = texture->width * texture->height;
-    for (int i = 0; i < length; i++, pixels++)
+    for (int i = 0; i < length; i++, pixels++) {
       ChangeHue(&(pixels->color), angle);
+    }
   } else {
     const int paletteSize = texture->paletteSize;
     Color* palette = texture->palette;
-    for (int i = 0; i < paletteSize; i++, palette++)
+    for (int i = 0; i < paletteSize; i++, palette++) {
       ChangeHue(palette, angle);
+    }
     palette = texture->palette;
     uint8_t* indexes = texture->indexes;
     const int length = texture->width * texture->height;
-    for (int i = 0; i < length; i++, pixels++, indexes++)
+    for (int i = 0; i < length; i++, pixels++, indexes++) {
       pixels->color = palette[*indexes];
+    }
   }
   return Qnil;
 }
@@ -561,16 +591,19 @@ Texture_change_palette_bang(VALUE self, VALUE rbPalette)
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
-  if (!texture->palette)
+  if (!texture->palette) {
     rb_raise(strb_GetStarRubyErrorClass(), "no palette texture");
+  }
   Check_Type(rbPalette, T_ARRAY);
   VALUE* rbColors = RARRAY_PTR(rbPalette);
   Color* palette = texture->palette;
-  for (int i = 0; i < texture->paletteSize; i++, palette++)
-    if (i < RARRAY_LEN(rbPalette))
+  for (int i = 0; i < texture->paletteSize; i++, palette++) {
+    if (i < RARRAY_LEN(rbPalette)) {
       strb_GetColorFromRubyValue(palette, rbColors[i]);
-    else
+    } else {
       *palette = (Color){0, 0, 0, 0};
+    }
+  }
   Pixel* pixels = texture->pixels;
   palette = texture->palette;
   const uint8_t* indexes = texture->indexes;
@@ -651,8 +684,9 @@ Texture_fill(VALUE self, VALUE rbColor)
   strb_GetColorFromRubyValue(&color, rbColor);
   const int length = texture->width * texture->height;
   Pixel* pixels = texture->pixels;
-  for (int i = 0; i < length; i++, pixels++)
+  for (int i = 0; i < length; i++, pixels++) {
     pixels->color = color;
+  }
   return self;
 }
 
@@ -669,15 +703,18 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
+  if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight)) {
     return self;
+  }
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);  
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   const int paddingJ = texture->width - rectWidth;
-  for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
-    for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
+  for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ) {
+    for (int i = rectX; i < rectX + rectWidth; i++, pixels++) {
       pixels->color = color;
+    }
+  }
   return self;
 }
 
@@ -723,8 +760,9 @@ Texture_palette(VALUE self)
     if (!_dst.alpha) {                                        \
       _dst = _src;                                            \
     } else {                                                  \
-      if (_dst.alpha < _src.alpha)                            \
+      if (_dst.alpha < _src.alpha) {                          \
         _dst.alpha = _src.alpha;                              \
+      }                                                       \
       _dst.red   = ALPHA(_src.red,   _dst.red,   _src.alpha); \
       _dst.green = ALPHA(_src.green, _dst.green, _src.alpha); \
       _dst.blue  = ALPHA(_src.blue,  _dst.blue,  _src.alpha); \
@@ -738,31 +776,42 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
   Check_Type(rbOptions, T_HASH);
   MEMZERO(options, PerspectiveOptions, 1);
   options->viewAngle = PI / 4;
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x))) {
     options->cameraX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_y))) {
     options->cameraY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_height))) {
     options->cameraHeight = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_yaw)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_yaw))) {
     options->cameraYaw = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_pitch)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_pitch))) {
     options->cameraPitch = NUM2DBL(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_roll)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_roll))) {
     options->cameraRoll = NUM2DBL(val);
+  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_view_angle))) {
     options->viewAngle = NUM2DBL(val);
-    if (!isfinite(options->viewAngle))
+    if (!isfinite(options->viewAngle)) {
       rb_raise(rb_eArgError, "invalid :view_angle value");
-    if (options->viewAngle <= 0 || PI <= options->viewAngle)
+    }
+    if (options->viewAngle <= 0 || PI <= options->viewAngle) {
       rb_raise(rb_eArgError, "invalid :view_angle value");
+    }
   }
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_x))) {
     options->intersectionX = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_intersection_y))) {
     options->intersectionY = NUM2INT(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_loop))) {
     options->isLoop = RTEST(val);
+  }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blur))) {
     switch (TYPE(val)) {
     case T_DATA:
@@ -772,10 +821,11 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
       options->blurColor = color;
       break;
     case T_SYMBOL:
-      if (val == symbol_background)
+      if (val == symbol_background) {
         options->blurType = BLUR_TYPE_BACKGROUND;
-      else
+      } else {
         options->blurType = BLUR_TYPE_NONE;
+      }
       break;
     default:
       rb_raise(rb_eTypeError,
@@ -816,8 +866,9 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   rb_check_frozen(self);
   volatile VALUE rbTexture, rbOptions;
   rb_scan_args(argc, argv, "11", &rbTexture, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   strb_CheckTexture(rbTexture);
   const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
@@ -826,12 +877,14 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   Data_Get_Struct(self, Texture, dstTexture);
   CheckDisposed(dstTexture);
   CheckPalette(dstTexture);
-  if (srcTexture == dstTexture)
+  if (srcTexture == dstTexture) {
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
+  }
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
-  if (!options.cameraHeight)
+  if (!options.cameraHeight) {
     return self;
+  }
   const int srcWidth  = srcTexture->width;
   const int srcHeight = srcTexture->height;
   const int dstWidth  = dstTexture->width;
@@ -886,11 +939,13 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
           int srcZ = (int)((screenP.z) * scale + options.cameraY);
           if (options.isLoop) {
             srcX %= srcWidth;
-            if (srcX < 0)
+            if (srcX < 0) {
               srcX += srcWidth;
+            }
             srcZ %= srcHeight;
-            if (srcZ < 0)
+            if (srcZ < 0) {
               srcZ += srcHeight;
+            }
           }
           if (options.isLoop ||
               (0 <= srcX && srcX < srcWidth && 0 <= srcZ && srcZ < srcHeight)) {
@@ -992,8 +1047,9 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   CheckPalette(texture);
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
-  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y)
+  if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     return Qnil;
+  }
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixel = &(texture->pixels[x + y * texture->width]);
@@ -1014,15 +1070,18 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectY = NUM2INT(rbY);
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
-  if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight))
+  if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight)) {
     return Qnil;
+  }
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   const int paddingJ = texture->width - rectWidth;
-  for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ)
-    for (int i = rectX; i < rectX + rectWidth; i++, pixels++)
+  for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ) {
+    for (int i = rectX; i < rectX + rectWidth; i++, pixels++) {
       RENDER_PIXEL(pixels->color, color);
+    }
+  }
   return self;
 }
 
@@ -1034,8 +1093,9 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   rb_scan_args(argc, argv, "51",
                &rbText, &rbX, &rbY, &rbFont, &rbColor, &rbAntiAlias);
   Check_Type(rbText, T_STRING);
-  if (!(RSTRING_LEN(rbText)))
+  if (!(RSTRING_LEN(rbText))) {
     return self;
+  }
   const bool antiAlias = RTEST(rbAntiAlias);
   const char* text = StringValueCStr(rbText);
   strb_CheckFont(rbFont);
@@ -1050,17 +1110,19 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   strb_GetColorFromRubyValue(&color, rbColor);
 
   SDL_Surface* textSurfaceRaw;
-  if (antiAlias)
+  if (antiAlias) {
     textSurfaceRaw =
       TTF_RenderUTF8_Shaded(font->sdlFont, text,
                             (SDL_Color){255, 255, 255, 255},
                             (SDL_Color){0, 0, 0, 0});
-  else
+  } else {
     textSurfaceRaw =
       TTF_RenderUTF8_Solid(font->sdlFont, text,
                            (SDL_Color){255, 255, 255, 255});
-  if (!textSurfaceRaw)
+  }
+  if (!textSurfaceRaw) {
     rb_raise_sdl_ttf_error();
+  }
   SDL_PixelFormat format = {
     .palette = NULL, .BitsPerPixel = 32, .BytesPerPixel = 4,
     .Rmask = 0x00ff0000, .Gmask = 0x0000ff00,
@@ -1071,8 +1133,9 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     SDL_ConvertSurface(textSurfaceRaw, &format, SDL_SWSURFACE);
   SDL_FreeSurface(textSurfaceRaw);
   textSurfaceRaw = NULL;
-  if (!textSurface)
+  if (!textSurface) {
     rb_raise_sdl_error();
+  }
   SDL_LockSurface(textSurface);
   const Pixel* src = (Pixel*)(textSurface->pixels);
   Pixel* dst = textTexture->pixels;
@@ -1080,10 +1143,11 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   for (int i = 0; i < size; i++, src++, dst++) {
     if (src->value) {
       dst->color = color;
-      if (color.alpha == 255)
+      if (color.alpha == 255) {
         dst->color.alpha = src->color.red;
-      else
+      } else {
         dst->color.alpha = DIV255(src->color.red * color.alpha);
+      }
     }
   }
   SDL_UnlockSurface(textSurface);
@@ -1121,16 +1185,17 @@ AssignRenderingTextureOptions(st_data_t key, st_data_t val,
     options->alpha = NUM2DBL(val);
   } else if (key == symbol_blend_type) {
     Check_Type(val, T_SYMBOL);
-    if (val == symbol_none)
+    if (val == symbol_none) {
       options->blendType = BLEND_TYPE_NONE;
-    else if (val == symbol_alpha)
+    } else if (val == symbol_alpha) {
       options->blendType = BLEND_TYPE_ALPHA;
-    else if (val == symbol_add)
+    } else if (val == symbol_add) {
       options->blendType = BLEND_TYPE_ADD;
-    else if (val == symbol_sub)
+    } else if (val == symbol_sub) {
       options->blendType = BLEND_TYPE_SUB;
-    else if (val == symbol_mask)
+    } else if (val == symbol_mask) {
       options->blendType = BLEND_TYPE_MASK;
+    }
   } else if (key == symbol_tone_red) {
     options->toneRed = NUM2INT(val);
   } else if (key == symbol_tone_green) {
@@ -1196,58 +1261,75 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (0 < table->num_entries) {
         volatile VALUE val;
         st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);
-        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val))
+        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val)) {
           options.srcWidth = srcTextureWidth - options.srcX;
-        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val))
+        }
+        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val)) {
           options.srcHeight = srcTextureHeight - options.srcY;
+        }
       }
     } else {
       volatile VALUE val;
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x)))
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x))) {
         options.srcX = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y))) {
         options.srcY = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width))) {
         options.srcWidth = NUM2INT(val);
-      else
+      } else {
         options.srcWidth = srcTextureWidth - options.srcX;
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height))) {
         options.srcHeight = NUM2INT(val);
-      else
+      } else {
         options.srcHeight = srcTextureHeight - options.srcY;
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x))) {
         options.scaleX = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y))) {
         options.scaleY = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle))) {
         options.angle = NUM2DBL(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x))) {
         options.centerX = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y))) {
         options.centerY = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha))) {
         options.alpha = NUM2DBL(val);
+      }
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
         Check_Type(val, T_SYMBOL);
-        if (val == symbol_none)
+        if (val == symbol_none) {
           options.blendType = BLEND_TYPE_NONE;
-        else if (val == symbol_alpha)
+        } else if (val == symbol_alpha) {
           options.blendType = BLEND_TYPE_ALPHA;
-        else if (val == symbol_add)
+        } else if (val == symbol_add) {
           options.blendType = BLEND_TYPE_ADD;
-        else if (val == symbol_sub)
+        } else if (val == symbol_sub) {
           options.blendType = BLEND_TYPE_SUB;
-        else if (val == symbol_mask)
+        } else if (val == symbol_mask) {
           options.blendType = BLEND_TYPE_MASK;
+        }
       }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red)))
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red))) {
         options.toneRed = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green))) {
         options.toneGreen = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue))) {
         options.toneBlue = NUM2INT(val);
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation)))
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation))) {
         options.saturation = NUM2INT(val);
+      }
     }
   } else if (!NIL_P(rbOptions)) {
     rb_raise(rb_eTypeError, "wrong argument type %s (expected Hash)",
@@ -1261,17 +1343,18 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   if (toneRed   < -255 || 255 < toneRed   ||
       toneGreen < -255 || 255 < toneGreen ||
       toneBlue  < -255 || 255 < toneBlue  ||
-      saturation < 0   || 255 < saturation)
+      saturation < 0   || 255 < saturation) {
     rb_raise(rb_eArgError, "invalid tone value: (r:%d, g:%d, b:%d, s:%d)",
              toneRed, toneGreen, toneBlue, saturation);
-
+  }
   int srcHeight = options.srcHeight;
   int srcWidth  = options.srcWidth;
   int srcX      = options.srcX;
   int srcY      = options.srcY;
-  if (!ModifyRectInTexture(srcTexture, &(srcX), &(srcY), &(srcWidth), &(srcHeight)))
+  if (!ModifyRectInTexture(srcTexture,
+                           &(srcX), &(srcY), &(srcWidth), &(srcHeight))) {
     return self;
-
+  }
   const uint8_t alpha       = options.alpha;
   const double angle        = options.angle;
   const BlendType blendType = options.blendType;
@@ -1289,8 +1372,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     if (dstX < 0) {
       srcX -= dstX;
       srcWidth += dstX;
-      if (srcTextureWidth <= srcX || srcWidth <= 0)
+      if (srcTextureWidth <= srcX || srcWidth <= 0) {
         return Qnil;
+      }
       dstX = 0;
     } else if (dstTextureWidth <= dstX) {
       return Qnil;
@@ -1298,8 +1382,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     if (dstY < 0) {
       srcY -= dstY;
       srcHeight += dstY;
-      if (srcTextureHeight <= srcY || srcHeight <= 0)
+      if (srcTextureHeight <= srcY || srcHeight <= 0) {
         return Qnil;
+      }
       dstY = 0;
     } else if (dstTextureHeight <= dstY) {
       return Qnil;
@@ -1320,8 +1405,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
               if ((beta == 255) | (dstAlpha == 0)) {
                 *dst = *src;
               } else if (beta) {
-                if (dstAlpha < beta)
+                if (dstAlpha < beta) {
                   dst->color.alpha = beta;
+                }
                 dst->color.red =
                   ALPHA(src->color.red,   dst->color.red,   beta);
                 dst->color.green =
@@ -1344,8 +1430,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
                 dst->color.green = src->color.green;
                 dst->color.blue  = src->color.blue;
               } else if (beta) {
-                if (dstAlpha < beta)
+                if (dstAlpha < beta) {
                   dst->color.alpha = beta;
+                }
                 dst->color.red =
                   ALPHA(src->color.red,   dst->color.red,   beta);
                 dst->color.green =
@@ -1413,9 +1500,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   mat.tx += NUM2INT(rbX);
   mat.ty += NUM2INT(rbY);
   const double det = mat.a * mat.d - mat.b * mat.c;
-  if (!det)
+  if (!det) {
     return self;
-
+  }
   const double dstX00 = mat.tx;
   const double dstY00 = mat.ty;
   const double dstX01 = mat.b * srcHeight + mat.tx;
@@ -1429,9 +1516,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
   double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
   if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
-      dstX1 < 0 || dstY1 < 0)
+      dstX1 < 0 || dstY1 < 0) {
     return self;
-
+  }
   AffineMatrix matInv = {
     .a = mat.d  / det,
     .b = -mat.b / det,
@@ -1506,22 +1593,25 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             srcBlue  = ALPHA(srcBlue,  y, saturation);
           }
           if (toneRed) {
-            if (0 < toneRed)
+            if (0 < toneRed) {
               srcRed = ALPHA(255, srcRed, toneRed);
-            else
+            } else {
               srcRed = ALPHA(0,   srcRed, -toneRed);
+            }
           }
           if (toneGreen) {
-            if (0 < toneGreen)
+            if (0 < toneGreen) {
               srcGreen = ALPHA(255, srcGreen, toneGreen);
-            else
+            } else {
               srcGreen = ALPHA(0,   srcGreen, -toneGreen);
+            }
           }
           if (toneBlue) {
-            if (0 < toneBlue)
+            if (0 < toneBlue) {
               srcBlue = ALPHA(255, srcBlue, toneBlue);
-            else
+            } else {
               srcBlue = ALPHA(0,   srcBlue, -toneBlue);
+            }
           }
           if (blendType == BLEND_TYPE_NONE) {
             dst->color.red   = srcRed;
@@ -1568,8 +1658,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
             }
           } else {
             const uint8_t beta = DIV255(srcAlpha * alpha);
-            if (dst->color.alpha < beta)
+            if (dst->color.alpha < beta) {
               dst->color.alpha = beta;
+            }
             switch (blendType) {
             case BLEND_TYPE_ALPHA:
               dst->color.red   = ALPHA(srcRed,   dst->color.red,   beta);
@@ -1614,9 +1705,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     }
   }
 
-  if (!NIL_P(rbClonedTexture))
+  if (!NIL_P(rbClonedTexture)) {
     Texture_dispose(rbClonedTexture);
-
+  }
   return self;
 }
 
@@ -1628,8 +1719,9 @@ Texture_save(VALUE self, VALUE rbPath)
   CheckDisposed(texture);
   const char* path = StringValueCStr(rbPath);
   FILE* fp = fopen(path, "wb");
-  if (!fp)
+  if (!fp) {
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
+  }
   png_structp pngPtr =
     png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
   png_infop infoPtr = png_create_info_struct(pngPtr);
@@ -1676,8 +1768,9 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   CheckDisposed(texture);
   volatile VALUE rbX, rbY, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
+  }
   const int screenWidth = texture->width;
   PerspectiveOptions options;
   AssignPerspectiveOptions(&options, rbOptions);
@@ -1702,8 +1795,9 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   z = z2;
   volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
   OBJ_FREEZE(rbResult);
-  if (!z)
+  if (!z) {
     return rbResult;
+  }
   const double distance = screenWidth / (2 * tan(options.viewAngle / 2));
   const double scale = -distance / z;
   const double screenX = x * scale;
@@ -1712,14 +1806,16 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
     (long)(cosRoll  * screenX + sinRoll * screenY + options.intersectionX);
   const long screenYLong =
     (long)(-sinRoll * screenX + cosRoll * screenY + options.intersectionY);
-  if (FIXABLE(screenXLong) && INT_MIN <= screenXLong && screenXLong <= INT_MAX)
+  if (FIXABLE(screenXLong) && INT_MIN <= screenXLong && screenXLong <= INT_MAX) {
     RARRAY_PTR(rbResult)[0] = LONG2FIX(screenXLong);
-  else
+  } else {
     RARRAY_PTR(rbResult)[0] = Qnil;
-  if (FIXABLE(screenYLong) && INT_MIN <= screenYLong && screenYLong <= INT_MAX)
+  }
+  if (FIXABLE(screenYLong) && INT_MIN <= screenYLong && screenYLong <= INT_MAX) {
     RARRAY_PTR(rbResult)[1] = LONG2FIX(screenYLong);
-  else
+  } else {
     RARRAY_PTR(rbResult)[1] = Qnil;
+  }
   RARRAY_PTR(rbResult)[2] = rb_float_new(scale);
   return rbResult;
 }
@@ -1736,9 +1832,10 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   const int formatLength = RSTRING_LEN(rbFormat);
   const int pixelLength = texture->width * texture->height;
   Check_Type(rbData, T_STRING);
-  if (pixelLength * formatLength != RSTRING_LEN(rbData))
+  if (pixelLength * formatLength != RSTRING_LEN(rbData)) {
     rb_raise(rb_eArgError, "invalid data size: %d expected but was %ld",
              pixelLength * formatLength, RSTRING_LEN(rbData));
+  }
   const uint8_t* data = (uint8_t*)RSTRING_PTR(rbData);
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < pixelLength; i++, pixels++) {

@@ -27,9 +27,10 @@ inline void
 strb_CheckFont(VALUE rbFont)
 {
   Check_Type(rbFont, T_DATA);
-  if (RDATA(rbFont)->dfree != (RUBY_DATA_FUNC)Font_free)
+  if (RDATA(rbFont)->dfree != (RUBY_DATA_FUNC)Font_free) {
     rb_raise(rb_eTypeError, "wrong argument type %s (expected StarRuby::Font)",
              rb_obj_classname(rbFont));
+  }
 }
 
 static void
@@ -37,11 +38,13 @@ SearchFont(VALUE rbFilePathOrName,
            VALUE* volatile rbRealFilePath, int* ttcIndex)
 {
   *rbRealFilePath = Qnil;
-  if (ttcIndex != NULL)
+  if (ttcIndex != NULL) {
     *ttcIndex = -1;
+  }
   *rbRealFilePath = strb_GetCompletePath(rbFilePathOrName, false);
-  if (!NIL_P(*rbRealFilePath))
+  if (!NIL_P(*rbRealFilePath)) {
     return;
+  }
   volatile VALUE rbFontNameSymbol =
     ID2SYM(rb_intern(StringValueCStr(rbFilePathOrName)));
   FontFileInfo* info = fontFileInfos;
@@ -53,8 +56,9 @@ SearchFont(VALUE rbFilePathOrName,
         rb_str_new2(rb_id2name(SYM2ID(rbWindowsFontDirPathSymbol)));
       *rbRealFilePath = rb_str_concat(rb_str_cat2(rbTemp, "\\"), *rbRealFilePath);
 #endif
-      if (ttcIndex != NULL)
+      if (ttcIndex != NULL) {
         *ttcIndex = info->ttcIndex;
+      }
       return;
     }
     info = info->next;
@@ -78,18 +82,22 @@ SearchFont(VALUE rbFilePathOrName,
       *nameTail = '\0';
       nameTail--;
     }
-    while (*style == ' ')
+    while (*style == ' ') {
       style++;
+    }
   }
   FcPattern* pattern = FcPatternBuild(NULL, FC_FAMILY, FcTypeString, name, NULL);
-  if (style && 0 < strlen(style))
+  if (style && 0 < strlen(style)) {
     FcPatternAddString(pattern, FC_STYLE, (FcChar8*)style);
+  }
   FcObjectSet* objectSet = FcObjectSetBuild(FC_FAMILY, FC_FILE, NULL);
   FcFontSet* fontSet = FcFontList(NULL, pattern, objectSet);
-  if (objectSet)
+  if (objectSet) {
     FcObjectSetDestroy(objectSet);
-  if (pattern)
+  }
+  if (pattern) {
     FcPatternDestroy(pattern);
+  }
   if (fontSet) {
     for (int i = 0; i < fontSet->nfont; i++) {
       FcChar8* fileName = NULL;
@@ -100,15 +108,17 @@ SearchFont(VALUE rbFilePathOrName,
         volatile VALUE rbFontName = rb_str_new2((char*)fontName);
         free(fontName);
         fontName = NULL;
-        if (ttcIndex != NULL && strchr(StringValueCStr(rbFontName), ','))
+        if (ttcIndex != NULL && strchr(StringValueCStr(rbFontName), ',')) {
           *ttcIndex = 0;
+        }
       }
     }
     FcFontSetDestroy(fontSet);
   }
   FcFini();
-  if (!NIL_P(*rbRealFilePath))
+  if (!NIL_P(*rbRealFilePath)) {
     return;
+  }
 #endif
   return;
 }
@@ -124,8 +134,9 @@ Font_s_exist(VALUE self, VALUE rbFilePath)
 static void
 Font_free(Font* font)
 {
-  if (TTF_WasInit())
+  if (TTF_WasInit()) {
     TTF_CloseFont(font->sdlFont);
+  }
   font->sdlFont = NULL;
   free(font);
 }
@@ -135,9 +146,9 @@ Font_s_new(int argc, VALUE* argv, VALUE self)
 {
   volatile VALUE rbPath, rbSize, rbOptions;
   rb_scan_args(argc, argv, "21", &rbPath, &rbSize, &rbOptions);
-  if (NIL_P(rbOptions))
+  if (NIL_P(rbOptions)) {
     rbOptions = rb_hash_new();
-
+  }
   volatile VALUE rbRealFilePath;
   int preTtcIndex = -1;
   SearchFont(rbPath, (VALUE*)&rbRealFilePath, &preTtcIndex);
@@ -146,36 +157,39 @@ Font_s_new(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_path2class("Errno::ENOENT"), "%s", path);
     return Qnil;
   }
-
   int size = NUM2INT(rbSize);
   bool bold = false;
   bool italic = false;
   int ttcIndex = 0;
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_bold)))
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_bold))) {
     bold = RTEST(val);
-  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_italic)))
+  }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_italic))) {
     italic = RTEST(val);
-  if (preTtcIndex != -1)
+  }
+  if (preTtcIndex != -1) {
     ttcIndex = preTtcIndex;
-  else if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_ttc_index)))
+  } else if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_ttc_index))) {
     ttcIndex = NUM2INT(val);
-
+  }
   volatile VALUE rbHashKey = rb_str_dup(rbRealFilePath);  
   char temp[256];
   // TODO: change the delimiter or the way to name a hash key
   rb_str_cat2(rbHashKey, ";size=");
   snprintf(temp, sizeof(temp), "%d", size);
   rb_str_cat2(rbHashKey, temp);
-  if (bold)
+  if (bold) {
     rb_str_cat2(rbHashKey, ";bold=true");
-  else
+  } else {
     rb_str_cat2(rbHashKey, ";bold=false");
-  if (italic)
+  }
+  if (italic) {
     rb_str_cat2(rbHashKey, ";italic=true");
-  else
+  } else {
     rb_str_cat2(rbHashKey, ";italic=false");
+  }
   rb_str_cat2(rbHashKey, ";ttc_index=");
   snprintf(temp, sizeof(temp), "%d", ttcIndex);
   rb_str_cat2(rbHashKey, temp);
@@ -219,8 +233,9 @@ Font_initialize(VALUE self, VALUE rbRealFilePath, VALUE rbSize,
   Data_Get_Struct(self, Font, font);
   font->size = size;
   font->sdlFont = TTF_OpenFontIndex(path, size, ttcIndex);
-  if (!font->sdlFont)
+  if (!font->sdlFont) {
     rb_raise(strb_GetStarRubyErrorClass(), "%s (%s)", TTF_GetError(), path);
+  }
   const int style = TTF_STYLE_NORMAL |
     (bold ? TTF_STYLE_BOLD : 0) | (italic ? TTF_STYLE_ITALIC : 0);
   TTF_SetFontStyle(font->sdlFont, style);
@@ -251,8 +266,9 @@ Font_get_size(VALUE self, VALUE rbText)
   Data_Get_Struct(self, Font, font);
   const char* text = StringValueCStr(rbText);
   int width, height;
-  if (TTF_SizeUTF8(font->sdlFont, text, &width, &height))
+  if (TTF_SizeUTF8(font->sdlFont, text, &width, &height)) {
     rb_raise_sdl_ttf_error();
+  }
   volatile VALUE rbSize = rb_assoc_new(INT2NUM(width), INT2NUM(height));
   OBJ_FREEZE(rbSize);
   return rbSize;
@@ -289,8 +305,9 @@ Font_size(VALUE self)
 void
 strb_InitializeSdlFont(void)
 {
-  if (TTF_Init())
+  if (TTF_Init()) {
     rb_raise_sdl_ttf_error();
+  }
   fontFileInfos = ALLOC(FontFileInfo);
   fontFileInfos->rbFontNameSymbol = Qundef;
   fontFileInfos->rbFileNameSymbol = Qundef;

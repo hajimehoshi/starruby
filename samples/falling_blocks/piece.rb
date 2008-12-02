@@ -3,23 +3,20 @@ module FallingBlocks
   class Piece
     
     attr_reader :id
-    attr_reader :width
-    alias height width
 
-    def initialize(id, width, blocks)
+    def initialize(id, blocks)
       @id = id
-      @width = width
       @blocks = blocks
     end
     
     @@pieces = []
-    @@pieces << Piece.new(0, 4, [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(1, 3, [1,0,0, 1,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(2, 3, [0,1,0, 1,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(3, 3, [0,0,1, 1,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(4, 3, [1,1,0, 0,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(5, 3, [0,1,1, 1,1,0, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(6, 2, [1,1, 1,1].map{|n| n != 0})
+    @@pieces << Piece.new(0, [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0].map{|n| n != 0})
+    @@pieces << Piece.new(1, [1,0,0, 1,1,1, 0,0,0].map{|n| n != 0})
+    @@pieces << Piece.new(2, [0,1,0, 1,1,1, 0,0,0].map{|n| n != 0})
+    @@pieces << Piece.new(3, [0,0,1, 1,1,1, 0,0,0].map{|n| n != 0})
+    @@pieces << Piece.new(4, [1,1,0, 0,1,1, 0,0,0].map{|n| n != 0})
+    @@pieces << Piece.new(5, [0,1,1, 1,1,0, 0,0,0].map{|n| n != 0})
+    @@pieces << Piece.new(6, [1,1, 1,1].map{|n| n != 0})
     
     def self.[](id)
       @@pieces[id]
@@ -28,6 +25,12 @@ module FallingBlocks
     def self.count
       @@pieces.size
     end
+
+    def width
+      @width ||= Math.sqrt(@blocks.size).to_i
+    end
+
+    alias height width
 
     def [](x, y, angle = 0)
       case angle

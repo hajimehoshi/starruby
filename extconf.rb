@@ -17,12 +17,13 @@ have_header("zlib.h") or exit(false)
 have_library("SDL_mixer", "Mix_OpenAudio") or exit(false)
 have_library("SDL_ttf", "TTF_Init") or exit(false)
 
-if CONFIG["arch"] =~ /linux|darwin/
-  have_header("fontconfig/fontconfig.h") or exit(false)
+if have_header("fontconfig/fontconfig.h")
   have_library("fontconfig", "FcInit") or exit(false)
 end
 
-$CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter -pedantic -std=c99 -funit-at-a-time"
+$CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter"
+$CFLAGS += " -pedantic -std=c99 -funit-at-a-time"
+# TODO: use gcc -dumpspecs
 if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/
   $CFLAGS += " -mfpmath=sse -msse2"
 end

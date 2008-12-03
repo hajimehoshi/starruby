@@ -1,13 +1,13 @@
 #include "starruby_private.h"
 
-static volatile VALUE rb_cGame;
-static volatile VALUE rb_mStarRuby;
+static volatile VALUE rb_cGame     = Qundef;
+static volatile VALUE rb_mStarRuby = Qundef;
 
-static volatile VALUE symbol_cursor;
-static volatile VALUE symbol_fps;
-static volatile VALUE symbol_fullscreen;
-static volatile VALUE symbol_title;
-static volatile VALUE symbol_window_scale;
+static volatile VALUE symbol_cursor       = Qundef;
+static volatile VALUE symbol_fps          = Qundef;
+static volatile VALUE symbol_fullscreen   = Qundef;
+static volatile VALUE symbol_title        = Qundef;
+static volatile VALUE symbol_window_scale = Qundef;
 
 typedef struct {
   Uint32 error;

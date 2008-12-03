@@ -1,7 +1,7 @@
 #include "starruby_private.h"
 
-static volatile VALUE rb_cColor;
-static volatile VALUE rbColorCache;
+static volatile VALUE rb_cColor = Qundef;
+static volatile VALUE rbColorCache = Qundef;
 
 VALUE
 strb_GetColorClass(void)

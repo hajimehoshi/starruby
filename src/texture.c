@@ -20,45 +20,45 @@
     }                         \
   } while (false)
 
-static volatile VALUE rb_cTexture;
+static volatile VALUE rb_cTexture = Qundef;
 
-static volatile VALUE symbol_add;
-static volatile VALUE symbol_alpha;
-static volatile VALUE symbol_angle;
-static volatile VALUE symbol_background;
-static volatile VALUE symbol_blend_type;
-static volatile VALUE symbol_blur;
-static volatile VALUE symbol_camera_height;
-static volatile VALUE symbol_camera_pitch;
-static volatile VALUE symbol_camera_roll;
-static volatile VALUE symbol_camera_x;
-static volatile VALUE symbol_camera_y;
-static volatile VALUE symbol_camera_yaw;
-static volatile VALUE symbol_center_x;
-static volatile VALUE symbol_center_y;
-static volatile VALUE symbol_height;
-static volatile VALUE symbol_intersection_x;
-static volatile VALUE symbol_intersection_y;
-static volatile VALUE symbol_io_length;
-static volatile VALUE symbol_loop;
-static volatile VALUE symbol_mask;
-static volatile VALUE symbol_none;
-static volatile VALUE symbol_palette;
-static volatile VALUE symbol_saturation;
-static volatile VALUE symbol_scale_x;
-static volatile VALUE symbol_scale_y;
-static volatile VALUE symbol_src_height;
-static volatile VALUE symbol_src_width;
-static volatile VALUE symbol_src_x;
-static volatile VALUE symbol_src_y;
-static volatile VALUE symbol_sub;
-static volatile VALUE symbol_tone_blue;
-static volatile VALUE symbol_tone_green;
-static volatile VALUE symbol_tone_red;
-static volatile VALUE symbol_view_angle;
-static volatile VALUE symbol_width;
-static volatile VALUE symbol_x;
-static volatile VALUE symbol_y;
+static volatile VALUE symbol_add            = Qundef;
+static volatile VALUE symbol_alpha          = Qundef;
+static volatile VALUE symbol_angle          = Qundef;
+static volatile VALUE symbol_background     = Qundef;
+static volatile VALUE symbol_blend_type     = Qundef;
+static volatile VALUE symbol_blur           = Qundef;
+static volatile VALUE symbol_camera_height  = Qundef;
+static volatile VALUE symbol_camera_pitch   = Qundef;
+static volatile VALUE symbol_camera_roll    = Qundef;
+static volatile VALUE symbol_camera_x       = Qundef;
+static volatile VALUE symbol_camera_y       = Qundef;
+static volatile VALUE symbol_camera_yaw     = Qundef;
+static volatile VALUE symbol_center_x       = Qundef;
+static volatile VALUE symbol_center_y       = Qundef;
+static volatile VALUE symbol_height         = Qundef;
+static volatile VALUE symbol_intersection_x = Qundef;
+static volatile VALUE symbol_intersection_y = Qundef;
+static volatile VALUE symbol_io_length      = Qundef;
+static volatile VALUE symbol_loop           = Qundef;
+static volatile VALUE symbol_mask           = Qundef;
+static volatile VALUE symbol_none           = Qundef;
+static volatile VALUE symbol_palette        = Qundef;
+static volatile VALUE symbol_saturation     = Qundef;
+static volatile VALUE symbol_scale_x        = Qundef;
+static volatile VALUE symbol_scale_y        = Qundef;
+static volatile VALUE symbol_src_height     = Qundef;
+static volatile VALUE symbol_src_width      = Qundef;
+static volatile VALUE symbol_src_x          = Qundef;
+static volatile VALUE symbol_src_y          = Qundef;
+static volatile VALUE symbol_sub            = Qundef;
+static volatile VALUE symbol_tone_blue      = Qundef;
+static volatile VALUE symbol_tone_green     = Qundef;
+static volatile VALUE symbol_tone_red       = Qundef;
+static volatile VALUE symbol_view_angle     = Qundef;
+static volatile VALUE symbol_width          = Qundef;
+static volatile VALUE symbol_x              = Qundef;
+static volatile VALUE symbol_y              = Qundef;
 
 typedef enum {
   BLEND_TYPE_NONE,

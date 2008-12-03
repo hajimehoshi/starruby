@@ -9,14 +9,14 @@ static Mix_Music* sdlBgm = NULL;
 static Uint32 sdlBgmStartTicks = 0;
 static Uint32 sdlBgmLastPausedPosition = 0;
 
-static volatile VALUE rbChunkCache;
-static volatile VALUE rbMusicCache;
+static volatile VALUE rbChunkCache = Qundef;
+static volatile VALUE rbMusicCache = Qundef;
 
-static volatile VALUE symbol_loop;
-static volatile VALUE symbol_panning;
-static volatile VALUE symbol_position;
-static volatile VALUE symbol_time;
-static volatile VALUE symbol_volume;
+static volatile VALUE symbol_loop     = Qundef;
+static volatile VALUE symbol_panning  = Qundef;
+static volatile VALUE symbol_position = Qundef;
+static volatile VALUE symbol_time     = Qundef;
+static volatile VALUE symbol_volume   = Qundef;
 
 static VALUE
 Audio_bgm_position(VALUE self)

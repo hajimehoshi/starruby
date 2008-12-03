@@ -1,6 +1,6 @@
 #include "starruby_private.h"
 
-static volatile VALUE rb_eStarRubyError;
+static volatile VALUE rb_eStarRubyError = Qundef;
 
 VALUE
 strb_GetCompletePath(VALUE rbPath, bool raiseNotFoundError)

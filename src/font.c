@@ -4,14 +4,14 @@
 #include <fontconfig/fontconfig.h>
 #endif
 #ifdef WIN32
-static volatile VALUE rbWindowsFontDirPathSymbol;
+static volatile VALUE rbWindowsFontDirPathSymbol = Qundef;
 #endif
 
-static volatile VALUE rbFontCache;
+static volatile VALUE rbFontCache = Qundef;
 
-static volatile VALUE symbol_bold;
-static volatile VALUE symbol_italic;
-static volatile VALUE symbol_ttc_index;
+static volatile VALUE symbol_bold      = Qundef;
+static volatile VALUE symbol_italic    = Qundef;
+static volatile VALUE symbol_ttc_index = Qundef;
 
 typedef struct FontFileInfo {
   VALUE rbFontNameSymbol;

@@ -369,7 +369,7 @@ Game_dispose(VALUE self)
 {
   Game* game;
   Data_Get_Struct(self, Game, game);
-  RDATA(self)->data = NULL;
+  DATA_PTR(self) = NULL;
   if (game) {
     volatile VALUE rbScreen = game->screen;
     if (!NIL_P(rbScreen)) {

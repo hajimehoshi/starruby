@@ -94,8 +94,7 @@ Color_initialize(VALUE self, VALUE rbRed, VALUE rbGreen, VALUE rbBlue, VALUE rbA
       .alpha = alpha,
     }
   };
-  // Valid at Ruby 1.9?
-  RDATA(self)->data = (void*)(VALUE)pixel.value;
+  DATA_PTR(self) = (void*)(VALUE)pixel.value;
   return Qnil;
 }
 

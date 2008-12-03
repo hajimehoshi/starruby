@@ -769,11 +769,14 @@ Texture_palette(VALUE self)
   } while (false)
 
 static void
-AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions)
+AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions,
+                         const Texture* texture)
 {
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   MEMZERO(options, PerspectiveOptions, 1);
+  options->intersectionX = texture->width  / 2;
+  options->intersectionY = texture->height / 2;
   options->viewAngle = PI / 4;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x))) {
     options->cameraX = NUM2INT(val);
@@ -880,7 +883,7 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
   }
   PerspectiveOptions options;
-  AssignPerspectiveOptions(&options, rbOptions);
+  AssignPerspectiveOptions(&options, rbOptions, dstTexture);
   if (!options.cameraHeight) {
     return self;
   }
@@ -1772,7 +1775,7 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   }
   const int screenWidth = texture->width;
   PerspectiveOptions options;
-  AssignPerspectiveOptions(&options, rbOptions);
+  AssignPerspectiveOptions(&options, rbOptions, texture);
   const double cosYaw   = cos(options.cameraYaw);
   const double sinYaw   = sin(options.cameraYaw);
   const double cosPitch = cos(options.cameraPitch);

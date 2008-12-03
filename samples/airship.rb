@@ -6,16 +6,14 @@ include StarRuby
 field_texture = Texture.load("images/ruby-logo-R")
 star_texture  = Texture.load("images/star")
 
-Airship = Struct.new(:x, :y, :yaw, :pitch, :roll, :height, :screen_x, :screen_y)
+Airship = Struct.new(:x, :y, :yaw, :pitch, :roll, :height)
 airship = Airship.new
-airship.x        = field_texture.width / 2
-airship.y        = field_texture.height
-airship.yaw      = 0
-airship.pitch    = 0
-airship.roll     = 0
-airship.height   = 25
-airship.screen_x = 0
-airship.screen_y = 0
+airship.x      = field_texture.width / 2
+airship.y      = field_texture.height
+airship.yaw    = 0
+airship.pitch  = 0
+airship.roll   = 0
+airship.height = 25
 fearless = false
 
 font = Font.new("fonts/ORANGEKI", 12)
@@ -66,17 +64,6 @@ Game.run(320, 240, :title => "Airship") do |game|
       airship.pitch = [airship.pitch + (fearless ? 8 : 3), 0].min
     end
   end
-  # Move the camera
-  if keys.include?(:a)
-    airship.screen_x -= 1
-  elsif keys.include?(:s)
-    airship.screen_x += 1
-  end
-  if keys.include?(:w)
-    airship.screen_y -= 1
-  elsif keys.include?(:z)
-    airship.screen_y += 1
-  end
   # End Inputing
   # Begin View
   s = game.screen
@@ -88,8 +75,6 @@ Game.run(320, 240, :title => "Airship") do |game|
     :camera_yaw   => airship.yaw.degree,
     :camera_pitch => airship.pitch.degree,
     :camera_roll  => airship.roll.degree,
-    :intersection_x => s.width / 2 + airship.screen_x,
-    :intersection_y => s.height / 2 + airship.screen_y,
     :loop => true,
     :blur => :background,
   }
@@ -129,8 +114,7 @@ Game.run(320, 240, :title => "Airship") do |game|
   # Render texts
   s.render_text("[Arrow] Rotate Camera", 8, 8, font, yellow)
   s.render_text("[Space] Go Forward", 8, 8 + 16, font, yellow)
-  s.render_text("[W][A][S][Z] Move Screen", 8, 8 + 32, font, yellow)
   str = "[F] Fearless? #{fearless ? '(Yes)' : '(No)'}"
-  s.render_text(str, 8, 8 + 48, font, yellow)
+  s.render_text(str, 8, 8 + 32, font, yellow)
   # End Viewing
 end

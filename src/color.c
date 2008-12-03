@@ -1,7 +1,6 @@
 #include "starruby_private.h"
 
 static volatile VALUE rb_cColor = Qundef;
-static volatile VALUE rbColorCache = Qundef;
 
 VALUE
 strb_GetColorClass(void)
@@ -39,32 +38,31 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
     rb_raise(rb_eArgError, "invalid color value: (r:%d, g:%d, b:%d, a:%d)",
              red, green, blue, alpha);
   }
-  const VALUE* rbColorCacheP = RARRAY_PTR(rbColorCache);
-  const int length = RARRAY_LEN(rbColorCache);
-  for (int i = 0; i < length; i++, rbColorCacheP++) {
-    volatile VALUE rbColor = *rbColorCacheP;
-    if (NIL_P(rbColor)) {
-      break;
-    }
+  static VALUE rbColorCache = Qundef;
+  if (rbColorCache == Qundef) {
+    rb_global_variable(&rbColorCache);
+    const int cacheSize = 64;
+    rbColorCache = rb_ary_new2(cacheSize);
+    rb_ary_store(rbColorCache, cacheSize - 1, Qnil);
+  }
+  VALUE* rbColorCacheValues = RARRAY_PTR(rbColorCache);
+  const long index = ((red & 3) << 4) | ((green & 3) << 2) | (blue & 3);
+  volatile VALUE rbColor = rbColorCacheValues[index];
+  if (!NIL_P(rbColor)) {
     Color color;
     strb_GetColorFromRubyValue(&color, rbColor);
     if (color.red == red &&
-        color.green == green &&
-        color.blue == blue &&
-        color.alpha == alpha) {
-      if (0 < i) {
-        rb_ary_delete_at(rbColorCache, i);
-        rb_ary_unshift(rbColorCache, rbColor);
-      }
+	color.green == green &&
+	color.blue == blue &&
+	color.alpha == alpha) {
       return rbColor;
     }
   }
   VALUE args[] = {
     rbRed, rbGreen, rbBlue, NIL_P(rbAlpha) ? INT2FIX(255) : rbAlpha,
   };
-  VALUE rbColor = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
-  rb_ary_pop(rbColorCache);
-  rb_ary_unshift(rbColorCache, rbColor);
+  rbColor = rb_class_new_instance(sizeof(args) / sizeof(VALUE), args, self);
+  rbColorCacheValues[index] = rbColor;
   return rbColor;
 }
 
@@ -195,10 +193,5 @@ strb_InitializeColor(VALUE rb_mStarRuby)
   rb_define_method(rb_cColor, "red",   Color_red,   0);
   rb_define_method(rb_cColor, "to_s",  Color_to_s,  0);
 
-  const int length = 128;
-  rbColorCache = rb_iv_set(rb_cColor, "color_cache", rb_ary_new2(length));
-  for (int i = 0; i < length; i++) {
-    rb_ary_push(rbColorCache, Qnil);
-  }
   return rb_cColor;
 }

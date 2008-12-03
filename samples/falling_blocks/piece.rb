@@ -8,15 +8,31 @@ module FallingBlocks
       @id = id
       @blocks = blocks
     end
-    
+
+    t = true
+    _ = false
     @@pieces = []
-    @@pieces << Piece.new(0, [0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(1, [1,0,0, 1,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(2, [0,1,0, 1,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(3, [0,0,1, 1,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(4, [1,1,0, 0,1,1, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(5, [0,1,1, 1,1,0, 0,0,0].map{|n| n != 0})
-    @@pieces << Piece.new(6, [1,1, 1,1].map{|n| n != 0})
+    @@pieces << Piece.new(0, [_,_,_,_,
+                              t,t,t,t,
+                              _,_,_,_,
+                              _,_,_,_])
+    @@pieces << Piece.new(1, [t,_,_,
+                              t,t,t,
+                              _,_,_])
+    @@pieces << Piece.new(2, [_,t,_,
+                              t,t,t,
+                              _,_,_])
+    @@pieces << Piece.new(3, [_,_,t,
+                              t,t,t,
+                              _,_,_])
+    @@pieces << Piece.new(4, [t,t,_,
+                              _,t,t,
+                              _,_,_])
+    @@pieces << Piece.new(5, [_,t,t,
+                              t,t,_,
+                              _,_,_])
+    @@pieces << Piece.new(6, [t,t,
+                              t,t])
     
     def self.[](id)
       @@pieces[id]

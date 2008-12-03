@@ -4,7 +4,7 @@ module FallingBlocks
     alias _orig_keys keys
     
     def keys(device, options = {})
-      if device.respond_to?(:inject)
+      if device.kind_of?(Enumerable)
         device.inject([]) do |result, d|
           result | _orig_keys(d, options)
         end

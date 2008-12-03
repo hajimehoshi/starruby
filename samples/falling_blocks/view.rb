@@ -65,12 +65,12 @@ module FallingBlocks
     end
     
     def update(screen)
-      # clear windows
+      # Clear windows
       @textures.keys.select{|k| k.to_s =~ /window$/}.each do |key|
         @textures[key].fill(Color.new(0, 0, 0, 192))
       end
       
-      # render the field
+      # Render the field
       if [:playing, :gameover].include?(model.state)
       window = @textures[:field_window]
         blocks = @textures[:blocks]
@@ -86,7 +86,7 @@ module FallingBlocks
         end
       end
       
-      # render the falling piece
+      # Render the falling piece
       if [:playing, :gameover].include?(model.state)
         window = @textures[:field_window]
         x = model.falling_piece_x
@@ -99,7 +99,7 @@ module FallingBlocks
         render_piece(window, model.falling_piece, x * 10, y * 10, angle, options)
       end
       
-      # render flashing
+      # Render flashing
       if model.state == :playing and model.flashing?
         window = @textures[:field_window]
         lines = model.field.flashing_lines
@@ -110,7 +110,7 @@ module FallingBlocks
         end
       end
       
-      # render the next piece
+      # Render the next piece
       if [:playing, :gameover].include?(model.state) and model.next_piece
         window = @textures[:next_piece_window]
         x = (window.width - model.next_piece.width * 10) / 2
@@ -118,7 +118,7 @@ module FallingBlocks
         render_piece(window, model.next_piece, x, y)
       end
       
-      # render texts
+      # Render texts
       %w(score level lines).each do |key|
         value = model.send(key).to_s
         texture = @textures["#{key}_window".intern]

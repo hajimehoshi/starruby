@@ -10,14 +10,19 @@ cover.fill(Color.new(64, 64, 64))
 font = Font.new("fonts/ORANGEKI", 12)
 white = Color.new(255, 255, 255)
 
+# angle (0 to 49)
 angle   = 0
+# X-way scale (-10 to 10), the decuple power of 2 (then the real scale is 2^(-1.0) to 2^(1.0))
 scale_x = 0
+# Y-way scale (-10 to 10), the decuple power of 2 (then the real scale is 2^(-1.0) to 2^(1.0))
 scale_y = 0
 
 Game.run(320, 240, :title => "Geometry") do |game|
+  # Quit this game if ESC key is pressed
   break if Input.keys(:keyboard).include?(:escape)
   s = game.screen
   s.clear
+  # Get the keys of the keyboard with repeating
   keys = Input.keys(:keyboard, :duration => 1, :delay => 8, :interval => 2)
   if keys.include?(:r)
     angle   = 0
@@ -42,6 +47,7 @@ Game.run(320, 240, :title => "Geometry") do |game|
   angle %= 50
   scale_x = [[scale_x, -10].max, 10].min
   scale_y = [[scale_y, -10].max, 10].min
+  # Render the image of Ruby with options
   s.render_texture(texture, (s.width - texture.width) / 2, 32, {
     :angle    => angle * 2 * Math::PI / 50,
     :scale_x  => 2 ** (scale_x / 10.0),
@@ -49,6 +55,7 @@ Game.run(320, 240, :title => "Geometry") do |game|
     :center_x => texture.width  / 2,
     :center_y => texture.height / 2,
   })
+  # Show the help when 'h' key is pressed
   if Input.keys(:keyboard).include?(:h)
     s.render_texture(cover, 0, 0, :alpha => 128)
     s.render_text("'z': Rotate right",                 8, 8,        font, white)

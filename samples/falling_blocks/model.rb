@@ -4,7 +4,9 @@ require "falling_blocks/field"
 module FallingBlocks
   
   class Model
-    
+
+    # Current state of this game.
+    # :start, :playing, :pause, or :gameover
     attr_reader :state
     
     attr_reader :score

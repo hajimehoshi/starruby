@@ -4,6 +4,7 @@ require "starruby"
 include StarRuby
 
 class Texture
+  # Add a method of StarRuby::Texture class
   def render_line_16(x1, y1, x2, y2, color)
     render_line(x1 * 16, y1 * 16, x2 * 16, y2 * 16, color)
   end

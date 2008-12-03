@@ -13,9 +13,15 @@ bgm_position = 0
 Game.run(320, 240, :title => "Audio") do |game|
   music_alpha = Audio.playing_bgm? ? 255 : 128
   sound_alpha = 128
+  # Get pressed keys of a keyboard.
+  # ':duration => 1' means that keys are pressed just now.
   keys = Input.keys(:keyboard, :duration => 1)
+  # If ESC key is pressed, exit this game.
   break if keys.include?(:escape)
+  # Get the current position (Fixnum) of BGM.
+  # If you use this value when playing BGM, BGM can be played at middle of time.
   bgm_position = Audio.bgm_position
+  # If 'm' key is pressed, play or stop BGM
   if keys.include?(:m)
     if Audio.playing_bgm?
       Audio.stop_bgm
@@ -25,6 +31,7 @@ Game.run(320, 240, :title => "Audio") do |game|
                      :loop => true)
     end
   end
+  # If 's' key is pressed, play SE
   if keys.include?(:s)
     Audio.play_se("sounds/hello")
     sound_alpha = 255

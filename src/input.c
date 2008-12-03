@@ -1,4 +1,3 @@
-#include "starruby.h"
 #include "starruby_private.h"
 
 typedef struct KeyboardKey {

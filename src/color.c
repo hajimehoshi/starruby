@@ -1,4 +1,3 @@
-#include "starruby.h"
 #include "starruby_private.h"
 
 static volatile VALUE rb_cColor;

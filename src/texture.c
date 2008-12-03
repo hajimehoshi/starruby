@@ -775,8 +775,8 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions,
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
   MEMZERO(options, PerspectiveOptions, 1);
-  options->intersectionX = texture->width  / 2;
-  options->intersectionY = texture->height / 2;
+  options->intersectionX = texture->width  >> 1;
+  options->intersectionY = texture->height >> 1;
   options->viewAngle = PI / 4;
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_camera_x))) {
     options->cameraX = NUM2INT(val);
@@ -1007,14 +1007,14 @@ Texture_render_line(VALUE self,
   const int signY = (y1 <= y2) ? 1 : -1;
   if (dy <= dx) {
     int e = dx;
-    const int eLimit = dx * 2;
+    const int eLimit = dx << 1;
     for (int i = 0; i <= dx; i++) {
       if (0 <= x && x < texture->width && 0 <= y && y < texture->height) {
         Pixel* pixel = &(texture->pixels[x + y * texture->width]);
         RENDER_PIXEL(pixel->color, color);
       }
       x += signX;
-      e += 2 * dy;
+      e += dy << 1;
       if (eLimit <= e) {
         e -= eLimit;
         y += signY;
@@ -1022,14 +1022,14 @@ Texture_render_line(VALUE self,
     }
   } else {
     int e = dy;
-    const int eLimit = dy * 2;
+    const int eLimit = dy << 1;
     for (int i = 0; i <= dy; i++) {
       if (0 <= x && x < texture->width && 0 <= y && y < texture->height) {
         Pixel* pixel = &(texture->pixels[x + y * texture->width]);
         RENDER_PIXEL(pixel->color, color);
       }
       y += signY;
-      e += 2 * dx;
+      e += dx << 1;
       if (eLimit <= e) {
         e -= eLimit;
         x += signX;

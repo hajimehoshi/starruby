@@ -9,7 +9,7 @@ Benchmark.bm do |b|
   b.report("colors") do
     arr = Array.new(100000)
     arr.size.times do |i|
-      arr[i] = Color.new(1, 2, 3, 4)
+      arr[i] = Color.new(rand(256), rand(256), rand(256), rand(256))
     end
   end
 end

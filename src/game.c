@@ -474,9 +474,8 @@ Game_update_screen(VALUE self)
   case 1:
     {
       // For fullscreen
-      dst += (realScreenWidth - textureWidth) / 2
-        + (realScreenHeight - textureHeight) / 2 *
-        (realScreenWidth + screenPadding);
+      dst += ((realScreenWidth - textureWidth) >> 1) +
+        ((realScreenHeight - textureHeight) >> 1) * (realScreenWidth + screenPadding);
       const int heightPadding = realScreenWidth - texture->width + screenPadding;
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst++) {
@@ -490,8 +489,8 @@ Game_update_screen(VALUE self)
     break;
   case 2:
     {
-      const int textureWidth2x = textureWidth * 2;
-      const int heightPadding = textureWidth2x + screenPadding * 2;
+      const int textureWidth2x = textureWidth << 1;
+      const int heightPadding = textureWidth2x + (screenPadding << 1);
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
           const uint8_t alpha = src->color.alpha;

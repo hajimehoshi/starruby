@@ -40,7 +40,7 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
   }
   static VALUE rbColorCache = Qundef;
   if (rbColorCache == Qundef) {
-    rb_global_variable(&rbColorCache);
+    rb_gc_register_address(&rbColorCache);
     const int cacheSize = 64;
     rbColorCache = rb_ary_new2(cacheSize);
     rb_ary_store(rbColorCache, cacheSize - 1, Qnil);

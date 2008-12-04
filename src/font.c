@@ -7,7 +7,7 @@
 static volatile VALUE rbWindowsFontDirPathSymbol = Qundef;
 #endif
 
-static volatile VALUE rbFontCache = Qundef;
+static VALUE rbFontCache = Qundef;
 
 static volatile VALUE symbol_bold      = Qundef;
 static volatile VALUE symbol_italic    = Qundef;
@@ -447,7 +447,8 @@ strb_InitializeFont(VALUE rb_mStarRuby)
   symbol_italic    = ID2SYM(rb_intern("italic"));
   symbol_ttc_index = ID2SYM(rb_intern("ttc_index"));
 
-  rbFontCache = rb_iv_set(rb_cFont, "font_cache", rb_hash_new());
+  rbFontCache = rb_hash_new();
+  rb_gc_register_address(&rbFontCache);
 
   return rb_cFont;
 }

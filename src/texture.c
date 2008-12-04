@@ -1050,7 +1050,7 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
-    return Qnil;
+    return self;
   }
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
@@ -1073,7 +1073,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   int rectWidth  = NUM2INT(rbWidth);
   int rectHeight = NUM2INT(rbHeight);
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight)) {
-    return Qnil;
+    return self;
   }
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
@@ -1375,21 +1375,21 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       srcX -= dstX;
       srcWidth += dstX;
       if (srcTextureWidth <= srcX || srcWidth <= 0) {
-        return Qnil;
+        return self;
       }
       dstX = 0;
     } else if (dstTextureWidth <= dstX) {
-      return Qnil;
+      return self;
     }
     if (dstY < 0) {
       srcY -= dstY;
       srcHeight += dstY;
       if (srcTextureHeight <= srcY || srcHeight <= 0) {
-        return Qnil;
+        return self;
       }
       dstY = 0;
     } else if (dstTextureHeight <= dstY) {
-      return Qnil;
+      return self;
     }
     const int width  = MIN(srcWidth,  dstTextureWidth - dstX);
     const int height = MIN(srcHeight, dstTextureHeight - dstY);
@@ -1850,7 +1850,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
       }
     }
   }
-  return Qnil;
+  return self;
 }
 
 static VALUE

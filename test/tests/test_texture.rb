@@ -1574,6 +1574,10 @@ class TestTexture < Test::Unit::TestCase
                                                  :src_x => -10, :src_y => -10,
                                                  :src_width => 5, :src_height => 5)
     texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.render_texture(texture.dup, -10, -10,
+                                                 :src_x => 0, :src_y => 0,
+                                                 :src_width => 5, :src_height => 5)
+    texture = Texture.load("images/ruby.png")
     assert_equal texture, texture.render_texture(texture.dup, 0, 0,
                                                  :scale_x => 0, :scale_y => 0)
     texture = Texture.load("images/ruby.png")
@@ -1582,6 +1586,8 @@ class TestTexture < Test::Unit::TestCase
     texture = Texture.load("images/ruby.png")
     assert_equal texture, texture.render_texture(texture.dup, 0, 0,
                                                  :scale_x => 1.1, :scale_y => 1.1)
+    texture = Texture.load("images/ruby.png")
+    assert_equal texture, texture.undump(texture.dump("rgba"), "rgba")
   end
 
 end

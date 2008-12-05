@@ -607,8 +607,9 @@ Texture_change_palette_bang(VALUE self, VALUE rbPalette)
   palette = texture->palette;
   const uint8_t* indexes = texture->indexes;
   const int length = texture->width * texture->height;
-  for (int i = 0; i < length; i++, pixels++, indexes++)
+  for (int i = 0; i < length; i++, pixels++, indexes++) {
     pixels->color = palette[*indexes];
+  }
   return Qnil;
 }
 
@@ -1449,12 +1450,13 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       }
       break;
     case BLEND_TYPE_NONE:
-      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding)
+      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
         LOOP({
             *dst = *src;
             src++;
             dst++;
           }, width);
+      }
       break;
     default:
       assert(false);
@@ -1578,7 +1580,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       const int_fast32_t srcI = srcI16 >> 16;
       const int_fast32_t srcJ = srcJ16 >> 16;
       if (srcX <= srcI && srcI < srcX2 && srcY <= srcJ && srcJ < srcY2) {
-        const Color srcColor = srcTexture->pixels[srcI + srcJ * srcTextureWidth].color;
+        const Color srcColor =
+          srcTexture->pixels[srcI + srcJ * srcTextureWidth].color;
         if (blendType == BLEND_TYPE_MASK) {
           dst->color.alpha = srcColor.red;
         } else {

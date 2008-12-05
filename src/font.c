@@ -317,7 +317,7 @@ strb_InitializeSdlFont(void)
 
 #ifdef WIN32
   HKEY hKey;
-  LPCTSTR regPath =
+  TCHAR* regPath =
     _T("SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Fonts");
   if (SUCCEEDED(RegOpenKeyEx(HKEY_LOCAL_MACHINE, regPath, 0,
                              KEY_READ, &hKey))) {

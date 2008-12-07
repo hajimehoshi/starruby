@@ -389,10 +389,10 @@ static VALUE
 Texture_alloc(VALUE klass)
 {
   Texture* texture = ALLOC(Texture);
-  texture->pixels = NULL;
+  texture->pixels      = NULL;
   texture->paletteSize = 0;
-  texture->palette = NULL;
-  texture->indexes = NULL;
+  texture->palette     = NULL;
+  texture->indexes     = NULL;
   return Data_Wrap_Struct(klass, 0, Texture_free, texture);
 }
 
@@ -432,7 +432,6 @@ Texture_initialize_copy(VALUE self, VALUE rbTexture)
     const int paletteSize = texture->paletteSize = origTexture->paletteSize;
     texture->palette = ALLOC_N(Color, paletteSize);
     MEMCPY(texture->palette, origTexture->palette, Color, paletteSize);
-    const int length = texture->width * texture->height;
     texture->indexes = ALLOC_N(uint8_t, length);
     MEMCPY(texture->indexes, origTexture->indexes, uint8_t, length);
   }
@@ -546,7 +545,7 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   const double angle = NUM2DBL(rbAngle);
-  if (!angle) {
+  if (angle == 0) {
     return Qnil;
   }
   Pixel* pixels = texture->pixels;
@@ -757,7 +756,7 @@ Texture_palette(VALUE self)
 
 #define RENDER_PIXEL(_dst, _src)                              \
   do {                                                        \
-    if (!_dst.alpha) {                                        \
+    if (_dst.alpha == 0) {                                    \
       _dst = _src;                                            \
     } else {                                                  \
       if (_dst.alpha < _src.alpha) {                          \
@@ -799,10 +798,8 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions,
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_view_angle))) {
     options->viewAngle = NUM2DBL(val);
-    if (!isfinite(options->viewAngle)) {
-      rb_raise(rb_eArgError, "invalid :view_angle value");
-    }
-    if (options->viewAngle <= 0 || PI <= options->viewAngle) {
+    if (!isfinite(options->viewAngle) ||
+        options->viewAngle <= 0 || PI <= options->viewAngle) {
       rb_raise(rb_eArgError, "invalid :view_angle value");
     }
   }
@@ -1211,260 +1208,117 @@ AssignRenderingTextureOptions(st_data_t key, st_data_t val,
   return ST_CONTINUE;
 }
 
-static VALUE
-Texture_render_texture(int argc, VALUE* argv, VALUE self)
+static void
+RenderTexture(const Texture* srcTexture, const Texture* dstTexture,
+              int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY,
+              const uint8_t alpha, const BlendType blendType)
 {
-  rb_check_frozen(self);
-  const Texture* dstTexture;
-  Data_Get_Struct(self, Texture, dstTexture);
-  CheckDisposed(dstTexture);
-  CheckPalette(dstTexture);
-
-  volatile VALUE rbTexture, rbX, rbY, rbOptions;
-  if (3 <= argc && argc <= 4) {
-    rbTexture = argv[0];
-    rbX       = argv[1];
-    rbY       = argv[2];
-    rbOptions = (argc == 4) ? argv[3] : Qnil;
-  } else {
-    rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
-  }
-
-  strb_CheckTexture(rbTexture);
-  const Texture* srcTexture;
-  Data_Get_Struct(rbTexture, Texture, srcTexture);
-  CheckDisposed(srcTexture);
-
   const int srcTextureWidth  = srcTexture->width;
   const int srcTextureHeight = srcTexture->height;
   const int dstTextureWidth  = dstTexture->width;
   const int dstTextureHeight = dstTexture->height;
-
-  RenderingTextureOptions options = {
-    .srcX       = 0,
-    .srcY       = 0,
-    .srcWidth   = srcTextureWidth,
-    .srcHeight  = srcTextureHeight,
-    .scaleX     = 1,
-    .scaleY     = 1,
-    .angle      = 0,
-    .centerX    = 0,
-    .centerY    = 0,
-    .alpha      = 255,
-    .blendType  = BLEND_TYPE_ALPHA,
-    .toneRed    = 0,
-    .toneGreen  = 0,
-    .toneBlue   = 0,
-    .saturation = 255,
-  };
-
-  if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
-    if (NIL_P(RHASH_IFNONE(rbOptions))) {
-      st_table* table = RHASH_TBL(rbOptions);
-      if (0 < table->num_entries) {
-        volatile VALUE val;
-        st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);
-        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val)) {
-          options.srcWidth = srcTextureWidth - options.srcX;
-        }
-        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val)) {
-          options.srcHeight = srcTextureHeight - options.srcY;
-        }
-      }
-    } else {
-      volatile VALUE val;
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x))) {
-        options.srcX = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y))) {
-        options.srcY = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width))) {
-        options.srcWidth = NUM2INT(val);
-      } else {
-        options.srcWidth = srcTextureWidth - options.srcX;
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height))) {
-        options.srcHeight = NUM2INT(val);
-      } else {
-        options.srcHeight = srcTextureHeight - options.srcY;
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x))) {
-        options.scaleX = NUM2DBL(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y))) {
-        options.scaleY = NUM2DBL(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle))) {
-        options.angle = NUM2DBL(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x))) {
-        options.centerX = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y))) {
-        options.centerY = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha))) {
-        options.alpha = NUM2DBL(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
-        Check_Type(val, T_SYMBOL);
-        if (val == symbol_none) {
-          options.blendType = BLEND_TYPE_NONE;
-        } else if (val == symbol_alpha) {
-          options.blendType = BLEND_TYPE_ALPHA;
-        } else if (val == symbol_add) {
-          options.blendType = BLEND_TYPE_ADD;
-        } else if (val == symbol_sub) {
-          options.blendType = BLEND_TYPE_SUB;
-        } else if (val == symbol_mask) {
-          options.blendType = BLEND_TYPE_MASK;
-        }
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red))) {
-        options.toneRed = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green))) {
-        options.toneGreen = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue))) {
-        options.toneBlue = NUM2INT(val);
-      }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation))) {
-        options.saturation = NUM2INT(val);
-      }
+  if (dstX < 0) {
+    srcX -= dstX;
+    srcWidth += dstX;
+    if (srcTextureWidth <= srcX || srcWidth <= 0) {
+      return;
     }
-  } else if (!NIL_P(rbOptions)) {
-    rb_raise(rb_eTypeError, "wrong argument type %s (expected Hash)",
-             rb_obj_classname(rbOptions));
+    dstX = 0;
+  } else if (dstTextureWidth <= dstX) {
+    return;
   }
-
-  const int saturation = options.saturation;
-  const int toneRed    = options.toneRed;
-  const int toneGreen  = options.toneGreen;
-  const int toneBlue   = options.toneBlue;
-  if (toneRed   < -255 || 255 < toneRed   ||
-      toneGreen < -255 || 255 < toneGreen ||
-      toneBlue  < -255 || 255 < toneBlue  ||
-      saturation < 0   || 255 < saturation) {
-    rb_raise(rb_eArgError, "invalid tone value: (r:%d, g:%d, b:%d, s:%d)",
-             toneRed, toneGreen, toneBlue, saturation);
-  }
-  int srcHeight = options.srcHeight;
-  int srcWidth  = options.srcWidth;
-  int srcX      = options.srcX;
-  int srcY      = options.srcY;
-  if (!ModifyRectInTexture(srcTexture,
-                           &(srcX), &(srcY), &(srcWidth), &(srcHeight))) {
-    return self;
-  }
-  const uint8_t alpha       = options.alpha;
-  const double angle        = options.angle;
-  const BlendType blendType = options.blendType;
-  const int centerX         = options.centerX;
-  const int centerY         = options.centerY;
-  const double scaleX       = options.scaleX;
-  const double scaleY       = options.scaleY;
-
-  if (srcTexture != dstTexture &&
-      (scaleX == 1 && scaleY == 1 && angle == 0 &&
-       toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255 && 
-       (blendType == BLEND_TYPE_ALPHA || blendType == BLEND_TYPE_NONE))) {
-    int dstX = NUM2INT(rbX);
-    int dstY = NUM2INT(rbY);
-    if (dstX < 0) {
-      srcX -= dstX;
-      srcWidth += dstX;
-      if (srcTextureWidth <= srcX || srcWidth <= 0) {
-        return self;
-      }
-      dstX = 0;
-    } else if (dstTextureWidth <= dstX) {
-      return self;
+  if (dstY < 0) {
+    srcY -= dstY;
+    srcHeight += dstY;
+    if (srcTextureHeight <= srcY || srcHeight <= 0) {
+      return;
     }
-    if (dstY < 0) {
-      srcY -= dstY;
-      srcHeight += dstY;
-      if (srcTextureHeight <= srcY || srcHeight <= 0) {
-        return self;
-      }
-      dstY = 0;
-    } else if (dstTextureHeight <= dstY) {
-      return self;
-    }
-    const int width  = MIN(srcWidth,  dstTextureWidth - dstX);
-    const int height = MIN(srcHeight, dstTextureHeight - dstY);
-    const Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
-    Pixel* dst       = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
-    const int srcPadding = srcTextureWidth - width;
-    const int dstPadding = dstTextureWidth - width;
-    switch (blendType) {
-    case BLEND_TYPE_ALPHA:
-      if (alpha == 255) {
-        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-          LOOP({
-              const uint8_t beta = src->color.alpha;
-              const uint8_t dstAlpha = dst->color.alpha;
-              if ((beta == 255) | (dstAlpha == 0)) {
-                *dst = *src;
-              } else if (beta) {
-                if (dstAlpha < beta) {
-                  dst->color.alpha = beta;
-                }
-                dst->color.red =
-                  ALPHA(src->color.red,   dst->color.red,   beta);
-                dst->color.green =
-                  ALPHA(src->color.green, dst->color.green, beta);
-                dst->color.blue =
-                  ALPHA(src->color.blue,  dst->color.blue,  beta);
-              }
-              src++;
-              dst++;
-            }, width);
-        }
-      } else if (0 < alpha) {
-        for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
-          LOOP({
-              const uint8_t dstAlpha = dst->color.alpha;
-              const uint8_t beta = DIV255(src->color.alpha * alpha);
-              if (!dstAlpha) {
-                dst->color.alpha = beta;
-                dst->color.red   = src->color.red;
-                dst->color.green = src->color.green;
-                dst->color.blue  = src->color.blue;
-              } else if (beta) {
-                if (dstAlpha < beta) {
-                  dst->color.alpha = beta;
-                }
-                dst->color.red =
-                  ALPHA(src->color.red,   dst->color.red,   beta);
-                dst->color.green =
-                  ALPHA(src->color.green, dst->color.green, beta);
-                dst->color.blue =
-                  ALPHA(src->color.blue,  dst->color.blue,  beta);
-              }
-              src++;
-              dst++;
-            }, width);
-        }
-      }
-      break;
-    case BLEND_TYPE_NONE:
+    dstY = 0;
+  } else if (dstTextureHeight <= dstY) {
+    return;
+  }
+  const int width  = MIN(srcWidth,  dstTextureWidth - dstX);
+  const int height = MIN(srcHeight, dstTextureHeight - dstY);
+  const Pixel* src = &(srcTexture->pixels[srcX + srcY * srcTextureWidth]);
+  Pixel* dst       = &(dstTexture->pixels[dstX + dstY * dstTextureWidth]);
+  const int srcPadding = srcTextureWidth - width;
+  const int dstPadding = dstTextureWidth - width;
+  switch (blendType) {
+  case BLEND_TYPE_ALPHA:
+    if (alpha == 255) {
       for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
         LOOP({
-            *dst = *src;
+            const uint8_t beta = src->color.alpha;
+            const uint8_t dstAlpha = dst->color.alpha;
+            if ((beta == 255) | (dstAlpha == 0)) {
+              *dst = *src;
+            } else if (beta) {
+              if (dstAlpha < beta) {
+                dst->color.alpha = beta;
+              }
+              dst->color.red =
+                ALPHA(src->color.red,   dst->color.red,   beta);
+              dst->color.green =
+                ALPHA(src->color.green, dst->color.green, beta);
+              dst->color.blue =
+                ALPHA(src->color.blue,  dst->color.blue,  beta);
+            }
             src++;
             dst++;
           }, width);
       }
-      break;
-    default:
-      assert(false);
-      break;
+    } else if (0 < alpha) {
+      for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
+        LOOP({
+            const uint8_t dstAlpha = dst->color.alpha;
+            const uint8_t beta = DIV255(src->color.alpha * alpha);
+            if (dstAlpha == 0) {
+              dst->color.alpha = beta;
+              dst->color.red   = src->color.red;
+              dst->color.green = src->color.green;
+              dst->color.blue  = src->color.blue;
+            } else if (beta) {
+              if (dstAlpha < beta) {
+                dst->color.alpha = beta;
+              }
+              dst->color.red =
+                ALPHA(src->color.red,   dst->color.red,   beta);
+              dst->color.green =
+                ALPHA(src->color.green, dst->color.green, beta);
+              dst->color.blue =
+                ALPHA(src->color.blue,  dst->color.blue,  beta);
+            }
+            src++;
+            dst++;
+          }, width);
+      }
     }
-    return self;
+    break;
+  case BLEND_TYPE_NONE:
+    for (int j = 0; j < height; j++, src += srcPadding, dst += dstPadding) {
+      LOOP({
+          *dst = *src;
+          src++;
+          dst++;
+        }, width);
+    }
+    break;
+  default:
+    assert(false);
+    break;
   }
+}
 
+static void
+RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
+                         int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY,
+                         const RenderingTextureOptions* options)
+{
+  const double angle        = options->angle;
+  const int centerX         = options->centerX;
+  const int centerY         = options->centerY;
+  const double scaleX       = options->scaleX;
+  const double scaleY       = options->scaleY;
   AffineMatrix mat = {
     .a = 1, .c = 0, .tx = 0,
     .b = 0, .d = 1, .ty = 0,
@@ -1501,11 +1355,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     mat.tx += centerX;
     mat.ty += centerY;
   }
-  mat.tx += NUM2INT(rbX);
-  mat.ty += NUM2INT(rbY);
+  mat.tx += dstX;
+  mat.ty += dstY;
   const double det = mat.a * mat.d - mat.b * mat.c;
-  if (!det) {
-    return self;
+  if (det == 0) {
+    return;
   }
   const double dstX00 = mat.tx;
   const double dstY00 = mat.ty;
@@ -1519,9 +1373,11 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   double dstY0 = MIN(MIN(MIN(dstY00, dstY01), dstY10), dstY11);
   double dstX1 = MAX(MAX(MAX(dstX00, dstX01), dstX10), dstX11);
   double dstY1 = MAX(MAX(MAX(dstY00, dstY01), dstY10), dstY11);
+  const int dstTextureWidth  = dstTexture->width;
+  const int dstTextureHeight = dstTexture->height;
   if (dstTextureWidth <= dstX0 || dstTextureHeight <= dstY0 ||
       dstX1 < 0 || dstY1 < 0) {
-    return self;
+    return;
   }
   AffineMatrix matInv = {
     .a = mat.d  / det,
@@ -1562,14 +1418,37 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   const int_fast32_t srcDYX16 = (int_fast32_t)(srcDYX * (1 << 16));
   const int_fast32_t srcDYY16 = (int_fast32_t)(srcDYY * (1 << 16));
 
-  volatile VALUE rbClonedTexture = Qnil;
-  if (self == rbTexture) {
-    rbClonedTexture = rb_obj_clone(rbTexture);
-    Data_Get_Struct(rbClonedTexture, Texture, srcTexture);
+  Texture* clonedTexture = NULL;
+  if (srcTexture == dstTexture) {
+    clonedTexture = ALLOC(Texture);
+    clonedTexture->pixels      = NULL;
+    clonedTexture->paletteSize = 0;
+    clonedTexture->palette     = NULL;
+    clonedTexture->indexes     = NULL;
+    clonedTexture->width  = dstTexture->width;
+    clonedTexture->height = dstTexture->height;
+    const int length = dstTexture->width * dstTexture->height;
+    clonedTexture->pixels = ALLOC_N(Pixel, length);
+    MEMCPY(clonedTexture->pixels, dstTexture->pixels, Pixel, length);
+    if (dstTexture->palette) {
+      const int paletteSize = clonedTexture->paletteSize = dstTexture->paletteSize;
+      clonedTexture->palette = ALLOC_N(Color, paletteSize);
+      MEMCPY(clonedTexture->palette, dstTexture->palette, Color, paletteSize);
+      clonedTexture->indexes = ALLOC_N(uint8_t, length);
+      MEMCPY(clonedTexture->indexes, dstTexture->indexes, uint8_t, length);
+    }
+    srcTexture = clonedTexture;
   }
 
   const int srcX2 = srcX + srcWidth;
   const int srcY2 = srcY + srcHeight;
+  const int srcTextureWidth = srcTexture->width;
+  const uint8_t alpha       = options->alpha;
+  const BlendType blendType = options->blendType;
+  const int saturation      = options->saturation;
+  const int toneRed         = options->toneRed;
+  const int toneGreen       = options->toneGreen;
+  const int toneBlue        = options->toneBlue;
   for (int j = 0; j < dstHeight; j++) {
     int_fast32_t srcI16 = srcOX16 + j * srcDYX16;
     int_fast32_t srcJ16 = srcOY16 + j * srcDYY16;
@@ -1709,9 +1588,166 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       }
     }
   }
+  if (clonedTexture) {
+    Texture_free(clonedTexture);
+    clonedTexture = NULL;
+  }
+}
 
-  if (!NIL_P(rbClonedTexture)) {
-    Texture_dispose(rbClonedTexture);
+static VALUE
+Texture_render_texture(int argc, VALUE* argv, VALUE self)
+{
+  rb_check_frozen(self);
+  const Texture* dstTexture;
+  Data_Get_Struct(self, Texture, dstTexture);
+  CheckDisposed(dstTexture);
+  CheckPalette(dstTexture);
+
+  volatile VALUE rbTexture, rbX, rbY, rbOptions;
+  if (3 <= argc && argc <= 4) {
+    rbTexture = argv[0];
+    rbX       = argv[1];
+    rbY       = argv[2];
+    rbOptions = (argc == 4) ? argv[3] : Qnil;
+  } else {
+    rb_scan_args(argc, argv, "31", &rbTexture, &rbX, &rbY, &rbOptions);
+  }
+
+  strb_CheckTexture(rbTexture);
+  const Texture* srcTexture;
+  Data_Get_Struct(rbTexture, Texture, srcTexture);
+  CheckDisposed(srcTexture);
+
+  const int srcTextureWidth  = srcTexture->width;
+  const int srcTextureHeight = srcTexture->height;
+  RenderingTextureOptions options = {
+    .srcX       = 0,
+    .srcY       = 0,
+    .srcWidth   = srcTextureWidth,
+    .srcHeight  = srcTextureHeight,
+    .scaleX     = 1,
+    .scaleY     = 1,
+    .angle      = 0,
+    .centerX    = 0,
+    .centerY    = 0,
+    .alpha      = 255,
+    .blendType  = BLEND_TYPE_ALPHA,
+    .toneRed    = 0,
+    .toneGreen  = 0,
+    .toneBlue   = 0,
+    .saturation = 255,
+  };
+  if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
+    if (NIL_P(RHASH_IFNONE(rbOptions))) {
+      st_table* table = RHASH_TBL(rbOptions);
+      if (0 < table->num_entries) {
+        volatile VALUE val;
+        st_foreach(table, AssignRenderingTextureOptions, (st_data_t)&options);
+        if (!st_lookup(table, (st_data_t)symbol_src_width, (st_data_t*)&val)) {
+          options.srcWidth = srcTextureWidth - options.srcX;
+        }
+        if (!st_lookup(table, (st_data_t)symbol_src_height, (st_data_t*)&val)) {
+          options.srcHeight = srcTextureHeight - options.srcY;
+        }
+      }
+    } else {
+      volatile VALUE val;
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_x))) {
+        options.srcX = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_y))) {
+        options.srcY = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_width))) {
+        options.srcWidth = NUM2INT(val);
+      } else {
+        options.srcWidth = srcTextureWidth - options.srcX;
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_src_height))) {
+        options.srcHeight = NUM2INT(val);
+      } else {
+        options.srcHeight = srcTextureHeight - options.srcY;
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_x))) {
+        options.scaleX = NUM2DBL(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_scale_y))) {
+        options.scaleY = NUM2DBL(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_angle))) {
+        options.angle = NUM2DBL(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_x))) {
+        options.centerX = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y))) {
+        options.centerY = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha))) {
+        options.alpha = NUM2DBL(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_blend_type))) {
+        Check_Type(val, T_SYMBOL);
+        if (val == symbol_none) {
+          options.blendType = BLEND_TYPE_NONE;
+        } else if (val == symbol_alpha) {
+          options.blendType = BLEND_TYPE_ALPHA;
+        } else if (val == symbol_add) {
+          options.blendType = BLEND_TYPE_ADD;
+        } else if (val == symbol_sub) {
+          options.blendType = BLEND_TYPE_SUB;
+        } else if (val == symbol_mask) {
+          options.blendType = BLEND_TYPE_MASK;
+        }
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_red))) {
+        options.toneRed = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_green))) {
+        options.toneGreen = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_tone_blue))) {
+        options.toneBlue = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_saturation))) {
+        options.saturation = NUM2INT(val);
+      }
+    }
+  } else if (!NIL_P(rbOptions)) {
+    rb_raise(rb_eTypeError, "wrong argument type %s (expected Hash)",
+             rb_obj_classname(rbOptions));
+  }
+
+  const int saturation = options.saturation;
+  const int toneRed    = options.toneRed;
+  const int toneGreen  = options.toneGreen;
+  const int toneBlue   = options.toneBlue;
+  if (toneRed   < -255 || 255 < toneRed   ||
+      toneGreen < -255 || 255 < toneGreen ||
+      toneBlue  < -255 || 255 < toneBlue  ||
+      saturation < 0   || 255 < saturation) {
+    rb_raise(rb_eArgError, "invalid tone value: (r:%d, g:%d, b:%d, s:%d)",
+             toneRed, toneGreen, toneBlue, saturation);
+  }
+  int srcX      = options.srcX;
+  int srcY      = options.srcY;
+  int srcWidth  = options.srcWidth;
+  int srcHeight = options.srcHeight;
+  if (!ModifyRectInTexture(srcTexture,
+                           &(srcX), &(srcY), &(srcWidth), &(srcHeight))) {
+    return self;
+  }
+  if (srcTexture != dstTexture &&
+      (options.scaleX == 1 && options.scaleY == 1 && options.angle == 0 &&
+       toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255 && 
+       (options.blendType == BLEND_TYPE_ALPHA || options.blendType == BLEND_TYPE_NONE))) {
+    RenderTexture(srcTexture, dstTexture,
+                  srcX, srcY, srcWidth, srcHeight, NUM2INT(rbX), NUM2INT(rbY),
+                  options.alpha, options.blendType);
+  } else {
+    RenderTextureWithOptions(srcTexture, dstTexture,
+                             srcX, srcY, srcWidth, srcHeight, NUM2INT(rbX), NUM2INT(rbY),
+                             &options);
   }
   return self;
 }
@@ -1800,7 +1836,7 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
   z = z2;
   volatile VALUE rbResult = rb_ary_new3(3, Qnil, Qnil, Qnil);
   OBJ_FREEZE(rbResult);
-  if (!z) {
+  if (z == 0) {
     return rbResult;
   }
   const double distance = screenWidth / (2 * tan(options.viewAngle / 2));

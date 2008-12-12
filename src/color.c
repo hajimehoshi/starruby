@@ -10,17 +10,14 @@ strb_GetColorClass(void)
 
 static void Color_free(Color*);
 inline void
-strb_GetColorFromRubyValue(Color* color, VALUE rbColor)
+strb_GetPixelFromRubyValue(Pixel* pixel, VALUE rbColor)
 {
   Check_Type(rbColor, T_DATA);
   if (RDATA(rbColor)->dfree != (RUBY_DATA_FUNC)Color_free) {
     rb_raise(rb_eTypeError, "wrong argument type %s (expected StarRuby::Color)",
              rb_obj_classname(rbColor));
   }
-  const Pixel p = (Pixel){
-    .value = (uint32_t)(VALUE)DATA_PTR(rbColor)
-  };
-  *color = p.color;
+  pixel->value = (uint32_t)(VALUE)DATA_PTR(rbColor);
 }
 
 static VALUE
@@ -49,12 +46,13 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
   const long index = ((red & 3) << 4) | ((green & 3) << 2) | (blue & 3);
   volatile VALUE rbColor = rbColorCacheValues[index];
   if (!NIL_P(rbColor)) {
-    Color color;
-    strb_GetColorFromRubyValue(&color, rbColor);
-    if (color.red == red &&
-	color.green == green &&
-	color.blue == blue &&
-	color.alpha == alpha) {
+    Pixel pixel;
+    strb_GetPixelFromRubyValue(&pixel, rbColor);
+    Color color = pixel.color;
+    if (color.red   == red &&
+        color.green == green &&
+        color.blue  == blue &&
+        color.alpha == alpha) {
       return rbColor;
     }
   }
@@ -99,17 +97,17 @@ Color_initialize(VALUE self, VALUE rbRed, VALUE rbGreen, VALUE rbBlue, VALUE rbA
 static VALUE
 Color_alpha(VALUE self)
 {
-  Color color;
-  strb_GetColorFromRubyValue(&color, self);
-  return INT2FIX(color.alpha);
+  Pixel pixel;
+  strb_GetPixelFromRubyValue(&pixel, self);
+  return INT2FIX(pixel.color.alpha);
 }
 
 static VALUE
 Color_blue(VALUE self)
 {
-  Color color;
-  strb_GetColorFromRubyValue(&color, self);
-  return INT2FIX(color.blue);
+  Pixel pixel;
+  strb_GetPixelFromRubyValue(&pixel, self);
+  return INT2FIX(pixel.color.blue);
 }
 
 static VALUE
@@ -121,9 +119,11 @@ Color_equal(VALUE self, VALUE rbOther)
   if (!rb_obj_is_kind_of(rbOther, rb_cColor)) {
     return Qfalse;
   }
-  Color color1, color2;
-  strb_GetColorFromRubyValue(&color1, self);
-  strb_GetColorFromRubyValue(&color2, rbOther);
+  Pixel pixel1, pixel2;
+  strb_GetPixelFromRubyValue(&pixel1, self);
+  strb_GetPixelFromRubyValue(&pixel2, rbOther);
+  Color color1 = pixel1.color;
+  Color color2 = pixel2.color;
   return (color1.red   == color2.red &&
           color1.green == color2.green &&
           color1.blue  == color2.blue &&
@@ -133,16 +133,17 @@ Color_equal(VALUE self, VALUE rbOther)
 static VALUE
 Color_green(VALUE self)
 {
-  Color color;
-  strb_GetColorFromRubyValue(&color, self);
-  return INT2FIX(color.green);
+  Pixel pixel;
+  strb_GetPixelFromRubyValue(&pixel, self);
+  return INT2FIX(pixel.color.green);
 }
 
 static VALUE
 Color_hash(VALUE self)
 {
-  Color color;
-  strb_GetColorFromRubyValue(&color, self);
+  Pixel pixel;
+  strb_GetPixelFromRubyValue(&pixel, self);
+  Color color = pixel.color;
 #if POSFIXABLE(0xffffffff)
   const uint32_t hash = (color.alpha << 24) |
     (color.red << 16) |
@@ -160,16 +161,17 @@ Color_hash(VALUE self)
 static VALUE
 Color_red(VALUE self)
 {
-  Color color;
-  strb_GetColorFromRubyValue(&color, self);
-  return INT2FIX(color.red);
+  Pixel pixel;
+  strb_GetPixelFromRubyValue(&pixel, self);
+  return INT2FIX(pixel.color.red);
 }
 
 static VALUE
 Color_to_s(VALUE self)
 {
-  Color color;
-  strb_GetColorFromRubyValue(&color, self);
+  Pixel pixel;
+  strb_GetPixelFromRubyValue(&pixel, self);
+  Color color = pixel.color;
   char str[256];
   snprintf(str, sizeof(str),
            "#<StarRuby::Color alpha=%d, red=%d, green=%d, blue=%d>",

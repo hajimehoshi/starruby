@@ -81,7 +81,7 @@ VALUE strb_GetTextureClass(void);
 
 VALUE strb_GetCompletePath(VALUE, bool);
 
-void strb_GetPixelFromRubyValue(Pixel*, VALUE);
+void strb_GetColorFromRubyValue(Color*, VALUE);
 
 void strb_CheckFont(VALUE);
 void strb_CheckTexture(VALUE);

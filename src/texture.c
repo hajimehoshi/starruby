@@ -2,7 +2,7 @@
 #include "starruby_private.h"
 #include <png.h>
 
-#define ALPHA(src, dst, a) DIV255(((dst) << 8) - (dst) + ((src) - (dst)) * a)
+#define ALPHA(src, dst, a) DIV255((dst << 8) - dst + (src - dst) * a)
 
 #define LOOP(process, length) \
   do {                        \
@@ -470,9 +470,9 @@ Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     return Qnil;
   }
-  Pixel pixel;
-  strb_GetPixelFromRubyValue(&pixel, rbColor);
-  texture->pixels[x + y * texture->width] = pixel;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
+  texture->pixels[x + y * texture->width].color = color;
   return rbColor;
 }
 
@@ -597,9 +597,7 @@ Texture_change_palette_bang(VALUE self, VALUE rbPalette)
   Color* palette = texture->palette;
   for (int i = 0; i < texture->paletteSize; i++, palette++) {
     if (i < RARRAY_LEN(rbPalette)) {
-      Pixel pixel;
-      strb_GetPixelFromRubyValue(&pixel, rbColors[i]);
-      *palette = pixel.color;
+      strb_GetColorFromRubyValue(palette, rbColors[i]);
     } else {
       *palette = (Color){0, 0, 0, 0};
     }
@@ -681,12 +679,12 @@ Texture_fill(VALUE self, VALUE rbColor)
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
-  Pixel pixel;
-  strb_GetPixelFromRubyValue(&pixel, rbColor);
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   const int length = texture->width * texture->height;
   Pixel* pixels = texture->pixels;
   for (int i = 0; i < length; i++, pixels++) {
-    *pixels = pixel;
+    pixels->color = color;
   }
   return self;
 }
@@ -707,13 +705,13 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight)) {
     return self;
   }
-  Pixel pixel;
-  strb_GetPixelFromRubyValue(&pixel, rbColor);  
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);  
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   const int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ) {
     for (int i = rectX; i < rectX + rectWidth; i++, pixels++) {
-      *pixels = pixel;
+      pixels->color = color;
     }
   }
   return self;
@@ -756,21 +754,18 @@ Texture_palette(VALUE self)
   }
 }
 
-#define RENDER_PIXEL(_dst, _src)                                \
-  do {                                                          \
-    if (_dst.alpha == 0) {                                      \
-      _dst = _src;                                              \
-    } else {                                                    \
-      if (_dst.alpha < _src.alpha) {                            \
-        _dst.alpha = _src.alpha;                                \
-      }                                                         \
-      const uint32_t srcRG = (_src.red << 16) | _src.green;     \
-      uint32_t dstRG = (_dst.red << 16) | _dst.green;           \
-      dstRG = ALPHA(srcRG, dstRG, _src.alpha);                  \
-      _dst.red   = dstRG >> 16;                                 \
-      _dst.green = dstRG;                                       \
-      _dst.blue  = ALPHA(_src.blue,  _dst.blue,  _src.alpha);   \
-    }                                                           \
+#define RENDER_PIXEL(_dst, _src)                              \
+  do {                                                        \
+    if (_dst.alpha == 0) {                                    \
+      _dst = _src;                                            \
+    } else {                                                  \
+      if (_dst.alpha < _src.alpha) {                          \
+        _dst.alpha = _src.alpha;                              \
+      }                                                       \
+      _dst.red   = ALPHA(_src.red,   _dst.red,   _src.alpha); \
+      _dst.green = ALPHA(_src.green, _dst.green, _src.alpha); \
+      _dst.blue  = ALPHA(_src.blue,  _dst.blue,  _src.alpha); \
+    }                                                         \
   } while (false)
 
 static void
@@ -821,9 +816,9 @@ AssignPerspectiveOptions(PerspectiveOptions* options, VALUE rbOptions,
     switch (TYPE(val)) {
     case T_DATA:
       options->blurType = BLUR_TYPE_COLOR;
-      Pixel pixel;
-      strb_GetPixelFromRubyValue(&pixel, val);
-      options->blurColor = pixel.color;
+      Color color;
+      strb_GetColorFromRubyValue(&color, val);
+      options->blurColor = color;
       break;
     case T_SYMBOL:
       if (val == symbol_background) {
@@ -931,9 +926,6 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   const Pixel* src = srcTexture->pixels;
   Pixel* dst = dstTexture->pixels;
   PointF screenP;
-  Color blurColor = options.blurColor;
-  const uint32_t blurRG = (blurColor.red  << 16) | blurColor.green;
-  const uint32_t blurBA = (blurColor.blue << 16) | blurColor.alpha;
   for (int j = 0; j < dstHeight; j++) {
     screenP.x = screenO.x + j * screenDY.x;
     screenP.y = screenO.y + j * screenDY.y;
@@ -961,24 +953,20 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
             if (options.blurType == BLUR_TYPE_NONE || scale <= 1) {
               RENDER_PIXEL(dst->color, (*srcColor));
             } else {
-              const int ratio = (int)(255 * (1 / scale));
+              const int rate = (int)(255 * (1 / scale));
               if (options.blurType == BLUR_TYPE_BACKGROUND) {
                 Color c;
                 c.red   = srcColor->red;
                 c.green = srcColor->green;
                 c.blue  = srcColor->blue;
-                c.alpha = DIV255(srcColor->alpha * ratio);
+                c.alpha = DIV255(srcColor->alpha * rate);
                 RENDER_PIXEL(dst->color, c);
               } else {
-                const uint32_t srcRG = (srcColor->red  << 16) | srcColor->green;
-                const uint32_t srcBA = (srcColor->blue << 16) | srcColor->alpha;
-                const uint32_t resultRG = ALPHA(srcRG, blurRG, ratio);
-                const uint32_t resultBA = ALPHA(srcBA, blurBA, ratio);
                 Color c;
-                c.red   = resultRG >> 16;
-                c.green = resultRG;
-                c.blue  = resultBA >> 16;
-                c.alpha = resultBA;
+                c.red   = ALPHA(srcColor->red,   options.blurColor.red,   rate);
+                c.green = ALPHA(srcColor->green, options.blurColor.green, rate);
+                c.blue  = ALPHA(srcColor->blue,  options.blurColor.blue,  rate);
+                c.alpha = ALPHA(srcColor->alpha, options.blurColor.alpha, rate);
                 RENDER_PIXEL(dst->color, c);
               }
             }
@@ -1007,9 +995,8 @@ Texture_render_line(VALUE self,
   Data_Get_Struct(self, Texture, texture);
   CheckDisposed(texture);
   CheckPalette(texture);
-  Pixel pixel;
-  strb_GetPixelFromRubyValue(&pixel, rbColor);
-  Color color = pixel.color;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   int x = x1;
   int y = y1;
   const int dx = abs(x2 - x1);
@@ -1063,9 +1050,8 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
     return self;
   }
-  Pixel p;
-  strb_GetPixelFromRubyValue(&p, rbColor);
-  Color color = p.color;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixel = &(texture->pixels[x + y * texture->width]);
   RENDER_PIXEL(pixel->color, color);
   return self;
@@ -1087,9 +1073,8 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   if (!ModifyRectInTexture(texture, &rectX, &rectY, &rectWidth, &rectHeight)) {
     return self;
   }
-  Pixel p;
-  strb_GetPixelFromRubyValue(&p, rbColor);
-  Color color = p.color;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
   Pixel* pixels = &(texture->pixels[rectX + rectY * texture->width]);
   const int paddingJ = texture->width - rectWidth;
   for (int j = rectY; j < rectY + rectHeight; j++, pixels += paddingJ) {
@@ -1121,9 +1106,8 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
     rb_class_new_instance(2, RARRAY_PTR(rbSize), rb_cTexture);
   const Texture* textTexture;
   Data_Get_Struct(rbTextTexture, Texture, textTexture);
-  Pixel pixel;
-  strb_GetPixelFromRubyValue(&pixel, rbColor);
-  Color color = pixel.color;
+  Color color;
+  strb_GetColorFromRubyValue(&color, rbColor);
 
   SDL_Surface* textSurfaceRaw;
   if (antiAlias) {
@@ -1272,12 +1256,12 @@ RenderTexture(const Texture* srcTexture, const Texture* dstTexture,
               if (dstAlpha < beta) {
                 dst->color.alpha = beta;
               }
-              const uint32_t srcRG = (src->color.red << 16) | src->color.green;
-              uint32_t dstRG = (dst->color.red << 16) | dst->color.green;
-              dstRG = ALPHA(srcRG, dstRG, beta);
-              dst->color.red   = dstRG >> 16;
-              dst->color.green = dstRG;
-              dst->color.blue  = ALPHA(src->color.blue, dst->color.blue, beta);
+              dst->color.red =
+                ALPHA(src->color.red,   dst->color.red,   beta);
+              dst->color.green =
+                ALPHA(src->color.green, dst->color.green, beta);
+              dst->color.blue =
+                ALPHA(src->color.blue,  dst->color.blue,  beta);
             }
             src++;
             dst++;
@@ -1297,12 +1281,12 @@ RenderTexture(const Texture* srcTexture, const Texture* dstTexture,
               if (dstAlpha < beta) {
                 dst->color.alpha = beta;
               }
-              const uint32_t srcRG = (src->color.red << 16) | src->color.green;
-              uint32_t dstRG = (dst->color.red << 16) | dst->color.green;
-              dstRG = ALPHA(srcRG, dstRG, beta);
-              dst->color.red   = dstRG >> 16;
-              dst->color.green = dstRG;
-              dst->color.blue  = ALPHA(src->color.blue, dst->color.blue, beta);
+              dst->color.red =
+                ALPHA(src->color.red,   dst->color.red,   beta);
+              dst->color.green =
+                ALPHA(src->color.green, dst->color.green, beta);
+              dst->color.blue =
+                ALPHA(src->color.blue,  dst->color.blue,  beta);
             }
             src++;
             dst++;
@@ -1488,11 +1472,8 @@ RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
             // http://www.poynton.com/ColorFAQ.html
             const uint8_t y =
               (6969 * srcRed + 23434 * srcGreen + 2365 * srcBlue) / 32768;
-            const uint32_t srcRG = (srcRed << 16) | srcGreen;
-            const uint32_t yy = (y << 16) | y;
-            const uint32_t result = ALPHA(srcRG, yy, saturation);
-            srcRed   = result >> 16;
-            srcGreen = result;
+            srcRed   = ALPHA(srcRed,   y, saturation);
+            srcGreen = ALPHA(srcGreen, y, saturation);
             srcBlue  = ALPHA(srcBlue,  y, saturation);
           }
           if (toneRed) {
@@ -1566,14 +1547,9 @@ RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
             }
             switch (blendType) {
             case BLEND_TYPE_ALPHA:
-              {
-                const uint32_t srcRG = (srcRed << 16) | srcGreen;
-                uint32_t dstRG = (dst->color.red << 16) | dst->color.green;
-                dstRG = ALPHA(srcRG, dstRG, beta);
-                dst->color.red   = dstRG >> 16;
-                dst->color.green = dstRG;
-                dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
-              }
+              dst->color.red   = ALPHA(srcRed,   dst->color.red,   beta);
+              dst->color.green = ALPHA(srcGreen, dst->color.green, beta);
+              dst->color.blue  = ALPHA(srcBlue,  dst->color.blue,  beta);
               break;
             case BLEND_TYPE_ADD:
               {

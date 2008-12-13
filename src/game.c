@@ -557,9 +557,9 @@ Game_wait(VALUE self)
   Uint32 now;
   while (true) {
     now = SDL_GetTicks();
-    if (1000 <= (now - gameTimer->before) * fps + gameTimer->error) {
-      gameTimer->error = MIN((now - gameTimer->before) * fps +
-                             gameTimer->error - 1000, 1000);
+    Uint32 diff = (now - gameTimer->before) * fps + gameTimer->error;
+    if (1000 <= diff) {
+      gameTimer->error = MIN(diff - 1000, 1000);
       gameTimer->before = now;
       break;
     }        

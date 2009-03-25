@@ -296,7 +296,7 @@ strb_InitializeSdlInput()
   }
   char* names[] = {
     "add",
-    "back", "backslash",
+    "back", "backslash", "backquotes",
     "capslock", "clear", "closebrackets", "comma",
     "decimal", "delete", "divide", "down",
     "end", "enter", "escape", "equals",
@@ -316,7 +316,7 @@ strb_InitializeSdlInput()
   };
   SDLKey sdlKeys[] = {
     SDLK_KP_PLUS,
-    SDLK_BACKSPACE, SDLK_BACKSLASH,
+    SDLK_BACKSPACE, SDLK_BACKSLASH, SDLK_BACKQUOTE,
     SDLK_CAPSLOCK, SDLK_CLEAR, SDLK_RIGHTBRACKET, SDLK_COMMA,
     SDLK_KP_PERIOD, SDLK_DELETE, SDLK_KP_DIVIDE, SDLK_DOWN,
     SDLK_END, SDLK_RETURN, SDLK_ESCAPE, SDLK_EQUALS,

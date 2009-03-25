@@ -195,6 +195,25 @@ class TestTextureRenderTexture < Test::Unit::TestCase
       end
     end
   end
+
+=begin
+  def test_render_texture_affine
+    texture = Texture.load("images/ruby")
+    texture2 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :affine)
+    texture2.height.times do |j|
+      texture2.width.times do |i|
+        p1 = texture[i / 2, j / 2]
+        p2 = texture2[i, j]
+        if p2.alpha != 0
+          assert_equal p1, p2
+        else
+          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
+        end
+      end
+    end
+  end
+=end
   
   def test_render_texture_src_rect
     texture = Texture.load("images/ruby")
@@ -211,7 +230,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         end
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0,
                             :src_x => -100, :src_y => -100,
                             :src_width => texture.width + 200,
@@ -221,28 +240,28 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal texture[i, j], texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_x => -10)
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal texture[i, j], texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_x => texture.width + 10)
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_y => -10)
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal texture[i, j], texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_y => texture.height + 10)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -255,7 +274,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_x => 10, :src_width => texture.width - 5)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -266,14 +285,14 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         end
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => -10)
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0, :src_y => 10, :src_height => texture.height - 5)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -284,7 +303,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         end
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0,
                             :src_x => -10, :src_y => 0,
                             :src_width => 10, :src_height => 10)
@@ -293,7 +312,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, 0,
                             :src_x => texture.width + 100, :src_y => texture.height + 100,
                             :src_width => 100, :src_height => 100)
@@ -302,7 +321,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, texture2.width, 0,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -311,7 +330,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, texture2.height,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -320,7 +339,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, -texture2.width, 0,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -329,7 +348,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, 0, -texture2.height,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -338,7 +357,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, -texture2.width, -texture2.height,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -347,7 +366,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, -texture2.width, texture2.height,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -356,7 +375,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, texture2.width, -texture2.height,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -365,7 +384,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, texture2.width, texture2.height,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -374,7 +393,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal Color.new(0, 0, 0, 0), texture2[i, j]
       end
     end
-    texture2 = Texture.new(texture.width, texture.height)
+    texture2.clear
     texture2.render_texture(texture, -10000, -10000,
                             :src_x => 10, :src_y => 10,
                             :src_width => texture.width - 10, :src_height => texture.height - 10)
@@ -384,7 +403,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
       end
     end
   end
-  
+
   def test_render_texture_alpha
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
@@ -437,14 +456,14 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
     # none
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :none)
     texture2.height.times do |j|
       texture2.width.times do |i|
         assert_equal texture[i, j], texture2[i, j]
       end
     end
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :none, :scale_y => 2)
     texture2.height.times do |j|
       texture2.width.times do |i|
@@ -452,7 +471,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
       end
     end
     # alpha
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :alpha)
     texture2.height.times do |j|
       texture2.width.times do |i|
@@ -466,7 +485,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
       end
     end
     # add
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :add, :alpha => 128)
     texture2.height.times do |j|
       texture2.width.times do |i|
@@ -493,7 +512,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
       end
     end
     # sub
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :sub, :alpha => 128)
     texture2.height.times do |j|
       texture2.width.times do |i|
@@ -519,7 +538,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
       end
     end
     # mask
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :mask)
     texture2.height.times do |j|
       texture2.width.times do |i|
@@ -531,7 +550,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal p1.red, p2.alpha
       end
     end
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :mask, :alpha => 128)
     texture2.height.times do |j|
       texture2.width.times do |i|
@@ -543,7 +562,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
         assert_equal p1.red, p2.alpha
       end
     end
-    texture2.fill Color.new(100, 110, 120, 130)
+    texture2.fill(Color.new(100, 110, 120, 130))
     texture2.render_texture(texture, 0, 0, :blend_type => :mask,
                             :alpha => 128, :tone_red => 255)
     texture2.height.times do |j|

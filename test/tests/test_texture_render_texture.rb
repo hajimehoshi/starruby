@@ -72,7 +72,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     assert_raise TypeError do
       texture2.render_texture(texture, 0, 0, false)
     end
-    [:alpha, :angle, :blend_type, :center_x, :center_y,
+    [:alpha, :angle, :blend_type, :center_x, :center_y, :affine,
      :saturation, :scale_x, :scale_y, :src_height, :src_width,
      :src_x, :src_y, :tone_red, :tone_green, :tone_blue].each do |key|
       assert_raise TypeError, "#{key}" do
@@ -196,24 +196,68 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     end
   end
 
-=begin
   def test_render_texture_affine
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
-    texture2.render_texture(texture, 0, 0, :affine)
-    texture2.height.times do |j|
-      texture2.width.times do |i|
-        p1 = texture[i / 2, j / 2]
-        p2 = texture2[i, j]
-        if p2.alpha != 0
-          assert_equal p1, p2
-        else
-          assert_equal Color.new(p1.red, p1.green, p1.blue, 0), p2
-        end
+    texture3 = Texture.new(texture.width, texture.height)
+    texture2.render_texture(texture, 0, 0, :affine => [1, 0, 0, 1])
+    texture3.render_texture(texture, 0, 0)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture3[i, j], texture2[i, j]
       end
     end
+    texture2.clear
+    texture3.clear
+    texture2.render_texture(texture, 0, 0, :affine => [2, 0, 0, 1])
+    texture3.render_texture(texture, 0, 0, :scale_x => 2)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture3[i, j], texture2[i, j]
+      end
+    end
+    texture2.clear
+    texture3.clear
+    texture2.render_texture(texture, 0, 0, :affine => [2.5, 0, 0, 1.5])
+    texture3.render_texture(texture, 0, 0, :scale_x => 2.5, :scale_y => 1.5)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture3[i, j], texture2[i, j]
+      end
+    end
+    texture2.clear
+    texture3.clear
+    texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3, 4])
+    texture3.render_texture(texture, 0, 0, :affine => [[1, 2], [3, 4]])
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture3[i, j], texture2[i, j]
+      end
+    end
+    texture2.clear
+    texture3.clear
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3])
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3, 4, 5])
+    end
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3, :foo])
+    end
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, 0, :affine => [[1, 2], :foo])
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :affine => [[1, 2, 3], [4, 5]])
+    end
+    assert_raise ArgumentError do
+      texture2.render_texture(texture, 0, 0, :affine => [[1, 2], [3, 4], [5, 6]])
+    end
+    assert_raise TypeError do
+      texture2.render_texture(texture, 0, 0, :affine => [[1, 2], [3, :foo]])
+    end
   end
-=end
   
   def test_render_texture_src_rect
     texture = Texture.load("images/ruby")

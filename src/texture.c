@@ -23,6 +23,7 @@
 static volatile VALUE rb_cTexture = Qundef;
 
 static volatile VALUE symbol_add            = Qundef;
+static volatile VALUE symbol_affine         = Qundef;
 static volatile VALUE symbol_alpha          = Qundef;
 static volatile VALUE symbol_angle          = Qundef;
 static volatile VALUE symbol_background     = Qundef;
@@ -110,6 +111,7 @@ typedef struct {
   double scaleY;
   int centerX;
   int centerY;
+  AffineMatrix affineMatrix;
   int srcHeight;
   int srcWidth;
   int srcX;
@@ -1159,6 +1161,45 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return self;
 }
 
+#define ASSIGN_AFFINE(options, val)                                \
+  Check_Type(val, T_ARRAY);                                        \
+  VALUE* values = RARRAY_PTR(val);                                 \
+  switch (RARRAY_LEN(val)) {                                       \
+  case 2:                                                          \
+    {                                                              \
+      VALUE row0 = values[0];                                      \
+      VALUE row1 = values[1];                                      \
+      Check_Type(row0, T_ARRAY);                                   \
+      Check_Type(row1, T_ARRAY);                                   \
+      if (RARRAY_LEN(row0) != 2) {                                 \
+        rb_raise(rb_eArgError, "affine array must be 2x2 or 4x1"); \
+      }                                                            \
+      if (RARRAY_LEN(row1) != 2) {                                 \
+        rb_raise(rb_eArgError, "affine array must be 2x2 or 4x1"); \
+      }                                                            \
+      options->affineMatrix.a = NUM2DBL(RARRAY_PTR(row0)[0]);      \
+      options->affineMatrix.b = NUM2DBL(RARRAY_PTR(row0)[1]);      \
+      options->affineMatrix.c = NUM2DBL(RARRAY_PTR(row1)[0]);      \
+      options->affineMatrix.d = NUM2DBL(RARRAY_PTR(row1)[1]);      \
+      options->affineMatrix.tx = 0;                                \
+      options->affineMatrix.ty = 0;                                \
+    }                                                              \
+    break;                                                         \
+  case 4:                                                          \
+    {                                                              \
+      options->affineMatrix.a = NUM2DBL(values[0]);                \
+      options->affineMatrix.b = NUM2DBL(values[1]);                \
+      options->affineMatrix.c = NUM2DBL(values[2]);                \
+      options->affineMatrix.d = NUM2DBL(values[3]);                \
+      options->affineMatrix.tx = 0;                                \
+      options->affineMatrix.ty = 0;                                \
+    }                                                              \
+    break;                                                         \
+  default:                                                         \
+    rb_raise(rb_eArgError, "affine must be 2x2 or 4x1");           \
+    break;                                                         \
+  }
+
 static int
 AssignRenderingTextureOptions(st_data_t key, st_data_t val,
                               RenderingTextureOptions* options)
@@ -1181,6 +1222,8 @@ AssignRenderingTextureOptions(st_data_t key, st_data_t val,
     options->centerX = NUM2INT(val);
   } else if (key == symbol_center_y) {
     options->centerY = NUM2INT(val);
+  } else if (key == symbol_affine) {
+    ASSIGN_AFFINE(options, val);
   } else if (key == symbol_alpha) {
     options->alpha = NUM2DBL(val);
   } else if (key == symbol_blend_type) {
@@ -1314,15 +1357,12 @@ RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
                          int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY,
                          const RenderingTextureOptions* options)
 {
-  const double angle        = options->angle;
-  const int centerX         = options->centerX;
-  const int centerY         = options->centerY;
-  const double scaleX       = options->scaleX;
-  const double scaleY       = options->scaleY;
-  AffineMatrix mat = {
-    .a = 1, .c = 0, .tx = 0,
-    .b = 0, .d = 1, .ty = 0,
-  };
+  const double angle  = options->angle;
+  const int centerX   = options->centerX;
+  const int centerY   = options->centerY;
+  const double scaleX = options->scaleX;
+  const double scaleY = options->scaleY;
+  AffineMatrix mat    = options->affineMatrix;
   if (scaleX != 1 || scaleY != 1 || angle != 0) {
     mat.tx -= centerX;
     mat.ty -= centerY;
@@ -1621,21 +1661,29 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   const int srcTextureWidth  = srcTexture->width;
   const int srcTextureHeight = srcTexture->height;
   RenderingTextureOptions options = {
-    .srcX       = 0,
-    .srcY       = 0,
-    .srcWidth   = srcTextureWidth,
-    .srcHeight  = srcTextureHeight,
-    .scaleX     = 1,
-    .scaleY     = 1,
-    .angle      = 0,
-    .centerX    = 0,
-    .centerY    = 0,
-    .alpha      = 255,
-    .blendType  = BLEND_TYPE_ALPHA,
-    .toneRed    = 0,
-    .toneGreen  = 0,
-    .toneBlue   = 0,
-    .saturation = 255,
+    .srcX         = 0,
+    .srcY         = 0,
+    .srcWidth     = srcTextureWidth,
+    .srcHeight    = srcTextureHeight,
+    .scaleX       = 1,
+    .scaleY       = 1,
+    .angle        = 0,
+    .centerX      = 0,
+    .centerY      = 0,
+    .affineMatrix = (AffineMatrix) {
+      .a  = 1,
+      .b  = 0,
+      .c  = 0,
+      .d  = 1,
+      .tx = 0,
+      .ty = 0,
+    },
+    .alpha        = 255,
+    .blendType    = BLEND_TYPE_ALPHA,
+    .toneRed      = 0,
+    .toneGreen    = 0,
+    .toneBlue     = 0,
+    .saturation   = 255,
   };
   if (!SPECIAL_CONST_P(rbOptions) && BUILTIN_TYPE(rbOptions) == T_HASH) {
     if (NIL_P(RHASH_IFNONE(rbOptions))) {
@@ -1682,6 +1730,9 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       }
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y))) {
         options.centerY = NUM2INT(val);
+      }
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_affine))) {
+        ASSIGN_AFFINE((&options), val);
       }
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha))) {
         options.alpha = NUM2DBL(val);
@@ -1733,11 +1784,14 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int srcY      = options.srcY;
   int srcWidth  = options.srcWidth;
   int srcHeight = options.srcHeight;
+  const AffineMatrix* affineMatrix = &(options.affineMatrix);
   if (!ModifyRectInTexture(srcTexture,
                            &(srcX), &(srcY), &(srcWidth), &(srcHeight))) {
     return self;
   }
   if (srcTexture != dstTexture &&
+      (affineMatrix->a == 1 && affineMatrix->b == 0 &&
+       affineMatrix->c == 0 && affineMatrix->d == 1) &&
       (options.scaleX == 1 && options.scaleY == 1 && options.angle == 0 &&
        toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255 && 
        (options.blendType == BLEND_TYPE_ALPHA || options.blendType == BLEND_TYPE_NONE))) {
@@ -1962,6 +2016,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
                    Texture_width, 0);
 
   symbol_add            = ID2SYM(rb_intern("add"));
+  symbol_affine         = ID2SYM(rb_intern("affine"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
   symbol_background     = ID2SYM(rb_intern("background"));

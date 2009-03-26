@@ -41,7 +41,7 @@ if CONFIG["arch"] =~ /mingw32/
   str = open("./Makefile", "rb") do |fp|
     str = fp.read
     drive_name = Dir.pwd[/^(.+:)/].upcase
-    str.gsub(/ \/msys\//, " #{drive_name}/msys/")
+    str.gsub(" /msys/", " #{drive_name}/msys/").gsub(" -L/msys/", " -L#{drive_name}/msys/").gsub("$(DESTDIR)", "#{drive_name}")
   end
   str
   open("./Makefile", "wb") do |fp|

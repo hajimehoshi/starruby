@@ -1362,13 +1362,15 @@ RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
   const int centerY   = options->centerY;
   const double scaleX = options->scaleX;
   const double scaleY = options->scaleY;
-  AffineMatrix mat    = options->matrix;
-  mat.tx -= centerX;
-  mat.ty -= centerY;
-  const double tx = mat.tx;
-  const double ty = mat.ty;
-  mat.tx = mat.a * tx + mat.b * ty;
-  mat.ty = mat.c * tx + mat.d * ty;
+  AffineMatrix mat;
+  mat.a  = options->matrix.a;
+  mat.b  = options->matrix.b;
+  mat.c  = options->matrix.c;
+  mat.d  = options->matrix.d;
+  mat.tx = options->matrix.a * (options->matrix.tx - centerX)
+    + options->matrix.b * (options->matrix.ty - centerY);
+  mat.ty = options->matrix.c * (options->matrix.tx - centerX)
+    + options->matrix.d * (options->matrix.ty - centerY);
   if (scaleX != 1) {
     mat.a  *= scaleX;
     mat.b  *= scaleX;

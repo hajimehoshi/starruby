@@ -23,7 +23,6 @@
 static volatile VALUE rb_cTexture = Qundef;
 
 static volatile VALUE symbol_add            = Qundef;
-static volatile VALUE symbol_affine         = Qundef;
 static volatile VALUE symbol_alpha          = Qundef;
 static volatile VALUE symbol_angle          = Qundef;
 static volatile VALUE symbol_background     = Qundef;
@@ -43,6 +42,7 @@ static volatile VALUE symbol_intersection_y = Qundef;
 static volatile VALUE symbol_io_length      = Qundef;
 static volatile VALUE symbol_loop           = Qundef;
 static volatile VALUE symbol_mask           = Qundef;
+static volatile VALUE symbol_matrix         = Qundef;
 static volatile VALUE symbol_none           = Qundef;
 static volatile VALUE symbol_palette        = Qundef;
 static volatile VALUE symbol_saturation     = Qundef;
@@ -111,7 +111,7 @@ typedef struct {
   double scaleY;
   int centerX;
   int centerY;
-  AffineMatrix affineMatrix;
+  AffineMatrix matrix;
   int srcHeight;
   int srcWidth;
   int srcX;
@@ -1161,7 +1161,7 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
   return self;
 }
 
-#define ASSIGN_AFFINE(options, val)                                \
+#define ASSIGN_MATRIX(options, val)                                \
   Check_Type(val, T_ARRAY);                                        \
   VALUE* values = RARRAY_PTR(val);                                 \
   switch (RARRAY_LEN(val)) {                                       \
@@ -1172,31 +1172,31 @@ Texture_render_text(int argc, VALUE* argv, VALUE self)
       Check_Type(row0, T_ARRAY);                                   \
       Check_Type(row1, T_ARRAY);                                   \
       if (RARRAY_LEN(row0) != 2) {                                 \
-        rb_raise(rb_eArgError, "affine array must be 2x2 or 4x1"); \
+        rb_raise(rb_eArgError, "matrix array must be 2x2 or 4x1"); \
       }                                                            \
       if (RARRAY_LEN(row1) != 2) {                                 \
-        rb_raise(rb_eArgError, "affine array must be 2x2 or 4x1"); \
+        rb_raise(rb_eArgError, "matrix array must be 2x2 or 4x1"); \
       }                                                            \
-      options->affineMatrix.a = NUM2DBL(RARRAY_PTR(row0)[0]);      \
-      options->affineMatrix.b = NUM2DBL(RARRAY_PTR(row0)[1]);      \
-      options->affineMatrix.c = NUM2DBL(RARRAY_PTR(row1)[0]);      \
-      options->affineMatrix.d = NUM2DBL(RARRAY_PTR(row1)[1]);      \
-      options->affineMatrix.tx = 0;                                \
-      options->affineMatrix.ty = 0;                                \
+      options->matrix.a = NUM2DBL(RARRAY_PTR(row0)[0]);            \
+      options->matrix.b = NUM2DBL(RARRAY_PTR(row0)[1]);            \
+      options->matrix.c = NUM2DBL(RARRAY_PTR(row1)[0]);            \
+      options->matrix.d = NUM2DBL(RARRAY_PTR(row1)[1]);            \
+      options->matrix.tx = 0;                                      \
+      options->matrix.ty = 0;                                      \
     }                                                              \
     break;                                                         \
   case 4:                                                          \
     {                                                              \
-      options->affineMatrix.a = NUM2DBL(values[0]);                \
-      options->affineMatrix.b = NUM2DBL(values[1]);                \
-      options->affineMatrix.c = NUM2DBL(values[2]);                \
-      options->affineMatrix.d = NUM2DBL(values[3]);                \
-      options->affineMatrix.tx = 0;                                \
-      options->affineMatrix.ty = 0;                                \
+      options->matrix.a = NUM2DBL(values[0]);                      \
+      options->matrix.b = NUM2DBL(values[1]);                      \
+      options->matrix.c = NUM2DBL(values[2]);                      \
+      options->matrix.d = NUM2DBL(values[3]);                      \
+      options->matrix.tx = 0;                                      \
+      options->matrix.ty = 0;                                      \
     }                                                              \
     break;                                                         \
   default:                                                         \
-    rb_raise(rb_eArgError, "affine must be 2x2 or 4x1");           \
+    rb_raise(rb_eArgError, "matrix array must be 2x2 or 4x1");     \
     break;                                                         \
   }
 
@@ -1222,8 +1222,8 @@ AssignRenderingTextureOptions(st_data_t key, st_data_t val,
     options->centerX = NUM2INT(val);
   } else if (key == symbol_center_y) {
     options->centerY = NUM2INT(val);
-  } else if (key == symbol_affine) {
-    ASSIGN_AFFINE(options, val);
+  } else if (key == symbol_matrix) {
+    ASSIGN_MATRIX(options, val);
   } else if (key == symbol_alpha) {
     options->alpha = NUM2DBL(val);
   } else if (key == symbol_blend_type) {
@@ -1362,7 +1362,7 @@ RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
   const int centerY   = options->centerY;
   const double scaleX = options->scaleX;
   const double scaleY = options->scaleY;
-  AffineMatrix mat    = options->affineMatrix;
+  AffineMatrix mat    = options->matrix;
   if (scaleX != 1 || scaleY != 1 || angle != 0) {
     mat.tx -= centerX;
     mat.ty -= centerY;
@@ -1670,7 +1670,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
     .angle        = 0,
     .centerX      = 0,
     .centerY      = 0,
-    .affineMatrix = (AffineMatrix) {
+    .matrix       = (AffineMatrix) {
       .a  = 1,
       .b  = 0,
       .c  = 0,
@@ -1731,8 +1731,8 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_center_y))) {
         options.centerY = NUM2INT(val);
       }
-      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_affine))) {
-        ASSIGN_AFFINE((&options), val);
+      if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_matrix))) {
+        ASSIGN_MATRIX((&options), val);
       }
       if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_alpha))) {
         options.alpha = NUM2DBL(val);
@@ -1784,14 +1784,13 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   int srcY      = options.srcY;
   int srcWidth  = options.srcWidth;
   int srcHeight = options.srcHeight;
-  const AffineMatrix* affineMatrix = &(options.affineMatrix);
+  const AffineMatrix* matrix = &(options.matrix);
   if (!ModifyRectInTexture(srcTexture,
                            &(srcX), &(srcY), &(srcWidth), &(srcHeight))) {
     return self;
   }
   if (srcTexture != dstTexture &&
-      (affineMatrix->a == 1 && affineMatrix->b == 0 &&
-       affineMatrix->c == 0 && affineMatrix->d == 1) &&
+      (matrix->a == 1 && matrix->b == 0 && matrix->c == 0 && matrix->d == 1) &&
       (options.scaleX == 1 && options.scaleY == 1 && options.angle == 0 &&
        toneRed == 0 && toneGreen == 0 && toneBlue == 0 && saturation == 255 && 
        (options.blendType == BLEND_TYPE_ALPHA || options.blendType == BLEND_TYPE_NONE))) {
@@ -2016,7 +2015,6 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
                    Texture_width, 0);
 
   symbol_add            = ID2SYM(rb_intern("add"));
-  symbol_affine         = ID2SYM(rb_intern("affine"));
   symbol_alpha          = ID2SYM(rb_intern("alpha"));
   symbol_angle          = ID2SYM(rb_intern("angle"));
   symbol_background     = ID2SYM(rb_intern("background"));
@@ -2036,6 +2034,7 @@ strb_InitializeTexture(VALUE rb_mStarRuby)
   symbol_io_length      = ID2SYM(rb_intern("io_length"));
   symbol_loop           = ID2SYM(rb_intern("loop"));
   symbol_mask           = ID2SYM(rb_intern("mask"));
+  symbol_matrix         = ID2SYM(rb_intern("matrix"));
   symbol_none           = ID2SYM(rb_intern("none"));
   symbol_palette        = ID2SYM(rb_intern("palette"));
   symbol_saturation     = ID2SYM(rb_intern("saturation"));

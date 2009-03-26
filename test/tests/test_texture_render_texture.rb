@@ -72,7 +72,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     assert_raise TypeError do
       texture2.render_texture(texture, 0, 0, false)
     end
-    [:alpha, :angle, :blend_type, :center_x, :center_y, :affine,
+    [:alpha, :angle, :blend_type, :center_x, :center_y, :matrix,
      :saturation, :scale_x, :scale_y, :src_height, :src_width,
      :src_x, :src_y, :tone_red, :tone_green, :tone_blue].each do |key|
       assert_raise TypeError, "#{key}" do
@@ -196,11 +196,11 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     end
   end
 
-  def test_render_texture_affine
+  def test_render_texture_matrix
     texture = Texture.load("images/ruby")
     texture2 = Texture.new(texture.width, texture.height)
     texture3 = Texture.new(texture.width, texture.height)
-    texture2.render_texture(texture, 0, 0, :affine => [1, 0, 0, 1])
+    texture2.render_texture(texture, 0, 0, :matrix => [1, 0, 0, 1])
     texture3.render_texture(texture, 0, 0)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -209,7 +209,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     end
     texture2.clear
     texture3.clear
-    texture2.render_texture(texture, 0, 0, :affine => [2, 0, 0, 1])
+    texture2.render_texture(texture, 0, 0, :matrix => [2, 0, 0, 1])
     texture3.render_texture(texture, 0, 0, :scale_x => 2)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -218,7 +218,7 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     end
     texture2.clear
     texture3.clear
-    texture2.render_texture(texture, 0, 0, :affine => [2.5, 0, 0, 1.5])
+    texture2.render_texture(texture, 0, 0, :matrix => [2.5, 0, 0, 1.5])
     texture3.render_texture(texture, 0, 0, :scale_x => 2.5, :scale_y => 1.5)
     texture.height.times do |j|
       texture.width.times do |i|
@@ -227,8 +227,8 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     end
     texture2.clear
     texture3.clear
-    texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3, 4])
-    texture3.render_texture(texture, 0, 0, :affine => [[1, 2], [3, 4]])
+    texture2.render_texture(texture, 0, 0, :matrix => [1, 2, 3, 4])
+    texture3.render_texture(texture, 0, 0, :matrix => [[1, 2], [3, 4]])
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal texture3[i, j], texture2[i, j]
@@ -237,25 +237,25 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     texture2.clear
     texture3.clear
     assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3])
+      texture2.render_texture(texture, 0, 0, :matrix => [1, 2, 3])
     end
     assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3, 4, 5])
+      texture2.render_texture(texture, 0, 0, :matrix => [1, 2, 3, 4, 5])
     end
     assert_raise TypeError do
-      texture2.render_texture(texture, 0, 0, :affine => [1, 2, 3, :foo])
+      texture2.render_texture(texture, 0, 0, :matrix => [1, 2, 3, :foo])
     end
     assert_raise TypeError do
-      texture2.render_texture(texture, 0, 0, :affine => [[1, 2], :foo])
+      texture2.render_texture(texture, 0, 0, :matrix => [[1, 2], :foo])
     end
     assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :affine => [[1, 2, 3], [4, 5]])
+      texture2.render_texture(texture, 0, 0, :matrix => [[1, 2, 3], [4, 5]])
     end
     assert_raise ArgumentError do
-      texture2.render_texture(texture, 0, 0, :affine => [[1, 2], [3, 4], [5, 6]])
+      texture2.render_texture(texture, 0, 0, :matrix => [[1, 2], [3, 4], [5, 6]])
     end
     assert_raise TypeError do
-      texture2.render_texture(texture, 0, 0, :affine => [[1, 2], [3, :foo]])
+      texture2.render_texture(texture, 0, 0, :matrix => [[1, 2], [3, :foo]])
     end
   end
   

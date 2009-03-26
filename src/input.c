@@ -183,15 +183,15 @@ Input_keys(int argc, VALUE* argv, VALUE self)
   return rbResult;
 }
 
-#define ADD_KEY(currentKey, _name, _sdlKey)     \
-  do {                                          \
-    KeyboardKey* key = ALLOC(KeyboardKey);      \
-    key->rbSymbol = ID2SYM(rb_intern(_name));   \
-    key->sdlKey   = _sdlKey;                    \
-    key->state    = 0;                          \
-    key->next     = NULL;                       \
-    currentKey->next = key;                     \
-    currentKey = key;                           \
+#define ADD_KEY(currentKey, _name, _sdlKey)   \
+  do {                                        \
+    KeyboardKey* key = ALLOC(KeyboardKey);    \
+    key->rbSymbol = ID2SYM(rb_intern(_name)); \
+    key->sdlKey   = _sdlKey;                  \
+    key->state    = 0;                        \
+    key->next     = NULL;                     \
+    currentKey->next = key;                   \
+    currentKey = key;                         \
   } while (false)
 
 void
@@ -304,7 +304,7 @@ strb_InitializeSdlInput()
     "insert",
     "lcontrolkey", "left", "lmenu", "lshiftkey",
     "minus", "multiply",
-    "numlock",
+    "numlock", "numpadenter",
     "openbrackets",
     "pagedown", "pageup", "period",
     "quotes",
@@ -324,7 +324,7 @@ strb_InitializeSdlInput()
     SDLK_INSERT,
     SDLK_LCTRL, SDLK_LEFT, SDLK_LALT, SDLK_LSHIFT,
     SDLK_MINUS, SDLK_KP_MULTIPLY,
-    SDLK_NUMLOCK,
+    SDLK_NUMLOCK, SDLK_KP_ENTER,
     SDLK_LEFTBRACKET,
     SDLK_PAGEDOWN, SDLK_PAGEUP, SDLK_PERIOD,
     SDLK_QUOTE,

@@ -227,6 +227,19 @@ class TestTextureRenderTexture < Test::Unit::TestCase
     end
     texture2.clear
     texture3.clear
+    texture2.render_texture(texture, 0, 0,
+                            :matrix => [2.5, 0, 0, 1.5],
+                            :center_x => 10, :center_y => 10)
+    texture3.render_texture(texture, 0, 0,
+                            :scale_x => 2.5, :scale_y => 1.5,
+                            :center_x => 10, :center_y => 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture3[i, j], texture2[i, j]
+      end
+    end
+    texture2.clear
+    texture3.clear
     a = 45.degrees
     texture2.render_texture(texture, 0, 0,
                             :matrix => [Math.cos(a), -Math.sin(a), Math.sin(a), Math.cos(a)])
@@ -244,6 +257,21 @@ class TestTextureRenderTexture < Test::Unit::TestCase
                             :center_x => 10, :center_y => 10)
     texture3.render_texture(texture, 0, 0,
                             :angle => a, :center_x => 10, :center_y => 10)
+    texture.height.times do |j|
+      texture.width.times do |i|
+        assert_equal texture3[i, j], texture2[i, j]
+      end
+    end
+    texture2.clear
+    texture3.clear
+    a = 45.degrees
+    texture2.render_texture(texture, 0, 0,
+                            :matrix => [Math.cos(a) * 2.5, -Math.sin(a) * 1.5,
+                                        Math.sin(a) * 2.5, Math.cos(a) * 1.5],
+                            :center_x => 10, :center_y => 10)
+    texture3.render_texture(texture, 0, 0,
+                            :scale_x => 2.5, :scale_y => 1.5, :angle => a,
+                            :center_x => 10, :center_y => 10)
     texture.height.times do |j|
       texture.width.times do |i|
         assert_equal texture3[i, j], texture2[i, j]

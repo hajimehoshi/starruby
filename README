@@ -30,6 +30,11 @@ You can develop SNES-like 2D games with Star Ruby.
   $ make install
 
 
+* How to Do Tests
+
+  $ ruby -Ctest -I.. runner.rb
+
+
 * Licenses
 
 MIT License

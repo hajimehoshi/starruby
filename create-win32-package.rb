@@ -15,7 +15,9 @@ def main
   # readme
   open("win32/readmes/win32.txt", "r") do |fp|
     open(File.join(main_dir, "readme.txt"), "w") do |fp2|
-      fp2.write(fp.read.sub("%title%", title))
+      ruby_version = RUBY_VERSION[0, 4] + "*"
+      str = fp.read.gsub("%title%", title).gsub("%ruby_version%", ruby_version)
+      fp2.write(str)
     end
   end
   # dlls

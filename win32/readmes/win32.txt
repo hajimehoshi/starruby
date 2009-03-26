@@ -1,5 +1,5 @@
 %title%
-(Binary for 32bit Windows / Ruby 1.8.*)
+(Binary for 32bit Windows / Ruby %ruby_version%)
 
 
 * About Star Ruby
@@ -10,10 +10,10 @@ You can develop SNES-like 2D games with Star Ruby.
 
 * How to Install
 
-Install Ruby 1.8.* if you need.
+Install Ruby %ruby_version% if you need.
 
-  One-Click Installer - Windows (Download)
-  http://rubyforge.org/frs/?group_id=167&release_id=15923
+  Active Script Ruby (Windows Installer)
+  http://arton.no-ip.info/data/asr/
 
 Execute "install.rb" to install Star Ruby.
 

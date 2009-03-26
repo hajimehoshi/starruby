@@ -37,15 +37,13 @@ end
 
 create_makefile("starruby", "./src")
 
-if "1.9.0" <= RUBY_VERSION
+if CONFIG["arch"] =~ /mingw32/
   str = open("./Makefile", "rb") do |fp|
     str = fp.read
-    if CONFIG["arch"] =~ /mingw32/
-      drive_name = Dir.pwd[/^(.+:)/].upcase
-      str.gsub!(/ \/msys\//, " #{drive_name}/msys/")
-    end
-    str
+    drive_name = Dir.pwd[/^(.+:)/].upcase
+    str.gsub(/ \/msys\//, " #{drive_name}/msys/")
   end
+  str
   open("./Makefile", "wb") do |fp|
     fp.write(str)
   end

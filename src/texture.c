@@ -1363,40 +1363,40 @@ RenderTextureWithOptions(const Texture* srcTexture, const Texture* dstTexture,
   const double scaleX = options->scaleX;
   const double scaleY = options->scaleY;
   AffineMatrix mat    = options->matrix;
-  if (scaleX != 1 || scaleY != 1 || angle != 0) {
-    mat.tx -= centerX;
-    mat.ty -= centerY;
-    if (scaleX != 1) {
-      mat.a  *= scaleX;
-      mat.b  *= scaleX;
-      mat.tx *= scaleX;
-    }
-    if (scaleY != 1) {
-      mat.c  *= scaleY;
-      mat.d  *= scaleY;
-      mat.ty *= scaleY;
-    }
-    if (angle != 0) {
-      const double a  = mat.a;
-      const double b  = mat.b;
-      const double c  = mat.c;
-      const double d  = mat.d;
-      const double tx = mat.tx;
-      const double ty = mat.ty;
-      const double cosAngle = cos(angle);
-      const double sinAngle = sin(angle);
-      mat.a  = cosAngle * a  - sinAngle * c;
-      mat.b  = cosAngle * b  - sinAngle * d;
-      mat.c  = sinAngle * a  + cosAngle * c;
-      mat.d  = sinAngle * b  + cosAngle * d;
-      mat.tx = cosAngle * tx - sinAngle * ty;
-      mat.ty = sinAngle * tx + cosAngle * ty;
-    }
-    mat.tx += centerX;
-    mat.ty += centerY;
+  mat.tx -= centerX;
+  mat.ty -= centerY;
+  const double tx = mat.tx;
+  const double ty = mat.ty;
+  mat.tx = mat.a * tx + mat.b * ty;
+  mat.ty = mat.c * tx + mat.d * ty;
+  if (scaleX != 1) {
+    mat.a  *= scaleX;
+    mat.b  *= scaleX;
+    mat.tx *= scaleX;
   }
-  mat.tx += dstX;
-  mat.ty += dstY;
+  if (scaleY != 1) {
+    mat.c  *= scaleY;
+    mat.d  *= scaleY;
+    mat.ty *= scaleY;
+  }
+  if (angle != 0) {
+    const double a  = mat.a;
+    const double b  = mat.b;
+    const double c  = mat.c;
+    const double d  = mat.d;
+    const double tx = mat.tx;
+    const double ty = mat.ty;
+    const double cosAngle = cos(angle);
+    const double sinAngle = sin(angle);
+    mat.a  = cosAngle * a  - sinAngle * c;
+    mat.b  = cosAngle * b  - sinAngle * d;
+    mat.c  = sinAngle * a  + cosAngle * c;
+    mat.d  = sinAngle * b  + cosAngle * d;
+    mat.tx = cosAngle * tx - sinAngle * ty;
+    mat.ty = sinAngle * tx + cosAngle * ty;
+  }
+  mat.tx += centerX + dstX;
+  mat.ty += centerY + dstY;
   const double det = mat.a * mat.d - mat.b * mat.c;
   if (det == 0) {
     return;

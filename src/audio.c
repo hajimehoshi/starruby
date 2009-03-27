@@ -84,8 +84,8 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
     time = NUM2INT(val);
   }
   if (bgmPosition) {
-    time = MAX(time, 50);
-  } else if (time < 50) {
+    time = MAX(time, 250);
+  } else if (time < 250) {
     time = 0;
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_volume))) {
@@ -98,6 +98,7 @@ Audio_play_bgm(int argc, VALUE* argv, VALUE self)
   if (!isEnabled) {
     return Qnil;
   }
+  //printf("time: %d, bgmPosition: %d\n", time, bgmPosition);
   if (Mix_FadeInMusicPos(sdlBgm, 0, time, bgmPosition)) {
     rb_raise_sdl_mix_error();
   }
@@ -153,7 +154,7 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
     return Qnil;
   }
   int sdlChannel;
-  if (time <= 50) {
+  if (time < 250) {
     sdlChannel = Mix_PlayChannel(-1, sdlSE, 0);
   } else {
     sdlChannel = Mix_FadeInChannel(-1, sdlSE, 0, time);
@@ -179,7 +180,9 @@ Audio_play_se(int argc, VALUE* argv, VALUE self)
 static VALUE
 Audio_playing_bgm(VALUE self)
 {
-  return (isEnabled && Mix_PlayingMusic()) ? Qtrue : Qfalse;
+  return (isEnabled &&
+          (Mix_PlayingMusic() ||
+           Mix_FadingMusic() != MIX_NO_FADING)) ? Qtrue : Qfalse;
 }
 
 static VALUE
@@ -209,7 +212,7 @@ Audio_stop_all_ses(int argc, VALUE* argv, VALUE self)
   if (!isEnabled) {
     return Qnil;
   }
-  if (time <= 50) {
+  if (time <= 250) {
     Mix_HaltChannel(-1);
   } else {
     Mix_FadeOutChannel(-1, time);
@@ -235,8 +238,8 @@ Audio_stop_bgm(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_time))) {
     time = NUM2INT(val);
   }
-  time = MAX(time, 50);
-  if (time < 50) {
+  time = MAX(time, 0);
+  if (time < 250) {
     Mix_HaltMusic();
   } else {
     Mix_FadeOutMusic(time);

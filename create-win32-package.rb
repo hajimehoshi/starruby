@@ -10,7 +10,8 @@ def main
     title = fp.gets.chomp
   end
   version = title[/\d+\.\d+\.\d+/]
-  main_dir = "starruby-#{version}-win32"
+  ruby_version = RUBY_VERSION[0, 1] + RUBY_VERSION[2, 1]
+  main_dir = "starruby-#{version}-win32-ruby#{ruby_version}"
   mkdir_p(main_dir, :verbose => true)
   # readme
   open("win32/readmes/win32.txt", "r") do |fp|

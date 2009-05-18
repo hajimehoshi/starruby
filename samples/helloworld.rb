@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# encoding: utf-8
 
 # Require Star Ruby library
 require "starruby"
@@ -7,6 +8,7 @@ include StarRuby
 
 # Create Font object with a TTF file and 12 px size
 font = Font.new("fonts/ORANGEKI", 12)
+
 # Create Color object of white color (R, G, and B are all 255)
 white = Color.new(255, 255, 255)
 

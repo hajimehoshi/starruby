@@ -18,6 +18,7 @@ typedef struct {
 
 typedef struct {
   int windowScale;
+  bool isFullscreen;
   int realScreenWidth;
   int realScreenHeight;
   VALUE screen;
@@ -237,6 +238,7 @@ Game_alloc(VALUE klass)
   }
   Game* game = ALLOC(Game);
   game->windowScale = 1;
+  game->isFullscreen = false;
   game->realScreenWidth = 0;
   game->realScreenHeight = 0;
   game->screen = Qnil;
@@ -249,6 +251,53 @@ Game_alloc(VALUE klass)
   game->isWindowClosing = false;
   game->isTerminated = false;
   return Data_Wrap_Struct(klass, Game_mark, Game_free, game);;
+}
+
+static void
+InitializeScreen(Game* game, const int width, const int height)
+{
+  const int bpp = 32;
+
+  Uint32 options = 0;
+  options |= SDL_DOUBLEBUF;
+  if (game->isFullscreen) {
+    options |= SDL_HWSURFACE | SDL_FULLSCREEN;
+    game->windowScale = 1;    
+    SDL_Rect** modes = SDL_ListModes(NULL, options);
+    if (!modes) {
+      rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
+    }
+    if (modes != (SDL_Rect**)-1) {
+      game->realScreenWidth = 0;
+      game->realScreenHeight = 0;
+      for (int i = 0; modes[i]; i++) {
+        int realBpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, bpp, options);
+        if (width <= modes[i]->w && height <= modes[i]->h && realBpp == bpp) {
+          game->realScreenWidth  = modes[i]->w;
+          game->realScreenHeight = modes[i]->h;
+        } else {
+          break;
+        }
+      }
+      if (game->realScreenWidth == 0 || game->realScreenHeight == 0) {
+        rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
+      }
+    } else {
+      // any resolution are available
+      game->realScreenWidth  = width;
+      game->realScreenHeight = height;
+    }
+  } else {
+    game->realScreenWidth  = width  * game->windowScale;
+    game->realScreenHeight = height * game->windowScale;
+    options |= SDL_SWSURFACE;
+  }
+
+  game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
+                                     game->realScreenHeight, bpp, options);
+  if (!game->sdlScreen) {
+    rb_raise_sdl_error();
+  }
 }
 
 static VALUE
@@ -297,9 +346,6 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   }
 
   bool cursor = false;
-  bool fullscreen = false;
-  const int bpp = 32;
-  game->windowScale = 1;
 
   volatile VALUE val;
   Check_Type(rbOptions, T_HASH);
@@ -307,7 +353,7 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
     cursor = RTEST(val);
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_fullscreen))) {
-    fullscreen = RTEST(val);
+    game->isFullscreen = RTEST(val);
   }
   if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_window_scale))) {
     game->windowScale = NUM2INT(val);
@@ -316,44 +362,10 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
                game->windowScale);
     }
   }
-  game->realScreenWidth  = width  * game->windowScale;
-  game->realScreenHeight = height * game->windowScale;
+
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
+  InitializeScreen(game, width, height);
 
-  Uint32 options = 0;
-  options |= SDL_DOUBLEBUF;
-  if (fullscreen) {
-    options |= SDL_HWSURFACE | SDL_FULLSCREEN;
-    game->windowScale = 1;    
-    SDL_Rect** modes = SDL_ListModes(NULL, options);
-    if (!modes) {
-      rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
-    }
-    if (modes != (SDL_Rect**)-1) {
-      game->realScreenWidth = 0;
-      game->realScreenHeight = 0;
-      for (int i = 0; modes[i]; i++) {
-        int realBpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, bpp, options);
-        if (width <= modes[i]->w && height <= modes[i]->h && realBpp == bpp) {
-          game->realScreenWidth  = modes[i]->w;
-          game->realScreenHeight = modes[i]->h;
-        } else {
-          break;
-        }
-      }
-      if (game->realScreenWidth == 0 || game->realScreenHeight == 0) {
-        rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
-      }
-    }
-  } else {
-    options |= SDL_SWSURFACE;
-  }
-
-  game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
-                                     game->realScreenHeight, bpp, options);
-  if (!game->sdlScreen) {
-    rb_raise_sdl_error();
-  }
   volatile VALUE rbScreen =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)},
                           strb_GetTextureClass());
@@ -459,6 +471,7 @@ Game_update_screen(VALUE self)
   volatile VALUE rbScreen = game->screen;
   const Texture* texture;
   Data_Get_Struct(rbScreen, Texture, texture);
+  strb_CheckDisposedTexture(texture);
   const Pixel* src = texture->pixels;
   const int realScreenWidth    = game->realScreenWidth;
   const int realScreenHeight   = game->realScreenHeight;
@@ -593,6 +606,21 @@ Game_window_scale(VALUE self)
   return INT2FIX(game->windowScale);
 }
 
+static VALUE
+Game_window_scale_eq(VALUE self, VALUE rbWindowScale)
+{
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
+  game->windowScale = NUM2INT(rbWindowScale);
+  /*VALUE rbScreen = game->screen;
+  const Texture* screen;
+  Data_Get_Struct(self, Texture, screen);
+  CheckDisposed(screen);
+  InitializeScreen(game, screen->width, screen->height);*/
+  return Qnil;
+}
+
 VALUE
 strb_InitializeGame(VALUE _rb_mStarRuby)
 {
@@ -612,19 +640,20 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, -1);
-  rb_define_method(rb_cGame, "dispose",         Game_dispose,        0);
-  rb_define_method(rb_cGame, "disposed?",       Game_disposed,       0);
-  rb_define_method(rb_cGame, "fps",             Game_fps,            0);
-  rb_define_method(rb_cGame, "fps=",            Game_fps_eq,         1);
-  rb_define_method(rb_cGame, "real_fps",        Game_real_fps,       0);
-  rb_define_method(rb_cGame, "screen",          Game_screen,         0);
-  rb_define_method(rb_cGame, "title",           Game_title,          0);
-  rb_define_method(rb_cGame, "title=",          Game_title_eq,       1);
-  rb_define_method(rb_cGame, "update_screen",   Game_update_screen,  0);
-  rb_define_method(rb_cGame, "update_state",    Game_update_state,   0);
-  rb_define_method(rb_cGame, "wait",            Game_wait,           0);
-  rb_define_method(rb_cGame, "window_closing?", Game_window_closing, 0);
-  rb_define_method(rb_cGame, "window_scale",    Game_window_scale,   0);
+  rb_define_method(rb_cGame, "dispose",         Game_dispose,         0);
+  rb_define_method(rb_cGame, "disposed?",       Game_disposed,        0);
+  rb_define_method(rb_cGame, "fps",             Game_fps,             0);
+  rb_define_method(rb_cGame, "fps=",            Game_fps_eq,          1);
+  rb_define_method(rb_cGame, "real_fps",        Game_real_fps,        0);
+  rb_define_method(rb_cGame, "screen",          Game_screen,          0);
+  rb_define_method(rb_cGame, "title",           Game_title,           0);
+  rb_define_method(rb_cGame, "title=",          Game_title_eq,        1);
+  rb_define_method(rb_cGame, "update_screen",   Game_update_screen,   0);
+  rb_define_method(rb_cGame, "update_state",    Game_update_state,    0);
+  rb_define_method(rb_cGame, "wait",            Game_wait,            0);
+  rb_define_method(rb_cGame, "window_closing?", Game_window_closing,  0);
+  rb_define_method(rb_cGame, "window_scale",    Game_window_scale,    0);
+  rb_define_method(rb_cGame, "window_scale=",   Game_window_scale_eq, 1);
 
   symbol_cursor       = ID2SYM(rb_intern("cursor"));
   symbol_fps          = ID2SYM(rb_intern("fps"));

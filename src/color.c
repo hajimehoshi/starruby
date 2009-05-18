@@ -51,9 +51,9 @@ Color_s_new(int argc, VALUE* argv, VALUE self)
   if (!NIL_P(rbColor)) {
     Color color;
     strb_GetColorFromRubyValue(&color, rbColor);
-    if (color.red == red &&
+    if (color.red   == red &&
 	color.green == green &&
-	color.blue == blue &&
+	color.blue  == blue &&
 	color.alpha == alpha) {
       return rbColor;
     }

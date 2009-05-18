@@ -141,8 +141,8 @@ strb_CheckTexture(VALUE rbTexture)
   }
 }
 
-inline static void
-CheckDisposed(const Texture* const texture)
+inline void
+strb_CheckDisposedTexture(const Texture* const texture)
 {
   if (!texture->pixels) {
     rb_raise(rb_eRuntimeError,
@@ -445,7 +445,7 @@ Texture_aref(VALUE self, VALUE rbX, VALUE rbY)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
   if (x < 0 || texture->width <= x || y < 0 || texture->height <= y) {
@@ -465,7 +465,7 @@ Texture_aset(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
@@ -484,7 +484,7 @@ Texture_change_hue(VALUE self, VALUE rbAngle)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   volatile VALUE rbTexture = rb_obj_dup(self);
   Texture* newTexture;
   Data_Get_Struct(rbTexture, Texture, newTexture);
@@ -545,7 +545,7 @@ Texture_change_hue_bang(VALUE self, VALUE rbAngle)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   const double angle = NUM2DBL(rbAngle);
   if (angle == 0) {
     return Qnil;
@@ -578,7 +578,7 @@ Texture_change_palette(VALUE self, VALUE rbPalette)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   volatile VALUE rbTexture = rb_obj_dup(self);
   Texture_change_palette_bang(rbTexture, rbPalette);
   return rbTexture;
@@ -590,7 +590,7 @@ Texture_change_palette_bang(VALUE self, VALUE rbPalette)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   if (!texture->palette) {
     rb_raise(strb_GetStarRubyErrorClass(), "no palette texture");
   }
@@ -620,7 +620,7 @@ Texture_clear(VALUE self)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   MEMZERO(texture->pixels, Color, texture->width * texture->height);
   return self;
@@ -653,7 +653,7 @@ Texture_dump(VALUE self, VALUE rbFormat)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   const char* format = StringValuePtr(rbFormat);
   const int formatLength = RSTRING_LEN(rbFormat);
   const int pixelLength = texture->width * texture->height;
@@ -679,7 +679,7 @@ Texture_fill(VALUE self, VALUE rbColor)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
@@ -698,7 +698,7 @@ Texture_fill_rect(VALUE self, VALUE rbX, VALUE rbY,
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
@@ -724,7 +724,7 @@ Texture_height(VALUE self)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   return INT2NUM(texture->height);
 }
 
@@ -733,7 +733,7 @@ Texture_palette(VALUE self)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   if (texture->palette) {
     volatile VALUE rbArray = rb_ary_new2(texture->paletteSize);
     const Color* colors = texture->palette;
@@ -874,10 +874,10 @@ Texture_render_in_perspective(int argc, VALUE* argv, VALUE self)
   strb_CheckTexture(rbTexture);
   const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
-  CheckDisposed(srcTexture);
+  strb_CheckDisposedTexture(srcTexture);
   const Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
-  CheckDisposed(dstTexture);
+  strb_CheckDisposedTexture(dstTexture);
   CheckPalette(dstTexture);
   if (srcTexture == dstTexture) {
     rb_raise(rb_eRuntimeError, "can't render self in perspective");
@@ -995,7 +995,7 @@ Texture_render_line(VALUE self,
   const int y2 = NUM2INT(rbY2);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   Color color;
   strb_GetColorFromRubyValue(&color, rbColor);
@@ -1045,7 +1045,7 @@ Texture_render_pixel(VALUE self, VALUE rbX, VALUE rbY, VALUE rbColor)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   const int x = NUM2INT(rbX);
   const int y = NUM2INT(rbY);
@@ -1066,7 +1066,7 @@ Texture_render_rect(VALUE self, VALUE rbX, VALUE rbY,
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   int rectX = NUM2INT(rbX);
   int rectY = NUM2INT(rbY);
@@ -1642,7 +1642,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   rb_check_frozen(self);
   const Texture* dstTexture;
   Data_Get_Struct(self, Texture, dstTexture);
-  CheckDisposed(dstTexture);
+  strb_CheckDisposedTexture(dstTexture);
   CheckPalette(dstTexture);
 
   volatile VALUE rbTexture, rbX, rbY, rbOptions;
@@ -1658,7 +1658,7 @@ Texture_render_texture(int argc, VALUE* argv, VALUE self)
   strb_CheckTexture(rbTexture);
   const Texture* srcTexture;
   Data_Get_Struct(rbTexture, Texture, srcTexture);
-  CheckDisposed(srcTexture);
+  strb_CheckDisposedTexture(srcTexture);
 
   const int srcTextureWidth  = srcTexture->width;
   const int srcTextureHeight = srcTexture->height;
@@ -1812,7 +1812,7 @@ Texture_save(VALUE self, VALUE rbPath)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   const char* path = StringValueCStr(rbPath);
   FILE* fp = fopen(path, "wb");
   if (!fp) {
@@ -1849,7 +1849,7 @@ Texture_size(VALUE self)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   volatile VALUE rbSize =
     rb_assoc_new(INT2NUM(texture->width), INT2NUM(texture->height));
   OBJ_FREEZE(rbSize);
@@ -1861,7 +1861,7 @@ Texture_transform_in_perspective(int argc, VALUE* argv, VALUE self)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   volatile VALUE rbX, rbY, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "31", &rbX, &rbY, &rbHeight, &rbOptions);
   if (NIL_P(rbOptions)) {
@@ -1922,7 +1922,7 @@ Texture_undump(VALUE self, VALUE rbData, VALUE rbFormat)
   rb_check_frozen(self);
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   CheckPalette(texture);
   const char* format = StringValuePtr(rbFormat);
   const int formatLength = RSTRING_LEN(rbFormat);
@@ -1952,7 +1952,7 @@ Texture_width(VALUE self)
 {
   const Texture* texture;
   Data_Get_Struct(self, Texture, texture);
-  CheckDisposed(texture);
+  strb_CheckDisposedTexture(texture);
   return INT2NUM(texture->width);
 }
 

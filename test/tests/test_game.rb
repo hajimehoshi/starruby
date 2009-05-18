@@ -3,7 +3,7 @@
 =begin
 If you execute these tests singularly, it will fail
 because both Test::Unit and StarRuby use Kernel#at_exit.
-When these tests are executed, the game module of Star Ruby
+When these tests are executed, the Game module of Star Ruby
 is closed at the same time.
 =end
 
@@ -210,6 +210,21 @@ class TestGame < Test::Unit::TestCase
     end
   end
 
+  def test_screen_dispose
+    g = nil
+    begin
+      g = Game.new(320, 240,
+                   :title => "foo", :fps => 31, :window_scale => 2)
+      g.screen.dispose
+      g.update_state
+      assert_raise RuntimeError do
+        g.update_screen
+      end
+    ensure
+      g.dispose if g
+    end
+  end
+
   def test_ticks
     ticks1 = Game.ticks
     ticks2 = 0
@@ -220,6 +235,15 @@ class TestGame < Test::Unit::TestCase
     end
     ticks3 = Game.ticks
     assert ticks2 <= ticks3
+  end
+
+  def test_window_scale
+    Game.run(320, 240, :window_scale => 1) do |game|
+      assert_equal 1, game.window_scale
+      game.window_scale = 2
+      assert_equal 2, game.window_scale
+      break
+    end
   end
 
 end

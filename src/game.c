@@ -613,11 +613,11 @@ Game_window_scale_eq(VALUE self, VALUE rbWindowScale)
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   game->windowScale = NUM2INT(rbWindowScale);
-  /*VALUE rbScreen = game->screen;
+  VALUE rbScreen = game->screen;
   const Texture* screen;
-  Data_Get_Struct(self, Texture, screen);
-  CheckDisposed(screen);
-  InitializeScreen(game, screen->width, screen->height);*/
+  Data_Get_Struct(rbScreen, Texture, screen);
+  strb_CheckDisposedTexture(screen);
+  InitializeScreen(game, screen->width, screen->height);
   return Qnil;
 }
 

@@ -254,9 +254,16 @@ Game_alloc(VALUE klass)
 }
 
 static void
-InitializeScreen(Game* game, const int width, const int height)
+InitializeScreen(Game* game)
 {
   const int bpp = 32;
+
+  VALUE rbScreen = game->screen;
+  const Texture* screen;
+  Data_Get_Struct(rbScreen, Texture, screen);
+  strb_CheckDisposedTexture(screen);
+  const int width  = screen->width;
+  const int height = screen->height;
 
   Uint32 options = 0;
   options |= SDL_DOUBLEBUF;
@@ -316,8 +323,8 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
     rb_raise_sdl_error();
   }
-  const int width   = NUM2INT(rbWidth);
-  const int height  = NUM2INT(rbHeight);
+  const int width  = NUM2INT(rbWidth);
+  const int height = NUM2INT(rbHeight);
 
   volatile VALUE rbFps = rb_hash_aref(rbOptions, symbol_fps);
   if (!NIL_P(rbFps)) {
@@ -364,12 +371,13 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   }
 
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
-  InitializeScreen(game, width, height);
 
   volatile VALUE rbScreen =
     rb_class_new_instance(2, (VALUE[]){INT2NUM(width), INT2NUM(height)},
                           strb_GetTextureClass());
   game->screen = rbScreen;
+
+  InitializeScreen(game);
 
   rb_iv_set(rb_cGame, "current", self);
 
@@ -419,6 +427,26 @@ Game_fps_eq(VALUE self, VALUE rbFps)
   CheckDisposed(game);
   game->fps = NUM2INT(rbFps);
   return rbFps;
+}
+
+static VALUE
+Game_fullscreen(VALUE self)
+{
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
+  return game->isFullscreen ? Qtrue : Qfalse;
+}
+
+static VALUE
+Game_fullscreen_eq(VALUE self, VALUE rbFullscreen)
+{
+  Game* game;
+  Data_Get_Struct(self, Game, game);
+  CheckDisposed(game);
+  game->isFullscreen = RTEST(rbFullscreen);
+  InitializeScreen(game);
+  return Qnil;
 }
 
 static VALUE
@@ -613,11 +641,7 @@ Game_window_scale_eq(VALUE self, VALUE rbWindowScale)
   Data_Get_Struct(self, Game, game);
   CheckDisposed(game);
   game->windowScale = NUM2INT(rbWindowScale);
-  VALUE rbScreen = game->screen;
-  const Texture* screen;
-  Data_Get_Struct(rbScreen, Texture, screen);
-  strb_CheckDisposedTexture(screen);
-  InitializeScreen(game, screen->width, screen->height);
+  InitializeScreen(game);
   return Qnil;
 }
 
@@ -644,6 +668,8 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   rb_define_method(rb_cGame, "disposed?",       Game_disposed,        0);
   rb_define_method(rb_cGame, "fps",             Game_fps,             0);
   rb_define_method(rb_cGame, "fps=",            Game_fps_eq,          1);
+  rb_define_method(rb_cGame, "fullscreen?",     Game_fullscreen,      0);
+  rb_define_method(rb_cGame, "fullscreen=",     Game_fullscreen_eq,   1);
   rb_define_method(rb_cGame, "real_fps",        Game_real_fps,        0);
   rb_define_method(rb_cGame, "screen",          Game_screen,          0);
   rb_define_method(rb_cGame, "title",           Game_title,           0);

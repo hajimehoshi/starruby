@@ -59,6 +59,7 @@ class TestGame < Test::Unit::TestCase
       g.fps = 32
       assert_equal 32, g.fps
       assert_equal 2, g.window_scale
+      assert_equal false, g.fullscreen?
       assert_equal 0.0, g.real_fps
       assert_kind_of Float, g.real_fps
       g.update_state
@@ -104,6 +105,9 @@ class TestGame < Test::Unit::TestCase
       g.fps = 30
     end
     assert_raise RuntimeError do
+      g.fullscreen?
+    end
+    assert_raise RuntimeError do
       g.real_fps
     end
     assert_raise RuntimeError do
@@ -129,6 +133,9 @@ class TestGame < Test::Unit::TestCase
     end
     assert_raise RuntimeError do
       g.window_scale
+    end
+    assert_raise RuntimeError do
+      g.window_scale = 2
     end
   ensure
     g.dispose if g

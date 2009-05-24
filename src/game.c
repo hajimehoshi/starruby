@@ -521,9 +521,17 @@ Game_update_screen(VALUE self)
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst++) {
           const uint8_t alpha = src->color.alpha;
-          dst->color.red   = DIV255(src->color.red   * alpha);
-          dst->color.green = DIV255(src->color.green * alpha);
-          dst->color.blue  = DIV255(src->color.blue  * alpha);
+          if (alpha == 255) {
+            *dst = *src;
+          } else if (alpha) {
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
+          } else {
+            dst->color.red   = 0;
+            dst->color.green = 0;
+            dst->color.blue  = 0;
+          }
         }
       }
     }
@@ -535,10 +543,19 @@ Game_update_screen(VALUE self)
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
           const uint8_t alpha = src->color.alpha;
-          dst->color.red   = DIV255(src->color.red   * alpha);
-          dst->color.green = DIV255(src->color.green * alpha);
-          dst->color.blue  = DIV255(src->color.blue  * alpha);
-          dst[textureWidth2x + screenPadding] = dst[textureWidth2x + screenPadding + 1] = dst[1] = *dst;
+          if (alpha == 255) {
+            *dst = *src;
+          } else if (alpha) {
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
+          } else {
+            dst->color.red   = 0;
+            dst->color.green = 0;
+            dst->color.blue  = 0;
+          }
+          dst[textureWidth2x + screenPadding] =
+            dst[textureWidth2x + screenPadding + 1] = dst[1] = *dst;
         }
       }
     }
@@ -551,9 +568,17 @@ Game_update_screen(VALUE self)
       for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
         for (int i = 0; i < textureWidth; i++, src++, dst += windowScale) {
           const uint8_t alpha = src->color.alpha;
-          dst->color.red   = DIV255(src->color.red   * alpha);
-          dst->color.green = DIV255(src->color.green * alpha);
-          dst->color.blue  = DIV255(src->color.blue  * alpha);
+          if (alpha == 255) {
+            *dst = *src;
+          } else if (alpha) {
+            dst->color.red   = DIV255(src->color.red   * alpha);
+            dst->color.green = DIV255(src->color.green * alpha);
+            dst->color.blue  = DIV255(src->color.blue  * alpha);
+          } else {
+            dst->color.red   = 0;
+            dst->color.green = 0;
+            dst->color.blue  = 0;
+          }
           for (int k = 1; k < windowScale; k++) {
             dst[k] = *dst;
           }

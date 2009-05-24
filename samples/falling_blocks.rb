@@ -12,7 +12,7 @@ def main
   view       = FallingBlocks::View.new(model)
   StarRuby::Game.run(320, 240,
                      :title => "Falling Blocks Game",
-                     :window_scale => 1) do |game|
+                     :window_scale => 2) do |game|
     # If ESC key is pressed, quit this game
     break if Input.keys(:keyboard).include?(:escape)
     # Update the controller

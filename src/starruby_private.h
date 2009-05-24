@@ -64,9 +64,9 @@ typedef struct {
   TTF_Font* sdlFont;
 } Font;
 
-#define MAX(x, y) ((x >= y) ? x : y)
-#define MIN(x, y) ((x <= y) ? x : y)
-#define DIV255(x) ((x + 255) >> 8)
+#define MAX(x, y) (((x) >= (y)) ? (x) : (y))
+#define MIN(x, y) (((x) <= (y)) ? (x) : (y))
+#define DIV255(x) ((x) / 255)
 
 #define rb_raise_sdl_error() \
   rb_raise(strb_GetStarRubyErrorClass(), "%s", SDL_GetError())

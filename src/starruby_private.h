@@ -105,7 +105,7 @@ void strb_InitializeSdlInput(void);
 
 int strb_GetWindowScale(void);
 
-inline void strb_CheckDisposedTexture(const Texture* const);
+void strb_CheckDisposedTexture(const Texture* const);
 
 #ifdef DEBUG
 #include <assert.h>

@@ -141,6 +141,12 @@ strb_CheckTexture(VALUE rbTexture)
   }
 }
 
+inline bool
+strb_IsDisposedTexture(const Texture* const texture)
+{
+  return !texture->pixels;
+}
+
 inline void
 strb_CheckDisposedTexture(const Texture* const texture)
 {

@@ -63,6 +63,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
     rb_raise(rb_eArgError, "array size should be 2, %ld given", RARRAY_LEN(rbValue));
   }
   const int windowScale = strb_GetWindowScale();
+  // TODO: Fix it for fullscreen
   SDL_WarpMouse(NUM2INT(RARRAY_PTR(rbValue)[0]) * windowScale,
                 NUM2INT(RARRAY_PTR(rbValue)[1]) * windowScale);
   int mouseLocationX, mouseLocationY;
@@ -252,6 +253,12 @@ strb_UpdateInput(void)
   int mouseLocationX, mouseLocationY;
   const Uint8 sdlMouseButtons =
     SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
+  int screenWidth = 0, screenHeight = 0;
+  strb_GetScreenSize(&screenWidth, &screenHeight);
+  int realScreenWidth = 0, realScreenHeight = 0;
+  strb_GetRealScreenSize(&realScreenWidth, &realScreenHeight);
+  mouseLocationX -= (realScreenWidth  - screenWidth  * windowScale) / 2;
+  mouseLocationY -= (realScreenHeight - screenHeight * windowScale) / 2;
   volatile VALUE rbMouseLocation =
     rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
                  INT2NUM(mouseLocationY / windowScale));

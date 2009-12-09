@@ -65,9 +65,13 @@ strb_GetScreenSize(int* width, int* height)
     volatile VALUE rbScreen = game->screen;
     const Texture* screen;
     Data_Get_Struct(rbScreen, Texture, screen);
-    strb_CheckDisposedTexture(screen);
-    *width  = screen->width;
-    *height = screen->height;
+    if (!strb_IsDisposedTexture(screen)) {
+      *width  = screen->width;
+      *height = screen->height;
+    } else {
+      *width  = 0;
+      *height = 0;
+    }
   } else {
     *width  = 0;
     *height = 0;

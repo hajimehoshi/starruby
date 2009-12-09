@@ -108,6 +108,7 @@ void strb_GetScreenSize(int*, int*);
 int strb_GetWindowScale(void);
 
 void strb_CheckDisposedTexture(const Texture* const);
+bool strb_IsDisposedTexture(const Texture* const);
 
 #ifdef DEBUG
 #include <assert.h>

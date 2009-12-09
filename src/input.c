@@ -68,7 +68,7 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
   int mouseLocationX, mouseLocationY;
   SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
   int screenWidth = 0, screenHeight = 0;
-  strb_GetRealScreenSize(&screenWidth, &screenHeight);
+  strb_GetScreenSize(&screenWidth, &screenHeight);
   int realScreenWidth = 0, realScreenHeight = 0;
   strb_GetRealScreenSize(&realScreenWidth, &realScreenHeight);
   mouseLocationX -= (realScreenWidth  - screenWidth  * windowScale) / 2;

@@ -39,6 +39,41 @@ CheckDisposed(const Game* const game)
 }
 
 static VALUE Game_s_current(VALUE);
+
+void
+strb_GetRealScreenSize(int* width, int* height)
+{
+  volatile VALUE rbCurrent = Game_s_current(rb_cGame);
+  if (!NIL_P(rbCurrent)) {
+    const Game* game;
+    Data_Get_Struct(rbCurrent, Game, game);
+    *width  = game->realScreenWidth;
+    *height = game->realScreenHeight;
+  } else {
+    *width  = 0;
+    *height = 0;
+  }
+}
+
+void
+strb_GetScreenSize(int* width, int* height)
+{
+  volatile VALUE rbCurrent = Game_s_current(rb_cGame);
+  if (!NIL_P(rbCurrent)) {
+    const Game* game;
+    Data_Get_Struct(rbCurrent, Game, game);
+    volatile VALUE rbScreen = game->screen;
+    const Texture* screen;
+    Data_Get_Struct(rbScreen, Texture, screen);
+    strb_CheckDisposedTexture(screen);
+    *width  = screen->width;
+    *height = screen->height;
+  } else {
+    *width  = 0;
+    *height = 0;
+  }
+}
+
 int
 strb_GetWindowScale(void)
 {

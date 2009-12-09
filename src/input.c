@@ -67,6 +67,12 @@ Input_mouse_location_eq(VALUE self, VALUE rbValue)
                 NUM2INT(RARRAY_PTR(rbValue)[1]) * windowScale);
   int mouseLocationX, mouseLocationY;
   SDL_GetMouseState(&mouseLocationX, &mouseLocationY);
+  int screenWidth = 0, screenHeight = 0;
+  strb_GetRealScreenSize(&screenWidth, &screenHeight);
+  int realScreenWidth = 0, realScreenHeight = 0;
+  strb_GetRealScreenSize(&realScreenWidth, &realScreenHeight);
+  mouseLocationX -= (realScreenWidth  - screenWidth  * windowScale) / 2;
+  mouseLocationY -= (realScreenHeight - screenHeight * windowScale) / 2;
   volatile VALUE rbMouseLocation =
     rb_assoc_new(INT2NUM(mouseLocationX / windowScale),
                  INT2NUM(mouseLocationY / windowScale));

@@ -103,6 +103,8 @@ void strb_InitializeSdlAudio(void);
 void strb_InitializeSdlFont(void);
 void strb_InitializeSdlInput(void);
 
+void strb_GetRealScreenSize(int*, int*);
+void strb_GetScreenSize(int*, int*);
 int strb_GetWindowScale(void);
 
 void strb_CheckDisposedTexture(const Texture* const);

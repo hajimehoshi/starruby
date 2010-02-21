@@ -43,7 +43,11 @@
 #endif
 
 typedef struct {
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
   uint8_t blue, green, red, alpha;
+#else
+  uint8_t alpha, red, green, blue;
+#endif
 } Color;
 
 typedef union {

@@ -362,6 +362,7 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER)) {
     rb_raise_sdl_error();
   }
+
   const int width  = NUM2INT(rbWidth);
   const int height = NUM2INT(rbHeight);
 

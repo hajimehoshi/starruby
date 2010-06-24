@@ -7,6 +7,7 @@ static volatile VALUE symbol_cursor       = Qundef;
 static volatile VALUE symbol_fps          = Qundef;
 static volatile VALUE symbol_fullscreen   = Qundef;
 static volatile VALUE symbol_title        = Qundef;
+static volatile VALUE symbol_vsync        = Qundef;
 static volatile VALUE symbol_window_scale = Qundef;
 
 typedef struct {
@@ -750,6 +751,7 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   symbol_fps          = ID2SYM(rb_intern("fps"));
   symbol_fullscreen   = ID2SYM(rb_intern("fullscreen"));
   symbol_title        = ID2SYM(rb_intern("title"));
+  symbol_vsync        = ID2SYM(rb_intern("vsync"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
 
   // backward compatibility

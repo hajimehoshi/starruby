@@ -21,6 +21,12 @@ if have_header("fontconfig/fontconfig.h")
   have_library("fontconfig", "FcInit") or exit(false)
 end
 
+if CONFIG["arch"] =~ /mingw32/
+  have_library("opengl32") or exit(false)
+else
+  have_library("GL") or exit(false)
+end
+
 $CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter"
 $CFLAGS += " -pedantic -std=c99 -funit-at-a-time"
 # TODO: use gcc -dumpspecs

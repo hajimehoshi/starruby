@@ -262,30 +262,10 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
   const int height = NUM2INT(rbHeight);
 
   volatile VALUE rbFps = rb_hash_aref(rbOptions, symbol_fps);
-  if (!NIL_P(rbFps)) {
-    Game_fps_eq(self, rbFps);
-  } else {
-    // backward compatibility
-    volatile VALUE rbFps2 = rb_iv_get(rb_cGame, "default_fps");
-    if (!NIL_P(rbFps2)) {
-      Game_fps_eq(self, rbFps2);
-    } else {
-      Game_fps_eq(self, INT2FIX(30));
-    }
-  }
+  Game_fps_eq(self, !NIL_P(rbFps) ? rbFps : INT2FIX(30));
 
   volatile VALUE rbTitle = rb_hash_aref(rbOptions, symbol_title);
-  if (!NIL_P(rbTitle)) {
-    Game_title_eq(self, rbTitle);
-  } else {
-    // backward compatibility
-    volatile VALUE rbTitle2 = rb_iv_get(rb_cGame, "default_title");
-    if (!NIL_P(rbTitle2)) {
-      Game_title_eq(self, rbTitle2);
-    } else {
-      Game_title_eq(self, rb_str_new2(""));
-    }
-  }
+  Game_title_eq(self, !NIL_P(rbTitle) ? rbTitle : rb_str_new2(""));
 
   bool cursor = false;
 
@@ -639,9 +619,6 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
   symbol_title        = ID2SYM(rb_intern("title"));
   symbol_vsync        = ID2SYM(rb_intern("vsync"));
   symbol_window_scale = ID2SYM(rb_intern("window_scale"));
-
-  // backward compatibility
-  rb_iv_set(rb_cGame, "default_fps", INT2FIX(30));
 
   return rb_cGame;
 }

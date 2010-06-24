@@ -28,7 +28,6 @@ typedef struct {
   double realFps;
   GameTimer timer;
   bool isWindowClosing;
-  bool isTerminated; // backward compatibility
 } Game;
 
 inline static void
@@ -111,52 +110,13 @@ Game_s_current(VALUE self)
 }
 
 static VALUE
-Game_s_fps(VALUE self)
-{
-  rb_warn("Game.fps is deprecated;"
-          " use Game#fps instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent)) {
-    return Game_fps(rbCurrent);
-  } else {
-    return rb_iv_get(self, "default_fps");
-  }
-}
-
-static VALUE
-Game_s_fps_eq(VALUE self, VALUE rbFps)
-{
-  rb_warn("Game.fps= is deprecated;"
-          " use Game#fps= or Game.run(..., :fps => ...) instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent)) {
-    return Game_fps_eq(rbCurrent, rbFps);
-  } else {
-    return rb_iv_set(self, "default_fps", INT2NUM(NUM2INT(rbFps)));
-  }
-}
-
-static VALUE
-Game_s_real_fps(VALUE self)
-{
-  rb_warn("Game.real_fps is deprecated;"
-          " use Game#real_fps instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent)) {
-    return Game_real_fps(rbCurrent);
-  } else {
-    return rb_float_new(0.0);
-  }
-}
-
-static VALUE
 RunGame(VALUE rbGame)
 {
   const Game* game;
   Data_Get_Struct(rbGame, Game, game);
   while (true) {
     Game_update_state(rbGame);
-    if (RTEST(Game_window_closing(rbGame)) || game->isTerminated) {
+    if (RTEST(Game_window_closing(rbGame))) {
       break;
     }
     rb_yield(rbGame);
@@ -182,74 +142,9 @@ Game_s_run(int argc, VALUE* argv, VALUE self)
 }
 
 static VALUE
-Game_s_running(VALUE self)
-{
-  rb_warn("Game.running? is deprecated;"
-          " use Game.current instead");
-  return !NIL_P(Game_s_current(self)) ? Qtrue : Qfalse;
-}
-
-static VALUE
-Game_s_screen(VALUE self)
-{
-  rb_warn("Game.screen is deprecated;"
-          " use Game#screen instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (NIL_P(rbCurrent)) {
-    return Qnil;
-  }
-  return Game_screen(rbCurrent);
-}
-
-static VALUE
-Game_s_terminate(VALUE self)
-{
-  rb_warn("Game.terminate is deprecated;"
-          " use break instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (NIL_P(rbCurrent)) {
-    rb_raise(strb_GetStarRubyErrorClass(), "a game has not run yet");
-  }
-  Game* game;
-  Data_Get_Struct(rbCurrent, Game, game);
-  game->isTerminated = true;
-  return Qnil;
-}
-
-static VALUE
 Game_s_ticks(VALUE self)
 {
   return INT2NUM(SDL_GetTicks());
-}
-
-static VALUE
-Game_s_title(VALUE self)
-{
-  rb_warn("Game.title is deprecated;"
-          " use Game#title instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent)) {
-    return Game_title(rbCurrent);
-  } else {
-    return rb_iv_get(self, "default_title");
-  }
-}
-
-static VALUE
-Game_s_title_eq(VALUE self, VALUE rbTitle)
-{
-  rb_warn("Game.title= is deprecated;"
-          " use Game#title= or Game.run(..., :title => ...) instead");
-  volatile VALUE rbCurrent = Game_s_current(self);
-  if (!NIL_P(rbCurrent)) {
-    return Game_title_eq(rbCurrent, rbTitle);
-  } else {
-    Check_Type(rbTitle, T_STRING);
-    if (SDL_WasInit(SDL_INIT_VIDEO)) {
-      SDL_WM_SetCaption(StringValueCStr(rbTitle), NULL);
-    }
-    return rb_iv_set(self, "default_title", rbTitle);
-  }
 }
 
 static void
@@ -289,7 +184,6 @@ Game_alloc(VALUE klass)
   game->timer.before2 = game->timer.before2;
   game->timer.counter = 0;
   game->isWindowClosing = false;
-  game->isTerminated = false;
   return Data_Wrap_Struct(klass, Game_mark, Game_free, game);;
 }
 
@@ -718,16 +612,8 @@ strb_InitializeGame(VALUE _rb_mStarRuby)
 
   rb_cGame = rb_define_class_under(rb_mStarRuby, "Game", rb_cObject);
   rb_define_singleton_method(rb_cGame, "current",   Game_s_current,   0);
-  rb_define_singleton_method(rb_cGame, "fps",       Game_s_fps,       0);
-  rb_define_singleton_method(rb_cGame, "fps=",      Game_s_fps_eq,    1);
-  rb_define_singleton_method(rb_cGame, "real_fps",  Game_s_real_fps,  0);
   rb_define_singleton_method(rb_cGame, "run",       Game_s_run,       -1);
-  rb_define_singleton_method(rb_cGame, "running?",  Game_s_running,   0);
-  rb_define_singleton_method(rb_cGame, "screen",    Game_s_screen,    0);
-  rb_define_singleton_method(rb_cGame, "terminate", Game_s_terminate, 0);
   rb_define_singleton_method(rb_cGame, "ticks",     Game_s_ticks,     0);
-  rb_define_singleton_method(rb_cGame, "title",     Game_s_title,     0);
-  rb_define_singleton_method(rb_cGame, "title=",    Game_s_title_eq,  1);
   rb_define_alloc_func(rb_cGame, Game_alloc);
   rb_define_private_method(rb_cGame, "initialize", Game_initialize, -1);
   rb_define_method(rb_cGame, "dispose",         Game_dispose,         0);

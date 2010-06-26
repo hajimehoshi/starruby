@@ -27,7 +27,7 @@ else
   have_library("GL") or exit(false)
 end
 
-$CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wno-unused-parameter"
+$CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wunused-parameter"
 $CFLAGS += " -pedantic -std=c99 -funit-at-a-time"
 # TODO: use gcc -dumpspecs
 if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/

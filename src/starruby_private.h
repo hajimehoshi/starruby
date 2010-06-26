@@ -9,6 +9,7 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
+#include <SDL_opengl.h>
 
 #include <ruby.h>
 #ifndef RHASH_IFNONE
@@ -78,6 +79,8 @@ typedef struct {
   rb_raise(strb_GetStarRubyErrorClass(), "%s", Mix_GetError())
 #define rb_raise_sdl_ttf_error() \
   rb_raise(strb_GetStarRubyErrorClass(), "%s", TTF_GetError())
+#define rb_raise_opengl_error() \
+  rb_raise(strb_GetStarRubyErrorClass(), "OpenGL Error: 0x%x", glGetError());
 
 VALUE strb_GetColorClass(void);
 VALUE strb_GetStarRubyErrorClass(void);

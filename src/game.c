@@ -20,14 +20,15 @@ typedef struct {
 typedef struct {
   int windowScale;
   bool isFullscreen;
-  int realScreenWidth;
-  int realScreenHeight;
   VALUE screen;
   SDL_Surface* sdlScreen;
+  SDL_Surface* sdlScreenBuffer;
+  GLuint glScreen;
   int fps;
   double realFps;
   GameTimer timer;
   bool isWindowClosing;
+  bool isVsync;
 } Game;
 
 inline static void
@@ -36,6 +37,16 @@ CheckDisposed(const Game* const game)
   if (!game) {
     rb_raise(rb_eRuntimeError, "can't modify disposed StarRuby::Game");
   }
+}
+
+inline static int
+Power2(int x)
+{
+  int result = 1;
+  while (result < x) {
+    result <<= 1;
+  }
+  return result;
 }
 
 static VALUE Game_s_current(VALUE);
@@ -47,8 +58,8 @@ strb_GetRealScreenSize(int* width, int* height)
   if (!NIL_P(rbCurrent)) {
     const Game* game;
     Data_Get_Struct(rbCurrent, Game, game);
-    *width  = game->realScreenWidth;
-    *height = game->realScreenHeight;
+    *width  = game->sdlScreen->w;
+    *height = game->sdlScreen->h;
   } else {
     *width  = 0;
     *height = 0;
@@ -161,6 +172,10 @@ Game_free(Game* game)
   // should NOT to call SDL_FreeSurface
   if (game) {
     game->sdlScreen = NULL;
+    if (game->sdlScreenBuffer) {
+      SDL_FreeSurface(game->sdlScreenBuffer);
+      game->sdlScreenBuffer = NULL;
+    }
   }
   free(game);
 }
@@ -174,16 +189,17 @@ Game_alloc(VALUE klass)
   Game* game = ALLOC(Game);
   game->windowScale = 1;
   game->isFullscreen = false;
-  game->realScreenWidth = 0;
-  game->realScreenHeight = 0;
   game->screen = Qnil;
   game->sdlScreen = NULL;
+  game->sdlScreenBuffer = NULL;
+  game->glScreen = 0;
   game->realFps = 0;
   game->timer.error = 0;
   game->timer.before = SDL_GetTicks();
   game->timer.before2 = game->timer.before2;
   game->timer.counter = 0;
   game->isWindowClosing = false;
+  game->isVsync = false;
   return Data_Wrap_Struct(klass, Game_mark, Game_free, game);;
 }
 
@@ -198,9 +214,11 @@ InitializeScreen(Game* game)
   strb_CheckDisposedTexture(screen);
   const int width  = screen->width;
   const int height = screen->height;
+  int screenWidth = 0;
+  int screenHeight = 0;
 
   Uint32 options = 0;
-  options |= SDL_DOUBLEBUF;
+  options |= SDL_OPENGL;
   if (game->isFullscreen) {
     options |= SDL_HWSURFACE | SDL_FULLSCREEN;
     game->windowScale = 1;    
@@ -209,36 +227,57 @@ InitializeScreen(Game* game)
       rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
     }
     if (modes != (SDL_Rect**)-1) {
-      game->realScreenWidth = 0;
-      game->realScreenHeight = 0;
       for (int i = 0; modes[i]; i++) {
         int realBpp = SDL_VideoModeOK(modes[i]->w, modes[i]->h, bpp, options);
         if (width <= modes[i]->w && height <= modes[i]->h && realBpp == bpp) {
-          game->realScreenWidth  = modes[i]->w;
-          game->realScreenHeight = modes[i]->h;
+          screenWidth  = modes[i]->w;
+          screenHeight = modes[i]->h;
         } else {
           break;
         }
       }
-      if (game->realScreenWidth == 0 || game->realScreenHeight == 0) {
+      if (screenWidth == 0 || screenHeight == 0) {
         rb_raise(rb_eRuntimeError, "not supported fullscreen resolution");
       }
     } else {
       // any resolution are available
-      game->realScreenWidth  = width;
-      game->realScreenHeight = height;
+      screenWidth  = width;
+      screenHeight = height;
     }
   } else {
-    game->realScreenWidth  = width  * game->windowScale;
-    game->realScreenHeight = height * game->windowScale;
+    screenWidth  = width  * game->windowScale;
+    screenHeight = height * game->windowScale;
     options |= SDL_SWSURFACE;
   }
 
-  game->sdlScreen = SDL_SetVideoMode(game->realScreenWidth,
-                                     game->realScreenHeight, bpp, options);
+  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, game->isVsync ? 1 : 0);
+
+  game->sdlScreen = SDL_SetVideoMode(screenWidth, screenHeight,
+                                     bpp, options);
   if (!game->sdlScreen) {
     rb_raise_sdl_error();
   }
+  SDL_PixelFormat* format = game->sdlScreen->format;
+  game->sdlScreenBuffer = SDL_CreateRGBSurface(SDL_SWSURFACE,
+                                               Power2(width),
+                                               Power2(height),
+                                               bpp,
+                                               format->Bmask, format->Gmask, format->Bmask, format->Amask);
+  if (!game->sdlScreenBuffer) {
+    rb_raise_sdl_error();
+  }
+
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glOrtho(0.0, screenWidth, screenHeight, 0.0, -1.0, 1.0);
+  glEnable(GL_TEXTURE_2D);
+  glGenTextures(1, &game->glScreen);
+  glBindTexture(GL_TEXTURE_2D, game->glScreen);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
 static VALUE
@@ -284,6 +323,9 @@ Game_initialize(int argc, VALUE* argv, VALUE self)
                game->windowScale);
     }
   }
+  if (!NIL_P(val = rb_hash_aref(rbOptions, symbol_vsync))) {
+    game->isVsync = RTEST(val);
+  }
 
   SDL_ShowCursor(cursor ? SDL_ENABLE : SDL_DISABLE);
 
@@ -310,6 +352,10 @@ Game_dispose(VALUE self)
     if (!NIL_P(rbScreen)) {
       rb_funcall(rbScreen, rb_intern("dispose"), 0);
       game->screen = Qnil;
+    }
+    if (game->glScreen) {
+      glDeleteTextures(1, &game->glScreen);
+      game->glScreen = 0;
     }
   }
   SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
@@ -416,102 +462,58 @@ Game_update_screen(VALUE self)
   Data_Get_Struct(rbScreen, Texture, texture);
   strb_CheckDisposedTexture(texture);
   const Pixel* src = texture->pixels;
-  const int realScreenWidth    = game->realScreenWidth;
-  const int realScreenHeight   = game->realScreenHeight;
-  SDL_Surface* sdlScreen = game->sdlScreen;
-  SDL_LockSurface(sdlScreen);
-  Pixel* dst = (Pixel*)sdlScreen->pixels;
+  SDL_Surface* sdlScreenBuffer = game->sdlScreenBuffer;
+  SDL_LockSurface(sdlScreenBuffer);
+  Pixel* dst = (Pixel*)sdlScreenBuffer->pixels;
   const int screenPadding =
-    sdlScreen->pitch / sdlScreen->format->BytesPerPixel - sdlScreen->w;
+    sdlScreenBuffer->pitch / sdlScreenBuffer->format->BytesPerPixel - sdlScreenBuffer->w;
   const int textureWidth  = texture->width;
   const int textureHeight = texture->height;
-  const int windowScale = game->windowScale;
-  switch (windowScale) {
-  case 1:
-    {
-      // For fullscreen
-      dst += ((realScreenWidth - textureWidth) >> 1) +
-        ((realScreenHeight - textureHeight) >> 1) * (realScreenWidth + screenPadding);
-      const int heightPadding = realScreenWidth - texture->width + screenPadding;
-      for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
-        for (int i = 0; i < textureWidth; i++, src++, dst++) {
-          const uint8_t alpha = src->color.alpha;
-          if (alpha == 255) {
-            *dst = *src;
-          } else if (alpha) {
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          } else {
-            dst->color.red   = 0;
-            dst->color.green = 0;
-            dst->color.blue  = 0;
-          }
-        }
-      }
-    }
-    break;
-  case 2:
-    {
-      const int textureWidth2x = textureWidth << 1;
-      const int heightPadding = textureWidth2x + (screenPadding << 1);
-      for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
-        for (int i = 0; i < textureWidth; i++, src++, dst += 2) {
-          const uint8_t alpha = src->color.alpha;
-          if (alpha == 255) {
-            *dst = *src;
-          } else if (alpha) {
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          } else {
-            dst->color.red   = 0;
-            dst->color.green = 0;
-            dst->color.blue  = 0;
-          }
-          dst[textureWidth2x + screenPadding] =
-            dst[textureWidth2x + screenPadding + 1] = dst[1] = *dst;
-        }
-      }
-    }
-    break;
-  default:
-    {
-      const int textureWidthN = textureWidth * windowScale;
-      const int heightPadding =
-        textureWidth * windowScale * (windowScale - 1) + screenPadding * windowScale;
-      for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
-        for (int i = 0; i < textureWidth; i++, src++, dst += windowScale) {
-          const uint8_t alpha = src->color.alpha;
-          if (alpha == 255) {
-            *dst = *src;
-          } else if (alpha) {
-            dst->color.red   = DIV255(src->color.red   * alpha);
-            dst->color.green = DIV255(src->color.green * alpha);
-            dst->color.blue  = DIV255(src->color.blue  * alpha);
-          } else {
-            dst->color.red   = 0;
-            dst->color.green = 0;
-            dst->color.blue  = 0;
-          }
-          for (int k = 1; k < windowScale; k++) {
-            dst[k] = *dst;
-          }
-          for (int l = 1; l < windowScale; l++) {
-            for (int k = 0; k < windowScale; k++) {
-              dst[(textureWidthN + screenPadding) * l + k] = *dst;
-            }
-          }
-        }
-      }
-    }
-    break;
-  }
-  SDL_UnlockSurface(sdlScreen);
 
-  if (SDL_Flip(sdlScreen)) {
-    rb_raise_sdl_error();
+  const int heightPadding = sdlScreenBuffer->w - texture->width + screenPadding;
+  for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
+    for (int i = 0; i < textureWidth; i++, src++, dst++) {
+      const uint8_t alpha = src->color.alpha;
+      if (alpha == 255) {
+        *dst = *src;
+      } else if (alpha) {
+        dst->color.red   = DIV255(src->color.red   * alpha);
+        dst->color.green = DIV255(src->color.green * alpha);
+        dst->color.blue  = DIV255(src->color.blue  * alpha);
+      } else {
+        dst->color.red   = 0;
+        dst->color.green = 0;
+        dst->color.blue  = 0;
+      }
+    }
   }
+
+  SDL_UnlockSurface(sdlScreenBuffer);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+               sdlScreenBuffer->w, sdlScreenBuffer->h,
+               0, GL_BGRA, GL_UNSIGNED_BYTE, sdlScreenBuffer->pixels);
+  glClear(GL_COLOR_BUFFER_BIT);
+  glColor3f(1.0, 1.0, 1.0);
+  glBegin(GL_QUADS);
+  {
+    // TODO: centering
+    const int x = game->sdlScreen->w;
+    const int y = game->sdlScreen->h;
+    const double tu = (double)textureWidth  / sdlScreenBuffer->w;
+    const double tv = (double)textureHeight / sdlScreenBuffer->h;
+    glTexCoord2f(0.0, 0.0);
+    glVertex3i(0, 0, 0);
+    glTexCoord2f(tu, 0.0);
+    glVertex3i(x, 0, 0);
+    glTexCoord2f(tu, tv);
+    glVertex3i(x, y, 0);
+    glTexCoord2f(0.0, tv);
+    glVertex3i(0, y, 0);
+  }
+  glEnd();
+
+  SDL_GL_SwapBuffers();
   return Qnil;
 }
 

@@ -469,7 +469,6 @@ Game_update_screen(VALUE self)
     sdlScreenBuffer->pitch / sdlScreenBuffer->format->BytesPerPixel - sdlScreenBuffer->w;
   const int textureWidth  = texture->width;
   const int textureHeight = texture->height;
-
   const int heightPadding = sdlScreenBuffer->w - texture->width + screenPadding;
   for (int j = 0; j < textureHeight; j++, dst += heightPadding) {
     for (int i = 0; i < textureWidth; i++, src++, dst++) {

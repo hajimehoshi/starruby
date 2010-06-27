@@ -1,4 +1,4 @@
-Star Ruby 0.3.3 (2009-05-28)
+Star Ruby 0.4.0 (2010-06-28)
 
 
 * About Star Ruby
@@ -11,6 +11,7 @@ You can develop SNES-like 2D games with Star Ruby.
 
   - Fontconfig (Optional)
   - libfreetype
+  - libGL / libopengl32
   - libpng
   - libogg
   - libruby18
@@ -45,7 +46,7 @@ MIT License
 http://www.starruby.info/
 
 
-* The Author
+* The Authors
 
 Hajime Hoshi (hajimehoshi@gmail.com)
 Daigo Sato (daigo_gamemaker@hotmail.com)

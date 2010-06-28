@@ -496,19 +496,28 @@ Game_update_screen(VALUE self)
   glColor3f(1.0, 1.0, 1.0);
   glBegin(GL_QUADS);
   {
-    // TODO: centering
-    const int x = game->sdlScreen->w;
-    const int y = game->sdlScreen->h;
+    int x1, y1, x2, y2;
+    if (!game->isFullscreen) {
+      x1 = 0;
+      y1 = 0;
+      x2 = game->sdlScreen->w;
+      y2 = game->sdlScreen->h;
+    } else {
+      x1 = (game->sdlScreen->w - textureWidth)  / 2;
+      y1 = (game->sdlScreen->h - textureHeight) / 2;
+      x2 = x1 + textureWidth;
+      y2 = y1 + textureHeight;
+    }
     const double tu = (double)textureWidth  / sdlScreenBuffer->w;
     const double tv = (double)textureHeight / sdlScreenBuffer->h;
     glTexCoord2f(0.0, 0.0);
-    glVertex3i(0, 0, 0);
+    glVertex3i(x1, y1, 0);
     glTexCoord2f(tu, 0.0);
-    glVertex3i(x, 0, 0);
+    glVertex3i(x2, y1, 0);
     glTexCoord2f(tu, tv);
-    glVertex3i(x, y, 0);
+    glVertex3i(x2, y2, 0);
     glTexCoord2f(0.0, tv);
-    glVertex3i(0, y, 0);
+    glVertex3i(x1, y2, 0);
   }
   glEnd();
 

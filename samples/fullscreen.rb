@@ -7,7 +7,7 @@ texture = Texture.load("images/star")
 x, y = 0, 0
 vx, vy = 2, 2
 
-Game.run(240, 640, :fullscreen => true) do |game|
+Game.run(240, 700, :fullscreen => true, :cursor => true) do |game|
   break if Input.keys(:keyboard).include?(:escape)
   s = game.screen
   max_x = s.width - texture.width
@@ -33,5 +33,6 @@ Game.run(240, 640, :fullscreen => true) do |game|
     vy = -(vy.abs)
   end
   s.render_texture(texture, x, y)
+  mx, my = *Input.mouse_location
+  s.render_texture(texture, mx, my)
 end
-

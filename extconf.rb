@@ -9,13 +9,19 @@ end
 
 $CFLAGS     += " " + `env libpng-config --cflags`.chomp
 $CFLAGS     += " " + `env sdl-config --cflags`.chomp
+$LDFLAGS    += " " + `env libpng-config --ldflags`.chomp
 $LOCAL_LIBS += " " + `env libpng-config --libs`.chomp
 $LOCAL_LIBS += " " + `env sdl-config --libs`.chomp
+
+if CONFIG["arch"] !~ /mingw32/
+  $CFLAGS     += " " + `env pkg-config fontconfig --cflags`.chomp
+  $LOCAL_LIBS += " " + `env pkg-config fontconfig --libs`.chomp
+end
 
 have_header("png.h") or exit(false)
 have_header("zlib.h") or exit(false)
 have_library("SDL_mixer", "Mix_OpenAudio") or exit(false)
-have_library("SDL_ttf", "TTF_Init") or exit(false)
+have_library("SDL_ttf",   "TTF_Init") or exit(false)
 
 if have_header("fontconfig/fontconfig.h")
   have_library("fontconfig", "FcInit") or exit(false)

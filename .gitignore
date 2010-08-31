@@ -1,1 +1,7 @@
 *~
+*.bundle
+*.log
+*.o
+*.so
+Makefile
+

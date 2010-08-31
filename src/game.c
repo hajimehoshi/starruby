@@ -183,9 +183,7 @@ Game_free(Game* game)
 static VALUE
 Game_alloc(VALUE klass)
 {
-  if (!NIL_P(Game_s_current(klass))) {
-    rb_raise(strb_GetStarRubyErrorClass(), "already run");
-  }
+  // do not call rb_raise in this function
   Game* game = ALLOC(Game);
   game->windowScale = 1;
   game->isFullscreen = false;
@@ -283,6 +281,10 @@ InitializeScreen(Game* game)
 static VALUE
 Game_initialize(int argc, VALUE* argv, VALUE self)
 {
+  if (!NIL_P(Game_s_current(rb_cGame))) {
+    rb_raise(strb_GetStarRubyErrorClass(), "already run");
+  }
+
   volatile VALUE rbWidth, rbHeight, rbOptions;
   rb_scan_args(argc, argv, "21", &rbWidth, &rbHeight, &rbOptions);
   if (NIL_P(rbOptions)) {

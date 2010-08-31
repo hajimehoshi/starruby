@@ -207,7 +207,7 @@ class TestTexturePalette < Test::Unit::TestCase
     texture.change_palette!([Color.new(1, 2, 3, 4),
                              Color.new(5, 6, 7, 8),
                              Color.new(9, 10, 11, 12)])
-    assert size, texture.palette.size
+    assert_equal size, texture.palette.size
     assert_equal Color.new(1, 2, 3, 4), texture.palette[0]
     assert_equal Color.new(5, 6, 7, 8), texture.palette[1]
     assert_equal Color.new(9, 10, 11, 12), texture.palette[2]

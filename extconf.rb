@@ -1,3 +1,4 @@
+# -*- coding: undecided -*-
 require "mkmf"
 
 case CONFIG["arch"]
@@ -14,8 +15,12 @@ $LOCAL_LIBS += " " + `env libpng-config --libs`.chomp
 $LOCAL_LIBS += " " + `env sdl-config --libs`.chomp
 
 if CONFIG["arch"] !~ /mingw32/
+  # TODO: Is pkg-config needed?
   $CFLAGS     += " " + `env pkg-config fontconfig --cflags`.chomp
   $LOCAL_LIBS += " " + `env pkg-config fontconfig --libs`.chomp
+end
+if CONFIG["arch"] =~ /darwin/
+  $LDFLAGS += " -framework OpenGL"
 end
 
 have_header("png.h") or exit(false)

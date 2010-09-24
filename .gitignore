@@ -3,4 +3,5 @@
 *.log
 *.o
 *.so
+conftest.dSYM
 Makefile

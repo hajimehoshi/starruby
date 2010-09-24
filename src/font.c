@@ -45,7 +45,11 @@ SearchFont(VALUE rbFilePathOrName,
     return;
   }
   volatile VALUE rbFontNameSymbol =
+#ifdef rb_intern_str
+    ID2SYM(rb_intern_str(rbFilePathOrName));
+#else
     ID2SYM(rb_intern(StringValueCStr(rbFilePathOrName)));
+#endif
   FontFileInfo* info = fontFileInfos;
   while (info) {
     if (info->rbFontNameSymbol == rbFontNameSymbol) {

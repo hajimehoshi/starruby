@@ -122,4 +122,8 @@ bool strb_IsDisposedTexture(const Texture* const);
 void strb_TestInput(void);
 #endif
 
+#ifndef HAVE_RUBY_ENCODING_H
+#define rb_intern_str(str) ID2SYM(rb_intern(StringValueCStr(str)))
+#endif
+
 #endif

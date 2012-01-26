@@ -1123,7 +1123,7 @@ class TestTexture < Test::Unit::TestCase
   end
   
   def test_render_text_hello_world
-    if Font.exist?("Arial") and not RUBY_PLATFORM =~ /linux/
+    if Font.exist?("Arial") and not RUBY_PLATFORM =~ /linux/ and not RUBY_PLATFORM =~ /darwin/
       font = Font.new("Arial", 24)
       texture = Texture.load("images/hello_world")
       texture2 = Texture.new(320, 240)

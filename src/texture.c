@@ -330,7 +330,11 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
     texture->indexes = ALLOC_N(uint8_t, width * height);
     const png_colorp palette = infoPtr->palette;
     const int numTrans = infoPtr->num_trans;
+#if PNG_LIBPNG_VER_SONUM <= 12
     const png_bytep trans = infoPtr->trans;
+#else
+    const png_bytep trans = infoPtr->trans_alpha;
+#endif
     texture->paletteSize = infoPtr->num_palette;
     Color* p = texture->palette = ALLOC_N(Color, texture->paletteSize);
     for (int i = 0; i < texture->paletteSize; i++, p++) {

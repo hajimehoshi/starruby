@@ -34,6 +34,8 @@ end
 
 if CONFIG["arch"] =~ /mingw32/
   have_library("opengl32") or exit(false)
+elsif CONFIG["arch"] =~ /darwin/
+  have_library("GL")  
 else
   have_library("GL") or exit(false)
 end

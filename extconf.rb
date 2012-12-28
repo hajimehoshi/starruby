@@ -41,6 +41,7 @@ else
 end
 
 $CFLAGS += " -finline-functions -Wall -W -Wpointer-arith -Wunused-parameter"
+$CFLAGS += " -Wno-declaration-after-statement"
 $CFLAGS += " -pedantic -std=c99 -funit-at-a-time"
 # TODO: use gcc -dumpspecs
 if RUBY_PLATFORM !~ /^powerpc/ and CONFIG["arch"] !~ /darwin/

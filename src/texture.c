@@ -323,19 +323,22 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
     png_set_packing(pngPtr);
   }
   if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8) {
+#if 15 <= PNG_LIBPNG_VER_SONUM
+    png_set_expand_gray_1_2_4_to_8(pngPtr);
+#else
     png_set_gray_1_2_4_to_8(pngPtr);
+#endif
   }
   png_read_update_info(pngPtr, infoPtr);
-  if (0 < infoPtr->num_palette && hasPalette) {
+  int numPalette = 0;
+  png_colorp palette = NULL;
+  png_get_PLTE(pngPtr, infoPtr, &palette, &numPalette);
+  if (0 < numPalette && hasPalette) {
     texture->indexes = ALLOC_N(uint8_t, width * height);
-    const png_colorp palette = infoPtr->palette;
-    const int numTrans = infoPtr->num_trans;
-#if PNG_LIBPNG_VER_SONUM <= 12
-    const png_bytep trans = infoPtr->trans;
-#else
-    const png_bytep trans = infoPtr->trans_alpha;
-#endif
-    texture->paletteSize = infoPtr->num_palette;
+    int numTrans = 0;
+    png_bytep trans = NULL;
+    png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, NULL);
+    texture->paletteSize = numPalette;
     Color* p = texture->palette = ALLOC_N(Color, texture->paletteSize);
     for (int i = 0; i < texture->paletteSize; i++, p++) {
       const png_colorp pngColorP = &(palette[i]);
@@ -352,7 +355,7 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
     }
   }
   const int channels = png_get_channels(pngPtr, infoPtr);
-  const Color* palette = texture->palette;
+  const Color* srPalette = texture->palette;
   uint8_t* indexes = texture->indexes;
   for (unsigned int j = 0; j < height; j++) {
     png_byte row[width * channels];
@@ -361,7 +364,7 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
       Color* c = &(texture->pixels[width * j + i].color);
       switch (channels) {
       case 1:
-        *c = palette[*indexes = row[i]];
+        *c = srPalette[*indexes = row[i]];
         break;
       case 2:
         c->red = c->green = c->blue = row[i * channels];

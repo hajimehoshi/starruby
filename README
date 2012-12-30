@@ -33,7 +33,7 @@ You can develop SNES-like 2D games with Star Ruby.
 
 * How to Do Tests
 
-  $ ruby -Ctest -I.. runner.rb
+  $ ruby -Ctest -I.. -I. runner.rb
 
 
 * Licenses

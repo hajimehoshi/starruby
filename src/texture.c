@@ -330,13 +330,13 @@ Texture_s_load(int argc, VALUE* argv, VALUE self)
 #endif
   }
   png_read_update_info(pngPtr, infoPtr);
-  int numPalette = 0;
   png_colorp palette = NULL;
+  int numPalette = 0;
   png_get_PLTE(pngPtr, infoPtr, &palette, &numPalette);
   if (0 < numPalette && hasPalette) {
     texture->indexes = ALLOC_N(uint8_t, width * height);
-    int numTrans = 0;
     png_bytep trans = NULL;
+    int numTrans = 0;
     png_get_tRNS(pngPtr, infoPtr, &trans, &numTrans, NULL);
     texture->paletteSize = numPalette;
     Color* p = texture->palette = ALLOC_N(Color, texture->paletteSize);
